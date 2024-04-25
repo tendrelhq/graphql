@@ -1,0 +1,25 @@
+{
+  "name": "@tendrelhq/graphql",
+  "module": "lib/index.ts",
+  "type": "module",
+  "scripts": {
+    "dev": "bun run --watch bin/dev.ts",
+    "generate": "graphql-codegen --config ./lib/schema/codegen.yml"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^1.7.1",
+    "@graphql-codegen/cli": "^5.0.2",
+    "@graphql-codegen/typescript": "^4.0.6",
+    "@graphql-codegen/typescript-resolvers": "^4.0.6",
+    "@types/bun": "latest",
+    "typescript-language-server": "^4.3.3"
+  },
+  "peerDependencies": {
+    "typescript": "^5.0.0"
+  },
+  "dependencies": {
+    "@apollo/server": "^4.10.4",
+    "graphql": "^16.8.1",
+    "graphql-tag": "^2.12.6"
+  }
+}

@@ -1,0 +1,13 @@
+### direnv ###
+/.devenv/
+/.direnv/
+/.envrc
+
+### graphql ###
+__generated__/
+
+### nix ###
+/result/
+
+### typescript ###
+/node_modules/
