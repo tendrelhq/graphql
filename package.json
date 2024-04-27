@@ -20,6 +20,8 @@
   "dependencies": {
     "@apollo/server": "^4.10.4",
     "graphql": "^16.8.1",
-    "graphql-tag": "^2.12.6"
+    "graphql-tag": "^2.12.6",
+    "pattycake": "^0.0.2",
+    "ts-pattern": "^5.1.1"
   }
 }

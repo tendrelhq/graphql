@@ -1,3 +1,6 @@
+### bun ###
+/out/
+
 ### direnv ###
 /.devenv/
 /.direnv/

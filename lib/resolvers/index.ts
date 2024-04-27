@@ -1,5 +1,6 @@
 import { randomUUID } from "node:crypto";
 import type { Resolvers } from "@/schema/schema";
+import { match } from "ts-pattern";
 
 import { customers, locations } from "@/data";
 import { GraphQLError } from "graphql";
@@ -10,10 +11,14 @@ export const resolvers: Resolvers = {
       return customers;
     },
     locations(_, args, context) {
-      return locations.filter(
-        ({ customerId, parentId }) =>
-          customerId === args.customerId && parentId === args.parentId,
-      );
+      return locations.filter(({ customerId, parentId }) => {
+        return (
+          customerId === args.customerId &&
+          match(args.parentId)
+            .with(undefined, () => true)
+            .otherwise((p) => p === parentId)
+        );
+      });
     },
   },
   Mutation: {
