@@ -28,7 +28,6 @@ type Query {
   customers: [Customer!]!
   customer(id: ID!): Customer!
   locations(customerId: ID!, parentId: ID): [Location!]!
-  sites(customerId: ID!): [Location!]!
 }
 
 type Mutation {

@@ -11,13 +11,8 @@ export const resolvers: Resolvers = {
     },
     locations(_, args, context) {
       return locations.filter(
-        ({ customerId, parentId }) => customerId === args.customerId, // && parentId === args.parentId,
-      );
-    },
-    sites(_, args, context) {
-      return locations.filter(
         ({ customerId, parentId }) =>
-          customerId === args.customerId && !parentId,
+          customerId === args.customerId && parentId === args.parentId,
       );
     },
   },
