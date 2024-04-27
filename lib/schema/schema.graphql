@@ -1,65 +1,78 @@
-type Mentor {
-  id: ID!
-  name: String!
-  branches: [String!]!
-  reports: [Report!]
+enum Language {
+  en
+  es
 }
 
-type Pupil {
+type Tag {
   id: ID!
   name: String!
-  passed: Boolean!
-  reports: [Report!]
+  type: String!
+  parent: ID
 }
 
-type Report {
+type Customer {
   id: ID!
-  grade: String!
-  marks: Int!
-  mentor: Mentor!
-  pupil: Pupil!
+  name: String!
+  defaultLanguage: Language!
+}
+
+type Location {
+  id: ID!
+  customerId: ID!
+  name: String!
+  parentId: ID
+  tags: [Tag!]!
 }
 
 type Query {
-  mentors: [Mentor]
-  mentor(id: ID!): Mentor
-  pupils: [Pupil]
-  pupil(id: ID!): Pupil
-  reports: [Report]
-  report(id: ID!): Report
+  customers: [Customer!]!
+  customer(id: ID!): Customer!
+  locations(customerId: ID!, parentId: ID): [Location!]!
+  sites(customerId: ID!): [Location!]!
 }
 
 type Mutation {
-  addMentor(mentor: AddMentorInput!): Mentor
-  updateMentor(id: ID!, edits: EditMentorInput): Mentor
-  addPupil(pupil: AddPupilInput!): Pupil
-  updatePupil(id: ID!, edits: EditPupilInput): Pupil
-  createReport(report: ReportInput!): Report
-  deleteReport(id: ID!): [Report]
+  createCustomer(input: CreateCustomerInput!): ID!
+  updateCustomer(input: UpdateCustomerInput!): ID!
+  deleteCustomer(id: ID!): ID!
+  createLocation(input: CreateLocationInput!): ID!
+  updateLocation(input: UpdateLocationInput!): ID!
+  deleteLocation(id: ID!): ID!
 }
 
-input AddMentorInput {
-  name: String!,
-  branches: [String!]!
+input CreateTagInput {
+  id: ID!
+  name: String!
+  type: String!
+  parent: ID
 }
 
-input EditMentorInput {
-  name: String,
-  branches: [String!]
+input UpdateTagInput {
+  id: ID!
+  name: String
 }
 
-input AddPupilInput {
-  name: String!,
+input CreateCustomerInput {
+  id: ID!
+  name: String!
+  defaultLanguage: Language!
 }
 
-input EditPupilInput {
-  name: String,
-  passed: Boolean,
+input UpdateCustomerInput {
+  id: ID!
+  name: String
+  defaultLanguage: Language
 }
 
-input ReportInput {
-  grade: String!,
-  marks: Int!,
-  mentor_id: String!,
-  pupil_id: String!
+input CreateLocationInput {
+  id: ID!
+  customerId: ID!
+  name: String!
+  tags: [CreateTagInput!]!
+}
+
+input UpdateLocationInput {
+  id: ID!
+  name: String
+  tags: [UpdateTagInput!]
 }

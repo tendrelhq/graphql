@@ -3,8 +3,8 @@
   "module": "lib/index.ts",
   "type": "module",
   "scripts": {
-    "dev": "bun run --watch bin/dev.ts",
-    "generate": "graphql-codegen --config ./lib/schema/codegen.yml"
+    "generate": "graphql-codegen",
+    "start": "bun run --watch bin/dev.ts"
   },
   "devDependencies": {
     "@biomejs/biome": "^1.7.1",

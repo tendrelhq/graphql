@@ -1,28 +1,66 @@
-// biome-ignore lint/style/useConst:
-let pupils = [
-  { id: "1", name: "Hecate", passed: true },
-  { id: "2", name: "Hella", passed: false },
-  { id: "3", name: "EMP", passed: true },
+import { randomUUID } from "node:crypto";
+import { type Customer, Language, type Location } from "@/schema/schema";
+
+export let customers: Customer[] = [
+  {
+    id: randomUUID(),
+    name: "Tendrel",
+    defaultLanguage: Language.En,
+  },
+  {
+    id: randomUUID(),
+    name: "Demo",
+    defaultLanguage: Language.En,
+  },
+  {
+    id: randomUUID(),
+    name: "Keller",
+    defaultLanguage: Language.Es,
+  },
 ];
 
-// biome-ignore lint/style/useConst:
-let mentors = [
-  { id: "1", name: "Langley", branches: ["Reticle"] },
-  { id: "2", name: "NOX", branches: ["Fury", "Endura"] },
-  { id: "3", name: "Bai Yi", branches: ["Umbra", "Fury"] },
-  { id: "4", name: "Enfer", branches: ["Catalyst", "Arcane", "Reticle"] },
-  { id: "5", name: "Hamel", branches: ["Catalyst"] },
+const sites: Location[] = [
+  {
+    id: randomUUID(),
+    customerId: customers[0].id,
+    name: "Tendrel - A",
+    tags: [],
+  },
+  {
+    id: randomUUID(),
+    customerId: customers[1].id,
+    name: "Demo - A",
+    tags: [],
+  },
+  {
+    id: randomUUID(),
+    customerId: customers[2].id,
+    name: "Keller - A",
+    tags: [],
+  },
 ];
 
-// biome-ignore lint/style/useConst:
-let reports = [
-  { id: "1", grade: "C", marks: 64, mentor_id: "1", pupil_id: "2" },
-  { id: "2", grade: "A", marks: 81, mentor_id: "2", pupil_id: "1" },
-  { id: "3", grade: "B", marks: 72, mentor_id: "4", pupil_id: "3" },
-  { id: "4", grade: "A", marks: 87, mentor_id: "1", pupil_id: "1" },
-  { id: "5", grade: "A", marks: 80, mentor_id: "3", pupil_id: "3" },
-  { id: "6", grade: "B", marks: 75, mentor_id: "5", pupil_id: "2" },
-  { id: "7", grade: "S", marks: 96, mentor_id: "3", pupil_id: "1" },
+export let locations = [
+  ...sites,
+  {
+    id: randomUUID(),
+    customerId: customers[0].id,
+    parentId: sites[0].id,
+    name: "Tendrel - AB",
+    tags: [],
+  },
+  {
+    id: randomUUID(),
+    customerId: customers[1].id,
+    parentId: sites[1].id,
+    name: "Demo - AB",
+    tags: [],
+  },
+  {
+    id: randomUUID(),
+    customerId: customers[2].id,
+    parentId: sites[2].id,
+    name: "Keller - AB",
+    tags: [],
+  },
 ];
-
-export default { pupils, mentors, reports };
