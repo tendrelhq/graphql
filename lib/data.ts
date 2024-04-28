@@ -25,7 +25,13 @@ const sites: Location[] = [
     customerId: customers[0].id,
     parentId: null,
     name: "Tendrel - A",
-    tags: [],
+    tags: [
+      {
+        id: randomUUID(),
+        name: "A",
+        type: "type",
+      },
+    ],
   },
   {
     id: randomUUID(),
