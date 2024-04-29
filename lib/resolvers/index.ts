@@ -1,9 +1,7 @@
-import { randomUUID } from "node:crypto";
-import type { Resolvers } from "@/schema/schema";
-import { match } from "ts-pattern";
-
 import { customers, locations } from "@/data";
+import type { Resolvers } from "@/schema/schema";
 import { GraphQLError } from "graphql";
+import { match } from "ts-pattern";
 
 export const resolvers: Resolvers = {
   Query: {
@@ -11,11 +9,16 @@ export const resolvers: Resolvers = {
       return customers;
     },
     locations(_, args, context) {
-      return locations.filter(({ customerId, parentId }) => {
+      return locations.filter(({ customerId, parentId, ...location }) => {
         return (
           customerId === args.customerId &&
           match(args.parentId)
+            // Not including parentId in the request implies you don't care
+            // about parent, i.e. give me all locations for this customer.
             .with(undefined, () => true)
+            // When specified, parentId can either be null (indicating a
+            // top-level location) or a valid ID (indicating a parent).
+            .with(null, () => !parentId)
             .otherwise((p) => p === parentId)
         );
       });
@@ -31,9 +34,8 @@ export const resolvers: Resolvers = {
         });
       }
 
-      const id = randomUUID();
-      customers.push({ ...args.input, id });
-      return id;
+      customers.push(args.input);
+      return args.input.id;
     },
     deleteCustomer(_, args, context) {
       const i = customers.findIndex(({ id }) => id === args.id);
@@ -67,6 +69,18 @@ export const resolvers: Resolvers = {
       };
 
       return c.id;
+    },
+    createLocation(_, args, context) {
+      if (locations.find(({ id }) => id === args.input.id)) {
+        throw new GraphQLError("Location already exists", {
+          extensions: {
+            code: "BAD_REQUEST",
+          },
+        });
+      }
+
+      locations.push(args.input);
+      return args.input.id;
     },
   },
 };

@@ -66,6 +66,7 @@ input UpdateCustomerInput {
 input CreateLocationInput {
   id: ID!
   customerId: ID!
+  parentId: ID
   name: String!
   tags: [CreateTagInput!]!
 }
