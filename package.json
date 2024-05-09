@@ -3,17 +3,21 @@
   "module": "lib/index.ts",
   "type": "module",
   "scripts": {
+    "clean": "rimraf ./out",
+    "compile": "bun clean && bun generate && bun build.ts",
     "generate": "graphql-codegen",
     "start": "bun run --watch bin/app.ts"
   },
   "devDependencies": {
     "@biomejs/biome": "^1.7.1",
+    "@eddeee888/gcg-typescript-resolver-files": "^0.8.0",
     "@graphql-codegen/cli": "^5.0.2",
     "@graphql-codegen/typescript": "^4.0.6",
     "@graphql-codegen/typescript-resolvers": "^4.0.6",
     "@types/bun": "latest",
     "@types/cors": "^2.8.17",
     "@types/morgan": "^1.9.9",
+    "graphql-language-service-cli": "^3.3.33",
     "rimraf": "^5.0.5",
     "typescript-language-server": "^4.3.3"
   },
@@ -27,7 +31,9 @@
     "graphql": "^16.8.1",
     "graphql-tag": "^2.12.6",
     "morgan": "^1.10.0",
+    "myzod": "^1.11.0",
     "pattycake": "^0.0.2",
+    "postgres": "^3.4.4",
     "ts-pattern": "^5.1.1"
   }
 }

@@ -1,6 +1,6 @@
 import http from "node:http";
-import { resolvers } from "@/resolvers";
-import { type Context, typeDefs } from "@/schema";
+import sql from "@/datasources/postgres";
+import { type Context, resolvers, typeDefs } from "@/schema";
 import { ApolloServer } from "@apollo/server";
 import { expressMiddleware } from "@apollo/server/express4";
 import { ApolloServerPluginDrainHttpServer } from "@apollo/server/plugin/drainHttpServer";
@@ -27,8 +27,17 @@ app.use(
   express.json(),
   expressMiddleware(server, {
     async context({ req }) {
+      const authScope = req.headers.authorization;
+      const [{ id: languageTypeId }] = await sql<[{ id: number }]>`
+        SELECT systagid AS id
+        FROM public.systag
+        WHERE
+            systagparentid = 2
+            AND systagtype = ${req.headers["content-language"] ?? "en"};
+      `;
       return {
-        authScope: await Promise.resolve(req.headers.authorization),
+        authScope,
+        languageTypeId,
       };
     },
   }),

@@ -6,6 +6,20 @@
 name: dev
 type: Environment
 
+# Import existing resources from TendrelService.
+network:
+  vpc:
+    id: ${VPC_ID}
+    subnets:
+      public:
+        - id: ${PUBLIC_SUBNET_1}
+        - id: ${PUBLIC_SUBNET_2}
+        - id: ${PUBLIC_SUBNET_3}
+      private:
+        - id: ${PRIVATE_SUBNET_1}
+        - id: ${PRIVATE_SUBNET_2}
+        - id: ${PRIVATE_SUBNET_3}
+
 # Configure observability for your environment resources.
 observability:
   container_insights: false

@@ -1,6 +1,20 @@
-enum Language {
+enum LanguageCode {
   en
   es
+}
+
+type Language {
+  id: ID!
+  code: LanguageCode!
+  name: Name!
+  name_id: ID!
+}
+
+type Name {
+  id: ID!
+  language: Language!
+  language_id: ID!
+  value: String!
 }
 
 type Tag {
@@ -12,67 +26,78 @@ type Tag {
 
 type Customer {
   id: ID!
-  name: String!
+  name: Name!
+  name_id: ID!
   defaultLanguage: Language!
+  default_language_id: ID!
 }
 
 type Location {
   id: ID!
-  customerId: ID!
-  name: String!
-  parentId: ID
+  customer: Customer!
+  name: Name!
+  name_id: ID!
+  parent: Location
+  parent_id: ID!
   tags: [Tag!]!
 }
 
 type Query {
   customers: [Customer!]!
-  customer(id: ID!): Customer!
-  locations(customerId: ID!, parentId: ID): [Location!]!
+  locations(customerId: ID!, options: LocationsQueryOptions): [Location!]!
 }
 
-type Mutation {
-  createCustomer(input: CreateCustomerInput!): ID!
-  updateCustomer(input: UpdateCustomerInput!): ID!
-  deleteCustomer(id: ID!): ID!
-  createLocation(input: CreateLocationInput!): ID!
-  updateLocation(input: UpdateLocationInput!): ID!
-  deleteLocation(id: ID!): ID!
-}
-
-input CreateTagInput {
-  id: ID!
-  name: String!
-  type: String!
+input LocationsQueryOptions {
+  cornerstone: ID
   parent: ID
+  site: ID
+  isCornerstone: Boolean
+  isSite: Boolean
 }
 
-input UpdateTagInput {
-  id: ID!
-  name: String
-}
-
-input CreateCustomerInput {
-  id: ID!
-  name: String!
-  defaultLanguage: Language!
-}
-
-input UpdateCustomerInput {
-  id: ID!
-  name: String
-  defaultLanguage: Language
-}
-
-input CreateLocationInput {
-  id: ID!
-  customerId: ID!
-  parentId: ID
-  name: String!
-  tags: [CreateTagInput!]!
-}
-
-input UpdateLocationInput {
-  id: ID!
-  name: String
-  tags: [UpdateTagInput!]
-}
+# type Mutation {
+#   createCustomer(input: CreateCustomerInput!): ID!
+#   updateCustomer(input: UpdateCustomerInput!): ID!
+#   deleteCustomer(id: ID!): ID!
+#   createLocation(input: CreateLocationInput!): ID!
+#   updateLocation(input: UpdateLocationInput!): ID!
+#   deleteLocation(id: ID!): ID!
+# }
+#
+# input CreateTagInput {
+#   id: ID!
+#   name: String!
+#   type: String!
+#   parent: ID
+# }
+#
+# input UpdateTagInput {
+#   id: ID!
+#   name: String
+# }
+#
+# input CreateCustomerInput {
+#   id: ID!
+#   name: String!
+#   defaultLanguage: Language!
+# }
+#
+# input UpdateCustomerInput {
+#   id: ID!
+#   name: String
+#   defaultLanguage: Language
+# }
+#
+# input CreateLocationInput {
+#   id: ID!
+#   customerId: ID!
+#   parentId: ID
+#   name: String!
+#   tags: [CreateTagInput!]!
+# }
+#
+# input UpdateLocationInput {
+#   id: ID!
+#   name: String
+#   tags: [UpdateTagInput!]
+# }

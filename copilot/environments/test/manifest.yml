@@ -6,10 +6,8 @@
 name: test
 type: Environment
 
-# Configure the load balancers in your environment, once created.
-# http:
-#   public:
-#   private:
+http:
+  alias: gql.test.tendrel.io
 
 # Configure observability for your environment resources.
 observability:

@@ -7,8 +7,9 @@ await Bun.build({
   plugins: [
     // pattycake: for ts-pattern
     pattycake.esbuild({ disableOptionalChaining: true }),
+    // allows for: `import contents from "./foo.gql"; => string`
     {
-      name: "compile-graphql",
+      name: "inline-graphql",
       setup(build) {
         build.onLoad(
           {

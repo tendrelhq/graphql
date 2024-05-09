@@ -15,47 +15,53 @@ image:
   port: 4000
 
 http:
-  path: /graphql/v1 # api.tendrel.io/graphql/v1
+  path: /v1 # gql.tendrel.io/v1
 
 # Number of CPU units for the task.
 cpu: 1024
 # Amount of memory in MiB used by the task.
 memory: 2048
 
-# Connect your App Runner service to your environment's VPC.
-network:
-  vpc:
-    id: ${VPC_ID}
-    subnets:
-      public:
-        - id: ${PUBLIC_SUBNET_1}
-        - id: ${PUBLIC_SUBNET_2}
-        - id: ${PUBLIC_SUBNET_3}
-      private:
-        - id: ${PRIVATE_SUBNET_1}
-        - id: ${PRIVATE_SUBNET_2}
-        - id: ${PRIVATE_SUBNET_3}
-
-# Enable tracing for the service.
-# observability:
-#   tracing: awsxray
-
-# Optional fields for more advanced use-cases.
-#
-# variables:                    # Pass environment variables as key value pairs.
-#   LOG_LEVEL: info
-#
-# tags:                         # Pass tags as key value pairs.
-#   project: project-name
-#
-# secrets:                      # Pass secrets from AWS Systems Manager (SSM) Parameter Store and Secrets Manager.
-#   GITHUB_TOKEN: GITHUB_TOKEN  # The key is the name of the environment variable, the value is the name of an SSM parameter.
+secrets:
+  DB_USERNAME:
+    secretsmanager: "/database/role/admin:username::"
+  DB_PASSWORD:
+    secretsmanager: "/database/role/admin:password::"
+  DB_HOST:
+    secretsmanager: "/database/role/admin:host::"
+  DB_PORT:
+    secretsmanager: "/database/role/admin:port::"
+  DB_NAME:
+    secretsmanager: "/database/role/admin:dbname::"
 
 # You can override any of the values defined above by environment.
 environments:
   dev:
+    secrets:
+      DB_USERNAME:
+        secretsmanager: "/database/role/admin:username::"
+      DB_PASSWORD:
+        secretsmanager: "/database/role/admin:password::"
+      DB_HOST:
+        secretsmanager: "/database/role/admin:host::"
+      DB_PORT:
+        secretsmanager: "/database/role/admin:port::"
+      DB_NAME:
+        secretsmanager: "/database/role/admin:dbname::"
     variables:
       LOG_LEVEL: debug
+      NODE_ENV: development
   test:
+    secrets:
+      DB_USERNAME:
+        secretsmanager: "/database/service/graphql:username::"
+      DB_PASSWORD:
+        secretsmanager: "/database/service/graphql:password::"
+      DB_HOST:
+        secretsmanager: "/database/service/graphql:host::"
+      DB_PORT:
+        secretsmanager: "/database/service/graphql:port::"
+      DB_NAME:
+        secretsmanager: "/database/service/graphql:dbname::"
     variables:
       LOG_LEVEL: debug

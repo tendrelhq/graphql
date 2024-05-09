@@ -1,6 +1,8 @@
 # vim: ft=bash
 # shellcheck disable=2148
 
+layout node
+
 if has nix; then
 	use flake . --impure
 fi

@@ -1,0 +1,26 @@
+services:
+  tendrel-database:
+    image: postgres:latest
+    environment:
+      POSTGRES_PASSWORD: password
+    ports:
+      - 5432:5432
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  tendrel-graphql:
+    image: tendrel-graphql-dev
+    build:
+      context: .
+      args:
+        NODE_ENV: development
+    depends_on:
+      - tendrel-database
+    environment:
+      DATABASE_URL: postgresql://postgres:password@tendrel-database:5432/postgres
+    ports:
+      - 4000:4000
+    pull_policy: build
+
+volumes:
+  pgdata:
