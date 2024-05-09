@@ -1,0 +1,16 @@
+# vim: ft=bash
+# shellcheck disable=2148
+
+if has nix; then
+	use flake . --impure
+fi
+
+# see copilot/environments/dev/manifest.yml
+# check the aws console for these ids
+export VPC_ID=vpc-0fd47d2099339a635
+export PUBLIC_SUBNET_1=subnet-0308349f924faf631
+export PUBLIC_SUBNET_2=subnet-0308349f924faf631
+export PUBLIC_SUBNET_3=subnet-0308349f924faf631
+export PRIVATE_SUBNET_1=subnet-0308349f924faf631
+export PRIVATE_SUBNET_2=subnet-0308349f924faf631
+export PRIVATE_SUBNET_3=subnet-0308349f924faf631

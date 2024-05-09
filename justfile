@@ -1,6 +1,5 @@
-deploy_env := "test"
-dev_image  := "tendrel-graphql-dev"
-prod_image := "tendrel-grahpql"
+deploy_env := "dev"
+image_name := "tendrel-graphql-dev"
 port       := "4000"
 
 default: build
@@ -15,14 +14,11 @@ deploy:
     copilot deploy --env {{deploy_env}}
 
 docker:
-    docker build --build-arg NODE_ENV=development --pull -t {{dev_image}} .
+    docker build --build-arg NODE_ENV=development --pull -t {{image_name}} .
 
 generate:
     bun graphql-codegen
 
-release:
-    docker build --build-arg NODE_ENV=production --pull -t {{prod_image}} .
-
 start: docker
     docker kill tendrel-graphql-dev 2>/dev/null || true
-    docker run --name tendrel-graphql-dev --rm -d -p {{port}}:{{port}} {{dev_image}}
+    docker run --name tendrel-graphql-dev --rm -d -p {{port}}:{{port}} {{image_name}}

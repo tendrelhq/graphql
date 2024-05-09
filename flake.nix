@@ -4,12 +4,22 @@
     nixpkgs.url = "github:nixos/nixpkgs/nixpkgs-unstable";
   };
 
+  nixConfig = {
+    extra-substituters = [
+      "https://tendrelhq.cachix.org"
+    ];
+    extra-trusted-public-keys = [
+      "tendrelhq.cachix.org-1:uAnm9wwXD60bKJbPuDgpVMxcAje1IqhKoroTi4iX608="
+    ];
+  };
+
   outputs = {flake-parts, ...} @ inputs:
     flake-parts.lib.mkFlake {inherit inputs;} {
       systems = ["x86_64-linux"];
       perSystem = {
         lib,
         pkgs,
+        self',
         ...
       }: {
         devShells.default = pkgs.mkShell {
@@ -43,6 +53,8 @@
           # environment variables
           BIOME_BINARY = lib.getExe pkgs.biome;
         };
+
+        packages.default = self'.devShells.default;
       };
     };
 }

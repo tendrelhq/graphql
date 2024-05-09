@@ -23,10 +23,18 @@ cpu: 1024
 memory: 2048
 
 # Connect your App Runner service to your environment's VPC.
-# network:
-#   vpc:
-#     placement: private
-
+network:
+  vpc:
+    id: ${VPC_ID}
+    subnets:
+      public:
+        - id: ${PUBLIC_SUBNET_1}
+        - id: ${PUBLIC_SUBNET_2}
+        - id: ${PUBLIC_SUBNET_3}
+      private:
+        - id: ${PRIVATE_SUBNET_1}
+        - id: ${PRIVATE_SUBNET_2}
+        - id: ${PRIVATE_SUBNET_3}
 
 # Enable tracing for the service.
 # observability:
@@ -45,6 +53,9 @@ memory: 2048
 
 # You can override any of the values defined above by environment.
 environments:
+  dev:
+    variables:
+      LOG_LEVEL: debug
   test:
     variables:
       LOG_LEVEL: debug

@@ -7,7 +7,7 @@
 /.envrc
 
 ### nix ###
-/result/
+/result
 
 ### typescript ###
 /node_modules/

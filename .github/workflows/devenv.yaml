@@ -1,0 +1,27 @@
+name: Build and cache dev environment
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-and-cache:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: cachix/install-nix-action@v26
+        with:
+          github_access_token: ${{ secrets.GITHUB_TOKEN }}
+          extra_nix_config: |
+            accept-flake-config = true
+      - uses: cachix/cachix-action@v14
+        with:
+          name: tendrelhq
+          authToken: ${{ secrets.CACHIX_AUTH_TOKEN }}
+      - run: nix build .
