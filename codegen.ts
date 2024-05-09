@@ -1,9 +1,9 @@
 import type { CodegenConfig } from "@graphql-codegen/cli";
 
 const config: CodegenConfig = {
-  schema: "./lib/schema/schema.graphql",
+  schema: "./lib/schema/schema.gql",
   generates: {
-    "lib/schema/schema.ts": {
+    "lib/schema/types.ts": {
       plugins: ["typescript", "typescript-resolvers"],
       config: {
         contextType: "@/schema#Context",

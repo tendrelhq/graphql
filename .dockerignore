@@ -1,0 +1,25 @@
+/.dockerignore
+/.gitignore
+/justfile
+/Dockerfile
+/README.md
+
+### bun ###
+/out/
+
+### direnv ###
+/.devenv/
+/.direnv/
+/.envrc
+
+### git ###
+/.git/
+
+### nix ###
+/flake.*
+/result/
+
+### typescript ###
+*.d.ts
+/biome.json
+/node_modules/

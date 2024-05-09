@@ -11,6 +11,11 @@
     "indentStyle": "space",
     "lineWidth": 80
   },
+  "javascript": {
+    "formatter": {
+      "arrowParentheses": "asNeeded"
+    }
+  },
   "linter": {
     "enabled": true,
     "rules": {

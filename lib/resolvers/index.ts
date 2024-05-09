@@ -1,5 +1,5 @@
 import { customers, locations } from "@/data";
-import type { Resolvers } from "@/schema/schema";
+import type { Resolvers } from "@/schema/types";
 import { GraphQLError } from "graphql";
 import { match } from "ts-pattern";
 
@@ -19,7 +19,7 @@ export const resolvers: Resolvers = {
             // When specified, parentId can either be null (indicating a
             // top-level location) or a valid ID (indicating a parent).
             .with(null, () => !parentId)
-            .otherwise((p) => p === parentId)
+            .otherwise(p => p === parentId)
         );
       });
     },

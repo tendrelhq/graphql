@@ -4,7 +4,7 @@
   "type": "module",
   "scripts": {
     "generate": "graphql-codegen",
-    "start": "bun run --watch bin/dev.ts"
+    "start": "bun run --watch bin/app.ts"
   },
   "devDependencies": {
     "@biomejs/biome": "^1.7.1",
@@ -12,6 +12,9 @@
     "@graphql-codegen/typescript": "^4.0.6",
     "@graphql-codegen/typescript-resolvers": "^4.0.6",
     "@types/bun": "latest",
+    "@types/cors": "^2.8.17",
+    "@types/morgan": "^1.9.9",
+    "rimraf": "^5.0.5",
     "typescript-language-server": "^4.3.3"
   },
   "peerDependencies": {
@@ -19,8 +22,11 @@
   },
   "dependencies": {
     "@apollo/server": "^4.10.4",
+    "cors": "^2.8.5",
+    "express": "^4.19.2",
     "graphql": "^16.8.1",
     "graphql-tag": "^2.12.6",
+    "morgan": "^1.10.0",
     "pattycake": "^0.0.2",
     "ts-pattern": "^5.1.1"
   }

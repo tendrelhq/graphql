@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { type Customer, Language, type Location } from "@/schema/schema";
+import { type Customer, Language, type Location } from "@/schema/types";
 
 export let customers: Customer[] = [
   {

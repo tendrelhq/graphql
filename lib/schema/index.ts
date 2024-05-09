@@ -1,8 +1,5 @@
-import { readFileSync } from "node:fs";
-
-export const typeDefs = readFileSync(`${__dirname}/schema.graphql`, {
-  encoding: "utf-8",
-});
+import typeDefs from "./schema.gql";
+export { typeDefs };
 
 export type Context = {
   authScope?: string;
