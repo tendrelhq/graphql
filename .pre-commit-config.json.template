@@ -1,0 +1,27 @@
+// vim: ft=jsonc
+{
+  "default_stages": ["pre-commit"],
+  "repos": [
+    {
+      "hooks": [
+        {
+          "always_run": false,
+          "entry": "biome check --apply",
+          "exclude": "^$",
+          "fail_fast": false,
+          "files": "",
+          "id": "biome",
+          "language": "system",
+          "name": "biome",
+          "pass_filenames": true,
+          "require_serial": false,
+          "stages": ["pre-commit"],
+          "types": ["file"],
+          "types_or": ["javascript", "jsx", "ts", "tsx", "json"],
+          "verbose": false
+        }
+      ],
+      "repo": "local"
+    }
+  ]
+}

@@ -1,6 +1,6 @@
 import pattycake from "pattycake";
 
-await Bun.build({
+const out = await Bun.build({
   entrypoints: ["./bin/app.ts"],
   outdir: "./out",
   target: "bun",
@@ -26,3 +26,9 @@ await Bun.build({
     },
   ],
 });
+
+for (const line of out.logs) {
+  console.log(line);
+}
+
+process.exit(Number(!out.success));

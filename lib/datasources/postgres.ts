@@ -1,5 +1,7 @@
+import type { Context } from "@/schema";
 import z from "myzod";
 import postgres from "postgres";
+import makeCustomerLoader from "./customer";
 
 if (process.env.DATABASE_URL) {
   const url = process.env.DATABASE_URL.split("://")[1];
@@ -32,7 +34,7 @@ const {
   })
   .parse(process.env, { allowUnknown: true });
 
-const sql = postgres({
+export const sql = postgres({
   username: DB_USERNAME,
   password: DB_PASSWORD,
   host: DB_HOST,
@@ -41,4 +43,10 @@ const sql = postgres({
   max: DB_MAX_CONNECTIONS,
 });
 
-export default sql;
+export function orm(ctx: Omit<Context, "orm">) {
+  return {
+    customer: makeCustomerLoader(ctx),
+  };
+}
+
+export type ORM = ReturnType<typeof orm>;

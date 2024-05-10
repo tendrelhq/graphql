@@ -1,4 +1,4 @@
-import sql from "@/datasources/postgres";
+import { sql } from "@/datasources/postgres";
 import type {
   CustomerResolvers,
   Language,
@@ -46,4 +46,3 @@ export const Customer: CustomerResolvers = {
     return language;
   },
 };
-

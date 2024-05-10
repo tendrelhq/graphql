@@ -1,7 +1,10 @@
 {
   inputs = {
-    flake-parts.url = "github:hercules-ci/flake-parts";
+    devenv.url = "github:cachix/devenv";
+    git-hooks.url = "github:cachix/git-hooks.nix";
     nixpkgs.url = "github:nixos/nixpkgs/nixpkgs-unstable";
+
+    devenv.inputs.pre-commit-hooks.follows = "git-hooks";
   };
 
   nixConfig = {
@@ -15,6 +18,9 @@
 
   outputs = {flake-parts, ...} @ inputs:
     flake-parts.lib.mkFlake {inherit inputs;} {
+      imports = [
+        inputs.devenv.flakeModule
+      ];
       systems = ["x86_64-linux"];
       perSystem = {
         lib,
@@ -22,16 +28,15 @@
         self',
         ...
       }: {
-        devShells.default = pkgs.mkShell {
+        devenv.shells.default = {
           name = "tendrel-graphql";
-          buildInputs = with pkgs; [
+          containers = lib.mkForce {};
+          env.BIOME_BINARY = lib.getExe pkgs.biome;
+          packages = with pkgs; [
             awscli2
             biome
             bun
             just
-            nodejs
-            nodejs.pkgs.typescript-language-server
-            xdg-utils
             (stdenv.mkDerivation rec {
               pname = "copilot-cli";
               version = "1.33.3";
@@ -50,8 +55,10 @@
               '';
             })
           ];
-          # environment variables
-          BIOME_BINARY = lib.getExe pkgs.biome;
+          pre-commit.hooks = {
+            alejandra.enable = true;
+            biome.enable = true;
+          };
         };
 
         packages.default = self'.devShells.default;

@@ -1,5 +1,5 @@
 import http from "node:http";
-import sql from "@/datasources/postgres";
+import { orm } from "@/datasources/postgres";
 import { type Context, resolvers, typeDefs } from "@/schema";
 import { ApolloServer } from "@apollo/server";
 import { expressMiddleware } from "@apollo/server/express4";
@@ -19,7 +19,11 @@ const server = new ApolloServer<Context>({
 
 await server.start();
 
-app.use(morgan("tiny")); // "access" logging
+app.use(
+  morgan(
+    ":date[iso] :method :url :status :res[content-length] - :response-time ms",
+  ),
+);
 
 app.use(
   "/",
@@ -28,16 +32,23 @@ app.use(
   expressMiddleware(server, {
     async context({ req }) {
       const authScope = req.headers.authorization;
-      const [{ id: languageTypeId }] = await sql<[{ id: number }]>`
-        SELECT systagid AS id
-        FROM public.systag
-        WHERE
-            systagparentid = 2
-            AND systagtype = ${req.headers["content-language"] ?? "en"};
-      `;
-      return {
+      const contentLanguage = req.headers["content-language"];
+      // const [{ id: languageTypeId }] = await sql<[{ id: number }]>`
+      //   SELECT systagid AS id
+      //   FROM public.systag
+      //   WHERE
+      //       systagparentid = 2
+      //       AND systagtype = ${req.headers["content-language"] ?? "en"};
+      // `;
+
+      const ctx = {
         authScope,
-        languageTypeId,
+        languageTypeId: 20,
+      };
+
+      return {
+        ...ctx,
+        orm: orm(ctx),
       };
     },
   }),
