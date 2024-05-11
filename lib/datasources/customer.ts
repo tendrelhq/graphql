@@ -7,12 +7,13 @@ export default (ctx: Omit<Context, "orm">) =>
   new Dataloader<string, Customer>(async keys => {
     const { authScope } = ctx;
 
-    if (!authScope)
+    if (!authScope) {
       throw new GraphQLError("Unauthenticated", {
         extensions: {
           code: 401,
         },
       });
+    }
 
     if (keys.length) {
       return await sql<Customer[]>`

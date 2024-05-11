@@ -31,6 +31,7 @@ app.use(
   express.json(),
   expressMiddleware(server, {
     async context({ req }) {
+      console.log(JSON.stringify(req.headers, null, 2));
       const authScope = req.headers.authorization;
       const contentLanguage = req.headers["content-language"];
       // const [{ id: languageTypeId }] = await sql<[{ id: number }]>`
