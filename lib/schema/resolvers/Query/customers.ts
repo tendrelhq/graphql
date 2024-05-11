@@ -9,12 +9,12 @@ export const customers: NonNullable<QueryResolvers["customers"]> = async (
 ) => {
   const { authScope } = ctx;
 
-  // if (!authScope)
-  //   throw new GraphQLError("Unauthenticated", {
-  //     extensions: {
-  //       code: 401,
-  //     },
-  //   });
+  if (!authScope)
+    throw new GraphQLError("Unauthenticated", {
+      extensions: {
+        code: 401,
+      },
+    });
 
   return await sql<Customer[]>`
     SELECT
@@ -22,10 +22,12 @@ export const customers: NonNullable<QueryResolvers["customers"]> = async (
         c.customernamelanguagemasterid AS name_id,
         l.systaguuid AS default_language_id
     FROM public.workerinstance AS w
+    INNER JOIN public.worker AS u
+        ON w.workerinstanceworkerid = u.workerid
     INNER JOIN public.customer AS c
         ON w.workerinstancecustomerid = c.customerid
     INNER JOIN public.systag AS l
         ON c.customerlanguagetypeid = l.systagid
-    WHERE w.workerinstanceworkerid = ${authScope ?? 457};
+    WHERE u.workeruuid = ${authScope};
   `;
 };
