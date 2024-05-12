@@ -22,18 +22,6 @@ cpu: 1024
 # Amount of memory in MiB used by the task.
 memory: 2048
 
-secrets:
-  DB_USERNAME:
-    secretsmanager: "/database/role/admin:username::"
-  DB_PASSWORD:
-    secretsmanager: "/database/role/admin:password::"
-  DB_HOST:
-    secretsmanager: "/database/role/admin:host::"
-  DB_PORT:
-    secretsmanager: "/database/role/admin:port::"
-  DB_NAME:
-    secretsmanager: "/database/role/admin:dbname::"
-
 # You can override any of the values defined above by environment.
 environments:
   dev:

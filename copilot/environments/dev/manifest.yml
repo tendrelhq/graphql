@@ -6,7 +6,7 @@
 name: dev
 type: Environment
 
-# Import existing resources from TendrelService.
+# Import your own VPC and subnets or configure how they should be created.
 network:
   vpc:
     id: ${VPC_ID}
