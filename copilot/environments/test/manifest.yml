@@ -1,4 +1,4 @@
-# The manifest for the "test" (TendrelService-Test) environment.
+# The manifest for the "test" environment.
 # Read the full specification for the "Environment" type at:
 #  https://aws.github.io/copilot-cli/docs/manifest/environment/
 
@@ -6,9 +6,25 @@
 name: test
 type: Environment
 
-http:
-  alias: gql.test.tendrel.io
+# Import your own VPC and subnets or configure how they should be created.
+network:
+  vpc:
+    id: vpc-0fba9ff9412604c73
+    subnets:
+      public:
+        - id: subnet-09e83d249680bfa3a
+        - id: subnet-00f6d8ccfdc1b8635
+        - id: subnet-03a38a68de55bb0bc
+      private:
+        - id: subnet-07fc52043f8240d60
+        - id: subnet-0841d6e233674e47d
+        - id: subnet-08cc33ddcc5bd6a85
+
+# Configure the load balancers in your environment, once created.
+# http:
+#   public:
+#   private:
 
 # Configure observability for your environment resources.
 observability:
-  container_insights: true
+  container_insights: false
