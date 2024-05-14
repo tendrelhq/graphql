@@ -37,7 +37,7 @@ export default {
                 workeruuid AS id,
                 workerlanguageid AS language
             FROM public.worker
-            WHERE workerexternalid = ${req.token.sub};
+            WHERE workeridentityid = ${req.token.sub};
           `;
 
           if (!user) {
