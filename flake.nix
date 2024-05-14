@@ -37,6 +37,7 @@
             biome
             bun
             just
+            postgresql
             (stdenv.mkDerivation rec {
               pname = "copilot-cli";
               version = "1.33.3";

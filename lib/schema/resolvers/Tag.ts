@@ -1,4 +1,5 @@
-import type { TagResolvers } from "./../__generated__/types.generated";
+import type { TagResolvers } from "@/schema";
+
 export const Tag: TagResolvers = {
   /* Implement Tag resolver logic here */
 };

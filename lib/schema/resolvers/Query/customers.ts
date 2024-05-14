@@ -1,12 +1,9 @@
 import { sql } from "@/datasources/postgres";
-import type { Customer, QueryResolvers } from "@/schema";
+import type { Customer } from "@/schema";
+import type { QueryResolver } from "@/schema/resolvers";
 import { GraphQLError } from "graphql";
 
-export const customers: NonNullable<QueryResolvers["customers"]> = async (
-  _,
-  __,
-  ctx,
-) => {
+export const customers: QueryResolver<"customers"> = async (_, __, ctx) => {
   const { authScope } = ctx;
 
   if (!authScope)

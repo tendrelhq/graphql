@@ -31,29 +31,32 @@ app.use(
   express.json(),
   expressMiddleware(server, {
     async context({ req }) {
-      const user = await (async () => {
-        console.log("Authorization:", req.headers.authorization);
-        const auth = req.headers.authorization;
-        if (!auth) return;
-        const [user] = await sql<[{ id: string; language: number }?]>`
+      try {
+        const user = await (async () => {
+          if (!req.headers.authorization) return;
+          const [user] = await sql<[{ id: string; language: number }?]>`
           SELECT
               workeruuid AS id,
               workerlanguageid AS language
           FROM public.worker
-          WHERE workerexternalid = ${auth};
+          WHERE workerexternalid = ${req.headers.authorization};
         `;
-        return user;
-      })();
+          return user;
+        })();
 
-      const ctx = {
-        authScope: user?.id,
-        languageTypeId: user?.language ?? 20,
-      };
+        const ctx = {
+          authScope: user?.id,
+          languageTypeId: user?.language ?? 20,
+        };
 
-      return {
-        ...ctx,
-        orm: orm(ctx),
-      };
+        return {
+          ...ctx,
+          orm: orm(ctx),
+        };
+      } catch (e) {
+        console.error(e);
+        throw e;
+      }
     },
   }),
 );

@@ -1,8 +1,6 @@
 import { sql } from "@/datasources/postgres";
-import type {
-  LanguageResolvers,
-  Name,
-} from "./../__generated__/types.generated";
+import type { LanguageResolvers, Name } from "@/schema";
+
 export const Language: LanguageResolvers = {
   async name(parent, _, ctx) {
     const [name] = await sql<[Name?]>`
@@ -29,6 +27,7 @@ export const Language: LanguageResolvers = {
             ON m.languagemastersourcelanguagetypeid = s.systagid
         WHERE m.languagemasterid = ${parent.name_id};
       `;
+
       return fallback;
     }
 

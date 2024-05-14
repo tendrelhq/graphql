@@ -1,9 +1,5 @@
 import { sql } from "@/datasources/postgres";
-import type {
-  CustomerResolvers,
-  Language,
-  Name,
-} from "./../__generated__/types.generated";
+import type { CustomerResolvers, Language, Name } from "@/schema";
 export const Customer: CustomerResolvers = {
   async name(parent, _, ctx) {
     const [name] = await sql<[Name]>`

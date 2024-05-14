@@ -1,15 +1,8 @@
 import { sql } from "@/datasources/postgres";
-import type {
-  Language,
-  NameResolvers,
-} from "./../__generated__/types.generated";
+import type { Language, NameResolvers } from "@/schema";
+
 export const Name: NameResolvers = {
   async language(parent) {
-    console.log(
-      "typeof parent.language_id =:",
-      typeof parent.language_id,
-      parent.language_id,
-    );
     const [language] = await sql<[Language]>`
       SELECT
           systaguuid AS id,

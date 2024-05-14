@@ -1,5 +1,6 @@
 /.dockerignore
 /.gitignore
+/docker-compose.yaml
 /justfile
 /Dockerfile
 /README.md
