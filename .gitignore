@@ -6,6 +6,9 @@
 /.direnv/
 /.envrc
 
+### dotenv ###
+/.env*.local
+
 ### nix ###
 /.pre-commit-config.yaml
 /result

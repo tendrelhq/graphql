@@ -1,5 +1,8 @@
+import "dotenv/config";
+
 import http from "node:http";
-import { orm, sql } from "@/datasources/postgres";
+import auth from "@/auth";
+import { orm } from "@/datasources/postgres";
 import { type Context, resolvers, typeDefs } from "@/schema";
 import { ApolloServer } from "@apollo/server";
 import { expressMiddleware } from "@apollo/server/express4";
@@ -28,35 +31,19 @@ app.use(
 app.use(
   "/",
   cors(),
+  auth.jwt(),
   express.json(),
   expressMiddleware(server, {
     async context({ req }) {
-      try {
-        const user = await (async () => {
-          if (!req.headers.authorization) return;
-          const [user] = await sql<[{ id: string; language: number }?]>`
-          SELECT
-              workeruuid AS id,
-              workerlanguageid AS language
-          FROM public.worker
-          WHERE workerexternalid = ${req.headers.authorization};
-        `;
-          return user;
-        })();
+      const ctx = {
+        token: req.token,
+        user: req["x-tendrel-user"],
+      };
 
-        const ctx = {
-          authScope: user?.id,
-          languageTypeId: user?.language ?? 20,
-        };
-
-        return {
-          ...ctx,
-          orm: orm(ctx),
-        };
-      } catch (e) {
-        console.error(e);
-        throw e;
-      }
+      return {
+        ...ctx,
+        orm: orm(ctx),
+      };
     },
   }),
 );

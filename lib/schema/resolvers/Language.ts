@@ -1,8 +1,11 @@
+import { assertAuthenticated } from "@/auth";
 import { sql } from "@/datasources/postgres";
 import type { LanguageResolvers, Name } from "@/schema";
 
 export const Language: LanguageResolvers = {
   async name(parent, _, ctx) {
+    assertAuthenticated(ctx);
+
     const [name] = await sql<[Name?]>`
       SELECT
           t.languagetranslationid AS id,
@@ -13,7 +16,7 @@ export const Language: LanguageResolvers = {
           ON t.languagetranslationtypeid = s.systagid
       WHERE
           t.languagetranslationmasterid = ${parent.name_id}
-          AND t.languagetranslationtypeid = ${ctx.languageTypeId};
+          AND t.languagetranslationtypeid = ${ctx.user.language};
     `;
 
     if (!name) {

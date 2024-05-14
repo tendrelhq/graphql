@@ -18,6 +18,8 @@ services:
       - tendrel-database
     environment:
       DATABASE_URL: postgresql://postgres:password@tendrel-database:5432/postgres
+    env_file:
+      - .env.local
     ports:
       - 4000:4000
     pull_policy: build

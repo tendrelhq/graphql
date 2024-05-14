@@ -1,20 +1,13 @@
+import { assertAuthenticated } from "@/auth";
 import { sql } from "@/datasources/postgres";
-import type { Location } from "@/schema";
-import type { QueryResolver } from "@/schema/resolvers";
-import { GraphQLError } from "graphql";
+import type { Location, QueryResolvers } from "@/schema";
 
-export const locations: QueryResolver<"locations"> = async (
+export const locations: NonNullable<QueryResolvers["locations"]> = async (
   _,
   { customerId },
-  { authScope },
+  ctx,
 ) => {
-  if (!authScope) {
-    throw new GraphQLError("Unauthenticated", {
-      extensions: {
-        code: 401,
-      },
-    });
-  }
+  assertAuthenticated(ctx);
 
   return await sql<Location[]>`
     SELECT

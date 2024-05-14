@@ -1,17 +1,14 @@
+import { assertAuthenticated } from "@/auth";
 import { sql } from "@/datasources/postgres";
-import type { Customer } from "@/schema";
-import type { QueryResolver } from "@/schema/resolvers";
-import { GraphQLError } from "graphql";
+import type { Customer, QueryResolvers } from "@/schema";
 
-export const customers: QueryResolver<"customers"> = async (_, __, ctx) => {
-  const { authScope } = ctx;
-
-  if (!authScope)
-    throw new GraphQLError("Unauthenticated", {
-      extensions: {
-        code: 401,
-      },
-    });
+export const customers: NonNullable<QueryResolvers["customers"]> = async (
+  _,
+  __,
+  ctx,
+) => {
+  console.log(JSON.stringify(ctx));
+  assertAuthenticated(ctx);
 
   return await sql<Customer[]>`
     SELECT
@@ -25,6 +22,6 @@ export const customers: QueryResolver<"customers"> = async (_, __, ctx) => {
         ON w.workerinstancecustomerid = c.customerid
     INNER JOIN public.systag AS l
         ON c.customerlanguagetypeid = l.systagid
-    WHERE u.workeruuid = ${authScope};
+    WHERE u.workeruuid = ${ctx.user.id};
   `;
 };

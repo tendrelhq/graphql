@@ -1,19 +1,11 @@
+import { assertAuthenticated } from "@/auth";
 import type { Context, Customer } from "@/schema";
 import Dataloader from "dataloader";
-import { GraphQLError } from "graphql";
 import { sql } from "./postgres";
 
 export default (ctx: Omit<Context, "orm">) =>
   new Dataloader<string, Customer>(async keys => {
-    const { authScope } = ctx;
-
-    if (!authScope) {
-      throw new GraphQLError("Unauthenticated", {
-        extensions: {
-          code: 401,
-        },
-      });
-    }
+    assertAuthenticated(ctx);
 
     if (keys.length) {
       return await sql<Customer[]>`
@@ -40,6 +32,6 @@ export default (ctx: Omit<Context, "orm">) =>
           ON w.workerinstancecustomerid = c.customerid
       INNER JOIN public.systag AS l
           ON c.customerlanguagetypeid = l.systagid
-      WHERE u.workeruuid = ${authScope};
+      WHERE u.workeruuid = ${ctx.user.id};
     `;
   });

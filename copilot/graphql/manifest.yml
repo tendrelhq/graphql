@@ -27,6 +27,9 @@ cpu: 1024
 # Amount of memory in MiB used by the task.
 memory: 2048
 
+secrets:
+  CLERK_PUBLIC_KEY: /copilot/${COPILOT_APPLICATION_NAME}/${COPILOT_ENVIRONMENT_NAME}/secrets/clerk-public-key
+
 # You can override any of the values defined above by environment.
 environments:
   dev:

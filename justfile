@@ -12,4 +12,4 @@ deploy:
     copilot deploy --env {{deploy_env}}
 
 start:
-    docker compose up --detach
+    docker compose up --detach && docker compose logs -f

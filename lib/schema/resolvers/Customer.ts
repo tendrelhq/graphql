@@ -1,7 +1,11 @@
+import { assertAuthenticated } from "@/auth";
 import { sql } from "@/datasources/postgres";
 import type { CustomerResolvers, Language, Name } from "@/schema";
+
 export const Customer: CustomerResolvers = {
   async name(parent, _, ctx) {
+    assertAuthenticated(ctx);
+
     const [name] = await sql<[Name]>`
       SELECT
           COALESCE(t.languagetranslationid, m.languagemasterid) AS id,
@@ -11,7 +15,7 @@ export const Customer: CustomerResolvers = {
       LEFT JOIN public.languagetranslations AS t
           ON
               m.languagemasterid = t.languagetranslationmasterid
-              AND t.languagetranslationtypeid = ${ctx.languageTypeId}
+              AND t.languagetranslationtypeid = ${ctx.user.language}
       WHERE m.languagemasterid = ${parent.name_id};
     `;
 
