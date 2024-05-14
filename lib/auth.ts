@@ -17,14 +17,19 @@ declare global {
 export default {
   jwt() {
     return async (req: Request, _: Response, next: NextFunction) => {
-      const auth = req.headers.authorization;
+      const bearer = req.headers.authorization;
 
-      if (auth) {
-        req.token = jwt.verify(
-          auth,
-          // biome-ignore lint/style/noNonNullAssertion:
-          process.env.CLERK_PUBLIC_KEY!,
-        ) as JwtPayload;
+      if (bearer) {
+        try {
+          req.token = jwt.verify(
+            bearer,
+            // biome-ignore lint/style/noNonNullAssertion:
+            process.env.CLERK_PUBLIC_KEY!,
+          ) as JwtPayload;
+        } catch (e) {
+          // This is most likely a TokenExpiredError.
+          return next(e);
+        }
 
         if (req.token) {
           const [user] = await sql<[{ id: string; language: number }?]>`
@@ -47,7 +52,7 @@ export default {
         }
       }
 
-      next();
+      return next();
     };
   },
 };

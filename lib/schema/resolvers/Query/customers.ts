@@ -7,7 +7,6 @@ export const customers: NonNullable<QueryResolvers["customers"]> = async (
   __,
   ctx,
 ) => {
-  console.log(JSON.stringify(ctx));
   assertAuthenticated(ctx);
 
   return await sql<Customer[]>`
