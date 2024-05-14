@@ -15,7 +15,7 @@ source:
   provider: GitHub
   # Additional properties that further specify the location of the artifacts.
   properties:
-    branch: develop
+    branch: main
     repository: https://github.com/tendrelhq/graphql
 
 # This section defines the order of the environments your pipeline will deploy to.
