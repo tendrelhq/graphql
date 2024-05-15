@@ -12,13 +12,9 @@ network:
     id: ${VPC_ID}
     subnets:
       public:
-        - id: ${PUBLIC_SUBNET_1}
-        - id: ${PUBLIC_SUBNET_2}
-        - id: ${PUBLIC_SUBNET_3}
+        - id: ${PUBLIC_SUBNET_ID_1}
       private:
-        - id: ${PRIVATE_SUBNET_1}
-        - id: ${PRIVATE_SUBNET_2}
-        - id: ${PRIVATE_SUBNET_3}
+        - id: ${PRIVATE_SUBNET_ID_1}
 
 # Configure observability for your environment resources.
 observability:
