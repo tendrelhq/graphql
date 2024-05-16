@@ -11,5 +11,8 @@ deploy:
     copilot env deploy --name {{deploy_env}}
     copilot deploy --env {{deploy_env}}
 
+package:
+    docker build -t {{image_name}} .
+
 start:
     docker compose up --detach && docker compose logs -f

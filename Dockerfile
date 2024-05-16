@@ -22,9 +22,8 @@ COPY . .
 
 # test and build
 ARG NODE_ENV=production
-ENV NODE_ENV=${NODE_ENV}
-RUN bun test
 RUN bun compile
+RUN bun test
 
 # copy production dependencies and source code into final image.
 FROM base AS release

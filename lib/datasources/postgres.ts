@@ -3,6 +3,7 @@ import z from "myzod";
 import postgres from "postgres";
 
 import makeLanguageLoader from "./language";
+import makeLocationLoader from "./location";
 import makeNameLoader from "./name";
 import makeOrganizationLoader from "./organization";
 import makeUserLoader from "./user";
@@ -43,13 +44,14 @@ export const sql = postgres({
   password: DB_PASSWORD,
   host: DB_HOST,
   port: DB_PORT,
-  db: DB_NAME,
+  database: DB_NAME,
   max: DB_MAX_CONNECTIONS,
 });
 
 export function orm(ctx: Omit<Context, "orm">) {
   return {
     language: makeLanguageLoader(ctx),
+    location: makeLocationLoader(ctx),
     name: makeNameLoader(ctx),
     organization: makeOrganizationLoader(ctx),
     user: makeUserLoader(ctx),

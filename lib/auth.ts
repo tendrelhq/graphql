@@ -40,7 +40,7 @@ export default {
           `;
 
           if (!user) {
-            return res.status(404).send("User does not exist");
+            return res.status(404).send({ message: "User does not exist" });
           }
 
           req["x-tendrel-user"] = user;
@@ -50,10 +50,11 @@ export default {
           e instanceof JsonWebTokenError ||
           (e instanceof GraphQLError && e.extensions.code === 401)
         ) {
-          return res.status(401).send(e.message);
+          return res.status(401).send({ message: e.message });
         }
 
-        return next(e);
+        console.error(e);
+        return res.status(500).send(e);
       }
 
       return next();

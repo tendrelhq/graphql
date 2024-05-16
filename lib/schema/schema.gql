@@ -34,11 +34,13 @@ type Customer {
 
 type Location {
   id: ID!
-  customer: Customer!
   name: Name!
   name_id: ID!
   parent: Location
-  parent_id: ID!
+  parent_id: ID
+  site: Location!
+  site_id: ID!
+  children(options: LocationsQueryOptions): [Location!]!
   tags: [Tag!]!
 }
 
@@ -46,14 +48,12 @@ type Query {
   customers: [Customer!]!
   customer(id: ID!): Customer!
   locations(customerId: ID!, options: LocationsQueryOptions): [Location!]!
+  location(id: ID!): Location!
 }
 
 input LocationsQueryOptions {
-  cornerstone: ID
-  parent: ID
-  site: ID
-  isCornerstone: Boolean
-  isSite: Boolean
+  cornerstone: Boolean
+  site: Boolean
 }
 
 # type Mutation {

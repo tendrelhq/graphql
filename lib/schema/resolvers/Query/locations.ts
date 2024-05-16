@@ -4,20 +4,32 @@ import type { Location, QueryResolvers } from "@/schema";
 
 export const locations: NonNullable<QueryResolvers["locations"]> = async (
   _,
-  { customerId },
+  { customerId, options },
   ctx,
 ) => {
   assertAuthenticated(ctx);
-
   return await sql<Location[]>`
     SELECT
         l.locationuuid AS id,
         l.locationnameid AS name_id,
-        l.locationparentid AS parent_id
+        p.locationuuid AS parent_id,
+        s.locationuuid AS site_id
     FROM public.location AS l
-    INNER JOIN public.customer AS c
-        ON l.locationcustomerid = c.customerid
+    INNER JOIN public.location AS s
+        ON l.locationsiteid = s.locationid
+    LEFT JOIN public.location AS p
+        ON l.locationparentid = p.locationid
     WHERE
-        c.customeruuid = ${customerId};
+        l.locationcustomerid = (
+            SELECT customerid
+            FROM public.customer
+            WHERE customeruuid = ${customerId}
+        )
+        ${
+          options?.cornerstone
+            ? sql`AND l.locationiscornerstone = ${true}`
+            : sql``
+        }
+        ${options?.site ? sql`AND l.locationistop = ${true}` : sql``}
   `;
 };
