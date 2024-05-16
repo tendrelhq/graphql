@@ -1,48 +1,43 @@
 import { assertAuthenticated } from "@/auth";
 import { sql } from "@/datasources/postgres";
-import type { CustomerResolvers, Language, Name } from "@/schema";
+import type { CustomerResolvers, Name } from "@/schema";
 
 export const Customer: CustomerResolvers = {
   async name(parent, _, ctx) {
     assertAuthenticated(ctx);
 
-    const [name] = await sql<[Name]>`
-      SELECT
-          COALESCE(t.languagetranslationid, m.languagemasterid) AS id,
-          COALESCE(t.languagetranslationtypeid, m.languagemastersourcelanguagetypeid) AS language_id,
-          COALESCE(t.languagetranslationvalue, m.languagemastersource) AS value
-      FROM public.languagemaster AS m
-      LEFT JOIN public.languagetranslations AS t
-          ON
-              m.languagemasterid = t.languagetranslationmasterid
-              AND t.languagetranslationtypeid = ${ctx.user.language}
-      WHERE m.languagemasterid = ${parent.name_id};
-    `;
+    const name = await ctx.orm.name.load({
+      id: parent.name_id as string,
+      language_id: ctx.user.language_id,
+    });
 
     if (!name) {
       const [fallback] = await sql<[Name]>`
         SELECT
-            customeruuid AS id,
-            customerlanguagetypeid AS language_id,
-            customername AS value
-        FROM public.customer
+            c.customeruuid AS id,
+            l.systaguuid AS language_id,
+            c.customername AS value
+        FROM public.customer AS c
+        INNER JOIN public.systag AS l
+            ON c.customerlanguagetypeid = l.systagid
         WHERE customeruuid = ${parent.id};
       `;
 
+      ctx.orm.name.prime(
+        {
+          id: fallback.id as string,
+          language_id: fallback.language_id as string,
+        },
+        fallback,
+      );
+
+      console.log(fallback);
       return fallback;
     }
 
     return name;
   },
-  async defaultLanguage(parent) {
-    const [language] = await sql<[Language]>`
-      SELECT 
-          systaguuid AS id,
-          systagtype AS code,
-          systagnameid AS name_id
-      FROM public.systag
-      WHERE systaguuid = ${parent.default_language_id};
-    `;
-    return language;
+  async defaultLanguage(parent, _, ctx) {
+    return ctx.orm.language.load(parent.default_language_id as string);
   },
 };

@@ -7,7 +7,7 @@ export * from "./__generated__/types.generated";
 
 type User = {
   id: string;
-  language: number;
+  language_id: string;
 };
 
 export type Context = {

@@ -3,7 +3,7 @@ import type { Context } from "@/schema";
 import type { JwtPayload } from "@clerk/types";
 import type { NextFunction, Request, Response } from "express";
 import { GraphQLError } from "graphql";
-import jwt from "jsonwebtoken";
+import jwt, { JsonWebTokenError } from "jsonwebtoken";
 
 declare global {
   namespace Express {
@@ -16,40 +16,44 @@ declare global {
 
 export default {
   jwt() {
-    return async (req: Request, _: Response, next: NextFunction) => {
+    return async (req: Request, res: Response, next: NextFunction) => {
       const bearer = req.headers.authorization;
 
-      if (bearer) {
-        try {
+      try {
+        if (bearer) {
           req.token = jwt.verify(
             bearer,
             // biome-ignore lint/style/noNonNullAssertion:
             process.env.CLERK_PUBLIC_KEY!,
           ) as JwtPayload;
-        } catch (e) {
-          // This is most likely a TokenExpiredError.
-          return next(e);
         }
 
         if (req.token) {
-          const [user] = await sql<[{ id: string; language: number }?]>`
+          const [user] = await sql<[{ id: string; language_id: string }?]>`
             SELECT
-                workeruuid AS id,
-                workerlanguageid AS language
-            FROM public.worker
+                u.workeruuid AS id,
+                l.systaguuid AS language_id
+            FROM public.worker AS u
+            INNER JOIN public.systag AS l
+                ON u.workerlanguageid = l.systagid
             WHERE workeridentityid = ${req.token.sub};
           `;
 
           if (!user) {
-            throw new GraphQLError("Unauthenticated", {
-              extensions: {
-                code: 401,
-              },
-            });
+            return res.status(404).send("User does not exist");
           }
 
           req["x-tendrel-user"] = user;
         }
+      } catch (e) {
+        if (
+          e instanceof JsonWebTokenError ||
+          (e instanceof GraphQLError && e.extensions.code === 401)
+        ) {
+          return res.status(401).send(e.message);
+        }
+
+        return next(e);
       }
 
       return next();

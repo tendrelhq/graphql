@@ -1,7 +1,11 @@
 import type { Context } from "@/schema";
 import z from "myzod";
 import postgres from "postgres";
-import makeCustomerLoader from "./customer";
+
+import makeLanguageLoader from "./language";
+import makeNameLoader from "./name";
+import makeOrganizationLoader from "./organization";
+import makeUserLoader from "./user";
 
 if (process.env.DATABASE_URL) {
   const url = process.env.DATABASE_URL.split("://")[1];
@@ -45,7 +49,10 @@ export const sql = postgres({
 
 export function orm(ctx: Omit<Context, "orm">) {
   return {
-    customer: makeCustomerLoader(ctx),
+    language: makeLanguageLoader(ctx),
+    name: makeNameLoader(ctx),
+    organization: makeOrganizationLoader(ctx),
+    user: makeUserLoader(ctx),
   };
 }
 

@@ -5,5 +5,5 @@ export const customer: NonNullable<QueryResolvers["customer"]> = async (
   { id },
   { orm },
 ) => {
-  return await orm.customer.load(id);
+  return await orm.organization.load(id);
 };
