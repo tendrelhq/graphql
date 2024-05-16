@@ -23,12 +23,15 @@
       ];
       systems = ["x86_64-linux"];
       perSystem = {
+        config,
         lib,
         pkgs,
         self',
         ...
       }: {
-        devenv.shells.default = {
+        devenv.shells.default = let
+          cfg = config.devenv.shells.default;
+        in {
           name = "tendrel-graphql";
           containers = lib.mkForce {};
           env.BIOME_BINARY = lib.getExe pkgs.biome;
@@ -37,7 +40,7 @@
             biome
             bun
             just
-            postgresql
+            cfg.services.postgres.package
             (stdenv.mkDerivation rec {
               pname = "copilot-cli";
               version = "1.33.3";
@@ -59,6 +62,40 @@
           pre-commit.hooks = {
             alejandra.enable = true;
             biome.enable = true;
+          };
+          services.postgres = {
+            enable = true;
+            extensions = exts:
+              with exts; [
+                pg_cron
+                pgtap
+                plpgsql_check
+                (pkgs.stdenv.mkDerivation rec {
+                  name = "pg_ddl";
+                  version = "0.27";
+                  src = pkgs.fetchFromGitHub {
+                    owner = "lacanoid";
+                    repo = "pgddl";
+                    rev = version;
+                    hash = "sha256-wX2ta+oFib/XzhixIg/BHjliFK3m9Kz+2XBctYCzemE=";
+                  };
+                  buildInputs = with pkgs; [perl cfg.services.postgres.package];
+                  postPatch = ''
+                    patchShebangs .
+                  '';
+                  installPhase = ''
+                    install -D -t $out/share/postgresql/extension *.sql
+                    install -D -t $out/share/postgresql/extension *.control
+                  '';
+                })
+              ];
+            listen_addresses = "127.0.0.1";
+            port = 5432;
+            settings = {
+              log_statement = "all";
+              logging_collector = false;
+              shared_preload_libraries = "pg_cron,plpgsql_check";
+            };
           };
         };
 
