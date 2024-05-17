@@ -1,26 +1,14 @@
-/.dockerignore
-/.gitignore
-/docker-compose.yaml
-/justfile
+# all "hidden" files except the .env's
+/.*
+!.env*
+
+/copilot
+/docs
+/node_modules
+/out
 /Dockerfile
 /README.md
-
-### bun ###
-/out/
-
-### direnv ###
-/.devenv/
-/.direnv/
-/.envrc
-
-### git ###
-/.git/
-
-### nix ###
-/flake.*
-/result/
-
-### typescript ###
-*.d.ts
 /biome.json
-/node_modules/
+/docker-compose.yaml
+/flake.*
+/justfile
