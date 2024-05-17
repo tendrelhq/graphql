@@ -44,6 +44,15 @@ type Location {
   tags: [Tag!]!
 }
 
+type User {
+  id: ID!
+  language: Language!
+  language_id: ID!
+  name: Name
+  name_id: ID
+  tags: [Tag!]!
+}
+
 type Query {
   customers: [Customer!]!
   customer(id: ID!): Customer!
