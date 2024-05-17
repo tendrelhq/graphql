@@ -36,6 +36,7 @@
           containers = lib.mkForce {};
           env.BIOME_BINARY = lib.getExe pkgs.biome;
           packages = with pkgs; [
+            act
             awscli2
             biome
             bun

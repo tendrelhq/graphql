@@ -1,4 +1,4 @@
-name: Build and cache dev environment
+name: dev
 
 on:
   push:
@@ -13,6 +13,7 @@ concurrency:
 
 jobs:
   build-and-cache:
+    name: nix
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
