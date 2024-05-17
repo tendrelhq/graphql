@@ -1,12 +1,10 @@
-import { assertAuthenticated } from "@/auth";
+import { NotFoundError } from "@/errors";
 import type { Context, Customer } from "@/schema";
 import Dataloader from "dataloader";
 import { sql } from "./postgres";
 
 export default (ctx: Omit<Context, "orm">) =>
   new Dataloader<string, Customer>(async keys => {
-    assertAuthenticated(ctx);
-
     const rows = await sql<Customer[]>`
       SELECT
           c.customeruuid AS id,
@@ -23,5 +21,7 @@ export default (ctx: Omit<Context, "orm">) =>
       new Map<string, Customer>(),
     );
 
-    return keys.map(key => byId.get(key) ?? new Error(`${key} does not exist`));
+    return keys.map(
+      key => byId.get(key) ?? new NotFoundError(key, "organization"),
+    );
   });

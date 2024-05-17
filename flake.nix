@@ -40,6 +40,8 @@
             biome
             bun
             just
+            # postgres.js needs this for some reason :/
+            nodejs
             cfg.services.postgres.package
             (stdenv.mkDerivation rec {
               pname = "copilot-cli";

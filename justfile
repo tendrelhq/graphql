@@ -7,6 +7,9 @@ default: build
 build:
     bun compile
 
+database:
+    docker compose up -d tendrel-database
+
 deploy:
     copilot env deploy --name {{deploy_env}}
     copilot deploy --env {{deploy_env}}

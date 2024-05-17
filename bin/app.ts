@@ -2,7 +2,7 @@ import "dotenv/config";
 
 import http from "node:http";
 import auth from "@/auth";
-import { orm } from "@/datasources/postgres";
+import { orm, user } from "@/datasources/postgres";
 import { type Context, resolvers, typeDefs } from "@/schema";
 import { ApolloServer } from "@apollo/server";
 import { expressMiddleware } from "@apollo/server/express4";
@@ -10,6 +10,7 @@ import { ApolloServerPluginDrainHttpServer } from "@apollo/server/plugin/drainHt
 import cors from "cors";
 import express from "express";
 import morgan from "morgan";
+import { match } from "ts-pattern";
 
 const app = express();
 const httpServer = http.createServer(app);
@@ -32,24 +33,33 @@ app.use(
 app.use(
   "/",
   cors(),
-  auth.jwt(),
+  auth.clerk(),
   express.json(),
   expressMiddleware(server, {
     async context({ req }) {
-      const ctx = {
-        token: req.token,
-        user: req["x-tendrel-user"],
-      };
+      try {
+        const ctx = {
+          auth: req.auth,
+          user: await user.byIdentityId.load(req.auth.userId),
+        };
 
-      return {
-        ...ctx,
-        orm: orm(ctx),
-      };
+        return {
+          ...ctx,
+          orm: orm(ctx),
+        };
+      } catch (e) {
+        match(e)
+          .with({ type: "user" }, console.debug)
+          // everything else is a 500
+          .otherwise(console.error);
+
+        throw e;
+      }
     },
   }),
 );
 
-const port = 4000;
+const port = Number(process.env.PORT ?? 4000);
 await new Promise<void>(resolve => httpServer.listen({ port }, resolve));
 
 console.log(`Server ready at 0.0.0.0:${port}`);

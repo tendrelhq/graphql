@@ -1,12 +1,10 @@
-import { assertAuthenticated } from "@/auth";
-import type { Context, Language } from "@/schema";
+import { NotFoundError } from "@/errors";
+import type { Language } from "@/schema";
 import Dataloader from "dataloader";
 import { sql } from "./postgres";
 
-export default (ctx: Omit<Context, "orm">) =>
+export default () =>
   new Dataloader<string, Language>(async keys => {
-    assertAuthenticated(ctx);
-
     const rows = await sql<Language[]>`
       SELECT 
           systaguuid AS id,
@@ -21,5 +19,5 @@ export default (ctx: Omit<Context, "orm">) =>
       new Map<string, Language>(),
     );
 
-    return keys.map(key => byId.get(key) ?? new Error(`${key} does not exist`));
+    return keys.map(key => byId.get(key) ?? new NotFoundError(key, "language"));
   });

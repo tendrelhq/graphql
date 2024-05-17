@@ -6,7 +6,7 @@
     "clean": "rimraf ./out",
     "compile": "bun clean && bun generate && bun build.ts",
     "generate": "graphql-codegen",
-    "start": "bun run --watch bin/app.ts"
+    "start": "bun bin/app.ts"
   },
   "devDependencies": {
     "@biomejs/biome": "^1.7.1",
@@ -28,6 +28,7 @@
   },
   "dependencies": {
     "@apollo/server": "^4.10.4",
+    "@clerk/clerk-sdk-node": "^5.0.7",
     "cors": "^2.8.5",
     "dataloader": "^2.2.2",
     "dotenv": "^16.4.5",

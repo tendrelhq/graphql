@@ -1,4 +1,4 @@
-import { assertAuthenticated } from "@/auth";
+import { NotFoundError } from "@/errors";
 import type { Context, Name } from "@/schema";
 import Dataloader from "dataloader";
 import { sql } from "./postgres";
@@ -8,8 +8,6 @@ type Key = { id: string; language_id: string };
 export default (ctx: Omit<Context, "orm">) =>
   new Dataloader<Key, Name, string>(
     async keys => {
-      assertAuthenticated(ctx);
-
       const rows = await sql<(Name & { key: number })[]>`
         SELECT
             m.languagemasterid AS key,
@@ -40,7 +38,7 @@ export default (ctx: Omit<Context, "orm">) =>
       return keys.map(
         key =>
           byId.get(`${key.id}:${key.language_id}`) ??
-          new Error(`${key.id}:${key.language_id} does not exist`),
+          new NotFoundError(`${key.id}${key.language_id}`, "name"),
       );
     },
     {

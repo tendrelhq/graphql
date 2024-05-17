@@ -1,11 +1,8 @@
-import { assertAuthenticated } from "@/auth";
 import { sql } from "@/datasources/postgres";
 import type { CustomerResolvers, Name } from "@/schema";
 
 export const Customer: CustomerResolvers = {
   async name(parent, _, ctx) {
-    assertAuthenticated(ctx);
-
     const name = await ctx.orm.name.load({
       id: parent.name_id as string,
       language_id: ctx.user.language_id,

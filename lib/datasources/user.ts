@@ -1,5 +1,4 @@
-import { assertAuthenticated } from "@/auth";
-import type { Context } from "@/schema";
+import { NotFoundError } from "@/errors";
 import Dataloader from "dataloader";
 import { sql } from "./postgres";
 
@@ -8,11 +7,9 @@ type User = {
   language_id: string;
 };
 
-export default (ctx: Omit<Context, "orm">) => {
+export default () => {
   return {
     byId: new Dataloader<string, User>(async keys => {
-      assertAuthenticated(ctx);
-
       const rows = await sql<User[]>`
         SELECT
             u.workeruuid AS id,
@@ -23,20 +20,17 @@ export default (ctx: Omit<Context, "orm">) => {
         WHERE u.workeruuid IN ${sql(keys)};
       `;
 
-      const byId = rows.reduce(
+      const byKey = rows.reduce(
         (acc, row) => acc.set(row.id as string, row),
         new Map<string, User>(),
       );
 
-      return keys.map(
-        key => byId.get(key) ?? new Error(`${key} does not exist`),
-      );
+      return keys.map(key => byKey.get(key) ?? new NotFoundError(key, "user"));
     }),
     byIdentityId: new Dataloader<string, User>(async keys => {
-      assertAuthenticated(ctx);
-
-      const rows = await sql<User[]>`
+      const rows = await sql<(User & { key: string })[]>`
         SELECT
+            u.workeridentityid AS key,
             u.workeruuid AS id,
             l.systaguuid AS language_id
         FROM public.worker AS u
@@ -45,12 +39,12 @@ export default (ctx: Omit<Context, "orm">) => {
         WHERE u.workeridentityid IN ${sql(keys)};
       `;
 
-      const byId = rows.reduce(
-        (acc, row) => acc.set(row.id as string, row),
+      const byKey = rows.reduce(
+        (acc, row) => acc.set(row.key as string, row),
         new Map<string, User>(),
       );
 
-      return keys.map(key => byId.get(key) ?? new Error(`${key} not found`));
+      return keys.map(key => byKey.get(key) ?? new NotFoundError(key, "user"));
     }),
   };
 };

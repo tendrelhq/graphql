@@ -48,13 +48,16 @@ export const sql = postgres({
   max: DB_MAX_CONNECTIONS,
 });
 
+export const language = makeLanguageLoader();
+export const user = makeUserLoader();
+
 export function orm(ctx: Omit<Context, "orm">) {
   return {
-    language: makeLanguageLoader(ctx),
+    language: language,
     location: makeLocationLoader(ctx),
     name: makeNameLoader(ctx),
     organization: makeOrganizationLoader(ctx),
-    user: makeUserLoader(ctx),
+    user: user,
   };
 }
 

@@ -1,13 +1,11 @@
-import { assertAuthenticated } from "@/auth";
 import { sql } from "@/datasources/postgres";
 import type { Location, QueryResolvers } from "@/schema";
 
 export const locations: NonNullable<QueryResolvers["locations"]> = async (
   _,
   { customerId, options },
-  ctx,
+  __,
 ) => {
-  assertAuthenticated(ctx);
   return await sql<Location[]>`
     SELECT
         l.locationuuid AS id,

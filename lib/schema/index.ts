@@ -1,5 +1,5 @@
+import type { Auth } from "@/auth";
 import type { ORM } from "@/datasources/postgres";
-import type { JwtPayload } from "@clerk/types";
 
 export * from "./__generated__/resolvers.generated";
 export * from "./__generated__/typeDefs.generated";
@@ -11,7 +11,7 @@ type User = {
 };
 
 export type Context = {
-  token?: JwtPayload;
-  user?: User;
+  auth: Auth;
+  user: User;
   orm: ORM;
 };
