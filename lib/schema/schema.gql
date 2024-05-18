@@ -53,16 +53,30 @@ type User {
   tags: [Tag!]!
 }
 
+type Worker {
+  id: ID!
+  language: Language!
+  language_id: ID!
+  name: String!
+  tags: [Tag!]!
+}
+
 type Query {
   customers: [Customer!]!
   customer(id: ID!): Customer!
   locations(customerId: ID!, options: LocationsQueryOptions): [Location!]!
   location(id: ID!): Location!
+  workers(customerId: ID!, options: WorkersQueryOptions): [Worker!]!
 }
 
 input LocationsQueryOptions {
   cornerstone: Boolean
   site: Boolean
+}
+
+input WorkersQueryOptions {
+  active: Boolean
+  site: ID
 }
 
 # type Mutation {

@@ -11,8 +11,8 @@ export const customers: NonNullable<QueryResolvers["customers"]> = async (
         c.customeruuid AS id,
         c.customernamelanguagemasterid AS name_id,
         l.systaguuid AS default_language_id
-    FROM public.workerinstance AS w
-    INNER JOIN public.worker AS u
+    FROM public.worker AS u
+    INNER JOIN public.workerinstance AS w
         ON w.workerinstanceworkerid = u.workerid
     INNER JOIN public.customer AS c
         ON w.workerinstancecustomerid = c.customerid
