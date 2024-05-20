@@ -18,6 +18,7 @@ const httpServer = http.createServer(app);
 const server = new ApolloServer<Context>({
   resolvers,
   typeDefs,
+  introspection: true,
   plugins: [ApolloServerPluginDrainHttpServer({ httpServer })],
 });
 
