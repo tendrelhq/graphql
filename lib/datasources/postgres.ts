@@ -6,7 +6,9 @@ import makeLanguageLoader from "./language";
 import makeLocationLoader from "./location";
 import makeNameLoader from "./name";
 import makeOrganizationLoader from "./organization";
+import makeTagLoader from "./tag";
 import makeUserLoader from "./user";
+import makeWorkerLoader from "./worker";
 
 if (process.env.DATABASE_URL) {
   const url = process.env.DATABASE_URL.split("://")[1];
@@ -57,7 +59,9 @@ export function orm(ctx: Omit<Context, "orm">) {
     location: makeLocationLoader(ctx),
     name: makeNameLoader(ctx),
     organization: makeOrganizationLoader(ctx),
+    tag: makeTagLoader(ctx),
     user: user,
+    worker: makeWorkerLoader(ctx),
   };
 }
 

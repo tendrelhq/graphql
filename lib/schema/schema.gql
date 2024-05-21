@@ -19,13 +19,16 @@ type Name {
 
 type Tag {
   id: ID!
-  name: String!
+  name: Name!
+  name_id: ID!
   type: String!
-  parent: ID
+  parent: Tag
+  parent_id: ID
 }
 
 type Customer {
   id: ID!
+  active: Boolean!
   name: Name!
   name_id: ID!
   defaultLanguage: Language!
@@ -40,25 +43,33 @@ type Location {
   parent_id: ID
   site: Location!
   site_id: ID!
-  children(options: LocationsQueryOptions): [Location!]!
   tags: [Tag!]!
+
+  children(options: LocationsQueryOptions): [Location!]!
 }
 
 type User {
   id: ID!
+  active: Boolean!
   language: Language!
   language_id: ID!
-  name: Name
-  name_id: ID
+  name: String!
   tags: [Tag!]!
 }
 
 type Worker {
   id: ID!
+  active: Boolean!
+  activated_at: String
+  deactivated_at: String
   language: Language!
   language_id: ID!
   name: String!
+  role: Tag!
+  role_id: ID!
   tags: [Tag!]!
+  user: User!
+  user_id: ID!
 }
 
 type Query {

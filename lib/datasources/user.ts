@@ -1,11 +1,7 @@
 import { NotFoundError } from "@/errors";
+import type { User } from "@/schema";
 import Dataloader from "dataloader";
 import { sql } from "./postgres";
-
-type User = {
-  id: string;
-  language_id: string;
-};
 
 export default () => {
   return {
@@ -13,7 +9,9 @@ export default () => {
       const rows = await sql<User[]>`
         SELECT
             u.workeruuid AS id,
-            l.systaguuid AS language_id
+            (u.workerenddate IS NULL OR u.workerenddate > now()) AS active,
+            l.systaguuid AS language_id,
+            u.workerfullname AS name
         FROM public.worker AS u
         INNER JOIN public.systag AS l
             ON u.workerlanguageid = l.systagid
@@ -32,7 +30,9 @@ export default () => {
         SELECT
             u.workeridentityid AS key,
             u.workeruuid AS id,
-            l.systaguuid AS language_id
+            (u.workerenddate IS NULL OR u.workerenddate > now()) AS active,
+            l.systaguuid AS language_id,
+            u.workerfullname AS name
         FROM public.worker AS u
         INNER JOIN public.systag AS l
             ON u.workerlanguageid = l.systagid
