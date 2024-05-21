@@ -58,6 +58,7 @@ type Worker {
   language: Language!
   language_id: ID!
   name: String!
+  start_date: String!
   tags: [Tag!]!
 }
 

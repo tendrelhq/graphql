@@ -1,7 +1,7 @@
 import { sql } from "@/datasources/postgres";
 import type { QueryResolvers, Worker } from "@/schema";
 
-export const workers: NonNullable<QueryResolvers["workers"]> = async (
+export const workers: NonNullable<QueryResolvers['workers']> = async (
   _,
   args,
   __,
@@ -10,7 +10,8 @@ export const workers: NonNullable<QueryResolvers["workers"]> = async (
     SELECT
         w.workerinstanceuuid AS id,
         l.systaguuid AS language_id,
-        u.workerfullname AS name
+        u.workerfullname AS name,
+        w.workerstartdate AS start_date,
     FROM public.workerinstance AS w
     INNER JOIN public.systag AS l
         ON w.workerinstancelanguageid = l.systagid
