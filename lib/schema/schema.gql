@@ -64,7 +64,6 @@ type Worker {
   deactivated_at: String
   language: Language!
   language_id: ID!
-  name: String!
   role: Tag!
   role_id: ID!
   tags: [Tag!]!

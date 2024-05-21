@@ -13,7 +13,6 @@ export const workers: NonNullable<QueryResolvers["workers"]> = async (
         w.workerinstancestartdate::text AS activated_at,
         w.workerinstanceenddate::text AS deactivated_at,
         l.systaguuid AS language_id,
-        u.workerfullname AS name,
         r.systaguuid AS role_id,
         u.workeruuid AS user_id
     FROM public.workerinstance AS w
