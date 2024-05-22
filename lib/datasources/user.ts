@@ -39,14 +39,10 @@ export default () => {
         WHERE u.workeridentityid IN ${sql(keys)};
       `;
 
-      console.debug(JSON.stringify(rows));
-
       const byKey = rows.reduce(
         (acc, row) => acc.set(row.key as string, row),
         new Map<string, User>(),
       );
-
-      console.debug(JSON.stringify(byKey));
 
       return keys.map(key => byKey.get(key) ?? new NotFoundError(key, "user"));
     }),
