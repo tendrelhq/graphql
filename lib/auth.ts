@@ -1,5 +1,5 @@
 import {
-  ClerkExpressWithAuth,
+  ClerkExpressRequireAuth,
   type StrictAuthProp,
 } from "@clerk/clerk-sdk-node";
 
@@ -13,7 +13,7 @@ export type Auth = StrictAuthProp["auth"];
 
 export default {
   clerk() {
-    return ClerkExpressWithAuth({
+    return ClerkExpressRequireAuth({
       //
     });
   },
