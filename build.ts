@@ -1,5 +1,15 @@
+import { generate } from "@graphql-codegen/cli";
+import { $ } from "bun";
 import pattycake from "pattycake";
+import config from "./codegen";
 
+// clean
+await $`rimraf ./out`;
+
+// codegen
+await generate(config);
+
+// build
 const out = await Bun.build({
   entrypoints: ["./bin/app.ts"],
   outdir: "./out",
@@ -31,4 +41,4 @@ for (const line of out.logs) {
   console.log(line);
 }
 
-process.exit(Number(!out.success));
+process.exit(out.success ? 0 : 1);

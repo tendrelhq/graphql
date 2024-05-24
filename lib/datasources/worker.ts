@@ -12,10 +12,16 @@ export default (ctx: Omit<Context, "orm">) =>
             w.workerinstancestartdate::text AS activated_at,
             w.workerinstanceenddate::text AS deactivated_at,
             l.systaguuid AS language_id,
+            r.systaguuid AS role_id,
+            w.workerinstancescanid AS scan_code,
             u.workeruuid AS user_id
         FROM public.workerinstance AS w
         INNER JOIN public.systag AS l
             ON w.workerinstancelanguageid = l.systagid
+        INNER JOIN public.systag AS r
+            ON w.workerinstanceuserroleid = r.systagid
+        INNER JOIN public.worker AS u
+            ON w.workerinstanceworkerid = u.workerid
         WHERE w.workerinstanceuuid IN ${sql(keys)};
       `;
 

@@ -4,7 +4,7 @@
   "type": "module",
   "scripts": {
     "clean": "rimraf ./out",
-    "compile": "bun clean && bun generate && bun build.ts",
+    "compile": "bun build.ts",
     "generate": "graphql-codegen",
     "start": "bun bin/app.ts"
   },

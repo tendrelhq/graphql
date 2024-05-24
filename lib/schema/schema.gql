@@ -1,3 +1,8 @@
+enum AuthenticationProvider {
+  legacy
+  clerk
+}
+
 enum LanguageCode {
   en
   es
@@ -51,6 +56,8 @@ type Location {
 type User {
   id: ID!
   active: Boolean!
+  authentication_provider: Tag
+  authentication_provider_id: ID
   language: Language!
   language_id: ID!
   name: String!
@@ -66,6 +73,7 @@ type Worker {
   language_id: ID!
   role: Tag!
   role_id: ID!
+  scan_code: String
   tags: [Tag!]!
   user: User!
   user_id: ID!
@@ -74,8 +82,10 @@ type Worker {
 type Query {
   customers: [Customer!]!
   customer(id: ID!): Customer!
+  languages: [Language!]!
   locations(customerId: ID!, options: LocationsQueryOptions): [Location!]!
   location(id: ID!): Location!
+  roles: [Tag!]!
   workers(customerId: ID!, options: WorkersQueryOptions): [Worker!]!
 }
 
@@ -89,49 +99,26 @@ input WorkersQueryOptions {
   site: ID
 }
 
-# type Mutation {
-#   createCustomer(input: CreateCustomerInput!): ID!
-#   updateCustomer(input: UpdateCustomerInput!): ID!
-#   deleteCustomer(id: ID!): ID!
-#   createLocation(input: CreateLocationInput!): ID!
-#   updateLocation(input: UpdateLocationInput!): ID!
-#   deleteLocation(id: ID!): ID!
-# }
-#
-# input CreateTagInput {
-#   id: ID!
-#   name: String!
-#   type: String!
-#   parent: ID
-# }
-#
-# input UpdateTagInput {
-#   id: ID!
-#   name: String
-# }
-#
-# input CreateCustomerInput {
-#   id: ID!
-#   name: String!
-#   defaultLanguage: Language!
-# }
-#
-# input UpdateCustomerInput {
-#   id: ID!
-#   name: String
-#   defaultLanguage: Language
-# }
-#
-# input CreateLocationInput {
-#   id: ID!
-#   customerId: ID!
-#   parentId: ID
-#   name: String!
-#   tags: [CreateTagInput!]!
-# }
-#
-# input UpdateLocationInput {
-#   id: ID!
-#   name: String
-#   tags: [UpdateTagInput!]
-# }
+type Mutation {
+  registerUser(input: RegisterUserInput!): User!
+  registerWorker(input: RegisterWorkerInput!): Worker!
+}
+
+input RegisterUserInput {
+  id: ID
+  active: Boolean!
+  authentication_provider_id: ID
+  authentication_identity: ID
+  language_id: ID!
+  name: String!
+}
+
+input RegisterWorkerInput {
+  id: ID
+  active: Boolean!
+  language_id: ID!
+  org_id: ID!
+  role_id: ID!
+  scan_code: ID
+  user_id: ID!
+}
