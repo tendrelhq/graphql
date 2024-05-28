@@ -1,9 +1,12 @@
 import { sql } from "@/datasources/postgres";
 import type { MutationResolvers } from "@/schema";
 
-export const registerUser: NonNullable<MutationResolvers["registerUser"]> =
-  async (_, { input }, ctx) => {
-    const [user] = await sql<[{ id: string }?]>`
+export const createUser: NonNullable<MutationResolvers["createUser"]> = async (
+  _,
+  { input },
+  ctx,
+) => {
+  const [user] = await sql<[{ id: string }?]>`
       INSERT INTO public.worker (
           workerfullname,
           workeridentityid,
@@ -43,12 +46,12 @@ export const registerUser: NonNullable<MutationResolvers["registerUser"]> =
       )
       ON CONFLICT DO NOTHING
       RETURNING workeruuid AS id;
-    `;
+  `;
 
-    if (!user) {
-      // This implies ON CONFLICT DO NOTHING hit.
-      // i.e. the user already exists, so we just need to find it.
-      const [user] = await sql<[{ id: string }?]>`
+  if (!user) {
+    // This implies ON CONFLICT DO NOTHING hit.
+    // i.e. the user already exists, so we just need to find it.
+    const [user] = await sql<[{ id: string }?]>`
         SELECT workeruuid AS id
         FROM public.worker
         WHERE
@@ -62,10 +65,10 @@ export const registerUser: NonNullable<MutationResolvers["registerUser"]> =
                 workerusername IS NOT NULL
                 AND workerusername = ${input.name}
             );
-      `;
-      if (!user) throw "must've messed up the unique constraints";
-      return ctx.orm.user.byId.load(user.id);
-    }
-
+    `;
+    if (!user) throw "must've messed up the unique constraints";
     return ctx.orm.user.byId.load(user.id);
-  };
+  }
+
+  return ctx.orm.user.byId.load(user.id);
+};

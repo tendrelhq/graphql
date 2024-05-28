@@ -12,6 +12,8 @@ function selectUsers(
         u.${sql(key)} AS key,
         u.workeruuid AS id,
         (u.workerenddate IS NULL OR u.workerenddate > now()) AS active,
+        u.workerstartdate::text AS activated_at,
+        u.workerenddate::text AS deactivated_at,
         a.systaguuid AS authentication_provider_id,
         l.systaguuid AS language_id,
         u.workerfullname AS name

@@ -3,7 +3,7 @@
   "module": "lib/index.ts",
   "type": "module",
   "scripts": {
-    "clean": "rimraf ./out",
+    "clean": "rimraf node_modules out",
     "compile": "bun build.ts",
     "generate": "graphql-codegen",
     "start": "bun bin/app.ts"
