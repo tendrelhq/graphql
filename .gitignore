@@ -16,3 +16,6 @@
 ### typescript ###
 /node_modules/
 *.d.ts
+
+### macOS ###
+.DS_Store
