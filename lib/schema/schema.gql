@@ -56,6 +56,8 @@ type Location {
 type User {
   id: ID!
   active: Boolean!
+  activated_at: String
+  deactivated_at: String
   authentication_provider: Tag
   authentication_provider_id: ID
   language: Language!
@@ -100,8 +102,49 @@ input WorkersQueryOptions {
 }
 
 type Mutation {
+  createUser(input: CreateUserInput!): User!
+  updateUser(input: UpdateUserInput!): User!
+  createWorker(input: CreateWorkerInput!): Worker!
+  updateWorker(input: UpdateWorkerInput!): Worker!
+  # TODO: deprecate
   registerUser(input: RegisterUserInput!): User!
   registerWorker(input: RegisterWorkerInput!): Worker!
+}
+
+input CreateUserInput {
+  id: ID
+  active: Boolean!
+  authentication_provider_id: ID
+  authentication_identity: ID
+  language_id: ID!
+  name: String!
+}
+
+input UpdateUserInput {
+  id: ID!
+  authentication_provider_id: ID
+  authentication_identity: ID
+  language_id: ID!
+  name: String!
+}
+
+input CreateWorkerInput {
+  id: ID
+  active: Boolean!
+  language_id: ID!
+  org_id: ID!
+  role_id: ID!
+  scan_code: ID
+  user_id: ID!
+}
+
+input UpdateWorkerInput {
+  id: ID!
+  activated_at: String
+  deactivated_at: String
+  language_id: ID!
+  role_id: ID!
+  scan_code: ID
 }
 
 input RegisterUserInput {

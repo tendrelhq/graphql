@@ -1,6 +1,7 @@
 import type { Response } from "express";
 
 const ErrorCode = {
+  "bad request": 400,
   "not found": 404,
 } as const;
 type ErrorCode = keyof typeof ErrorCode;

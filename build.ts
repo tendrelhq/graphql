@@ -4,7 +4,7 @@ import pattycake from "pattycake";
 import config from "./codegen";
 
 // clean
-await $`rimraf ./out`;
+await $`rimraf out`;
 
 // codegen
 await generate(config);

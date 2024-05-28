@@ -3,7 +3,7 @@ import type { MutationResolvers } from "@/schema";
 
 export const registerWorker: NonNullable<MutationResolvers["registerWorker"]> =
   async (_, { input }, ctx) => {
-    const [worker] = await sql<[{ id: string }]>`
+    const [worker] = await sql<[{ id: string }?]>`
       INSERT INTO public.workerinstance (
           workerinstanceworkerid,
           workerinstancecustomerid,
@@ -12,6 +12,7 @@ export const registerWorker: NonNullable<MutationResolvers["registerWorker"]> =
           workerinstanceenddate,
           workerinstanceuserroleuuid,
           workerinstancescanid,
+          -- Garbage. To be removed.
           workerinstanceuserroleid
       )
       SELECT
