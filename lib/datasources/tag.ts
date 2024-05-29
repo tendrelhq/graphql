@@ -8,10 +8,12 @@ export default (ctx: Omit<Context, "orm">) =>
     const rows = await sql<Tag[]>`
         SELECT
             s.systaguuid AS id,
-            s.systagnameid AS name_id,
+            n.languagemasteruuid AS name_id,
             p.systaguuid AS parent_id,
             s.systagtype AS type
         FROM public.systag AS s
+        INNER JOIN public.languagemaster AS n
+            ON s.systagnameid = n.languagemasterid
         LEFT JOIN public.systag AS p
             ON s.systagparentid = p.systagid
         WHERE s.systaguuid IN ${sql(keys)};

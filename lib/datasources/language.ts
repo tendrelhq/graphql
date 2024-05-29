@@ -8,13 +8,15 @@ export default () => {
     byCode: new Dataloader<LanguageCode, Language>(async keys => {
       const rows = await sql<Language[]>`
         SELECT
-            systaguuid AS id,
-            systagtype AS code,
-            systagnameid AS name_id
-        FROM public.systag
+            s.systaguuid AS id,
+            s.systagtype AS code,
+            n.languagemasteruuid AS name_id
+        FROM public.systag AS s
+        INNER JOIN public.languagemaster AS n
+            ON s.systagnameid = n.languagemasterid
         WHERE
-            systagparentid = 2 -- Language
-            AND systagtype IN ${sql(keys)};
+            s.systagparentid = 2 -- Language
+            AND s.systagtype IN ${sql(keys)};
       `;
 
       const byId = rows.reduce(
@@ -29,10 +31,12 @@ export default () => {
     byId: new Dataloader<string, Language>(async keys => {
       const rows = await sql<Language[]>`
         SELECT 
-            systaguuid AS id,
-            systagtype AS code,
-            systagnameid AS name_id
-        FROM public.systag
+            s.systaguuid AS id,
+            s.systagtype AS code,
+            n.languagemasteruuid AS name_id
+        FROM public.systag AS s
+        INNER JOIN public.languagemaster AS n
+            ON s.systagnameid = n.languagemasterid
         WHERE systaguuid IN ${sql(keys)};
       `;
 

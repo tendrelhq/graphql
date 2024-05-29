@@ -13,7 +13,7 @@ export class RuntimeError extends Error {
     message: string,
     cause?: Error,
   ) {
-    super(message, cause);
+    super(`${code}: ${message}`, cause);
   }
 
   putInto(res: Response) {

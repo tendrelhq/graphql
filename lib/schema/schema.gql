@@ -42,10 +42,14 @@ type Customer {
 
 type Location {
   id: ID!
+  active: Boolean!
+  activated_at: String
+  deactivated_at: String
   name: Name!
   name_id: ID!
   parent: Location
   parent_id: ID
+  scan_code: ID
   site: Location!
   site_id: ID!
   tags: [Tag!]!
@@ -102,11 +106,36 @@ input WorkersQueryOptions {
 }
 
 type Mutation {
+  # Location CRUD
+  createLocation(input: CreateLocationInput!): Location!
+  updateLocation(input: UpdateLocationInput!): Location!
+
+  # User
+  ## CRUD
   createUser(input: CreateUserInput!): User!
   updateUser(input: UpdateUserInput!): User!
+  ## Helpers
   acceptInvite(input: AcceptInviteInput!): User!
+
+  # Worker CRUD
   createWorker(input: CreateWorkerInput!): Worker!
   updateWorker(input: UpdateWorkerInput!): Worker!
+}
+
+input CreateLocationInput {
+  id: ID
+  active: Boolean!
+  name: CreateNameInput!
+  org_id: ID!
+  scan_code: ID
+}
+
+input UpdateLocationInput {
+  id: ID!
+  activated_at: String
+  deactivated_at: String
+  name: UpdateNameInput
+  scan_code: ID
 }
 
 input CreateUserInput {
@@ -143,6 +172,21 @@ input UpdateWorkerInput {
   language_id: ID!
   role_id: ID!
   scan_code: ID
+}
+
+input CreateNameInput {
+  id: ID
+  active: Boolean!
+  language_id: ID!
+  value: String!
+}
+
+input UpdateNameInput {
+  id: ID!
+  activated_at: String
+  deactivated_at: String
+  language_id: ID!
+  value: String!
 }
 
 input AcceptInviteInput {

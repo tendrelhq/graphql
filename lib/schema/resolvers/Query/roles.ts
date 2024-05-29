@@ -8,10 +8,12 @@ export const roles: NonNullable<QueryResolvers["roles"]> = async (
 ) => {
   return await sql<Tag[]>`
     SELECT
-        systaguuid AS id,
-        systagtype AS type,
-        systagnameid AS name_id
-    FROM public.systag
-    WHERE systagparentid = 772;
+        s.systaguuid AS id,
+        s.systagtype AS type,
+        n.languagemasteruuid AS name_id
+    FROM public.systag AS s
+    INNER JOIN public.languagemaster AS n
+        ON s.systagnameid = n.languagemasterid
+    WHERE s.systagparentid = 772;
   `;
 };

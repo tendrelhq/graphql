@@ -8,9 +8,11 @@ export default (ctx: Omit<Context, "orm">) =>
     const rows = await sql<Customer[]>`
       SELECT
           c.customeruuid AS id,
-          c.customernamelanguagemasterid AS name_id,
+          n.languagemasteruuid AS name_id,
           l.systaguuid AS default_language_id
       FROM public.customer AS c
+      INNER JOIN public.languagemaster AS n
+          ON c.customernamelanguagemasterid = n.languagemasterid
       INNER JOIN public.systag AS l
           ON c.customerlanguagetypeid = l.systagid
       WHERE c.customeruuid IN ${sql(keys)};
