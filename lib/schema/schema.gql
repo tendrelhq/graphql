@@ -106,9 +106,6 @@ type Mutation {
   updateUser(input: UpdateUserInput!): User!
   createWorker(input: CreateWorkerInput!): Worker!
   updateWorker(input: UpdateWorkerInput!): Worker!
-  # TODO: deprecate
-  registerUser(input: RegisterUserInput!): User!
-  registerWorker(input: RegisterWorkerInput!): Worker!
 }
 
 input CreateUserInput {
@@ -145,23 +142,4 @@ input UpdateWorkerInput {
   language_id: ID!
   role_id: ID!
   scan_code: ID
-}
-
-input RegisterUserInput {
-  id: ID
-  active: Boolean!
-  authentication_provider_id: ID
-  authentication_identity: ID
-  language_id: ID!
-  name: String!
-}
-
-input RegisterWorkerInput {
-  id: ID
-  active: Boolean!
-  language_id: ID!
-  org_id: ID!
-  role_id: ID!
-  scan_code: ID
-  user_id: ID!
 }
