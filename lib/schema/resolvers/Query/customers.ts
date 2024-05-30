@@ -4,7 +4,7 @@ import type { Customer, QueryResolvers } from "@/schema";
 export const customers: NonNullable<QueryResolvers["customers"]> = async (
   _,
   __,
-  ctx
+  ctx,
 ) => {
   const u = await user.byIdentityId.load(ctx.auth.userId);
 
