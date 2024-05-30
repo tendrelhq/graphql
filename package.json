@@ -3,9 +3,9 @@
   "module": "lib/index.ts",
   "type": "module",
   "scripts": {
-    "clean": "rimraf node_modules out",
+    "clean": "rimraf lib/schema/__generated__ node_modules out",
     "compile": "bun build.ts",
-    "generate": "graphql-codegen",
+    "generate": "graphql-codegen && biome check --apply lib/schema/resolvers/**/*.ts",
     "start": "bun bin/app.ts"
   },
   "devDependencies": {

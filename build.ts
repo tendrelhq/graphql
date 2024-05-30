@@ -4,10 +4,13 @@ import pattycake from "pattycake";
 import config from "./codegen";
 
 // clean
-await $`rimraf out`;
+await $`rimraf lib/schema/__generated__ out`;
 
 // codegen
 await generate(config);
+
+// typecheck
+await $`tsc`;
 
 // build
 const out = await Bun.build({
