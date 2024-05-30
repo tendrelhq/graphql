@@ -20,7 +20,7 @@ export const Location: LocationResolvers = {
           }
           ${options?.site ? sql`AND locationistop = ${true}` : sql``}
     `;
-    const children = await ctx.orm.location.loadMany(childIds.map((c) => c.id));
+    const children = await ctx.orm.location.loadMany(childIds.map(c => c.id));
     return children.filter(isValue);
   },
   async name(parent, _, ctx) {

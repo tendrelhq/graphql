@@ -1,7 +1,7 @@
 import { sql } from "@/datasources/postgres";
 import type { QueryResolvers, Worker } from "@/schema";
 
-export const workers: NonNullable<QueryResolvers['workers']> = async (
+export const workers: NonNullable<QueryResolvers["workers"]> = async (
   _,
   args,
   __,
