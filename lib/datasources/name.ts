@@ -18,16 +18,13 @@ export default (ctx: Omit<Context, "orm">) =>
         INNER JOIN public.systag AS ml
             ON m.languagemastersourcelanguagetypeid = ml.systagid
         LEFT JOIN public.languagetranslations AS t
-            ON
-                m.languagemasterid = t.languagetranslationmasterid
-                AND t.languagetranslationtypeid = (
-                    SELECT systagid
-                    FROM public.systag
-                    WHERE systaguuid = ${ctx.user.language_id}
-                )
+            ON m.languagemasterid = t.languagetranslationmasterid
         LEFT JOIN public.systag AS tl
             ON t.languagetranslationtypeid = tl.systagid
-        WHERE m.languagemasterid IN ${sql(keys.map(k => k.id))};
+        WHERE
+            (m.languagemasterid, tl.systaguuid) IN ${sql(
+              keys.map(k => sql([k.id, k.language_id])),
+            )};
       `;
 
       const byId = rows.reduce(

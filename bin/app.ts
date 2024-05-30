@@ -40,7 +40,6 @@ app.use(
       try {
         const ctx = {
           auth: req.auth,
-          user: await user.byIdentityId.load(req.auth.userId),
         };
 
         return {

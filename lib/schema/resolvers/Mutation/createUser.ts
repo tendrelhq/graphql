@@ -1,10 +1,10 @@
 import { sql } from "@/datasources/postgres";
 import type { MutationResolvers } from "@/schema";
 
-export const createUser: NonNullable<MutationResolvers['createUser']> = async (
+export const createUser: NonNullable<MutationResolvers["createUser"]> = async (
   _,
   { input },
-  ctx
+  ctx,
 ) => {
   const [user] = await sql<[{ id: string }?]>`
       INSERT INTO public.worker (
@@ -26,7 +26,7 @@ export const createUser: NonNullable<MutationResolvers['createUser']> = async (
             SELECT systagid
             FROM public.systag
             WHERE systaguuid = ${input.authentication_provider_id ?? null}
-        ),
+          ),
           (
               SELECT systagid
               FROM public.systag

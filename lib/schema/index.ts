@@ -8,6 +8,5 @@ export * from "./__generated__/types.generated";
 
 export type Context = {
   auth: Auth;
-  user: User;
   orm: ORM;
 };

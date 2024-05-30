@@ -1,7 +1,7 @@
 import { sql } from "@/datasources/postgres";
 import type { MutationResolvers } from "@/schema";
 
-export const updateWorker: NonNullable<MutationResolvers['updateWorker']> =
+export const updateWorker: NonNullable<MutationResolvers["updateWorker"]> =
   async (_, { input }, ctx) => {
     const existing = await ctx.orm.worker.load(input.id);
     await sql`
