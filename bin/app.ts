@@ -2,7 +2,7 @@ import "dotenv/config";
 
 import http from "node:http";
 import auth from "@/auth";
-import { orm, user } from "@/datasources/postgres";
+import { orm } from "@/datasources/postgres";
 import { type Context, resolvers, typeDefs } from "@/schema";
 import { ApolloServer } from "@apollo/server";
 import { expressMiddleware } from "@apollo/server/express4";
@@ -19,6 +19,10 @@ const server = new ApolloServer<Context>({
   resolvers,
   typeDefs,
   introspection: true,
+  formatError: (formattedError, error) => {
+    console.warn(error);
+    return formattedError;
+  },
   plugins: [ApolloServerPluginDrainHttpServer({ httpServer })],
 });
 

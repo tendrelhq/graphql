@@ -21,7 +21,7 @@ export default (ctx: Omit<Context, "orm">) =>
           LEFT JOIN public.systag AS tl
               ON t.languagetranslationtypeid = tl.systagid
           WHERE
-              (m.languagemasterid, tl.systaguuid) IN ${sql(
+              (m.languagemasteruuid, tl.systaguuid) IN ${sql(
                 keys.map(k => sql([k.id, k.language_id])),
               )};
       `;
