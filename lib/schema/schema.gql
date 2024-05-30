@@ -104,6 +104,7 @@ input WorkersQueryOptions {
 type Mutation {
   createUser(input: CreateUserInput!): User!
   updateUser(input: UpdateUserInput!): User!
+  acceptInvite(input: AcceptInviteInput!): User!
   createWorker(input: CreateWorkerInput!): Worker!
   updateWorker(input: UpdateWorkerInput!): Worker!
 }
@@ -142,4 +143,9 @@ input UpdateWorkerInput {
   language_id: ID!
   role_id: ID!
   scan_code: ID
+}
+
+input AcceptInviteInput {
+  id: ID!
+  authentication_identity: ID!
 }
