@@ -1,11 +1,13 @@
-import { sql } from "@/datasources/postgres";
+import { sql, user } from "@/datasources/postgres";
 import type { Customer, QueryResolvers } from "@/schema";
 
-export const customers: NonNullable<QueryResolvers['customers']> = async (
+export const customers: NonNullable<QueryResolvers["customers"]> = async (
   _,
   __,
-  ctx,
+  ctx
 ) => {
+  const u = await user.byIdentityId.load(ctx.auth.userId);
+
   return await sql<Customer[]>`
     SELECT
         c.customeruuid AS id,
@@ -19,6 +21,6 @@ export const customers: NonNullable<QueryResolvers['customers']> = async (
         ON w.workerinstancecustomerid = c.customerid
     INNER JOIN public.systag AS l
         ON c.customerlanguagetypeid = l.systagid
-    WHERE u.workeruuid = ${ctx.user.id};
+    WHERE u.workeruuid = ${u.id};
   `;
 };

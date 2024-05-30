@@ -7,7 +7,7 @@ type Key = { id: string; language_id: string };
 
 export default (ctx: Omit<Context, "orm">) =>
   new Dataloader<Key, Name, string>(
-    async keys => {
+    async (keys) => {
       const rows = await sql<(Name & { key: number })[]>`
         SELECT
             m.languagemasterid AS key,
@@ -27,21 +27,21 @@ export default (ctx: Omit<Context, "orm">) =>
                 )
         LEFT JOIN public.systag AS tl
             ON t.languagetranslationtypeid = tl.systagid
-        WHERE m.languagemasterid IN ${sql(keys.map(k => k.id))};
+        WHERE m.languagemasterid IN ${sql(keys.map((k) => k.id))};
       `;
 
       const byId = rows.reduce(
         (acc, row) => acc.set(`${row.key}:${row.language_id}`, row),
-        new Map<string, Name>(),
+        new Map<string, Name>()
       );
 
       return keys.map(
-        key =>
+        (key) =>
           byId.get(`${key.id}:${key.language_id}`) ??
-          new NotFoundError(`${key.id}${key.language_id}`, "name"),
+          new NotFoundError(`${key.id}${key.language_id}`, "name")
       );
     },
     {
-      cacheKeyFn: key => `${key.id}:${key.language_id}`,
-    },
+      cacheKeyFn: (key) => `${key.id}:${key.language_id}`,
+    }
   );

@@ -1,4 +1,4 @@
-import { sql } from "@/datasources/postgres";
+import { sql, user } from "@/datasources/postgres";
 import type { LocationResolvers } from "@/schema";
 import { isValue } from "@/util";
 
@@ -20,13 +20,14 @@ export const Location: LocationResolvers = {
           }
           ${options?.site ? sql`AND locationistop = ${true}` : sql``}
     `;
-    const children = await ctx.orm.location.loadMany(childIds.map(c => c.id));
+    const children = await ctx.orm.location.loadMany(childIds.map((c) => c.id));
     return children.filter(isValue);
   },
-  name(parent, _, ctx) {
+  async name(parent, _, ctx) {
+    const u = await user.byIdentityId.load(ctx.auth.userId);
     return ctx.orm.name.load({
       id: parent.name_id as string,
-      language_id: ctx.user.language_id as string,
+      language_id: u.language_id as string,
     });
   },
   parent(parent, _, ctx) {

@@ -26,8 +26,8 @@ await server.start();
 
 app.use(
   morgan(
-    ":date[iso] :method :url :status :res[content-length] - :response-time ms",
-  ),
+    ":date[iso] :method :url :status :res[content-length] - :response-time ms"
+  )
 );
 
 app.use(
@@ -40,7 +40,6 @@ app.use(
       try {
         const ctx = {
           auth: req.auth,
-          user: await user.byIdentityId.load(req.auth.userId),
         };
 
         return {
@@ -56,10 +55,10 @@ app.use(
         throw e;
       }
     },
-  }),
+  })
 );
 
 const port = Number(process.env.PORT ?? 4000);
-await new Promise<void>(resolve => httpServer.listen({ port }, resolve));
+await new Promise<void>((resolve) => httpServer.listen({ port }, resolve));
 
 console.log(`Server ready at 0.0.0.0:${port}`);
