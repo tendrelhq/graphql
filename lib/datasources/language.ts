@@ -1,11 +1,11 @@
 import { NotFoundError } from "@/errors";
-import type { Language, LanguageCode } from "@/schema";
+import type { Language } from "@/schema";
 import Dataloader from "dataloader";
 import { sql } from "./postgres";
 
 export default () => {
   return {
-    byCode: new Dataloader<LanguageCode, Language>(async keys => {
+    byCode: new Dataloader<string, Language>(async keys => {
       const rows = await sql<Language[]>`
         SELECT
             s.systaguuid AS id,

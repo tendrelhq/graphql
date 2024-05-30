@@ -1,16 +1,6 @@
-enum AuthenticationProvider {
-  legacy
-  clerk
-}
-
-enum LanguageCode {
-  en
-  es
-}
-
 type Language {
   id: ID!
-  code: LanguageCode!
+  code: String!
   name: Name!
   name_id: ID!
 }
@@ -31,13 +21,24 @@ type Tag {
   parent_id: ID
 }
 
-type Customer {
+type EnabledLanguage {
   id: ID!
   active: Boolean!
+  activated_at: String
+  deactivated_at: String
+  language: Language!
+  language_id: ID!
+  primary: Boolean!
+}
+
+type Organization {
+  id: ID!
+  active: Boolean!
+  activated_at: String
+  deactivated_at: String
   name: Name!
   name_id: ID!
-  defaultLanguage: Language!
-  default_language_id: ID!
+  languages: [EnabledLanguage!]!
 }
 
 type Location {
@@ -86,11 +87,11 @@ type Worker {
 }
 
 type Query {
-  customers: [Customer!]!
-  customer(id: ID!): Customer!
   languages: [Language!]!
   locations(customerId: ID!, options: LocationsQueryOptions): [Location!]!
   location(id: ID!): Location!
+  organizations: [Organization!]!
+  organization(id: ID!): Organization!
   roles: [Tag!]!
   workers(customerId: ID!, options: WorkersQueryOptions): [Worker!]!
 }
@@ -120,6 +121,10 @@ type Mutation {
   # Worker CRUD
   createWorker(input: CreateWorkerInput!): Worker!
   updateWorker(input: UpdateWorkerInput!): Worker!
+
+  # Organization helpers
+  enableLanguage(orgId: ID!, languageId: ID!): Boolean!
+  disableLanguage(orgId: ID!, languageId: ID!): Boolean!
 }
 
 input CreateLocationInput {

@@ -1,26 +1,26 @@
 import { NotFoundError } from "@/errors";
-import type { Context, Customer } from "@/schema";
+import type { Context, Organization } from "@/schema";
 import Dataloader from "dataloader";
 import { sql } from "./postgres";
 
 export default (ctx: Omit<Context, "orm">) =>
-  new Dataloader<string, Customer>(async keys => {
-    const rows = await sql<Customer[]>`
+  new Dataloader<string, Organization>(async keys => {
+    const rows = await sql<Organization[]>`
       SELECT
           c.customeruuid AS id,
-          n.languagemasteruuid AS name_id,
-          l.systaguuid AS default_language_id
+          (c.customerenddate IS NULL OR c.customerenddate > NOW()) AS active,
+          c.customerstartdate AS activated_at,
+          c.customerenddate AS deactivated_at,
+          n.languagemasteruuid AS name_id
       FROM public.customer AS c
       INNER JOIN public.languagemaster AS n
           ON c.customernamelanguagemasterid = n.languagemasterid
-      INNER JOIN public.systag AS l
-          ON c.customerlanguagetypeid = l.systagid
       WHERE c.customeruuid IN ${sql(keys)};
     `;
 
     const byId = rows.reduce(
       (acc, row) => acc.set(row.id as string, row),
-      new Map<string, Customer>(),
+      new Map<string, Organization>(),
     );
 
     return keys.map(

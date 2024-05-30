@@ -14,8 +14,6 @@ export const languages: NonNullable<QueryResolvers["languages"]> = async (
     FROM public.systag AS s
     INNER JOIN public.languagemaster AS n
         ON s.systagnameid = n.languagemasterid
-    WHERE
-        s.systagparentid = 2
-        AND s.systagtype IN ('en', 'es');
+    WHERE s.systagparentid = 2;
   `;
 };
