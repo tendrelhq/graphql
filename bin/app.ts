@@ -10,7 +10,6 @@ import { ApolloServerPluginDrainHttpServer } from "@apollo/server/plugin/drainHt
 import cors from "cors";
 import express from "express";
 import morgan from "morgan";
-import { match } from "ts-pattern";
 
 const app = express();
 const httpServer = http.createServer(app);
@@ -41,23 +40,14 @@ app.use(
   express.json(),
   expressMiddleware(server, {
     async context({ req }) {
-      try {
-        const ctx = {
-          auth: req.auth,
-        };
+      const ctx = {
+        auth: req.auth,
+      };
 
-        return {
-          ...ctx,
-          orm: orm(ctx),
-        };
-      } catch (e) {
-        match(e)
-          .with({ type: "user" }, console.debug)
-          // everything else is a 500
-          .otherwise(console.error);
-
-        throw e;
-      }
+      return {
+        ...ctx,
+        orm: orm(ctx),
+      };
     },
   }),
 );

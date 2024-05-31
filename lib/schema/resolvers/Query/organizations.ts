@@ -6,19 +6,29 @@ export const organizations: NonNullable<QueryResolvers["organizations"]> =
     const u = await user.byIdentityId.load(ctx.auth.userId);
     return await sql<Organization[]>`
         SELECT
-            c.customeruuid AS id,
-            (c.customerenddate IS NULL OR c.customerenddate > now()) AS active,
-            c.customerstartdate AS activated_at,
-            c.customerenddate AS deactivated_at,
-            c.customerexternalid AS billing_id,
+            o.customeruuid AS id,
+            (o.customerenddate IS NULL OR o.customerenddate > now()) AS active,
+            o.customerstartdate AS activated_at,
+            o.customerenddate AS deactivated_at,
+            (
+                SELECT o.customerexternalid
+                FROM public.systag AS s
+                WHERE
+                    o.customerexternalsystemid IS NOT NULL
+                    AND s.systagid = o.customerexternalsystemid
+                    AND s.systagtype = 'Stripe'
+            ) AS billing_id,
             n.languagemasteruuid AS name_id
-        FROM public.worker AS u
+        FROM public.customer AS o
         INNER JOIN public.workerinstance AS w
-            ON w.workerinstanceworkerid = u.workerid
-        INNER JOIN public.customer AS c
-            ON w.workerinstancecustomerid = c.customerid
+            ON
+                o.customerid = w.workerinstancecustomerid
+                AND w.workerinstanceworkerid = (
+                    SELECT workerid
+                    FROM public.worker
+                    WHERE workeruuid = ${u.id}
+                )
         INNER JOIN public.languagemaster AS n
-            ON c.customernamelanguagemasterid = n.languagemasterid
-        WHERE u.workeruuid = ${u.id};
+            ON o.customernamelanguagemasterid = n.languagemasterid;
     `;
   };
