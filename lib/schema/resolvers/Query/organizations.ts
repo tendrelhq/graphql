@@ -10,6 +10,7 @@ export const organizations: NonNullable<QueryResolvers["organizations"]> =
             (c.customerenddate IS NULL OR c.customerenddate > now()) AS active,
             c.customerstartdate AS activated_at,
             c.customerenddate AS deactivated_at,
+            c.customerexternalid AS billing_id,
             n.languagemasteruuid AS name_id
         FROM public.worker AS u
         INNER JOIN public.workerinstance AS w

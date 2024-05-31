@@ -39,6 +39,7 @@ type Organization {
   name: Name!
   name_id: ID!
   languages: [EnabledLanguage!]!
+  billing_id: String
 }
 
 type Location {
