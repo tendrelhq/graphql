@@ -1,4 +1,3 @@
-import type { Context } from "@/schema";
 import z from "myzod";
 import postgres from "postgres";
 
@@ -12,16 +11,12 @@ import makeUserLoader from "./user";
 import makeWorkerLoader from "./worker";
 
 if (process.env.DATABASE_URL) {
-  const url = process.env.DATABASE_URL.split("://")[1];
-  const [credential, endpoint] = url.split("@");
-  const [username, password] = credential.split(":");
-  const [host, rest] = endpoint.split(":");
-  const [port, dbname] = rest.split("/");
-  process.env.DB_USERNAME = username;
-  process.env.DB_PASSWORD = password;
-  process.env.DB_HOST = host;
-  process.env.DB_PORT = port;
-  process.env.DB_NAME = dbname;
+  const url = new URL(process.env.DATABASE_URL);
+  process.env.DB_USERNAME = url.username;
+  process.env.DB_PASSWORD = url.password;
+  process.env.DB_HOST = url.host;
+  process.env.DB_PORT = url.port;
+  process.env.DB_NAME = url.pathname.substring(1);
 }
 
 const {
