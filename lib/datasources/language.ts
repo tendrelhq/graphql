@@ -1,9 +1,10 @@
 import { NotFoundError } from "@/errors";
 import type { Language } from "@/schema";
 import Dataloader from "dataloader";
+import type { Request } from "express";
 import { sql } from "./postgres";
 
-export default () => {
+export default (_: Request) => {
   return {
     byCode: new Dataloader<string, Language>(async keys => {
       const rows = await sql<Language[]>`

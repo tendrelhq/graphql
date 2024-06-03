@@ -1,4 +1,4 @@
-import { sql, user } from "@/datasources/postgres";
+import { sql } from "@/datasources/postgres";
 import type { LocationResolvers } from "@/schema";
 import { isValue } from "@/util";
 
@@ -24,7 +24,7 @@ export const Location: LocationResolvers = {
     return children.filter(isValue);
   },
   async name(parent, _, ctx) {
-    const u = await user.byIdentityId.load(ctx.auth.userId);
+    const u = await ctx.orm.user.byIdentityId.load(ctx.auth.userId);
     return ctx.orm.name.load({
       id: parent.name_id as string,
       language_id: u.language_id as string,

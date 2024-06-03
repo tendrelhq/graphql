@@ -2,6 +2,7 @@ import type { Context } from "@/schema";
 import z from "myzod";
 import postgres from "postgres";
 
+import type { Request } from "express";
 import makeLanguageLoader from "./language";
 import makeLocationLoader from "./location";
 import makeNameLoader from "./name";
@@ -50,18 +51,15 @@ export const sql = postgres({
   max: DB_MAX_CONNECTIONS,
 });
 
-export const language = makeLanguageLoader();
-export const user = makeUserLoader();
-
-export function orm(ctx: Omit<Context, "orm">) {
+export function orm(req: Request) {
   return {
-    language: language,
-    location: makeLocationLoader(ctx),
-    name: makeNameLoader(ctx),
-    organization: makeOrganizationLoader(ctx),
-    tag: makeTagLoader(ctx),
-    user: user,
-    worker: makeWorkerLoader(ctx),
+    language: makeLanguageLoader(req),
+    location: makeLocationLoader(req),
+    name: makeNameLoader(req),
+    organization: makeOrganizationLoader(req),
+    tag: makeTagLoader(req),
+    user: makeUserLoader(req),
+    worker: makeWorkerLoader(req),
   };
 }
 

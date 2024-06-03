@@ -1,6 +1,7 @@
 import { NotFoundError } from "@/errors";
 import type { User } from "@/schema";
 import Dataloader from "dataloader";
+import type { Request } from "express";
 import { sql } from "./postgres";
 
 function selectUsers(
@@ -26,7 +27,7 @@ function selectUsers(
   `;
 }
 
-export default () => {
+export default (_: Request) => {
   return {
     byId: new Dataloader<string, User>(async keys => {
       const rows = await selectUsers("workeruuid", keys);

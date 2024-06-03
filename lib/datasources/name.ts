@@ -1,11 +1,12 @@
 import { NotFoundError } from "@/errors";
-import type { Context, Name } from "@/schema";
+import type { Name } from "@/schema";
 import Dataloader from "dataloader";
+import type { Request } from "express";
 import { sql } from "./postgres";
 
 type Key = { id: string; language_id: string };
 
-export default (ctx: Omit<Context, "orm">) =>
+export default (_: Request) =>
   new Dataloader<Key, Name, string>(
     async keys => {
       const rows = await sql<Name[]>`

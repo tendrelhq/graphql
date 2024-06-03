@@ -1,9 +1,10 @@
 import { NotFoundError } from "@/errors";
-import type { Context, Tag } from "@/schema";
+import type { Tag } from "@/schema";
 import Dataloader from "dataloader";
+import type { Request } from "express";
 import { sql } from "./postgres";
 
-export default (ctx: Omit<Context, "orm">) =>
+export default (_: Request) =>
   new Dataloader<string, Tag>(async keys => {
     const rows = await sql<Tag[]>`
         SELECT

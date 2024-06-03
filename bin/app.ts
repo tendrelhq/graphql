@@ -40,13 +40,9 @@ app.use(
   express.json(),
   expressMiddleware(server, {
     async context({ req }) {
-      const ctx = {
-        auth: req.auth,
-      };
-
       return {
-        ...ctx,
-        orm: orm(ctx),
+        auth: req.auth,
+        orm: orm(req),
       };
     },
   }),
