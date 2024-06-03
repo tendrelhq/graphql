@@ -13,12 +13,7 @@ export const createUser: NonNullable<MutationResolvers["createUser"]> = async (
           workeridentitysystemid,
           workerlanguageid,
           workerstartdate,
-          workerenddate,
-          -- Garbage. To be removed.
-          workerfirstname,
-          workerlastname,
-          workerusername,
-          workerpassword
+          workerenddate
       ) VALUES (
           ${input.name},
           ${null},
@@ -33,12 +28,7 @@ export const createUser: NonNullable<MutationResolvers["createUser"]> = async (
               WHERE systaguuid = ${input.language_id}
           ),
           ${new Date()},
-          ${input.active ? null : new Date()},
-          -- Garbage. To be removed.
-          ${input.name},
-          ${input.name},
-          ${input.name},
-          ${input.name}
+          ${input.active ? null : new Date()}
       )
       ON CONFLICT DO NOTHING
       RETURNING workeruuid AS id;
@@ -51,16 +41,8 @@ export const createUser: NonNullable<MutationResolvers["createUser"]> = async (
         SELECT workeruuid AS id
         FROM public.worker
         WHERE
-            (
-                workeridentityid IS NOT NULL
-                AND workeridentityid = ${
-                  input.authentication_provider_id ?? null
-                }
-            ) OR (
-                -- Garbage. To be removed.
-                workerusername IS NOT NULL
-                AND workerusername = ${input.name}
-            );
+            workeridentityid IS NOT NULL
+            AND workeridentityid = ${input.authentication_provider_id ?? null}
     `;
     if (!user) throw "must've messed up the unique constraints";
     return ctx.orm.user.byId.load(user.id);
