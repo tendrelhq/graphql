@@ -34,7 +34,7 @@ export default (ctx: Omit<Context, "orm">) =>
       return keys.map(
         key =>
           byId.get(`${key.id}:${key.language_id}`) ??
-          new NotFoundError(`${key.id}${key.language_id}`, "name"),
+          new NotFoundError(`${key.id}:${key.language_id}`, "name"),
       );
     },
     {
