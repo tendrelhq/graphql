@@ -9,6 +9,9 @@
 ### dotenv ###
 /.env*.local
 
+### neovim ###
+/.db.json
+
 ### nix ###
 /.pre-commit-config.yaml
 /result
