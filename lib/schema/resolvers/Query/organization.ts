@@ -1,6 +1,6 @@
 import type { QueryResolvers } from "@/schema";
 
-export const organization: NonNullable<QueryResolvers['organization']> = async (
+export const organization: NonNullable<QueryResolvers["organization"]> = async (
   _,
   { id },
   { orm },

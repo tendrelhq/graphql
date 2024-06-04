@@ -2,7 +2,9 @@ import { sql } from "@/datasources/postgres";
 import type { MutationResolvers } from "@/schema";
 import { GraphQLError } from "graphql";
 
-export const disableLanguage: NonNullable<MutationResolvers['disableLanguage']> = async (_, { orgId, languageId }, __) => {
+export const disableLanguage: NonNullable<
+  MutationResolvers["disableLanguage"]
+> = async (_, { orgId, languageId }, __) => {
   const check = await sql`
       SELECT 1
       FROM public.customer

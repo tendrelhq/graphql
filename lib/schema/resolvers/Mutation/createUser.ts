@@ -1,7 +1,7 @@
 import { sql } from "@/datasources/postgres";
 import type { MutationResolvers } from "@/schema";
 
-export const createUser: NonNullable<MutationResolvers['createUser']> = async (
+export const createUser: NonNullable<MutationResolvers["createUser"]> = async (
   _,
   { input },
   ctx,

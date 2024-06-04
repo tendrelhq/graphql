@@ -1,7 +1,7 @@
 import { sql } from "@/datasources/postgres";
 import type { MutationResolvers } from "@/schema";
 
-export const updateUser: NonNullable<MutationResolvers['updateUser']> = async (
+export const updateUser: NonNullable<MutationResolvers["updateUser"]> = async (
   _,
   { input },
   ctx,
