@@ -4,15 +4,10 @@ import type { EnabledLanguage, OrganizationResolvers } from "@/schema";
 export const Organization: OrganizationResolvers = {
   async name(parent, _, ctx) {
     const u = await ctx.orm.user.byIdentityId.load(ctx.auth.userId);
-
-    const test = ctx.orm.name.load({
+    return ctx.orm.name.load({
       id: parent.name_id as string,
       language_id: u.language_id as string,
     });
-
-    console.log(test);
-
-    return test;
   },
   async languages(parent, _, ctx) {
     return await sql<EnabledLanguage[]>`
