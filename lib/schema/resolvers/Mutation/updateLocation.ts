@@ -5,8 +5,6 @@ export const updateLocation: NonNullable<MutationResolvers['updateLocation']> =
   async (_, { input }, ctx) => {
     const existing = await ctx.orm.location.load(input.id);
     await sql.begin(async sql => {
-      // `child_id` implies a translation. When given, update the specified
-      // translation with the new value.
       if (input.name) {
         const changes = await sql<{ n: number }[]>`
             UPDATE public.languagetranslations
@@ -51,5 +49,6 @@ export const updateLocation: NonNullable<MutationResolvers['updateLocation']> =
           WHERE locationuuid = ${existing.id};
       `;
     });
+
     return ctx.orm.location.clear(input.id).load(input.id);
   };
