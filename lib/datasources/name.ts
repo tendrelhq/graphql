@@ -22,7 +22,7 @@ export default (_: Request) =>
           LEFT JOIN public.systag AS tl
               ON t.languagetranslationtypeid = tl.systagid
           WHERE
-              (m.languagemasteruuid, tl.systaguuid) IN ${sql(
+              (m.languagemasteruuid, COALESCE(tl.systaguuid, ml.systaguuid)) IN ${sql(
                 keys.map(k => sql([k.id, k.language_id])),
               )};
       `;

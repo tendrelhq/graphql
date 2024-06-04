@@ -1,7 +1,7 @@
 import { sql } from "@/datasources/postgres";
 import type { MutationResolvers } from "@/schema";
 
-export const enableLanguage: NonNullable<MutationResolvers["enableLanguage"]> =
+export const enableLanguage: NonNullable<MutationResolvers['enableLanguage']> =
   async (_, { orgId, languageId }, ctx) => {
     await sql`
         INSERT INTO public.customerrequestedlanguage (
