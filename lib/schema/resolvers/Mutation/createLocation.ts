@@ -1,7 +1,7 @@
 import { sql } from "@/datasources/postgres";
 import type { MutationResolvers } from "@/schema";
 
-export const createLocation: NonNullable<MutationResolvers["createLocation"]> =
+export const createLocation: NonNullable<MutationResolvers['createLocation']> =
   async (_, { input }, ctx) => {
     const [location] = await sql<[{ id: string }?]>`
         INSERT INTO public.location (
