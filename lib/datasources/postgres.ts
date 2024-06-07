@@ -2,6 +2,7 @@ import z from "myzod";
 import postgres from "postgres";
 
 import type { Request } from "express";
+import makeInvitationLoader from "./invitation";
 import makeLanguageLoader from "./language";
 import makeLocationLoader from "./location";
 import { makeNameLoader, makeNameMetadataLoader } from "./name";
@@ -48,6 +49,7 @@ export const sql = postgres({
 
 export function orm(req: Request) {
   return {
+    invitation: makeInvitationLoader(req),
     language: makeLanguageLoader(req),
     location: makeLocationLoader(req),
     name: makeNameLoader(req),

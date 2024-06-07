@@ -1,6 +1,12 @@
 import type { WorkerResolvers } from "@/schema";
 
 export const Worker: WorkerResolvers = {
+  invitation(parent, _, ctx) {
+    if (parent.invitation_id) {
+      return ctx.orm.invitation.byId.load(parent.invitation_id as string);
+    }
+    return null;
+  },
   language(parent, _, ctx) {
     return ctx.orm.language.byId.load(parent.language_id as string);
   },

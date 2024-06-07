@@ -24,7 +24,7 @@ export default (_: Request) =>
         INNER JOIN public.worker AS u
             ON w.workerinstanceworkerid = u.workerid
         WHERE w.workerinstanceuuid IN ${sql(keys)};
-      `;
+    `;
 
     const byKey = rows.reduce(
       (acc, row) => acc.set(row.id as string, row),

@@ -40,6 +40,21 @@ type EnabledLanguage {
   primary: Boolean!
 }
 
+enum InvitationStatus {
+  pending
+  accepted
+  revoked
+}
+
+type Invitation {
+  id: ID!
+  status: InvitationStatus!
+  email_address: String!
+  worker_id: ID!
+  created_at: String!
+  updated_at: String!
+}
+
 type Organization {
   id: ID!
   active: Boolean!
@@ -86,6 +101,8 @@ type Worker {
   active: Boolean!
   activated_at: String
   deactivated_at: String
+  invitation: Invitation
+  invitation_id: ID
   language: Language!
   language_id: ID!
   role: Tag!
@@ -127,6 +144,7 @@ type Mutation {
   createUser(input: CreateUserInput!): User!
   updateUser(input: UpdateUserInput!): User!
   ## Helpers
+  createInvitation(input: CreateInvitationInput!): Invitation!
   acceptInvite(input: AcceptInviteInput!): User!
 
   # Worker CRUD
@@ -203,6 +221,12 @@ input UpdateNameInput {
   deactivated_at: String
   language_id: ID!
   value: String!
+}
+
+input CreateInvitationInput {
+  email_address: String!
+  org_id: ID!
+  worker_id: ID!
 }
 
 input AcceptInviteInput {
