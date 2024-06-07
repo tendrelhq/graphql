@@ -18,8 +18,8 @@ export const Organization: OrganizationResolvers = {
                 OR
                 l.customerrequestedlanguageenddate > NOW()
             ) AS active,
-            l.customerrequestedlanguagestartdate AS activated_at,
-            l.customerrequestedlanguageenddate AS deactivated_at,
+            l.customerrequestedlanguagestartdate::text AS activated_at,
+            l.customerrequestedlanguageenddate::text AS deactivated_at,
             s.systaguuid AS language_id,
             (l.customerrequestedlanguagelanguageid = o.customerlanguagetypeid) AS primary
         FROM public.customerrequestedlanguage AS l

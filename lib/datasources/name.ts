@@ -1,13 +1,13 @@
 import { NotFoundError } from "@/errors";
-import type { Name } from "@/schema";
+import type { Name, NameMetadata } from "@/schema";
 import Dataloader from "dataloader";
 import type { Request } from "express";
 import { sql } from "./postgres";
 
 type Key = { id: string; language_id: string };
 
-export default (_: Request) =>
-  new Dataloader<Key, Name, string>(
+export function makeNameLoader(_: Request) {
+  return new Dataloader<Key, Name, string>(
     async keys => {
       const rows = await sql<Name[]>`
           SELECT
@@ -42,3 +42,27 @@ export default (_: Request) =>
       cacheKeyFn: key => `${key.id}:${key.language_id}`,
     },
   );
+}
+
+export function makeNameMetadataLoader(_: Request) {
+  return new Dataloader<string, NameMetadata>(async keys => {
+    const rows = await sql<NameMetadata[]>`
+        SELECT
+            m.languagemasteruuid AS name_id,
+            m.languagemastersource AS source_text,
+            l.systaguuid AS source_language_id,
+            m.languagemastertranslationtime::text AS translated_at
+        FROM public.languagemaster AS m
+        INNER JOIN public.systag AS l
+            ON m.languagemastersourcelanguagetypeid = l.systagid
+        WHERE m.languagemasteruuid IN ${sql(keys)};
+    `;
+
+    const byId = rows.reduce(
+      (acc, row) => acc.set(row.name_id as string, row),
+      new Map<string, NameMetadata>(),
+    );
+
+    return keys.map(key => byId.get(key) ?? new NotFoundError(key, "name"));
+  });
+}

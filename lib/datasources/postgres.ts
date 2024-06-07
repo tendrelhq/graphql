@@ -4,7 +4,7 @@ import postgres from "postgres";
 import type { Request } from "express";
 import makeLanguageLoader from "./language";
 import makeLocationLoader from "./location";
-import makeNameLoader from "./name";
+import { makeNameLoader, makeNameMetadataLoader } from "./name";
 import makeOrganizationLoader from "./organization";
 import makeTagLoader from "./tag";
 import makeUserLoader from "./user";
@@ -51,6 +51,7 @@ export function orm(req: Request) {
     language: makeLanguageLoader(req),
     location: makeLocationLoader(req),
     name: makeNameLoader(req),
+    nameMetadata: makeNameMetadataLoader(req),
     organization: makeOrganizationLoader(req),
     tag: makeTagLoader(req),
     user: makeUserLoader(req),

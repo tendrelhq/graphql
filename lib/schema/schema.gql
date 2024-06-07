@@ -9,7 +9,16 @@ type Name {
   id: ID!
   language: Language!
   language_id: ID!
+  metadata: NameMetadata!
   value: String!
+}
+
+type NameMetadata {
+  name_id: ID!
+  source_text: String!
+  source_language_id: ID!
+  source_language: Language!
+  translated_at: String!
 }
 
 type Tag {
@@ -91,6 +100,7 @@ type Query {
   languages: [Language!]!
   locations(customerId: ID!, options: LocationsQueryOptions): [Location!]!
   location(id: ID!): Location!
+  name(id: ID!): Name!
   organizations: [Organization!]!
   organization(id: ID!): Organization!
   roles: [Tag!]!
