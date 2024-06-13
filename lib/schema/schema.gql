@@ -147,9 +147,13 @@ type Mutation {
   createInvitation(input: CreateInvitationInput!): Invitation!
   acceptInvite(input: AcceptInviteInput!): User!
 
-  # Worker CRUD
+  # Worker
+  ## CRUD
   createWorker(input: CreateWorkerInput!): Worker!
   updateWorker(input: UpdateWorkerInput!): Worker!
+  ## Helpers
+  activateWorker(id: ID!): Worker!
+  deactivateWorker(id: ID!): Worker!
 
   # Organization helpers
   enableLanguage(orgId: ID!, languageId: ID!): Boolean!
