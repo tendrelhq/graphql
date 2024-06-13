@@ -16,6 +16,7 @@ export const updateWorker: NonNullable<MutationResolvers["updateWorker"]> =
           ),
           workerinstanceuserroleuuid = ${input.role_id},
           workerinstancescanid = ${input.scan_code ?? null},
+          workerinstancemodifieddate = NOW(),
           -- Garbage. To be removed.
           workerinstanceuserroleid = (
               SELECT systagid
