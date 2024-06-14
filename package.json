@@ -28,6 +28,7 @@
   "dependencies": {
     "@apollo/server": "^4.10.4",
     "@clerk/clerk-sdk-node": "^5.0.7",
+    "@clerk/shared": "^2.3.0",
     "cors": "^2.8.5",
     "dataloader": "^2.2.2",
     "dotenv": "^16.4.5",
