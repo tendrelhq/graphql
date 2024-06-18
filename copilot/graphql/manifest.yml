@@ -67,3 +67,17 @@ environments:
         secretsmanager: "/database/service/graphql:dbname::"
     variables:
       LOG_LEVEL: debug
+  beta:
+    nlb:
+      alias: beta.graphql.tendrel.io
+    secrets:
+      DB_USERNAME:
+        secretsmanager: "/database/service/graphql:username::"
+      DB_PASSWORD:
+        secretsmanager: "/database/service/graphql:password::"
+      DB_HOST:
+        secretsmanager: "/database/service/graphql:host::"
+      DB_PORT:
+        secretsmanager: "/database/service/graphql:port::"
+      DB_NAME:
+        secretsmanager: "/database/service/graphql:dbname::"
