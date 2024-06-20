@@ -88,6 +88,7 @@ type User {
   active: Boolean!
   activated_at: String
   deactivated_at: String
+  authentication_identity_id: ID
   authentication_provider: Tag
   authentication_provider_id: ID
   language: Language!
@@ -143,9 +144,6 @@ type Mutation {
   ## CRUD
   createUser(input: CreateUserInput!): User!
   updateUser(input: UpdateUserInput!): User!
-  ## Helpers
-  createInvitation(input: CreateInvitationInput!): Invitation!
-  acceptInvite(input: AcceptInviteInput!): User!
 
   # Worker
   ## CRUD
@@ -154,6 +152,8 @@ type Mutation {
   ## Helpers
   activateWorker(id: ID!): Worker!
   deactivateWorker(id: ID!): Worker!
+  createInvitation(input: CreateInvitationInput!): Invitation!
+  acceptInvitation(input: AcceptInvitationInput!): Worker!
 
   # Organization helpers
   enableLanguage(orgId: ID!, languageId: ID!): Boolean!
@@ -179,16 +179,13 @@ input UpdateLocationInput {
 input CreateUserInput {
   id: ID
   active: Boolean!
-  authentication_provider_id: ID
-  authentication_identity: ID
   language_id: ID!
   name: String!
+  username: String
 }
 
 input UpdateUserInput {
   id: ID!
-  authentication_provider_id: ID
-  authentication_identity: ID
   language_id: ID!
   name: String!
 }
@@ -233,7 +230,7 @@ input CreateInvitationInput {
   worker_id: ID!
 }
 
-input AcceptInviteInput {
-  id: ID!
-  authentication_identity: ID!
+input AcceptInvitationInput {
+  authentication_identity_id: ID!
+  worker_id: ID!
 }

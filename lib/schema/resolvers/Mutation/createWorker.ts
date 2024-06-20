@@ -6,36 +6,41 @@ export const createWorker: NonNullable<MutationResolvers["createWorker"]> =
     const [worker] = await sql<[{ id: string }?]>`
         INSERT INTO public.workerinstance (
             workerinstanceworkerid,
+            workerinstanceworkeruuid,
             workerinstancecustomerid,
+            workerinstancecustomeruuid,
             workerinstancelanguageid,
+            workerinstancelanguageuuid,
             workerinstancestartdate,
             workerinstanceenddate,
+            workerinstanceuserroleid,
             workerinstanceuserroleuuid,
-            workerinstancescanid,
-            -- Garbage. To be removed.
-            workerinstanceuserroleid
+            workerinstancescanid
         )
         SELECT
             u.workerid,
+            u.workeruuid,
             (
                 SELECT customerid
                 FROM public.customer
                 WHERE customeruuid = ${input.org_id}
             ),
+            ${input.org_id},
             (
                 SELECT systagid
                 FROM public.systag
                 WHERE systaguuid = ${input.language_id}
             ),
+            ${input.language_id},
             ${new Date()},
             ${input.active ? null : new Date()},
-            ${input.role_id},
-            ${input.scan_code ?? null},
             (
                 SELECT systagid
                 FROM public.systag
                 WHERE systaguuid = ${input.role_id}
-            )
+            ),
+            ${input.role_id},
+            ${input.scan_code ?? null}
         FROM public.worker AS u
         WHERE u.workeruuid = ${input.user_id}
         ON CONFLICT DO NOTHING

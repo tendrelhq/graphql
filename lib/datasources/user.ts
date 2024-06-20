@@ -15,6 +15,7 @@ function selectUsers(
         (u.workerenddate IS NULL OR u.workerenddate > now()) AS active,
         u.workerstartdate::text AS activated_at,
         u.workerenddate::text AS deactivated_at,
+        u.workeridentityid AS authentication_identity_id,
         a.systaguuid AS authentication_provider_id,
         l.systaguuid AS language_id,
         u.workerfullname AS name

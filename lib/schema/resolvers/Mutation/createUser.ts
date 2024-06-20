@@ -1,5 +1,6 @@
 import { sql } from "@/datasources/postgres";
 import type { MutationResolvers } from "@/schema";
+import { GraphQLError } from "graphql";
 
 export const createUser: NonNullable<MutationResolvers["createUser"]> = async (
   _,
@@ -8,20 +9,14 @@ export const createUser: NonNullable<MutationResolvers["createUser"]> = async (
 ) => {
   const [user] = await sql<[{ id: string }?]>`
       INSERT INTO public.worker (
+          workerusername,
           workerfullname,
-          workeridentityid,
-          workeridentitysystemid,
           workerlanguageid,
           workerstartdate,
           workerenddate
       ) VALUES (
+          ${input.username ?? null},
           ${input.name},
-          ${null},
-          (
-            SELECT systagid
-            FROM public.systag
-            WHERE systaguuid = ${input.authentication_provider_id ?? null}
-          ),
           (
               SELECT systagid
               FROM public.systag
@@ -30,22 +25,21 @@ export const createUser: NonNullable<MutationResolvers["createUser"]> = async (
           ${new Date()},
           ${input.active ? null : new Date()}
       )
-      ON CONFLICT DO NOTHING
+      ON CONFLICT (workerusername) DO NOTHING
       RETURNING workeruuid AS id;
   `;
 
   if (!user) {
-    // This implies ON CONFLICT DO NOTHING hit.
-    // i.e. the user already exists, so we just need to find it.
-    const [user] = await sql<[{ id: string }?]>`
-        SELECT workeruuid AS id
-        FROM public.worker
-        WHERE
-            workeridentityid IS NOT NULL
-            AND workeridentityid = ${input.authentication_provider_id ?? null}
-    `;
-    if (!user) throw "must've messed up the unique constraints";
-    return ctx.orm.user.byId.load(user.id);
+    // This implies ON CONFLICT DO NOTHING hit, meaning a user already exists
+    // for the given username.
+    throw new GraphQLError(
+      "That username already exists. Please try another.",
+      {
+        extensions: {
+          code: "user_identifier_exists",
+        },
+      },
+    );
   }
 
   return ctx.orm.user.byId.load(user.id);
