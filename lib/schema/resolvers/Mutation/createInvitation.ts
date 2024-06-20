@@ -2,7 +2,7 @@ import { protect } from "@/auth";
 import { sql } from "@/datasources/postgres";
 import type { MutationResolvers } from "@/schema";
 import { clerkClient } from "@clerk/clerk-sdk-node";
-import { isClerkAPIResponseError, isClerkRuntimeError } from "@clerk/shared";
+import { isClerkAPIResponseError } from "@clerk/shared";
 import { GraphQLError } from "graphql";
 
 export const createInvitation: NonNullable<
@@ -37,7 +37,24 @@ export const createInvitation: NonNullable<
   // Doesn't work without it :/
   await sql`
       UPDATE public.worker AS u
-      SET workerusername = ${input.email_address}
+      SET
+          workerusername = ${input.email_address},
+          workermodifieddate = NOW(),
+          workermodifiedby = (
+              SELECT workerinstanceid
+              FROM public.workerinstance
+              WHERE
+                  workerinstancecustomerid = (
+                      SELECT customerid
+                      FROM public.customer
+                      WHERE customeruuid = ${input.org_id}
+                  )
+                  AND workerinstanceworkerid = (
+                      SELECT workerid
+                      FROM public.worker
+                      WHERE workeridentityid = ${ctx.auth.userId}
+                  )
+          )
       FROM public.workerinstance AS w
       WHERE
           u.workerid = w.workerinstanceworkerid
