@@ -16,7 +16,7 @@ export const organizations: NonNullable<QueryResolvers["organizations"]> =
                 WHERE
                     o.customerexternalsystemid IS NOT NULL
                     AND s.systagid = o.customerexternalsystemid
-                    AND s.systagtype = 'Stripe'
+                    AND s.systagtype IN ('Stripe', 'Tendrel')
             ) AS billing_id,
             n.languagemasteruuid AS name_id
         FROM public.customer AS o
