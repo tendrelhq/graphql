@@ -140,6 +140,9 @@ type Mutation {
   createLocation(input: CreateLocationInput!): Location!
   updateLocation(input: UpdateLocationInput!): Location!
 
+  # Name CRUD
+  updateName(input: UpdateNameInput!): Name!
+
   # User
   ## CRUD
   createUser(input: CreateUserInput!): User!

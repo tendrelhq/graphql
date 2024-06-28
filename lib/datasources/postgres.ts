@@ -47,6 +47,9 @@ export const sql = postgres({
   max: DB_MAX_CONNECTIONS,
 });
 
+export type SQL = typeof sql;
+export type TxSQL = Parameters<Parameters<typeof sql.begin>[1]>[0];
+
 export function orm(req: Request) {
   return {
     invitation: makeInvitationLoader(req),

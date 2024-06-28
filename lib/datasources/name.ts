@@ -1,8 +1,8 @@
 import { NotFoundError } from "@/errors";
-import type { Name, NameMetadata } from "@/schema";
+import type { Name, NameMetadata, UpdateNameInput } from "@/schema";
 import Dataloader from "dataloader";
 import type { Request } from "express";
-import { sql } from "./postgres";
+import { type SQL, sql } from "./postgres";
 
 type Key = { id: string; language_id: string };
 
@@ -39,6 +39,45 @@ export function makeNameLoader(_: Request) {
       cacheKeyFn: key => `${key.id}:${key.language_id}`,
     },
   );
+}
+
+export async function updateName(input: UpdateNameInput, sql: SQL) {
+  // Update the language specific translation.
+  await sql`
+      UPDATE public.languagetranslations
+      SET
+          languagetranslationvalue = ${input.value},
+          languagetranslationmodifieddate = NOW()
+      WHERE
+          languagetranslationmasterid = (
+              SELECT languagemasterid
+              FROM public.languagemaster
+              WHERE languagemasteruuid = ${input.id}
+          )
+          AND languagetranslationtypeid = (
+              SELECT systagid
+              FROM public.systag
+              WHERE systaguuid = ${input.language_id}
+          );
+  `;
+
+  // Attempt to update the master as well, but only do so if the given name
+  // matches the master, i.e. same language_id.
+  await sql`
+      UPDATE public.languagemaster
+      SET
+          languagemastermodifieddate = NOW(),
+          languagemastersource = ${input.value},
+          languagemasterstatus = 'NEEDS_COMPLETE_RETRANSLATION'
+      WHERE
+          languagemasteruuid = ${input.id}
+          AND languagemastersource = ${input.value}
+          AND languagemastersourcelanguagetypeid = (
+              SELECT systagid
+              FROM public.systag
+              WHERE systaguuid = ${input.language_id}
+          );
+  `;
 }
 
 export function makeNameMetadataLoader(_: Request) {
