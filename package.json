@@ -1,45 +1,55 @@
 {
   "name": "@tendrelhq/graphql",
+  "version": "0.1.0",
   "module": "lib/index.ts",
   "type": "module",
   "scripts": {
     "clean": "rimraf lib/schema/__generated__ node_modules out",
     "compile": "bun build.ts",
     "generate": "graphql-codegen && biome check --apply lib/schema/resolvers/**/*.ts",
-    "start": "bun bin/app.ts"
+    "start": "bun ./bin/app.ts",
+    "start+tracing": "bun -r ./lib/instrument.ts ./bin/app.ts"
   },
   "devDependencies": {
-    "@biomejs/biome": "^1.7.1",
-    "@clerk/types": "^4.3.0",
-    "@eddeee888/gcg-typescript-resolver-files": "^0.8.0",
+    "@biomejs/biome": "^1.8.3",
+    "@clerk/types": "^4.6.1",
+    "@eddeee888/gcg-typescript-resolver-files": "^0.8.1",
     "@graphql-codegen/cli": "^5.0.2",
-    "@graphql-codegen/typescript": "^4.0.6",
-    "@graphql-codegen/typescript-resolvers": "^4.0.6",
+    "@graphql-codegen/typescript": "^4.0.8",
+    "@graphql-codegen/typescript-resolvers": "^4.2.0",
     "@types/bun": "latest",
     "@types/cors": "^2.8.17",
     "@types/morgan": "^1.9.9",
-    "graphql-language-service-cli": "^3.3.33",
-    "rimraf": "^5.0.5",
+    "graphql-language-service-cli": "^3.4.1",
+    "rimraf": "^5.0.7",
     "typescript-language-server": "^4.3.3"
   },
   "peerDependencies": {
-    "typescript": "^5.0.0"
+    "typescript": "^5.5.3"
   },
   "dependencies": {
     "@apollo/server": "^4.10.4",
-    "@clerk/clerk-sdk-node": "^5.0.7",
-    "@clerk/shared": "^2.3.0",
+    "@clerk/clerk-sdk-node": "^5.0.12",
+    "@clerk/shared": "^2.3.1",
+    "@opentelemetry/api": "^1.9.0",
+    "@opentelemetry/exporter-trace-otlp-http": "^0.52.1",
+    "@opentelemetry/instrumentation-dataloader": "^0.10.0",
+    "@opentelemetry/instrumentation-express": "^0.40.1",
+    "@opentelemetry/instrumentation-graphql": "^0.41.0",
+    "@opentelemetry/instrumentation-http": "^0.52.1",
+    "@opentelemetry/resource-detector-aws": "^1.5.1",
+    "@opentelemetry/sdk-node": "^0.52.1",
     "cors": "^2.8.5",
     "dataloader": "^2.2.2",
     "dotenv": "^16.4.5",
     "express": "^4.19.2",
-    "graphql": "^16.8.1",
+    "graphql": "^16.9.0",
     "graphql-scalars": "^1.23.0",
     "graphql-tag": "^2.12.6",
     "morgan": "^1.10.0",
     "myzod": "^1.11.0",
     "pattycake": "^0.0.2",
     "postgres": "^3.4.4",
-    "ts-pattern": "^5.1.1"
+    "ts-pattern": "^5.2.0"
   }
 }
