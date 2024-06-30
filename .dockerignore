@@ -1,6 +1,6 @@
 # all "hidden" files except the .env's
 /.*
-!.env*
+!.env.*
 
 /copilot
 /docs
@@ -12,3 +12,5 @@
 /docker-compose.yaml
 /flake.*
 /justfile
+/postgresql.conf
+/result

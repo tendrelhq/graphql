@@ -8,14 +8,20 @@ build:
     bun compile
 
 database:
-    docker compose up -d tendrel-database
+    docker compose up -d postgresql
 
 deploy:
     copilot env deploy --name {{deploy_env}}
     copilot deploy --env {{deploy_env}}
 
+jaeger:
+    docker compose up -d jaeger
+
 package:
     docker build -t {{image_name}} .
 
+sidecars: database jaeger
+    docker compose logs -f
+
 start:
-    docker compose up --detach && docker compose logs -f
+    docker compose up --detach && docker compose logs -f graphql
