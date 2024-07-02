@@ -30,9 +30,11 @@ memory: 2048
 secrets:
   CLERK_PUBLISHABLE_KEY: /copilot/${COPILOT_APPLICATION_NAME}/${COPILOT_ENVIRONMENT_NAME}/secrets/clerk-publishable-key
   CLERK_SECRET_KEY: /copilot/${COPILOT_APPLICATION_NAME}/${COPILOT_ENVIRONMENT_NAME}/secrets/clerk-secret-key
+  NEW_RELIC_LICENSE_KEY: /copilot/${COPILOT_APPLICATION_NAME}/${COPILOT_ENVIRONMENT_NAME}/secrets/new-relic-license-key
 
 variables:
   NODE_ENV: production
+  STAGE: ${COPILOT_ENVIRONMENT_NAME}
 
 # You can override any of the values defined above by environment.
 environments:

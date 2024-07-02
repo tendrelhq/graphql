@@ -27,9 +27,9 @@ RUN bun test
 
 # copy production dependencies and source code into final image.
 FROM base AS release
-COPY --from=prerelease /usr/src/app/out/app.js .
+COPY --from=prerelease /usr/src/app .
 
 # run the app
 USER bun
 EXPOSE 4000/tcp
-ENTRYPOINT ["bun", "app.js"]
+CMD ["bun", "start+tracing"]

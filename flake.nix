@@ -34,11 +34,14 @@
         in {
           name = "tendrel-graphql";
           containers = lib.mkForce {};
-          env.BIOME_BINARY = lib.getExe pkgs.biome;
+          enterShell = ''
+            autoPatchelf ./node_modules/@biomejs/cli-linux-x64 &>/dev/null &&
+              echo 'direnv: patched biome binary'
+          '';
           packages = with pkgs; [
+            autoPatchelfHook
             act
             awscli2
-            biome
             bun
             just
             # postgres.js needs this for some reason :/
@@ -64,7 +67,10 @@
           ];
           pre-commit.hooks = {
             alejandra.enable = true;
-            biome.enable = true;
+            biome = {
+              enable = true;
+              entry = "biome check --write";
+            };
           };
           services.postgres = {
             enable = true;
