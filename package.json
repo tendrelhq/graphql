@@ -6,7 +6,7 @@
   "scripts": {
     "clean": "rimraf lib/schema/__generated__ node_modules out",
     "compile": "bun build.ts",
-    "generate": "graphql-codegen && biome check --apply lib/schema/resolvers/**/*.ts",
+    "generate": "graphql-codegen && biome check --write lib/schema/resolvers/**/*.ts",
     "start": "bun ./bin/app.ts",
     "start+tracing": "bun -r ./lib/instrument.ts ./bin/app.ts"
   },
@@ -15,8 +15,8 @@
     "@clerk/types": "^4.6.1",
     "@eddeee888/gcg-typescript-resolver-files": "^0.8.1",
     "@graphql-codegen/cli": "^5.0.2",
-    "@graphql-codegen/typescript": "^4.0.8",
-    "@graphql-codegen/typescript-resolvers": "^4.2.0",
+    "@graphql-codegen/typescript": "^4.0.9",
+    "@graphql-codegen/typescript-resolvers": "^4.2.1",
     "@types/bun": "latest",
     "@types/cors": "^2.8.17",
     "@types/morgan": "^1.9.9",
@@ -29,7 +29,7 @@
   },
   "dependencies": {
     "@apollo/server": "^4.10.4",
-    "@clerk/clerk-sdk-node": "^5.0.12",
+    "@clerk/clerk-sdk-node": "^5.0.14",
     "@clerk/shared": "^2.3.1",
     "@opentelemetry/api": "^1.9.0",
     "@opentelemetry/exporter-trace-otlp-http": "^0.52.1",
@@ -43,7 +43,7 @@
     "dataloader": "^2.2.2",
     "dotenv": "^16.4.5",
     "express": "^4.19.2",
-    "graphql": "^16.8.1",
+    "graphql": "^16.9.0",
     "graphql-relay": "^0.10.1",
     "graphql-scalars": "^1.23.0",
     "graphql-tag": "^2.12.6",
