@@ -33,6 +33,14 @@ app.use(
   ),
 );
 
+app.use((req, _, next) => {
+  if (process.env.DEBUG_HEADERS) {
+    console.log(JSON.stringify(req.headers, null, 2));
+  }
+
+  next();
+});
+
 app.use(
   "/",
   cors(),
