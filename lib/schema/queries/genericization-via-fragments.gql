@@ -1,0 +1,25 @@
+query GenericizationViaFragmentsExample($options: OptionsType) {
+  id
+}
+
+fragment Named on Node {
+  node(id: $nodeId) {
+    component(type: "name") {
+      edges {
+        node {
+          name
+        }
+      }
+    }
+  }
+}
+
+type Node {
+  component(type: String!): Component
+}
+
+interface Name {
+  id: ID!
+  source: NameSource!
+  translations(options: TranslationOptions!): [TranslatedText!]!
+}

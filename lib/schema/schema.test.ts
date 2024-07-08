@@ -46,7 +46,7 @@ describe("user", () => {
   });
 
   describe("connections", () => {
-    it("fetches the first organization of the current user", () => {
+    it("fetches the first organization for the current user", () => {
       const source = `
         query {
           user {
@@ -78,7 +78,7 @@ describe("user", () => {
       });
     });
 
-    it("fetches the first two organizations of the current user with a cursor", () => {
+    it("fetches the first two organizations for the current user with a cursor", () => {
       const source = `
         query {
           user {
@@ -120,7 +120,7 @@ describe("user", () => {
       });
     });
 
-    it("fetches the next two organizations of the current user with a cursor", () => {
+    it("fetches the next two organizations for the current user with a cursor", () => {
       const source = `
         query {
           user {
@@ -162,7 +162,7 @@ describe("user", () => {
       });
     });
 
-    it("fetches no organizations of the current user at the end of the connection", () => {
+    it("fetches no organizations for the current user at the end of the connection", () => {
       const source = `
         query {
           user {

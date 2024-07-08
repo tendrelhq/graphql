@@ -4,6 +4,7 @@ import {
   GraphQLObjectType,
   GraphQLSchema,
   GraphQLString,
+  printSchema,
 } from "graphql";
 import {
   connectionArgs,
@@ -262,3 +263,5 @@ const queryType = new GraphQLObjectType({
 export const Schema = new GraphQLSchema({
   query: queryType,
 });
+
+await Bun.write(`${__dirname}/relay.schema.gql`, printSchema(Schema));

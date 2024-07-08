@@ -1,11 +1,11 @@
-import { describe, expect, it } from "bun:test";
+import { describe, expect, test } from "bun:test";
 import { graphqlSync } from "graphql";
 import { Schema as schema } from "./schema";
 
 // https://relay.dev/graphql/connections.htm
 describe("graphql cursor connections specification", () => {
   // https://relay.dev/graphql/connections.htm#sec-Connection-Types.Introspection
-  it("connection types", () => {
+  test("connection types", () => {
     const source = `
       {
         __type(name: "OrganizationConnection") {
@@ -57,7 +57,7 @@ describe("graphql cursor connections specification", () => {
   });
 
   // https://relay.dev/graphql/connections.htm#sec-Edge-Types.Introspection
-  it("edge types", () => {
+  test("edge types", () => {
     const source = `
       {
         __type(name: "OrganizationEdge") {
@@ -106,7 +106,7 @@ describe("graphql cursor connections specification", () => {
   });
 
   // https://relay.dev/graphql/connections.htm#sec-undefined.PageInfo.Introspection
-  it("page info", () => {
+  test("page info", () => {
     const source = `
       {
         __type(name: "PageInfo") {
