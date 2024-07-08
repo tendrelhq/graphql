@@ -18,16 +18,14 @@ services:
     pull_policy: build
   jaeger:
     image: jaegertracing/all-in-one
+    command:
+      - "--collector.otlp.http.cors.allowed-headers=*"
+      - "--collector.otlp.http.cors.allowed-origins=*"
     ports:
-      - 6831:6831/udp # jaeger.thrift
-      - 6832:6832/udp
-      - 14268:14268
-      - 14269:14269
-      - 5778:5778 # serve configs
-      - 16686:16686 # serve frontend
       - 4317:4317 # grpc
       - 4318:4318 # http
-      - 14250:14250 # model.proto
+      - 16686:16686 # serve frontend
+    restart: always
   postgresql:
     image: postgres:latest
     command: -c 'config_file=/etc/postgresql/postgresql.conf'
