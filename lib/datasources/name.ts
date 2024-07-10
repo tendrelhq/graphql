@@ -61,8 +61,8 @@ export async function updateName(input: UpdateNameInput, sql: SQL) {
           );
   `;
 
-  // Attempt to update the master as well, but only do so if the given name
-  // matches the master, i.e. same language_id.
+  // Attempt to update the master as well, but only do so if the languages
+  // match.
   await sql`
       UPDATE public.languagemaster
       SET
@@ -71,7 +71,6 @@ export async function updateName(input: UpdateNameInput, sql: SQL) {
           languagemasterstatus = 'NEEDS_COMPLETE_RETRANSLATION'
       WHERE
           languagemasteruuid = ${input.id}
-          AND languagemastersource = ${input.value}
           AND languagemastersourcelanguagetypeid = (
               SELECT systagid
               FROM public.systag
