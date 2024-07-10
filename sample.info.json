@@ -1,0 +1,607 @@
+{
+  "args": { "first": 1 },
+  "info": {
+    "fieldName": "entities",
+    "fieldNodes": [
+      {
+        "kind": "Field",
+        "name": {
+          "kind": "Name",
+          "value": "entities",
+          "loc": { "start": 35, "end": 43 }
+        },
+        "arguments": [
+          {
+            "kind": "Argument",
+            "name": {
+              "kind": "Name",
+              "value": "first",
+              "loc": { "start": 44, "end": 49 }
+            },
+            "value": {
+              "kind": "IntValue",
+              "value": "1",
+              "loc": { "start": 51, "end": 52 }
+            },
+            "loc": { "start": 44, "end": 52 }
+          }
+        ],
+        "directives": [],
+        "selectionSet": {
+          "kind": "SelectionSet",
+          "selections": [
+            {
+              "kind": "Field",
+              "name": {
+                "kind": "Name",
+                "value": "edges",
+                "loc": { "start": 60, "end": 65 }
+              },
+              "arguments": [],
+              "directives": [],
+              "selectionSet": {
+                "kind": "SelectionSet",
+                "selections": [
+                  {
+                    "kind": "Field",
+                    "name": {
+                      "kind": "Name",
+                      "value": "node",
+                      "loc": { "start": 74, "end": 78 }
+                    },
+                    "arguments": [],
+                    "directives": [],
+                    "selectionSet": {
+                      "kind": "SelectionSet",
+                      "selections": [
+                        {
+                          "kind": "Field",
+                          "name": {
+                            "kind": "Name",
+                            "value": "id",
+                            "loc": { "start": 89, "end": 91 }
+                          },
+                          "arguments": [],
+                          "directives": [],
+                          "loc": { "start": 89, "end": 91 }
+                        },
+                        {
+                          "kind": "Field",
+                          "alias": {
+                            "kind": "Name",
+                            "value": "required",
+                            "loc": { "start": 100, "end": 108 }
+                          },
+                          "name": {
+                            "kind": "Name",
+                            "value": "components",
+                            "loc": { "start": 110, "end": 120 }
+                          },
+                          "arguments": [
+                            {
+                              "kind": "Argument",
+                              "name": {
+                                "kind": "Name",
+                                "value": "first",
+                                "loc": { "start": 121, "end": 126 }
+                              },
+                              "value": {
+                                "kind": "IntValue",
+                                "value": "2",
+                                "loc": { "start": 128, "end": 129 }
+                              },
+                              "loc": { "start": 121, "end": 129 }
+                            }
+                          ],
+                          "directives": [],
+                          "selectionSet": {
+                            "kind": "SelectionSet",
+                            "selections": [
+                              {
+                                "kind": "Field",
+                                "name": {
+                                  "kind": "Name",
+                                  "value": "edges",
+                                  "loc": { "start": 143, "end": 148 }
+                                },
+                                "arguments": [],
+                                "directives": [],
+                                "selectionSet": {
+                                  "kind": "SelectionSet",
+                                  "selections": [
+                                    {
+                                      "kind": "Field",
+                                      "name": {
+                                        "kind": " Name",
+                                        "value": "node",
+                                        "loc": { "start": 163, "end": 167 }
+                                      },
+                                      "arguments": [],
+                                      "directives": [],
+                                      "selectionSet": {
+                                        "kind": "SelectionSet",
+                                        "selections": [
+                                          {
+                                            "kind": "Field",
+                                            "name": {
+                                              "kind": "Name",
+                                              "value": "__typename",
+                                              "loc": {
+                                                "start": 184,
+                                                "end": 194
+                                              }
+                                            },
+                                            "arguments": [],
+                                            "directives": [],
+                                            "loc": { "start": 184, "end": 194 }
+                                          },
+                                          {
+                                            "kind": "InlineFragment",
+                                            "typeCondition": {
+                                              "kind": "NamedType",
+                                              "name": {
+                                                "kind": "Name",
+                                                "value": "ActivationState",
+                                                "loc": {
+                                                  "start": 216,
+                                                  "end": 231
+                                                }
+                                              },
+                                              "loc": {
+                                                "start": 216,
+                                                "end": 231
+                                              }
+                                            },
+                                            "directives": [],
+                                            "selectionSet": {
+                                              "kind": "Selection Set",
+                                              "selections": [
+                                                {
+                                                  "kind": "Field",
+                                                  "name": {
+                                                    "kind": "Name",
+                                                    "value": "isActive",
+                                                    "loc": {
+                                                      "start": 250,
+                                                      "end": 258
+                                                    }
+                                                  },
+                                                  "arguments": [],
+                                                  "directives": [],
+                                                  "loc": {
+                                                    "start": 250,
+                                                    "end": 258
+                                                  }
+                                                }
+                                              ],
+                                              "loc": {
+                                                "start": 232,
+                                                "end": 274
+                                              }
+                                            },
+                                            "loc": { "start": 209, "end": 274 }
+                                          },
+                                          {
+                                            "kind": "InlineFragment",
+                                            "typeCondition": {
+                                              "kind": "NamedType",
+                                              "name": {
+                                                "kind": "Name",
+                                                "value": "Name",
+                                                "loc": {
+                                                  " start": 296,
+                                                  "end": 300
+                                                }
+                                              },
+                                              "loc": {
+                                                "start": 296,
+                                                "end": 300
+                                              }
+                                            },
+                                            "directives": [],
+                                            "selectionSet": {
+                                              "kind": "SelectionSet",
+                                              "selections": [
+                                                {
+                                                  "kind": "Field",
+                                                  "name": {
+                                                    "kind": "Name",
+                                                    "value": " name",
+                                                    "loc": {
+                                                      "start": 319,
+                                                      "end": 323
+                                                    }
+                                                  },
+                                                  "arguments": [],
+                                                  "directives": [],
+                                                  "loc": {
+                                                    "start": 319,
+                                                    "end": 323
+                                                  }
+                                                }
+                                              ],
+                                              "loc": {
+                                                "start": 301,
+                                                "end": 339
+                                              }
+                                            },
+                                            "loc": { "start": 289, "end": 339 }
+                                          }
+                                        ],
+                                        "loc": { "start": 168, "end": 353 }
+                                      },
+                                      "loc": { "start": 163, "end": 353 }
+                                    }
+                                  ],
+                                  "loc": { "start": 149, "end": 365 }
+                                },
+                                "loc": { "start": 143, "end": 365 }
+                              }
+                            ],
+                            "loc": { "start": 131, "end": 375 }
+                          },
+                          "loc": { "start": 100, "end": 375 }
+                        }
+                      ],
+                      "loc": { "start": 79, "end": 383 }
+                    },
+                    "loc": { "start": 74, "end": 383 }
+                  }
+                ],
+                "loc": { "start": 66, "end": 389 }
+              },
+              "loc": { "start": 60, "end": 389 }
+            }
+          ],
+          "loc": { "start": 54, "end": 393 }
+        },
+        "loc": { "start": 35, "end": 393 }
+      }
+    ],
+    "returnType": "EntityConnection",
+    "parentType": "Query",
+    "path": { "key": "entities", "typename": "Query" },
+    "schema": {
+      "__validationErrors": [],
+      "extensio ns": {},
+      "extensionASTNodes": [],
+      "_queryType": "Query",
+      "_directives": [
+        "@include",
+        "@skip",
+        "@deprecated",
+        "@specifiedBy",
+        "@oneOf"
+      ],
+      "_typeMap": {
+        "Query": "Query",
+        "Node": "Node",
+        "ID ": "ID",
+        "EntityConnection": "EntityConnection",
+        "PageInfo": "PageInfo",
+        "Boolean": "Boolean",
+        "String": "String",
+        "EntityEdge": "EntityEdge",
+        "Entity": "Entity",
+        "ComponentConnection ": "ComponentConnection",
+        "ComponentEdge": "ComponentEdge",
+        "Component": "Component",
+        "ActivationState": "ActivationState",
+        "Name": "Name",
+        "Int": "Int",
+        "User": "User",
+        "Organization Connection": "OrganizationConnection",
+        "OrganizationEdge": "OrganizationEdge",
+        "Organization": "Organization",
+        "TemplateConnection": "TemplateConnection",
+        "TemplateEdge": "Templa teEdge",
+        "Template": "Template",
+        "__Schema": "__Schema",
+        "__Type": "__Type",
+        "__TypeKind": "__TypeKind",
+        "__Field": "__Field",
+        "__InputValue": "__InputValue",
+        "__EnumValue": "__EnumVa lue",
+        "__Directive": "__Directive",
+        "__DirectiveLocation": "__DirectiveLocation"
+      },
+      "_subTypeMap": { "Component": { "ActivationState": true, "Name": true } },
+      "_implementationsMap": {
+        "No de": {
+          "objects": [
+            "Entity",
+            "ActivationState",
+            "Name",
+            "User",
+            "Organization",
+            "Template"
+          ],
+          "interfaces": []
+        }
+      }
+    },
+    "fragments": {},
+    "operation": {
+      "kind": "OperationDefinition",
+      "operation": "query",
+      "name": {
+        "kind": "Name",
+        "value": "NamedActivatableEntities",
+        "loc": { "start": 6, "end": 30 }
+      },
+      "variableDefinitions": [],
+      "directives": [],
+      "selectionSet": {
+        "kind": "SelectionSet",
+        "selections": [
+          {
+            "kind": "Field",
+            "name": {
+              "kind": "Name",
+              "value": "entities",
+              "loc": { "start": 35, "end": 43 }
+            },
+            "arguments": [
+              {
+                "kind": "Argument",
+                "name": {
+                  "kind": "Name",
+                  "value": " first",
+                  "loc": { "start": 44, "end": 49 }
+                },
+                "value": {
+                  "kind": "IntValue",
+                  "value": "1",
+                  "loc": { "start": 51, "end": 52 }
+                },
+                "loc": { "start": 44, "end": 52 }
+              }
+            ],
+            "directives": [],
+            "selectionSet": {
+              "ki nd": "SelectionSet",
+              "selections": [
+                {
+                  "kind": "Field",
+                  "name": {
+                    "kind": "Name",
+                    "value": "edges",
+                    "loc": { "start": 60, "end": 65 }
+                  },
+                  "arguments": [],
+                  "directives": [],
+                  "selectionSet": {
+                    "kind": "SelectionSet",
+                    "selections": [
+                      {
+                        "kind": "Field",
+                        "name": {
+                          "kind": "Name",
+                          "value": "node",
+                          "loc": { "start": 74, "end": 78 }
+                        },
+                        "arguments": [],
+                        "directives": [],
+                        "selectionSet": {
+                          "kind": "Se lectionSet",
+                          "selections": [
+                            {
+                              "kind": "Field",
+                              "name": {
+                                "kind": "Name",
+                                "value": "id",
+                                "loc": { "start": 89, "end": 91 }
+                              },
+                              "arguments": [],
+                              "directives": [],
+                              "loc": { "start": 89, "end": 91 }
+                            },
+                            {
+                              "k ind": "Field",
+                              "alias": {
+                                "kind": "Name",
+                                "value": "required",
+                                "loc": { "start": 100, "end": 108 }
+                              },
+                              "name": {
+                                "kind": "Name",
+                                "value": "components",
+                                "loc": { "start": 110, "end": 120 }
+                              },
+                              "argument s": [
+                                {
+                                  "kind": "Argument",
+                                  "name": {
+                                    "kind": "Name",
+                                    "value": "first",
+                                    "loc": { "start": 121, "end": 126 }
+                                  },
+                                  "value": {
+                                    "kind": "IntValue",
+                                    "value": "2",
+                                    "loc": { "start": 128, "end": 129 }
+                                  },
+                                  "loc": { "start": 121, "end": 129 }
+                                }
+                              ],
+                              "directives": [],
+                              "selectionSet": {
+                                "kind": "SelectionSet",
+                                "selections": [
+                                  {
+                                    "kind": "Field",
+                                    "name": {
+                                      "kind": "Name",
+                                      "value": "edges",
+                                      "loc": { "start": 143, "en d": 148 }
+                                    },
+                                    "arguments": [],
+                                    "directives": [],
+                                    "selectionSet": {
+                                      "kind": "SelectionSet",
+                                      "selections": [
+                                        {
+                                          "kind": "Field",
+                                          "name": {
+                                            "kind": "Name",
+                                            "value": "node",
+                                            "loc": { "start": 163, "end": 167 }
+                                          },
+                                          "arguments": [],
+                                          "directives": [],
+                                          "selectionSet": {
+                                            "kind": "SelectionSet",
+                                            "selections": [
+                                              {
+                                                "kind": "Field",
+                                                "name": {
+                                                  "kind": "Name",
+                                                  "value": "__typename",
+                                                  "loc": {
+                                                    "start": 184,
+                                                    " end": 194
+                                                  }
+                                                },
+                                                "arguments": [],
+                                                "directives": [],
+                                                "loc": {
+                                                  "start": 184,
+                                                  "end": 194
+                                                }
+                                              },
+                                              {
+                                                "kind": "InlineFragment",
+                                                "typeCondition": {
+                                                  "kind": "NamedType",
+                                                  "name": {
+                                                    "kind": "Name",
+                                                    "value": "Acti vationState",
+                                                    "loc": {
+                                                      "start": 216,
+                                                      "end": 231
+                                                    }
+                                                  },
+                                                  "loc": {
+                                                    "start": 216,
+                                                    "end": 231
+                                                  }
+                                                },
+                                                "directives": [],
+                                                "selectionSet": {
+                                                  "kind": "SelectionSet",
+                                                  "selections": [
+                                                    {
+                                                      "kind": "Field",
+                                                      "name": {
+                                                        "k ind": "Name",
+                                                        "value": "isActive",
+                                                        "loc": {
+                                                          "start": 250,
+                                                          "end": 258
+                                                        }
+                                                      },
+                                                      "arguments": [],
+                                                      "directives": [],
+                                                      "loc": {
+                                                        "start": 250,
+                                                        "end": 258
+                                                      }
+                                                    }
+                                                  ],
+                                                  "loc": {
+                                                    "start": 232,
+                                                    "end": 274
+                                                  }
+                                                },
+                                                "loc": {
+                                                  "start ": 209,
+                                                  "end": 274
+                                                }
+                                              },
+                                              {
+                                                "kind": "InlineFragment",
+                                                "typeCondition": {
+                                                  "kind": "NamedType",
+                                                  "name": {
+                                                    "kind": "Name",
+                                                    "value": "Name",
+                                                    "loc": {
+                                                      "start": 296,
+                                                      "end": 300
+                                                    }
+                                                  },
+                                                  "loc": {
+                                                    "start": 296,
+                                                    "en d": 300
+                                                  }
+                                                },
+                                                "directives": [],
+                                                "selectionSet": {
+                                                  "kind": "SelectionSet",
+                                                  "selections": [
+                                                    {
+                                                      "kind": "Field",
+                                                      "name": {
+                                                        "kind": "Name",
+                                                        "value": "name",
+                                                        "loc": {
+                                                          "start": 319,
+                                                          "end": 323
+                                                        }
+                                                      },
+                                                      "argumen ts": [],
+                                                      "directives": [],
+                                                      "loc": {
+                                                        "start": 319,
+                                                        "end": 323
+                                                      }
+                                                    }
+                                                  ],
+                                                  "loc": {
+                                                    "start": 301,
+                                                    "end": 339
+                                                  }
+                                                },
+                                                "loc": {
+                                                  "start": 289,
+                                                  "end": 339
+                                                }
+                                              }
+                                            ],
+                                            "loc": { "start": 168, "end": 353 }
+                                          },
+                                          "loc": { "start": 163, " end": 353 }
+                                        }
+                                      ],
+                                      "loc": { "start": 149, "end": 365 }
+                                    },
+                                    "loc": { "start": 143, "end": 365 }
+                                  }
+                                ],
+                                "loc": { "start": 131, "end": 375 }
+                              },
+                              "loc": { "start": 100, "end": 375 }
+                            }
+                          ],
+                          "loc": { "start": 79, "end": 383 }
+                        },
+                        " loc": { "start": 74, "end": 383 }
+                      }
+                    ],
+                    "loc": { "start": 66, "end": 389 }
+                  },
+                  "loc": { "start": 60, "end": 389 }
+                }
+              ],
+              "loc": { "start": 54, "end": 393 }
+            },
+            "loc": { "start": 35, "end": 393 }
+          }
+        ],
+        "loc": { "start": 31, "end": 395 }
+      },
+      "loc": { "start": 0, "end": 395 }
+    },
+    "variableValues": {}
+  }
+}

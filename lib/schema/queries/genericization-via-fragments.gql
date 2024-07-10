@@ -1,25 +1,32 @@
-query GenericizationViaFragmentsExample($options: OptionsType) {
-  id
-}
-
-fragment Named on Node {
-  node(id: $nodeId) {
-    component(type: "name") {
-      edges {
-        node {
-          name
+# The following query retrieves all entities that have the two named components:
+# - ActivationState
+# - Name
+# Internally, the compiler will turn these fragments into INNER JOINs, such that
+# rows will be removed if they do not have the required components.
+query NamedActivatableEntities {
+  entities {
+    edges {
+      node {
+        id
+        # By default, component selections behave similar to INNER JOINs.
+        # That is: only entities that have the selected components are returned.
+        # TODO: semantics for required/optional. Like "give me only activatable
+        # and named entities, but also give me the <xxx> component for those
+        # entities even if they don't have it.
+        components {
+          edges {
+            node {
+              __typename
+              ... on ActivationState {
+                isActive
+              }
+              ... on Name {
+                value
+              }
+            }
+          }
         }
       }
     }
   }
-}
-
-type Node {
-  component(type: String!): Component
-}
-
-interface Name {
-  id: ID!
-  source: NameSource!
-  translations(options: TranslationOptions!): [TranslatedText!]!
 }

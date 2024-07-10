@@ -21,7 +21,6 @@ package:
     docker build -t {{image_name}} .
 
 sidecars: database jaeger
-    docker compose logs -f
 
 start:
     docker compose up --detach && docker compose logs -f graphql

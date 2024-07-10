@@ -8,7 +8,8 @@
     "compile": "bun build.ts",
     "generate": "graphql-codegen && biome check --write lib/schema/resolvers/**/*.ts",
     "start": "bun ./bin/app.ts",
-    "start+tracing": "bun -r ./lib/instrument.ts ./bin/app.ts"
+    "start+tracing": "bun -r ./lib/instrument.ts ./bin/app.ts",
+    "start+relay": "bun --watch ./bin/relay.ts"
   },
   "devDependencies": {
     "@biomejs/biome": "^1.8.3",
@@ -44,6 +45,7 @@
     "dotenv": "^16.4.5",
     "express": "^4.19.2",
     "graphql": "^16.9.0",
+    "graphql-http": "^1.22.1",
     "graphql-relay": "^0.10.1",
     "graphql-scalars": "^1.23.0",
     "graphql-tag": "^2.12.6",
@@ -51,6 +53,7 @@
     "myzod": "^1.11.0",
     "pattycake": "^0.0.2",
     "postgres": "^3.4.4",
+    "ruru": "^2.0.0-beta.13",
     "ts-pattern": "^5.2.0"
   }
 }
