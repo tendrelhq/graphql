@@ -1,0 +1,50 @@
+type Name implements Node {
+  createdAt: String
+  id: ID!
+  languageId: String
+  updatedAt: String
+  value: String
+}
+
+interface Node {
+  id: ID!
+}
+
+type Organization implements Node {
+  createdAt: String
+  id: ID!
+  name: Name
+  nameId: String
+  updatedAt: String
+}
+
+type PageInfo {
+  endCursor: String
+  hasNextPage: Boolean!
+  hasPreviousPage: Boolean!
+  startCursor: String
+}
+
+type Query {
+  node(id: ID!): Node
+  nodes(ids: [ID!]!): [Node]!
+  user: User!
+}
+
+type User implements Node {
+  createdAt: String
+  id: ID!
+  name: String
+  organizations(after: String, before: String, first: Int, last: Int): UserOrganizationsConnection
+  updatedAt: String
+}
+
+type UserOrganizationsConnection {
+  edges: [UserOrganizationsConnectionEdge]
+  pageInfo: PageInfo!
+}
+
+type UserOrganizationsConnectionEdge {
+  cursor: String!
+  node: Organization
+}

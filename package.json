@@ -6,10 +6,9 @@
   "scripts": {
     "clean": "rimraf lib/schema/__generated__ node_modules out",
     "compile": "bun build.ts",
-    "generate": "graphql-codegen && biome check --write lib/schema/resolvers/**/*.ts",
-    "start": "bun ./bin/app.ts",
-    "start+tracing": "bun -r ./lib/instrument.ts ./bin/app.ts",
-    "start+relay": "bun --watch ./bin/relay.ts"
+    "generate": "bun ./bin/schema.ts",
+    "start": "bun --watch ./bin/app.ts",
+    "start+tracing": "bun -r ./lib/instrument.ts ./bin/app.ts"
   },
   "devDependencies": {
     "@biomejs/biome": "^1.8.3",
@@ -32,6 +31,11 @@
     "@apollo/server": "^4.10.4",
     "@clerk/clerk-sdk-node": "^5.0.14",
     "@clerk/shared": "^2.3.1",
+    "@envelop/core": "^5.0.1",
+    "@envelop/dataloader": "^6.0.0",
+    "@envelop/opentelemetry": "^6.3.1",
+    "@envelop/parser-cache": "^7.0.0",
+    "@envelop/validation-cache": "^7.0.0",
     "@opentelemetry/api": "^1.9.0",
     "@opentelemetry/exporter-trace-otlp-http": "^0.52.1",
     "@opentelemetry/instrumentation-dataloader": "^0.10.0",
@@ -40,6 +44,8 @@
     "@opentelemetry/instrumentation-http": "^0.52.1",
     "@opentelemetry/resource-detector-aws": "^1.5.1",
     "@opentelemetry/sdk-node": "^0.52.1",
+    "@pothos/core": "^4.0.0",
+    "@pothos/plugin-relay": "^4.0.0",
     "cors": "^2.8.5",
     "dataloader": "^2.2.2",
     "dotenv": "^16.4.5",
@@ -49,6 +55,7 @@
     "graphql-relay": "^0.10.1",
     "graphql-scalars": "^1.23.0",
     "graphql-tag": "^2.12.6",
+    "graphql-yoga": "^5.6.0",
     "morgan": "^1.10.0",
     "myzod": "^1.11.0",
     "pattycake": "^0.0.2",
