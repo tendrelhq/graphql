@@ -34,6 +34,9 @@ secrets:
 
 variables:
   NODE_ENV: production
+  # https://docs.newrelic.com/docs/opentelemetry/best-practices/opentelemetry-otlp/#attribute-limits
+  OTEL_ATTRIBUTE_COUNT_LIMIT: 64
+  OTEL_ATTRIBUTE_VALUE_LENGTH_LIMIT: 4095
   STAGE: ${COPILOT_ENVIRONMENT_NAME}
 
 # You can override any of the values defined above by environment.
