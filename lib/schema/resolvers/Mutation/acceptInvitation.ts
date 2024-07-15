@@ -1,9 +1,7 @@
 import { sql } from "@/datasources/postgres";
 import type { MutationResolvers } from "@/schema";
 
-export const acceptInvitation: NonNullable<
-  MutationResolvers["acceptInvitation"]
-> = async (_, { input }, ctx) => {
+export const acceptInvitation: NonNullable<MutationResolvers['acceptInvitation']> = async (_, { input }, ctx) => {
   await sql`
         UPDATE public.worker AS u
         SET

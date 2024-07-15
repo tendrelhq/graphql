@@ -2,7 +2,7 @@ import { sql } from "@/datasources/postgres";
 import type { MutationResolvers } from "@/schema";
 import { GraphQLError } from "graphql";
 
-export const createUser: NonNullable<MutationResolvers["createUser"]> = async (
+export const createUser: NonNullable<MutationResolvers['createUser']> = async (
   _,
   { input },
   ctx,

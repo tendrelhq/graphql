@@ -1,7 +1,7 @@
 import { sql } from "@/datasources/postgres";
 import type { Language, QueryResolvers } from "@/schema";
 
-export const languages: NonNullable<QueryResolvers["languages"]> = async (
+export const languages: NonNullable<QueryResolvers['languages']> = async (
   _,
   __,
   ___,

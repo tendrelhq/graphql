@@ -1,9 +1,7 @@
 import { sql } from "@/datasources/postgres";
 import type { MutationResolvers } from "@/schema";
 
-export const enableLanguage: NonNullable<
-  MutationResolvers["enableLanguage"]
-> = async (_, { orgId, languageId }, ctx) => {
+export const enableLanguage: NonNullable<MutationResolvers['enableLanguage']> = async (_, { orgId, languageId }, ctx) => {
   await sql.begin(async sql => {
     // This is basically an "upsert". When first enabling a language, no such
     // record will exist and thus the INSERT will take. A record *will exist*

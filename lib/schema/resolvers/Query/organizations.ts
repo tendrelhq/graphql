@@ -1,9 +1,7 @@
 import { sql } from "@/datasources/postgres";
 import type { Organization, QueryResolvers } from "@/schema";
 
-export const organizations: NonNullable<
-  QueryResolvers["organizations"]
-> = async (_, __, ctx) => {
+export const organizations: NonNullable<QueryResolvers['organizations']> = async (_, __, ctx) => {
   const u = await ctx.orm.user.byIdentityId.load(ctx.auth.userId);
   return await sql<Organization[]>`
       SELECT

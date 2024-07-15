@@ -5,9 +5,7 @@ import { clerkClient } from "@clerk/clerk-sdk-node";
 import { isClerkAPIResponseError } from "@clerk/shared";
 import { GraphQLError } from "graphql";
 
-export const createInvitation: NonNullable<
-  MutationResolvers["createInvitation"]
-> = async (_, { input }, ctx) => {
+export const createInvitation: NonNullable<MutationResolvers['createInvitation']> = async (_, { input }, ctx) => {
   await protect({ orgId: input.org_id, userId: ctx.auth.userId }, ["Admin"]);
 
   // HACK: This is pretty fucked. But I suppose ok for now.

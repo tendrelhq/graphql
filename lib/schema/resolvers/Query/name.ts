@@ -1,6 +1,6 @@
 import type { QueryResolvers } from "@/schema";
 
-export const name: NonNullable<QueryResolvers["name"]> = async (
+export const name: NonNullable<QueryResolvers['name']> = async (
   _,
   { id },
   ctx,

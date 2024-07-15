@@ -4,15 +4,19 @@
   "module": "lib/index.ts",
   "type": "module",
   "scripts": {
+    "ci:build": "bun i --frozen-lockfile && NODE_ENV=production bun compile",
     "clean": "rimraf lib/schema/__generated__ node_modules out",
     "compile": "bun build.ts",
     "generate": "graphql-codegen && biome check --apply lib/schema/resolvers/**/*.ts",
     "start": "bun ./bin/app.ts",
-    "start+tracing": "bun -r ./lib/instrument.ts ./bin/app.ts"
+    "start+tracing": "bun -r ./lib/instrument.ts ./bin/app.ts",
+    "prepare": "husky"
   },
   "devDependencies": {
     "@biomejs/biome": "^1.8.3",
     "@clerk/types": "^4.6.1",
+    "@commitlint/cli": "^19.3.0",
+    "@commitlint/config-conventional": "^19.2.2",
     "@eddeee888/gcg-typescript-resolver-files": "^0.8.1",
     "@graphql-codegen/cli": "^5.0.2",
     "@graphql-codegen/typescript": "^4.0.8",
@@ -21,7 +25,9 @@
     "@types/cors": "^2.8.17",
     "@types/morgan": "^1.9.9",
     "graphql-language-service-cli": "^3.4.1",
+    "husky": "^9.0.11",
     "rimraf": "^5.0.7",
+    "semantic-release": "^24.0.0",
     "typescript-language-server": "^4.3.3"
   },
   "peerDependencies": {

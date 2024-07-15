@@ -1,9 +1,7 @@
 import { sql } from "@/datasources/postgres";
 import type { MutationResolvers } from "@/schema";
 
-export const createWorker: NonNullable<
-  MutationResolvers["createWorker"]
-> = async (_, { input }, ctx) => {
+export const createWorker: NonNullable<MutationResolvers['createWorker']> = async (_, { input }, ctx) => {
   const [worker] = await sql<[{ id: string }?]>`
       INSERT INTO public.workerinstance (
           workerinstanceworkerid,

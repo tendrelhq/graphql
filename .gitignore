@@ -22,3 +22,8 @@
 
 ### macOS ###
 .DS_Store
+
+### jetbrains ###
+.idea
+
+

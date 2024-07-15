@@ -2,7 +2,7 @@ import { updateName as updateName_ } from "@/datasources/name";
 import { sql } from "@/datasources/postgres";
 import type { MutationResolvers } from "@/schema";
 
-export const updateName: NonNullable<MutationResolvers["updateName"]> = async (
+export const updateName: NonNullable<MutationResolvers['updateName']> = async (
   _,
   { input },
   ctx,
