@@ -43,7 +43,10 @@ app.use((req, _, next) => {
 
 app.use(
   "/",
-  cors(),
+  cors({
+    // for w3c trace context propagation
+    allowedHeaders: "*",
+  }),
   auth.clerk(),
   express.json(),
   expressMiddleware(server, {
