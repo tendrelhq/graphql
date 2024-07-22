@@ -93,7 +93,9 @@ type User {
   authentication_provider_id: ID
   language: Language!
   language_id: ID!
-  name: String!
+  firstName: String!
+  lastName: String!
+  displayName: String!
   tags: [Tag!]!
 }
 
@@ -183,14 +185,18 @@ input CreateUserInput {
   id: ID
   active: Boolean!
   language_id: ID!
-  name: String!
+  firstName: String!
+  lastName: String!
+  displayName: String
   username: String
 }
 
 input UpdateUserInput {
   id: ID!
   language_id: ID!
-  name: String!
+  firstName: String!
+  lastName: String!
+  displayName: String
 }
 
 input CreateWorkerInput {
