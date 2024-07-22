@@ -10,13 +10,17 @@ export const createUser: NonNullable<MutationResolvers["createUser"]> = async (
   const [user] = await sql<[{ id: string }?]>`
       INSERT INTO public.worker (
           workerusername,
+          workerfirstname,
+          workerlastname,
           workerfullname,
           workerlanguageid,
           workerstartdate,
           workerenddate
       ) VALUES (
           ${input.username ?? null},
-          ${input.name},
+          ${input.firstName},
+          ${input.lastName},
+          ${input.displayName ?? null},
           (
               SELECT systagid
               FROM public.systag

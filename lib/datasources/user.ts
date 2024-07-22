@@ -18,7 +18,9 @@ function selectUsers(
         u.workeridentityid AS authentication_identity_id,
         a.systaguuid AS authentication_provider_id,
         l.systaguuid AS language_id,
-        u.workerfullname AS name
+        u.workerfirstname AS "firstName",
+        u.workerlastname AS "lastName",
+        COALESCE(u.workerfullname, u.workergeneratedname) AS "displayName"
     FROM public.worker AS u
     LEFT JOIN public.systag AS a
         ON u.workeridentitysystemid = a.systagid
