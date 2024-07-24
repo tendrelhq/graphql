@@ -9,6 +9,7 @@ import { expressMiddleware } from "@apollo/server/express4";
 import { ApolloServerPluginDrainHttpServer } from "@apollo/server/plugin/drainHttpServer";
 import cors from "cors";
 import express from "express";
+import { GraphQLError, getIntrospectionQuery, parse, print } from "graphql";
 import morgan from "morgan";
 
 const app = express();
@@ -51,6 +52,13 @@ app.use(
   express.json(),
   expressMiddleware(server, {
     async context({ req }) {
+      if (!req.auth && process.env.NODE_ENV !== "development") {
+        throw new GraphQLError("Unauthenticated", {
+          extensions: {
+            hint: "Please sign in",
+          },
+        });
+      }
       return {
         auth: req.auth,
         orm: orm(req),

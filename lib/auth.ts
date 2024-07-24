@@ -1,7 +1,9 @@
 import {
-  ClerkExpressRequireAuth,
+  ClerkExpressWithAuth,
   type StrictAuthProp,
+  clerkClient,
 } from "@clerk/clerk-sdk-node";
+import type e from "express";
 import { sql } from "./datasources/postgres";
 
 declare global {
@@ -14,9 +16,21 @@ export type Auth = StrictAuthProp["auth"];
 
 export default {
   clerk() {
-    return ClerkExpressRequireAuth({
-      //
-    });
+    const clerkMiddleware = ClerkExpressWithAuth();
+    return async (req: e.Request, res: e.Response, next: e.NextFunction) => {
+      if (process.env.NODE_ENV === "development") {
+        const userId = req.headers["x-tendrel-user"];
+        if (userId) {
+          req.auth = {
+            userId: userId as string,
+          } as Auth;
+
+          return next();
+        }
+      }
+
+      clerkMiddleware(req, res, next);
+    };
   },
 };
 

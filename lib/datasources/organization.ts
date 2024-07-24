@@ -12,14 +12,7 @@ export default (_: Request) =>
             (o.customerenddate IS NULL OR o.customerenddate > NOW()) AS active,
             o.customerstartdate AS activated_at,
             o.customerenddate AS deactivated_at,
-            (
-                SELECT o.customerexternalid
-                FROM public.systag AS s
-                WHERE
-                    o.customerexternalsystemid IS NOT NULL
-                    AND s.systagid = o.customerexternalsystemid
-                    AND s.systagtype = 'Stripe'
-            ) AS billing_id,
+            o.customerexternalid AS billing_id,
             n.languagemasteruuid AS name_id
         FROM public.customer AS o
         INNER JOIN public.languagemaster AS n

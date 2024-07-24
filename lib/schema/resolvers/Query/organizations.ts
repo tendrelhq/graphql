@@ -6,19 +6,13 @@ export const organizations: NonNullable<
 > = async (_, __, ctx) => {
   const u = await ctx.orm.user.byIdentityId.load(ctx.auth.userId);
   return await sql<Organization[]>`
+      explain analyze
       SELECT
           o.customeruuid AS id,
           (o.customerenddate IS NULL OR o.customerenddate > now()) AS active,
           o.customerstartdate AS activated_at,
           o.customerenddate AS deactivated_at,
-          (
-              SELECT o.customerexternalid
-              FROM public.systag AS s
-              WHERE
-                  o.customerexternalsystemid IS NOT NULL
-                  AND s.systagid = o.customerexternalsystemid
-                  AND s.systagtype IN ('Stripe', 'Tendrel')
-          ) AS billing_id,
+          o.customerexternalid AS billing_id,
           n.languagemasteruuid AS name_id
       FROM public.customer AS o
       INNER JOIN public.workerinstance AS w

@@ -60,10 +60,12 @@ type Organization {
   active: Boolean!
   activated_at: String
   deactivated_at: String
+  billing_id: String
+  languages: [EnabledLanguage!]!
+  locations(first: Int, last: Int, before: String, after: String): LocationConnection!
   name: Name!
   name_id: ID!
-  languages: [EnabledLanguage!]!
-  billing_id: String
+  workers(first: Int, last: Int, before: String, after: String): WorkerConnection!
 }
 
 type Location {
@@ -71,6 +73,7 @@ type Location {
   active: Boolean!
   activated_at: String
   deactivated_at: String
+  children(options: LocationsQueryOptions): [Location!]!
   name: Name!
   name_id: ID!
   parent: Location
@@ -79,8 +82,15 @@ type Location {
   site: Location!
   site_id: ID!
   tags: [Tag!]!
+}
 
-  children(options: LocationsQueryOptions): [Location!]!
+type LocationConnection {
+  edges: [LocationEdge!]!
+  pageInfo: PageInfo!
+}
+
+type LocationEdge {
+  location: Location!
 }
 
 type User {
@@ -91,12 +101,29 @@ type User {
   authentication_identity_id: ID
   authentication_provider: Tag
   authentication_provider_id: ID
-  language: Language!
-  language_id: ID!
+  displayName: String!
   firstName: String!
   lastName: String!
-  displayName: String!
+  language: Language!
+  language_id: ID!
+  organizations(first: Int, last: Int, after: String, before: String): OrganizationConnection!
   tags: [Tag!]!
+}
+
+type OrganizationConnection {
+  edges: [OrganizationEdge!]!
+  pageInfo: PageInfo!
+}
+
+type OrganizationEdge {
+  organization: Organization!
+}
+
+type PageInfo {
+  hasNextPage: Boolean!
+  hasPrevPage: Boolean!
+  startCursor: String
+  endCursor: String
 }
 
 type Worker {
@@ -116,6 +143,15 @@ type Worker {
   user_id: ID!
 }
 
+type WorkerConnection {
+  edges: [WorkerEdge!]!
+  pageInfo: PageInfo!
+}
+
+type WorkerEdge {
+  worker: Worker!
+}
+
 type Query {
   languages: [Language!]!
   locations(customerId: ID!, options: LocationsQueryOptions): [Location!]!
@@ -125,6 +161,9 @@ type Query {
   organization(id: ID!): Organization!
   roles: [Tag!]!
   workers(customerId: ID!, options: WorkersQueryOptions): [Worker!]!
+
+  # v2
+  user: User!
 }
 
 input LocationsQueryOptions {
