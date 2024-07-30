@@ -19,9 +19,6 @@ export const createInvitation: NonNullable<
     });
   }
 
-  console.log("org", input.orgId);
-  // throw "break";
-
   // HACK: This is pretty fucked. But I suppose ok for now.
   // Will be fixed when we (hopefully) integrate with Clerk organizations.
   const i = await clerkClient.invitations

@@ -5,7 +5,7 @@ import { GraphQLError } from "graphql";
 /*
  * Generic "refetch" entrypoint. Useful for ensuring a client has the latest
  * state for a particular "node" (really a query), rather than saying "give me
- * everything that's changed since <some timestamp> though this will be a
+ * everything that's changed since <some timestamp> though that will be a
  * useful synchronization entrypoint as well.
  */
 export const node: NonNullable<QueryResolvers["node"]> = async (

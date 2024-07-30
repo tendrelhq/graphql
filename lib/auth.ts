@@ -17,8 +17,8 @@ export type Auth = StrictAuthProp["auth"];
 export default {
   clerk() {
     // In development it is nice to be able to use graphiql to help write your
-    // queries. The tendrel console explorer is pretty janky so one day this
-    // won't be necessary, but we'll add this little backdoor in until then.
+    // queries. The tendrel console explorer is pretty janky but one day this
+    // won't be necessary. Until then we'll add in this little backdoor.
     // Note that this won't work (easily) once Clerk organizations and roles
     // enter the fold.
     //

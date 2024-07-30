@@ -56,7 +56,9 @@ app.use(
   express.json(),
   expressMiddleware(server, {
     async context({ req }) {
-      console.log(req.body);
+      if (process.env.NODE_ENV === "development") {
+        console.log(req.body);
+      }
       if (!req.auth.userId && process.env.NODE_ENV !== "development") {
         throw new GraphQLError("Unauthenticated", {
           extensions: {
