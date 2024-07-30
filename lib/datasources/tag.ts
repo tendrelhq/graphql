@@ -9,8 +9,8 @@ export default (_: Request) =>
     const rows = await sql<Tag[]>`
         SELECT
             s.systaguuid AS id,
-            n.languagemasteruuid AS name_id,
-            p.systaguuid AS parent_id,
+            n.languagemasteruuid AS "nameId",
+            p.systaguuid AS "parentId",
             s.systagtype AS type
         FROM public.systag AS s
         INNER JOIN public.languagemaster AS n

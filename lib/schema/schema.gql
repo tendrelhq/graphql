@@ -1,43 +1,56 @@
+interface Node {
+  id: ID!
+}
+
 type Language {
   id: ID!
   code: String!
   name: Name!
-  name_id: ID!
+  nameId: ID!
 }
 
-type Name {
+type Name implements Node {
   id: ID!
   language: Language!
-  language_id: ID!
+  languageId: ID!
   metadata: NameMetadata!
   value: String!
 }
 
 type NameMetadata {
-  name_id: ID!
-  source_text: String!
-  source_language_id: ID!
-  source_language: Language!
-  translated_at: String!
+  nameId: ID!
+  sourceText: String!
+  sourceLanguageId: ID!
+  sourceLanguage: Language!
+  translatedAt: String!
 }
 
 type Tag {
   id: ID!
   name: Name!
-  name_id: ID!
+  nameId: ID!
   type: String!
   parent: Tag
-  parent_id: ID
+  parentId: ID
 }
 
-type EnabledLanguage {
+type EnabledLanguage implements Node {
   id: ID!
   active: Boolean!
-  activated_at: String
-  deactivated_at: String
+  activatedAt: String
+  deactivatedAt: String
   language: Language!
-  language_id: ID!
+  languageId: ID!
   primary: Boolean!
+}
+
+type EnabledLanguageConnection {
+  edges: [EnabledLanguageEdge!]!
+  pageInfo: PageInfo!
+}
+
+type EnabledLanguageEdge {
+  node: EnabledLanguage!
 }
 
 enum InvitationStatus {
@@ -49,82 +62,116 @@ enum InvitationStatus {
 type Invitation {
   id: ID!
   status: InvitationStatus!
-  email_address: String!
-  worker_id: ID!
-  created_at: String!
-  updated_at: String!
+  emailAddress: String!
+  workerId: ID!
+  createdAt: String!
+  updatedAt: String!
 }
 
-type Organization {
+type Organization implements Node {
   id: ID!
   active: Boolean!
-  activated_at: String
-  deactivated_at: String
+  activatedAt: String
+  deactivatedAt: String
+  billingId: String
+  languages(first: Int, last: Int, before: String, after: String): EnabledLanguageConnection!
+  locations(first: Int, last: Int, before: String, after: String): LocationConnection!
   name: Name!
-  name_id: ID!
-  languages: [EnabledLanguage!]!
-  billing_id: String
+  nameId: ID!
+  workers(first: Int, last: Int, before: String, after: String): WorkerConnection!
 }
 
-type Location {
+type Location implements Node {
   id: ID!
   active: Boolean!
-  activated_at: String
-  deactivated_at: String
-  name: Name!
-  name_id: ID!
-  parent: Location
-  parent_id: ID
-  scan_code: ID
-  site: Location!
-  site_id: ID!
-  tags: [Tag!]!
-
+  activatedAt: String
+  deactivatedAt: String
   children(options: LocationsQueryOptions): [Location!]!
+  name: Name!
+  nameId: ID!
+  parent: Location
+  parentId: ID
+  scanCode: ID
+  site: Location!
+  siteId: ID!
+  tags: [Tag!]!
 }
 
-type User {
+type LocationConnection {
+  edges: [LocationEdge!]!
+  pageInfo: PageInfo!
+}
+
+type LocationEdge {
+  node: Location!
+}
+
+type User implements Node {
   id: ID!
   active: Boolean!
-  activated_at: String
-  deactivated_at: String
-  authentication_identity_id: ID
-  authentication_provider: Tag
-  authentication_provider_id: ID
-  language: Language!
-  language_id: ID!
+  activatedAt: String
+  deactivatedAt: String
+  authenticationIdentityId: ID
+  authenticationProvider: Tag
+  authenticationProviderId: ID
+  displayName: String!
   firstName: String!
   lastName: String!
-  displayName: String!
+  language: Language!
+  languageId: ID!
+  organizations(first: Int, last: Int, after: String, before: String): OrganizationConnection!
   tags: [Tag!]!
 }
 
-type Worker {
+type OrganizationConnection {
+  edges: [OrganizationEdge!]!
+  pageInfo: PageInfo!
+}
+
+type OrganizationEdge {
+  node: Organization!
+}
+
+type PageInfo {
+  hasNextPage: Boolean!
+  hasPreviousPage: Boolean!
+  startCursor: String
+  endCursor: String
+}
+
+type Worker implements Node {
   id: ID!
   active: Boolean!
-  activated_at: String
-  deactivated_at: String
+  activatedAt: String
+  deactivatedAt: String
   invitation: Invitation
-  invitation_id: ID
+  invitationId: ID
   language: Language!
-  language_id: ID!
+  languageId: ID!
   role: Tag!
-  role_id: ID!
-  scan_code: String
+  roleId: ID!
+  scanCode: String
   tags: [Tag!]!
   user: User!
-  user_id: ID!
+  userId: ID!
+}
+
+type WorkerConnection {
+  edges: [WorkerEdge!]!
+  pageInfo: PageInfo!
+}
+
+type WorkerEdge {
+  node: Worker!
 }
 
 type Query {
   languages: [Language!]!
-  locations(customerId: ID!, options: LocationsQueryOptions): [Location!]!
-  location(id: ID!): Location!
-  name(id: ID!): Name!
-  organizations: [Organization!]!
-  organization(id: ID!): Organization!
   roles: [Tag!]!
-  workers(customerId: ID!, options: WorkersQueryOptions): [Worker!]!
+
+  # v2
+  node(id: ID!): Node!
+  user: User!
 }
 
 input LocationsQueryOptions {
@@ -169,22 +216,22 @@ input CreateLocationInput {
   id: ID
   active: Boolean!
   name: CreateNameInput!
-  org_id: ID!
-  scan_code: ID
+  orgId: ID!
+  scanCode: ID
 }
 
 input UpdateLocationInput {
   id: ID!
-  activated_at: String
-  deactivated_at: String
+  activatedAt: String
+  deactivatedAt: String
   name: UpdateNameInput
-  scan_code: ID
+  scanCode: ID
 }
 
 input CreateUserInput {
   id: ID
   active: Boolean!
-  language_id: ID!
+  languageId: ID!
   firstName: String!
   lastName: String!
   displayName: String
@@ -193,7 +240,7 @@ input CreateUserInput {
 
 input UpdateUserInput {
   id: ID!
-  language_id: ID!
+  languageId: ID!
   firstName: String!
   lastName: String!
   displayName: String
@@ -202,44 +249,44 @@ input UpdateUserInput {
 input CreateWorkerInput {
   id: ID
   active: Boolean!
-  language_id: ID!
-  org_id: ID!
-  role_id: ID!
-  scan_code: ID
-  user_id: ID!
+  languageId: ID!
+  orgId: ID!
+  roleId: ID!
+  scanCode: ID
+  userId: ID!
 }
 
 input UpdateWorkerInput {
   id: ID!
-  activated_at: String
-  deactivated_at: String
-  language_id: ID!
-  role_id: ID!
-  scan_code: ID
+  activatedAt: String
+  deactivatedAt: String
+  languageId: ID!
+  roleId: ID!
+  scanCode: ID
 }
 
 input CreateNameInput {
   id: ID
   active: Boolean!
-  language_id: ID!
+  languageId: ID!
   value: String!
 }
 
 input UpdateNameInput {
   id: ID!
-  activated_at: String
-  deactivated_at: String
-  language_id: ID!
+  activatedAt: String
+  deactivatedAt: String
+  languageId: ID!
   value: String!
 }
 
 input CreateInvitationInput {
-  email_address: String!
-  org_id: ID!
-  worker_id: ID!
+  emailAddress: String!
+  orgId: ID!
+  workerId: ID!
 }
 
 input AcceptInvitationInput {
-  authentication_identity_id: ID!
-  worker_id: ID!
+  authenticationIdentityId: ID!
+  workerId: ID!
 }

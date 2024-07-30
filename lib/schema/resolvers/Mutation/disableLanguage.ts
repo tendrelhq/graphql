@@ -1,10 +1,13 @@
 import { sql } from "@/datasources/postgres";
 import type { MutationResolvers } from "@/schema";
+import { decodeGlobalId } from "@/util";
 import { GraphQLError } from "graphql";
 
 export const disableLanguage: NonNullable<
   MutationResolvers["disableLanguage"]
-> = async (_, { orgId, languageId }, __) => {
+> = async (_, { languageId, ...args }, __) => {
+  const { id: orgId } = decodeGlobalId(args.orgId);
+
   await sql.begin(async sql => {
     const check = await sql`
         SELECT 1
