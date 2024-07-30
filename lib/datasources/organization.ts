@@ -1,26 +1,21 @@
 import { NotFoundError } from "@/errors";
 import type { Organization } from "@/schema";
+import type { WithKey } from "@/util";
 import Dataloader from "dataloader";
 import type { Request } from "express";
 import { sql } from "./postgres";
 
 export default (_: Request) =>
   new Dataloader<string, Organization>(async keys => {
-    const rows = await sql<Organization[]>`
+    const rows = await sql<WithKey<Organization>[]>`
         SELECT
-            o.customeruuid AS id,
+            o.customeruuid AS _key,
+            encode(('organization:' || o.customeruuid)::bytea, 'base64') AS id,
             (o.customerenddate IS NULL OR o.customerenddate > NOW()) AS active,
-            o.customerstartdate AS activated_at,
-            o.customerenddate AS deactivated_at,
-            (
-                SELECT o.customerexternalid
-                FROM public.systag AS s
-                WHERE
-                    o.customerexternalsystemid IS NOT NULL
-                    AND s.systagid = o.customerexternalsystemid
-                    AND s.systagtype = 'Stripe'
-            ) AS billing_id,
-            n.languagemasteruuid AS name_id
+            o.customerstartdate AS "activatedAt",
+            o.customerenddate AS "deactivatedAt",
+            o.customerexternalid AS "billingId",
+            n.languagemasteruuid AS "nameId"
         FROM public.customer AS o
         INNER JOIN public.languagemaster AS n
             ON o.customernamelanguagemasterid = n.languagemasterid
@@ -28,7 +23,7 @@ export default (_: Request) =>
     `;
 
     const byId = rows.reduce(
-      (acc, row) => acc.set(row.id as string, row),
+      (acc, row) => acc.set(row._key as string, row),
       new Map<string, Organization>(),
     );
 
