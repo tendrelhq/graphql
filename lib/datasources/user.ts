@@ -1,5 +1,6 @@
 import { NotFoundError } from "@/errors";
 import type { User } from "@/schema";
+import type { WithKey } from "@/util";
 import Dataloader from "dataloader";
 import type { Request } from "express";
 import { sql } from "./postgres";
@@ -8,16 +9,16 @@ function selectUsers(
   key: "workeridentityid" | "workeruuid",
   keys: readonly string[],
 ) {
-  return sql<(User & { key: string })[]>`
+  return sql<WithKey<User>[]>`
     SELECT
-        u.${sql(key)} AS key,
-        u.workeruuid AS id,
+        u.${sql(key)} AS _key,
+        encode(('user:' || u.workeruuid)::bytea, 'base64') AS id,
         (u.workerenddate IS NULL OR u.workerenddate > now()) AS active,
-        u.workerstartdate::text AS activated_at,
-        u.workerenddate::text AS deactivated_at,
-        u.workeridentityid AS authentication_identity_id,
-        a.systaguuid AS authentication_provider_id,
-        l.systaguuid AS language_id,
+        u.workerstartdate::text AS "activatedAt",
+        u.workerenddate::text AS "deactivatedAt",
+        u.workeridentityid AS "authenticationIdentityId",
+        a.systaguuid AS "authenticationProviderId",
+        l.systaguuid AS "languageId",
         u.workerfirstname AS "firstName",
         u.workerlastname AS "lastName",
         COALESCE(u.workerfullname, u.workergeneratedname) AS "displayName"
@@ -35,8 +36,8 @@ export default (_: Request) => {
     byId: new Dataloader<string, User>(async keys => {
       const rows = await selectUsers("workeruuid", keys);
       const byKey = rows.reduce(
-        (acc, row) => acc.set(row.id as string, row),
-        new Map<string, User>(),
+        (acc, row) => acc.set(row._key as string, row),
+        new Map(),
       );
 
       return keys.map(key => byKey.get(key) ?? new NotFoundError(key, "user"));
@@ -44,8 +45,8 @@ export default (_: Request) => {
     byIdentityId: new Dataloader<string, User>(async keys => {
       const rows = await selectUsers("workeridentityid", keys);
       const byKey = rows.reduce(
-        (acc, row) => acc.set(row.key as string, row),
-        new Map<string, User>(),
+        (acc, row) => acc.set(row._key as string, row),
+        new Map(),
       );
 
       return keys.map(key => byKey.get(key) ?? new NotFoundError(key, "user"));

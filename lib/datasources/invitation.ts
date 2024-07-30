@@ -53,10 +53,10 @@ export default (_: Request) => ({
           __typename: "Invitation" as const,
           id: i.id,
           status: i.status,
-          email_address: i.emailAddress,
-          created_at: new Date(i.createdAt).toISOString(),
-          updated_at: new Date(i.updatedAt).toISOString(),
-          worker_id: i.publicMetadata?.tendrel_id as string,
+          emailAddress: i.emailAddress,
+          createdAt: new Date(i.createdAt).toISOString(),
+          updatedAt: new Date(i.updatedAt).toISOString(),
+          workerId: i.publicMetadata?.tendrel_id as string,
         };
       }
       return new NotFoundError(key, "invitation");
@@ -79,10 +79,10 @@ export default (_: Request) => ({
           __typename: "Invitation" as const,
           id: i.id,
           status: i.status,
-          email_address: i.emailAddress,
-          created_at: new Date(i.createdAt).toISOString(),
-          updated_at: new Date(i.updatedAt).toISOString(),
-          worker_id: i.publicMetadata?.tendrel_id as string,
+          emailAddress: i.emailAddress,
+          createdAt: new Date(i.createdAt).toISOString(),
+          updatedAt: new Date(i.updatedAt).toISOString(),
+          workerId: i.publicMetadata?.tendrel_id as string,
         };
       }
       return new NotFoundError(key, "invitation:worker");

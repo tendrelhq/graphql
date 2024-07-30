@@ -1,28 +1,35 @@
 import { sql } from "@/datasources/postgres";
 import type { MutationResolvers } from "@/schema";
+import { decodeGlobalId } from "@/util";
 
 export const updateWorker: NonNullable<
   MutationResolvers["updateWorker"]
 > = async (_, { input }, ctx) => {
-  const existing = await ctx.orm.worker.load(input.id);
-  await sql`
+  const { id } = decodeGlobalId(input.id);
+  const rows = await sql`
       UPDATE public.workerinstance
       SET
-          workerinstancelanguageuuid = ${input.language_id},
+          workerinstancelanguageuuid = ${input.languageId},
           workerinstancelanguageid = (
               SELECT systagid
               FROM public.systag
-              WHERE systaguuid = ${input.language_id}
+              WHERE systaguuid = ${input.languageId}
           ),
           workerinstancemodifieddate = NOW(),
-          workerinstancescanid = ${input.scan_code ?? null},
-          workerinstanceuserroleuuid = ${input.role_id},
+          workerinstancescanid = ${input.scanCode ?? null},
+          workerinstanceuserroleuuid = ${input.roleId},
           workerinstanceuserroleid = (
               SELECT systagid
               FROM public.systag
-              WHERE systaguuid = ${input.role_id}
+              WHERE systaguuid = ${input.roleId}
           )
-      WHERE workerinstanceuuid = ${existing.id};
+      WHERE workerinstanceuuid = ${id}
+      RETURNING 1;
   `;
-  return ctx.orm.worker.clear(input.id).load(input.id);
+
+  if (!rows.length) {
+    throw new Error("Failed to update worker");
+  }
+
+  return ctx.orm.worker.clear(id).load(id);
 };

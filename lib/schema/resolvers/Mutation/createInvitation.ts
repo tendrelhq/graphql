@@ -8,16 +8,28 @@ import { GraphQLError } from "graphql";
 export const createInvitation: NonNullable<
   MutationResolvers["createInvitation"]
 > = async (_, { input }, ctx) => {
-  await protect({ orgId: input.org_id, userId: ctx.auth.userId }, ["Admin"]);
+  if (
+    !(await protect({ orgId: input.orgId, userId: ctx.auth.userId }, ["Admin"]))
+  ) {
+    throw new GraphQLError("Not authorized", {
+      extensions: {
+        code: "UNAUTHORIZED",
+        hint: "You do not have the necessary permissions to perform this action",
+      },
+    });
+  }
+
+  console.log("org", input.orgId);
+  // throw "break";
 
   // HACK: This is pretty fucked. But I suppose ok for now.
   // Will be fixed when we (hopefully) integrate with Clerk organizations.
   const i = await clerkClient.invitations
     .createInvitation({
-      emailAddress: input.email_address,
+      emailAddress: input.emailAddress,
       publicMetadata: {
         needs_sync: "yes",
-        tendrel_id: input.worker_id,
+        tendrel_id: input.workerId,
       },
     })
     .catch(e => {
@@ -38,7 +50,7 @@ export const createInvitation: NonNullable<
   await sql`
       UPDATE public.worker AS u
       SET
-          workerusername = ${input.email_address},
+          workerusername = ${input.emailAddress},
           workermodifieddate = NOW(),
           workermodifiedby = (
               SELECT workerinstanceid
@@ -47,7 +59,7 @@ export const createInvitation: NonNullable<
                   workerinstancecustomerid = (
                       SELECT customerid
                       FROM public.customer
-                      WHERE customeruuid = ${input.org_id}
+                      WHERE customeruuid = ${input.orgId}
                   )
                   AND workerinstanceworkerid = (
                       SELECT workerid
@@ -58,15 +70,15 @@ export const createInvitation: NonNullable<
       FROM public.workerinstance AS w
       WHERE
           u.workerid = w.workerinstanceworkerid
-          AND w.workerinstanceuuid = ${input.worker_id};
+          AND w.workerinstanceuuid = ${input.workerId};
   `;
 
   return {
     id: i.id,
     status: i.status,
-    email_address: i.emailAddress,
-    created_at: new Date(i.createdAt).toISOString(),
-    updated_at: new Date(i.updatedAt).toISOString(),
-    worker_id: input.worker_id,
+    emailAddress: i.emailAddress,
+    createdAt: new Date(i.createdAt).toISOString(),
+    updatedAt: new Date(i.updatedAt).toISOString(),
+    workerId: input.workerId,
   };
 };

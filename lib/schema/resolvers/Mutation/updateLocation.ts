@@ -1,27 +1,28 @@
 import { updateName } from "@/datasources/name";
 import { sql } from "@/datasources/postgres";
 import type { MutationResolvers } from "@/schema";
+import { decodeGlobalId } from "@/util";
 
 export const updateLocation: NonNullable<
   MutationResolvers["updateLocation"]
 > = async (_, { input }, ctx) => {
-  const existing = await ctx.orm.location.load(input.id);
-
+  const { id } = decodeGlobalId(input.id);
+  const existing = await ctx.orm.location.load(id);
   await sql.begin(async sql => {
-    if (input.name?.id === existing.name_id) {
+    if (input.name?.id === existing.nameId) {
       await updateName(input.name, sql);
     }
 
-    if (existing.scan_code !== input.scan_code) {
+    if (existing.scanCode !== input.scanCode) {
       await sql`
           UPDATE public.location
           SET
-              locationscanid = ${input.scan_code ?? null},
+              locationscanid = ${input.scanCode ?? null},
               locationmodifieddate = NOW()
-          WHERE locationuuid = ${existing.id};
+          WHERE locationuuid = ${id};
       `;
     }
   });
 
-  return ctx.orm.location.clear(input.id).load(input.id);
+  return ctx.orm.location.clear(id).load(id);
 };

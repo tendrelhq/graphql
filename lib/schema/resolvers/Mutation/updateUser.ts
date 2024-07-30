@@ -1,13 +1,14 @@
 import { sql } from "@/datasources/postgres";
 import type { MutationResolvers } from "@/schema";
+import { decodeGlobalId } from "@/util";
 
 export const updateUser: NonNullable<MutationResolvers["updateUser"]> = async (
   _,
   { input },
   ctx,
 ) => {
-  const existing = await ctx.orm.user.byId.load(input.id);
-  await sql`
+  const { id } = decodeGlobalId(input.id);
+  const rows = await sql`
       UPDATE public.worker
       SET
           workerfirstname = ${input.firstName},
@@ -16,10 +17,16 @@ export const updateUser: NonNullable<MutationResolvers["updateUser"]> = async (
           workerlanguageid = (
               SELECT systagid
               FROM public.systag
-              WHERE systaguuid = ${input.language_id}
+              WHERE systaguuid = ${input.languageId}
           ),
           workermodifieddate = NOW()
-      WHERE workeruuid = ${existing.id};
+      WHERE workeruuid = ${id}
+      RETURNING 1;
   `;
-  return ctx.orm.user.byId.clear(input.id).load(input.id);
+
+  if (!rows.length) {
+    throw new Error("Failed to update user");
+  }
+
+  return ctx.orm.user.byId.load(id);
 };

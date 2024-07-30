@@ -10,7 +10,7 @@ export const languages: NonNullable<QueryResolvers["languages"]> = async (
     SELECT
         s.systaguuid AS id,
         s.systagtype AS code,
-        n.languagemasteruuid AS name_id
+        n.languagemasteruuid AS "nameId"
     FROM public.systag AS s
     INNER JOIN public.languagemaster AS n
         ON s.systagnameid = n.languagemasterid
