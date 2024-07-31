@@ -10,7 +10,7 @@ import { type WithKey, decodeGlobalId } from "@/util";
 
 export const Organization: OrganizationResolvers = {
   async name(parent, _, ctx) {
-    return ctx.orm.name.load(parent.nameId as string);
+    return ctx.orm.name.load(decodeGlobalId(parent.nameId).id);
   },
   async languages(root, args, ctx) {
     const { first, last } = args;

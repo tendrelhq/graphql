@@ -15,7 +15,7 @@ export default (_: Request) =>
             o.customerstartdate AS "activatedAt",
             o.customerenddate AS "deactivatedAt",
             o.customerexternalid AS "billingId",
-            n.languagemasteruuid AS "nameId"
+            encode(('name:' || n.languagemasteruuid)::bytea, 'base64') AS "nameId"
         FROM public.customer AS o
         INNER JOIN public.languagemaster AS n
             ON o.customernamelanguagemasterid = n.languagemasterid

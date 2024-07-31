@@ -8,36 +8,36 @@ import { type SQL, sql } from "./postgres";
 export function makeNameLoader(req: Request) {
   return new Dataloader<string, Name, string>(
     async keys => {
-      return await Promise.all(
-        keys.map(async key => {
-          const [name] = await sql<[WithKey<Name>?]>`
-              SELECT
-                  m.languagemasteruuid AS _key,
-                  encode(('name:' || m.languagemasteruuid)::bytea, 'base64') AS id,
-                  coalesce(t.languagetranslationvalue, m.languagemastersource) AS value,
-                  coalesce(tl.systaguuid, ml.systaguuid) AS "languageId"
-              FROM public.languagemaster AS m
-              INNER JOIN public.systag AS ml
-                  ON m.languagemastersourcelanguagetypeid = ml.systagid
-              LEFT JOIN public.languagetranslations AS t
-                  ON
-                      m.languagemasterid = t.languagetranslationmasterid
-                      AND t.languagetranslationtypeid = (
-                          SELECT systagid
-                          FROM public.systag
-                          WHERE
-                              systagparentid = 2
-                              AND systagtype = ${req.i18n.language}
-                      )
-              LEFT JOIN public.systag AS tl
-                  ON t.languagetranslationtypeid = tl.systagid
-              WHERE m.languagemasteruuid = ${key};
-          `;
-          return (
-            name ?? new NotFoundError(`${key}:${req.i18n.language}`, "name")
-          );
-        }),
+      const rows = await sql<WithKey<Name>[]>`
+        SELECT
+            m.languagemasteruuid AS _key,
+            encode(('name:' || m.languagemasteruuid)::bytea, 'base64') AS id,
+            coalesce(t.languagetranslationvalue, m.languagemastersource) AS value,
+            coalesce(tl.systaguuid, ml.systaguuid) AS "languageId"
+        FROM public.languagemaster AS m
+        INNER JOIN public.systag AS ml
+            ON m.languagemastersourcelanguagetypeid = ml.systagid
+        LEFT JOIN public.languagetranslations AS t
+            ON
+                m.languagemasterid = t.languagetranslationmasterid
+                AND t.languagetranslationtypeid = (
+                    SELECT systagid
+                    FROM public.systag
+                    WHERE
+                        systagparentid = 2
+                        AND systagtype = ${req.i18n.language}
+                )
+        LEFT JOIN public.systag AS tl
+            ON t.languagetranslationtypeid = tl.systagid
+        WHERE m.languagemasteruuid IN ${sql(keys)};
+      `;
+
+      const byId = rows.reduce(
+        (acc, val) => acc.set(val._key, val),
+        new Map<string, Name>(),
       );
+
+      return keys.map(key => byId.get(key) ?? new NotFoundError(key, "name"));
     },
     {
       cacheKeyFn: key => `${key}:${req.i18n.language}`,
@@ -86,9 +86,10 @@ export async function updateName(input: UpdateNameInput, sql: SQL) {
 
 export function makeNameMetadataLoader(_: Request) {
   return new Dataloader<string, NameMetadata>(async keys => {
-    const rows = await sql<NameMetadata[]>`
+    const rows = await sql<WithKey<NameMetadata>[]>`
         SELECT
-            m.languagemasteruuid AS "nameId",
+            m.languagemasteruuid AS _key,
+            encode(('name:' || m.languagemasteruuid)::bytea, 'base64') AS "nameId",
             m.languagemastersource AS "sourceText",
             l.systaguuid AS "sourceLanguageId",
             m.languagemastertranslationtime::text AS "translatedAt"
@@ -99,7 +100,7 @@ export function makeNameMetadataLoader(_: Request) {
     `;
 
     const byId = rows.reduce(
-      (acc, row) => acc.set(row.nameId as string, row),
+      (acc, row) => acc.set(row._key, row),
       new Map<string, NameMetadata>(),
     );
 

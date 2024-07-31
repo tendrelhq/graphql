@@ -24,7 +24,7 @@ export const User: UserResolvers = {
           customerstartdate::text AS "activatedAt",
           customerenddate::text AS "deactivatedAt",
           customerexternalid AS "billingId",
-          languagemasteruuid AS "nameId"
+          encode(('name:' || languagemasteruuid)::bytea, 'base64') AS "nameId"
       FROM public.workerinstance
       INNER JOIN public.customer
           ON workerinstancecustomerid = customerid

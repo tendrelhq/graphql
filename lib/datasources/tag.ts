@@ -9,7 +9,7 @@ export default (_: Request) =>
     const rows = await sql<Tag[]>`
         SELECT
             s.systaguuid AS id,
-            n.languagemasteruuid AS "nameId",
+            encode(('name:' || n.languagemasteruuid)::bytea, 'base64') AS "nameId",
             p.systaguuid AS "parentId",
             s.systagtype AS type
         FROM public.systag AS s
