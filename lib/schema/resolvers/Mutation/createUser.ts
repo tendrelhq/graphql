@@ -24,7 +24,7 @@ export const createUser: NonNullable<MutationResolvers["createUser"]> = async (
           (
               SELECT systagid
               FROM public.systag
-              WHERE systaguuid = ${input.language_id}
+              WHERE systaguuid = ${input.languageId}
           ),
           ${new Date()},
           ${input.active ? null : new Date()}

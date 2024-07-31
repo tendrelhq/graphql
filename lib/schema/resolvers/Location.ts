@@ -1,9 +1,10 @@
 import { sql } from "@/datasources/postgres";
 import type { LocationResolvers } from "@/schema";
-import { isValue } from "@/util";
+import { decodeGlobalId, isValue } from "@/util";
 
 export const Location: LocationResolvers = {
   async children(parent, { options }, ctx) {
+    const parentId = decodeGlobalId(parent.id as string).id;
     const childIds = await sql<{ id: string }[]>`
       SELECT locationuuid AS id
       FROM public.location
@@ -11,7 +12,7 @@ export const Location: LocationResolvers = {
           locationparentid = (
               SELECT locationid
               FROM public.location
-              WHERE locationuuid = ${parent.id}
+              WHERE locationuuid = ${parentId}
           )
           ${
             options?.cornerstone
@@ -23,18 +24,16 @@ export const Location: LocationResolvers = {
     const children = await ctx.orm.location.loadMany(childIds.map(c => c.id));
     return children.filter(isValue);
   },
-  async name(parent, _, ctx) {
-    const u = await ctx.orm.user.byIdentityId.load(ctx.auth.userId);
-    return ctx.orm.name.load({
-      id: parent.name_id as string,
-      language_id: u.language_id as string,
-    });
+  name(parent, _, ctx) {
+    return ctx.orm.name.load(decodeGlobalId(parent.nameId).id);
   },
   parent(parent, _, ctx) {
-    return ctx.orm.location.load(parent.parent_id as string);
+    if (parent.parentId) {
+      return ctx.orm.location.load(decodeGlobalId(parent.parentId).id);
+    }
   },
   site(parent, _, ctx) {
-    return ctx.orm.location.load(parent.site_id as string);
+    return ctx.orm.location.load(decodeGlobalId(parent.siteId).id);
   },
   tags(parent, _, ctx) {
     return [];

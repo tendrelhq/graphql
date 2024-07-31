@@ -1,9 +1,11 @@
 import { sql } from "@/datasources/postgres";
 import type { MutationResolvers } from "@/schema";
+import { decodeGlobalId } from "@/util";
 
 export const createWorker: NonNullable<
   MutationResolvers["createWorker"]
 > = async (_, { input }, ctx) => {
+  console.log(input);
   const [worker] = await sql<[{ id: string }?]>`
       INSERT INTO public.workerinstance (
           workerinstanceworkerid,
@@ -24,26 +26,26 @@ export const createWorker: NonNullable<
           (
               SELECT customerid
               FROM public.customer
-              WHERE customeruuid = ${input.org_id}
+              WHERE customeruuid = ${decodeGlobalId(input.orgId).id}
           ),
-          ${input.org_id},
+          ${decodeGlobalId(input.orgId).id},
           (
               SELECT systagid
               FROM public.systag
-              WHERE systaguuid = ${input.language_id}
+              WHERE systaguuid = ${input.languageId}
           ),
-          ${input.language_id},
+          ${input.languageId},
           ${new Date()},
           ${input.active ? null : new Date()},
           (
               SELECT systagid
               FROM public.systag
-              WHERE systaguuid = ${input.role_id}
+              WHERE systaguuid = ${input.roleId}
           ),
-          ${input.role_id},
-          ${input.scan_code ?? null}
+          ${input.roleId},
+          ${input.scanCode ?? null}
       FROM public.worker AS u
-      WHERE u.workeruuid = ${input.user_id}
+      WHERE u.workeruuid = ${decodeGlobalId(input.userId).id}
       ON CONFLICT DO NOTHING
       RETURNING workerinstanceuuid AS id;
   `;
@@ -57,11 +59,11 @@ export const createWorker: NonNullable<
         INNER JOIN public.worker
             ON workerinstanceworkerid = workerid
         WHERE
-            workeruuid = ${input.user_id}
+            workeruuid = ${decodeGlobalId(input.userId).id}
             AND workerinstancecustomerid = (
                 SELECT customerid
                 FROM public.customer
-                WHERE customeruuid = ${input.org_id}
+                WHERE customeruuid = ${decodeGlobalId(input.orgId).id}
             );
     `;
 

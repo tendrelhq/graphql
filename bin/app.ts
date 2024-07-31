@@ -3,13 +3,17 @@ import "dotenv/config";
 import http from "node:http";
 import auth from "@/auth";
 import { orm } from "@/datasources/postgres";
+import i18n from "@/i18n";
 import { type Context, resolvers, typeDefs } from "@/schema";
 import { ApolloServer } from "@apollo/server";
 import { expressMiddleware } from "@apollo/server/express4";
 import { ApolloServerPluginDrainHttpServer } from "@apollo/server/plugin/drainHttpServer";
 import cors from "cors";
 import express from "express";
+import { GraphQLError, getIntrospectionQuery, parse, print } from "graphql";
 import morgan from "morgan";
+
+console.log(`NODE_ENV: ${process.env.NODE_ENV}`);
 
 const app = express();
 const httpServer = http.createServer(app);
@@ -48,9 +52,20 @@ app.use(
     allowedHeaders: "*",
   }),
   auth.clerk(),
+  i18n.accept(),
   express.json(),
   expressMiddleware(server, {
     async context({ req }) {
+      if (process.env.NODE_ENV === "development") {
+        console.log(req.body);
+      }
+      if (!req.auth.userId && process.env.NODE_ENV !== "development") {
+        throw new GraphQLError("Unauthenticated", {
+          extensions: {
+            hint: "Please sign in",
+          },
+        });
+      }
       return {
         auth: req.auth,
         orm: orm(req),
