@@ -1,9 +1,11 @@
 import { sql } from "@/datasources/postgres";
 import type { MutationResolvers } from "@/schema";
+import { decodeGlobalId } from "@/util";
 
 export const activateWorker: NonNullable<
   MutationResolvers["activateWorker"]
-> = async (_, { id }, ctx) => {
+> = async (_, args, ctx) => {
+  const { id } = decodeGlobalId(args.id);
   await sql`
       UPDATE public.workerinstance
       SET

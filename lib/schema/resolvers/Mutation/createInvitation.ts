@@ -1,6 +1,7 @@
 import { protect } from "@/auth";
 import { sql } from "@/datasources/postgres";
 import type { MutationResolvers } from "@/schema";
+import { decodeGlobalId } from "@/util";
 import { clerkClient } from "@clerk/clerk-sdk-node";
 import { isClerkAPIResponseError } from "@clerk/shared";
 import { GraphQLError } from "graphql";
@@ -67,7 +68,7 @@ export const createInvitation: NonNullable<
       FROM public.workerinstance AS w
       WHERE
           u.workerid = w.workerinstanceworkerid
-          AND w.workerinstanceuuid = ${input.workerId};
+          AND w.workerinstanceuuid = ${decodeGlobalId(input.workerId).id};
   `;
 
   return {
