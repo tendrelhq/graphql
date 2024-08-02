@@ -20,7 +20,7 @@ export const createUser: NonNullable<MutationResolvers["createUser"]> = async (
           ${input.username ?? null},
           ${input.firstName},
           ${input.lastName},
-          ${input.displayName ?? null},
+          ${input.displayName ?? `${input.firstName} ${input.lastName}`},
           (
               SELECT systagid
               FROM public.systag

@@ -13,7 +13,7 @@ export const updateUser: NonNullable<MutationResolvers["updateUser"]> = async (
       SET
           workerfirstname = ${input.firstName},
           workerlastname = ${input.lastName},
-          workerfullname = ${input.displayName ?? null},
+          workerfullname = ${input.displayName ?? `${input.firstName} ${input.lastName}`},
           workerlanguageid = (
               SELECT systagid
               FROM public.systag
