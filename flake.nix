@@ -31,21 +31,41 @@
       }: {
         devenv.shells.default = let
           cfg = config.devenv.shells.default;
+          pkg = lib.importJSON ./package.json;
+          biome = pkgs.stdenv.mkDerivation rec {
+            pname = "biome";
+            version = let
+              v = pkg.devDependencies."@biomejs/biome";
+            in "v${lib.strings.removePrefix "^" v}";
+
+            src = pkgs.fetchurl {
+              url = "https://github.com/biomejs/biome/releases/download/cli%2F${version}/biome-linux-x64";
+              hash = "sha256-VJXy9p7dlOnybtGtue2AI9fBQ8PMbydfkKvd7WEiF+Q=";
+            };
+
+            nativeBuildInputs = [pkgs.autoPatchelfHook];
+            buildInputs = [pkgs.stdenv.cc.cc.libgcc];
+
+            dontUnpack = true;
+            installPhase = ''
+              install -D -m755 $src $out/bin/biome
+            '';
+
+            meta.mainProgram = "biome";
+          };
         in {
           name = "tendrel-graphql";
           containers = lib.mkForce {};
-          enterShell = ''
-            autoPatchelf ./node_modules/@biomejs/cli-linux-x64 &>/dev/null &&
-              echo 'direnv: patched biome binary'
-          '';
+          env = {
+            BIOME_BINARY = lib.getExe biome;
+          };
           packages = with pkgs; [
-            autoPatchelfHook
             act
             awscli2
+            biome
             bun
             just
-            # postgres.js needs this for some reason :/
-            nodejs
+            nodejs # required by biome's entrypoint
             cfg.services.postgres.package
             (stdenv.mkDerivation rec {
               pname = "copilot-cli";
