@@ -1,1 +1,1 @@
-schema: ./lib/schema/schema.gql
+schema: ./lib/schema2/schema/**/*.graphql

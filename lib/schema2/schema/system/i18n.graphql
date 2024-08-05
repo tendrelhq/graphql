@@ -1,0 +1,9 @@
+scalar Locale
+
+"""
+  TODO
+"""
+type DynamicString {
+  locale: Locale!
+  value: String!
+}

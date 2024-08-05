@@ -16,6 +16,7 @@
     "@clerk/types": "^4.6.1",
     "@eddeee888/gcg-typescript-resolver-files": "^0.8.1",
     "@graphql-codegen/cli": "^5.0.2",
+    "@graphql-codegen/schema-ast": "^4.1.0",
     "@graphql-codegen/typescript": "^4.0.8",
     "@graphql-codegen/typescript-resolvers": "^4.2.0",
     "@graphql-tools/merge": "^9.0.4",

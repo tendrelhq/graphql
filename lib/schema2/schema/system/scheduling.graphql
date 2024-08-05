@@ -1,0 +1,16 @@
+"""TODO"""
+scalar CronExpression
+
+
+"""Schedule implementation using cron expressions"""
+type CronSchedule {
+  cron: CronExpression!
+}
+
+"""Schedule implementation for "oneshot" events"""
+type OnceSchedule {
+  once: Temporal!
+}
+
+"""TODO"""
+union Schedule = CronSchedule | OnceSchedule

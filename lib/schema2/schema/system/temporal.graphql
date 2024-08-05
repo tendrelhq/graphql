@@ -1,9 +1,3 @@
-# System types
-## Custom scalars
-scalar CronExpression
-scalar Locale
-scalar Link
-
 """Controls how rounding is performed"""
 enum RoundingMode {
   """Always round up, towards the end of time"""
@@ -90,20 +84,38 @@ input ZonedDateTimeToStringOptions {
   offset: OffsetOptions
 }
 
+"""
+  TODO
+"""
 enum CalendarNameOptions {
+  """TODO"""
   auto
+  """TODO"""
   always
+  """TODO"""
   never
+  """TODO"""
   critical
 }
 
+"""
+  TODO
+"""
 enum TimeZoneNameOptions {
+  """TODO"""
   auto
+  """TODO"""
   never
+  """TODO"""
   critical
 }
 
+"""
+  TODO
+"""
 enum OffsetOptions {
+  """TODO"""
   auto
+  """TODO"""
   never
 }

@@ -1,8 +1,5 @@
+import type { InstantResolvers, ZonedDateTime } from "@/schema2";
 import { Temporal } from "@js-temporal/polyfill";
-import type {
-  InstantResolvers,
-  ZonedDateTime,
-} from "./../__generated__/types.generated";
 
 export const Instant: InstantResolvers = {
   toString(root, { options }) {

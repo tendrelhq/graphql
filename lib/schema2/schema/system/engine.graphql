@@ -1,0 +1,7 @@
+"""
+  Components characterize Entities as possessing a particular trait.
+  They are just simple structs, holding all data necessary to model that trait.
+"""
+interface Component {
+  id: ID!
+}

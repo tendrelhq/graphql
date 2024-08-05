@@ -1,0 +1,61 @@
+"""TODO"""
+scalar Link
+
+"""
+  TODO
+"""
+type Attachment implements Component {
+  id: ID!
+  attachment: String!
+}
+
+"""
+  TODO
+"""
+type Assignee implements Component {
+  id: ID!
+  assignedTo: Worker!
+  assignedAt: Temporal!
+}
+
+"""
+  TODO
+"""
+type Auditable implements Component {
+  id: ID!
+  enabled: Boolean!
+}
+
+"""
+  TODO
+"""
+type Description implements Component {
+  id: ID!
+  value: DynamicString!
+}
+
+"""
+  TODO
+"""
+type Name implements Component {
+  id: ID!
+  value: DynamicString!
+}
+
+"""
+  TODO
+"""
+type Sop implements Component {
+  id: ID!
+  link: Link!
+}
+
+"""
+  TODO
+"""
+type Worker implements Component {
+  id: ID!
+  firstName: String!
+  lastName: String!
+  displayName: String!
+}
