@@ -24,7 +24,10 @@ test("checklists", async () => {
             __typename: "ChecklistEdge",
             node: {
               __typename: "Checklist",
-              id: "a25ceddb-b122-4825-b907-e084c295c096",
+              // TODO: for testing, it'd be really nice to automatically encode
+              // and decode these ids. We can just override the resolver in the
+              // scalars config I guess?
+              id: "eyJ0eXBlIjoid29ya2luc3RhbmNlIiwiaWQiOiJhMjVjZWRkYi1iMTIyLTQ4MjUtYjkwNy1lMDg0YzI5NWMwOTYifQ==",
               assignees: {
                 __typename: "AssigneeConnection",
                 edges: [
@@ -32,7 +35,7 @@ test("checklists", async () => {
                     __typename: "AssigneeEdge",
                     node: {
                       __typename: "Assignee",
-                      id: "02a4b82b-4605-43fc-af2d-f377c4da63cc",
+                      id: "eyJ0eXBlIjoid29ya3Jlc3VsdGluc3RhbmNlIiwiaWQiOiIwMmE0YjgyYi00NjA1LTQzZmMtYWYyZC1mMzc3YzRkYTYzY2MifQ==",
                       assignedAt: {
                         __typename: "Instant",
                         epochMilliseconds: "1722928536060",

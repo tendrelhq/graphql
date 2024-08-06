@@ -1,3 +1,4 @@
+import { config as scalarsConfig } from "@/schema/system/scalars";
 import { defineConfig } from "@eddeee888/gcg-typescript-resolver-files";
 import { generate } from "@graphql-codegen/cli";
 import type { CodegenConfig } from "@graphql-codegen/cli";
@@ -9,6 +10,7 @@ const config: CodegenConfig = {
   documents: "./schema/**/*.test.graphql",
   generates: {
     "./schema/__generated__": defineConfig({
+      scalarsModule: "@/schema/system/scalars",
       typesPluginsConfig: {
         contextType: "@/schema#Context",
         inputMaybeValue: "T | undefined",
@@ -27,6 +29,7 @@ const config: CodegenConfig = {
       },
       config: {
         addTypenameToSelectionSets: true,
+        scalars: scalarsConfig,
       },
     },
   },

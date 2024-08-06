@@ -14,7 +14,7 @@ scalar Link
   TODO
 """
 type Attachment implements Component {
-  id: ID!
+  id: Entity!
   attachment: String!
 }
 
@@ -33,7 +33,7 @@ type AttachmentEdge implements Edge {
   TODO
 """
 type Assignee implements Component {
-  id: ID!
+  id: Entity!
   assignedTo: Worker!
   assignedAt: Temporal!
 }
@@ -53,7 +53,7 @@ type AssigneeEdge implements Edge {
   TODO
 """
 type Auditable implements Component {
-  id: ID!
+  id: Entity!
   enabled: Boolean!
 }
 
@@ -61,7 +61,7 @@ type Auditable implements Component {
   TODO
 """
 type Description implements Component {
-  id: ID!
+  id: Entity!
   value: DynamicString!
 }
 
@@ -69,7 +69,7 @@ type Description implements Component {
   TODO
 """
 type DisplayName implements Component {
-  id: ID!
+  id: Entity!
   value: DynamicString!
 }
 
@@ -77,15 +77,15 @@ type DisplayName implements Component {
   TODO
 """
 type Sop implements Component {
-  id: ID!
+  id: Entity!
   link: Link!
 }
 
 """
   TODO
 """
-type Worker implements Component {
-  id: ID!
+type Actor implements Component {
+  id: Entity!
   firstName: String!
   lastName: String!
   displayName: DisplayName!

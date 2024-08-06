@@ -4,10 +4,18 @@ input AcceptInvitationInput {
 }
 
 """TODO"""
+type Actor implements Component {
+  displayName: DisplayName!
+  firstName: String!
+  id: Entity!
+  lastName: String!
+}
+
+"""TODO"""
 type Assignee implements Component {
   assignedAt: Temporal!
   assignedTo: Worker!
-  id: ID!
+  id: Entity!
 }
 
 type AssigneeConnection implements Connection {
@@ -24,7 +32,7 @@ type AssigneeEdge implements Edge {
 """TODO"""
 type Attachment implements Component {
   attachment: String!
-  id: ID!
+  id: Entity!
 }
 
 type AttachmentConnection implements Connection {
@@ -41,7 +49,7 @@ type AttachmentEdge implements Edge {
 """TODO"""
 type Auditable implements Component {
   enabled: Boolean!
-  id: ID!
+  id: Entity!
 }
 
 """TODO"""
@@ -64,7 +72,7 @@ type Checklist implements Component {
   attachments(after: String, before: String, first: Int, last: Int): AttachmentConnection!
   auditable: Auditable!
   description: Description
-  id: ID!
+  id: Entity!
   items(after: String, before: String, first: Int, last: Int): ChecklistConnection!
   name: DisplayName!
   required: Boolean
@@ -77,7 +85,7 @@ type ChecklistClosed implements Component {
   closedAt: Temporal!
   closedBecause: ChecklistClosedReason!
   closedBy: Worker!
-  id: ID!
+  id: Entity!
 }
 
 type ChecklistClosedReason {
@@ -102,7 +110,7 @@ type ChecklistEdge implements Edge {
 }
 
 type ChecklistInProgress implements Component {
-  id: ID!
+  id: Entity!
   inProgressAt: Temporal!
   inProgressBy: Worker!
 }
@@ -110,7 +118,7 @@ type ChecklistInProgress implements Component {
 union ChecklistItem = Checklist | ChecklistResult
 
 type ChecklistOpen implements Component {
-  id: ID!
+  id: Entity!
   openedAt: Temporal!
   openedBy: Worker
 }
@@ -119,7 +127,7 @@ type ChecklistResult implements Component {
   assignees(after: String, before: String, first: Int, last: Int): AssigneeConnection!
   attachments(after: String, before: String, first: Int, last: Int): AttachmentConnection!
   auditable: Auditable!
-  id: ID!
+  id: Entity!
   name: DisplayName!
   required: Boolean
   value: String
@@ -132,7 +140,7 @@ Components characterize Entities as possessing a particular trait.
 They are just simple structs, holding all data necessary to model that trait.
 """
 interface Component {
-  id: ID!
+  id: Entity!
 }
 
 interface Connection {
@@ -191,13 +199,13 @@ type CronSchedule {
 
 """TODO"""
 type Description implements Component {
-  id: ID!
+  id: Entity!
   value: DynamicString!
 }
 
 """TODO"""
 type DisplayName implements Component {
-  id: ID!
+  id: Entity!
   value: DynamicString!
 }
 
@@ -232,6 +240,12 @@ type EnabledLanguageConnection {
 type EnabledLanguageEdge {
   node: EnabledLanguage!
 }
+
+"""
+An entity represents a general-purpose object. The scalar representation is
+just an opaque string, similar to ID.
+"""
+scalar Entity
 
 """
 Fixed point in time (i.e. "exact time") without regard to calendar or location
@@ -425,7 +439,7 @@ enum SmallestTimeUnit {
 
 """TODO"""
 type Sop implements Component {
-  id: ID!
+  id: Entity!
   link: Link!
 }
 
@@ -505,19 +519,15 @@ type User implements Node {
   tags: [Tag!]!
 }
 
-"""TODO"""
-type Worker implements Component & Node {
+type Worker implements Node {
   activatedAt: String
   active: Boolean!
   deactivatedAt: String
-  displayName: DisplayName!
-  firstName: String!
   id: ID!
   invitation: Invitation
   invitationId: ID
   language: Language!
   languageId: ID!
-  lastName: String!
   role: Tag!
   roleId: ID!
   scanCode: String

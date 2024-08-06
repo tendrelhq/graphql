@@ -1,23 +1,7 @@
 import type { WorkerResolvers } from "@/schema";
 import { decodeGlobalId } from "@/util";
 
-export const Worker: Pick<
-  WorkerResolvers,
-  | "activatedAt"
-  | "active"
-  | "deactivatedAt"
-  | "id"
-  | "invitation"
-  | "invitationId"
-  | "language"
-  | "languageId"
-  | "role"
-  | "roleId"
-  | "scanCode"
-  | "tags"
-  | "user"
-  | "userId"
-> = {
+export const Worker: WorkerResolvers = {
   invitation(parent, _, ctx) {
     if (parent.invitationId) {
       return ctx.orm.invitation.byId.load(parent.invitationId as string);

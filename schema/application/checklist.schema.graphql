@@ -3,7 +3,7 @@ type Query {
 }
 
 type Checklist implements Component {
-  id: ID!
+  id: Entity!
   assignees(first: Int, last: Int, before: String, after: String): AssigneeConnection!
   attachments(first: Int, last: Int, before: String, after: String): AttachmentConnection!
   auditable: Auditable!
@@ -30,7 +30,7 @@ type ChecklistEdge implements Edge {
 ## We want our checklists to support nesting
 union ChecklistItem = Checklist | ChecklistResult
 type ChecklistResult implements Component {
-  id: ID!
+  id: Entity!
   assignees(first: Int, last: Int, before: String, after: String): AssigneeConnection!
   auditable: Auditable!
   attachments(first: Int, last: Int, before: String, after: String): AttachmentConnection!
@@ -42,17 +42,17 @@ type ChecklistResult implements Component {
 ## Our checklists go Open > In Progress > Closed
 union ChecklistStatus = ChecklistOpen | ChecklistInProgress | ChecklistClosed
 type ChecklistOpen implements Component {
-  id: ID!
+  id: Entity!
   openedBy: Worker
   openedAt: Temporal!
 }
 type ChecklistInProgress implements Component {
-  id: ID!
+  id: Entity!
   inProgressBy: Worker!
   inProgressAt: Temporal!
 }
 type ChecklistClosed implements Component {
-  id: ID!
+  id: Entity!
   closedBy: Worker!
   closedAt: Temporal!
   closedBecause: ChecklistClosedReason!
