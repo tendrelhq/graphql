@@ -1,7 +1,7 @@
 import "dotenv/config";
 
 import http from "node:http";
-import { resolvers, typeDefs } from "@/schema2";
+import { resolvers, typeDefs } from "@/schema";
 import { ApolloServer } from "@apollo/server";
 import { expressMiddleware } from "@apollo/server/express4";
 import { ApolloServerPluginDrainHttpServer } from "@apollo/server/plugin/drainHttpServer";
