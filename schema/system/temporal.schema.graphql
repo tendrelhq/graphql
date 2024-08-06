@@ -1,3 +1,6 @@
+"""A string representing a duration conforming to the ISO8601 standard"""
+scalar Duration
+
 """Controls how rounding is performed"""
 enum RoundingMode {
   """Always round up, towards the end of time"""

@@ -14,7 +14,7 @@ type Actor implements Component {
 """TODO"""
 type Assignee implements Component {
   assignedAt: Temporal!
-  assignedTo: Worker!
+  assignedTo: DisplayName!
   id: Entity!
 }
 
@@ -189,7 +189,7 @@ input CreateWorkerInput {
   userId: ID!
 }
 
-"""TODO"""
+"""A string representing a cron schedule expression"""
 scalar CronExpression
 
 """Schedule implementation using cron expressions"""
@@ -300,6 +300,9 @@ type Language {
 """TODO"""
 scalar Link
 
+"""
+A string representing a locale conforming to the BCP 47 (RFC 5646) standard
+"""
 scalar Locale
 
 type Location implements Node {

@@ -1,7 +1,7 @@
 import { Link } from "@/schema/platform/resolvers/Link";
 import type { GraphQLScalarType } from "graphql";
 import {
-  GraphQLISO8601Duration,
+  GraphQLDuration,
   GraphQLLocale,
   GraphQLTimeZone,
 } from "graphql-scalars";
@@ -10,7 +10,7 @@ import { Entity } from "../resolvers/Entity";
 
 export const resolvers: Record<string, GraphQLScalarType> = {
   CronExpression: CronExpression,
-  Duration: GraphQLISO8601Duration,
+  Duration: GraphQLDuration,
   Entity: Entity,
   Link: Link,
   Locale: GraphQLLocale,
@@ -22,11 +22,11 @@ export {
   CronExpression as CronExpressionResolver,
   Entity,
   Entity as EntityResolver,
-  GraphQLISO8601Duration,
-  GraphQLISO8601Duration as ISO8601DurationResolver,
-  GraphQLLocale,
+  GraphQLDuration as Duration,
+  GraphQLDuration as DurationResolver,
+  GraphQLLocale as Locale,
   GraphQLLocale as LocaleResolver,
-  GraphQLTimeZone,
+  GraphQLTimeZone as TimeZone,
   GraphQLTimeZone as TimeZoneResolver,
   Link,
   Link as LinkResolver,
@@ -34,9 +34,9 @@ export {
 
 export const config = {
   CronExpression: CronExpression.extensions.codegenScalarType,
+  Duration: GraphQLDuration.extensions.codegenScalarType,
   Entity: Entity.extensions.codegenScalarType,
-  GraphQLISO8601Duration: GraphQLISO8601Duration.extensions.codegenScalarType,
-  GraphQLLocale: GraphQLLocale.extensions.codegenScalarType,
-  GraphQLTimeZone: GraphQLTimeZone.extensions.codegenScalarType,
   Link: Link.extensions.codegenScalarType,
+  Locale: GraphQLLocale.extensions.codegenScalarType,
+  TimeZone: GraphQLTimeZone.extensions.codegenScalarType,
 };

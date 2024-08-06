@@ -34,7 +34,7 @@ type AttachmentEdge implements Edge {
 """
 type Assignee implements Component {
   id: Entity!
-  assignedTo: Worker!
+  assignedTo: DisplayName!
   assignedAt: Temporal!
 }
 

@@ -1,9 +1,4 @@
-import type {
-  Assignee,
-  ChecklistItem,
-  QueryResolvers,
-  Temporal,
-} from "@/schema";
+import type { ChecklistItem, QueryResolvers, Temporal } from "@/schema";
 import { encodeGlobalId } from "@/schema/system";
 
 const data: ChecklistItem[] = [
@@ -25,7 +20,19 @@ const data: ChecklistItem[] = [
               __typename: "Instant",
               epochMilliseconds: "1722928536060",
             } as Temporal,
-          } as Assignee,
+            assignedTo: {
+              __typename: "DisplayName",
+              id: encodeGlobalId({
+                type: "workerinstance",
+                id: "b9facef4-b716-45fd-af3c-478194d943e2",
+              }),
+              value: {
+                __typename: "DynamicString",
+                locale: "en",
+                value: "Jerry Garcia",
+              },
+            },
+          },
           cursor: "NDIwNjk=",
         },
       ],
@@ -50,7 +57,18 @@ const data: ChecklistItem[] = [
       }),
       enabled: false,
     },
-    // description:
+    description: {
+      __typename: "Description",
+      id: encodeGlobalId({
+        type: "workdescription",
+        id: "8efe4ad5-766b-4c1c-b3d3-60c677bc0177",
+      }),
+      value: {
+        __typename: "DynamicString",
+        locale: "en",
+        value: "It's a really cool test Checklist!",
+      },
+    },
     items: {
       edges: [],
       pageInfo: {
@@ -69,9 +87,18 @@ const data: ChecklistItem[] = [
         value: "Test Checklist",
       },
     },
-    // required:
-    // schedule:
-    // sop:
+    required: true,
+    schedule: {
+      __typename: "CronSchedule",
+      cron: "0 12 * * 3", // at noon every wednesday
+    },
+    sop: {
+      id: encodeGlobalId({
+        type: "worktemplate",
+        id: "e8241534-f392-46f0-bd20-911c34e13572",
+      }),
+      link: "https://console.tendrel.io/docs/checklists",
+    },
     status: {
       __typename: "ChecklistOpen",
       id: encodeGlobalId({

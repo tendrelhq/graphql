@@ -1,4 +1,4 @@
-"""TODO"""
+"""A string representing a cron schedule expression"""
 scalar CronExpression
 
 

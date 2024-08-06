@@ -12,4 +12,11 @@ export const Link = new GraphQLScalarType({
   parseLiteral: ast => {
     /* Implement logic to parse input that was sent to the server as literal values (string, number, or boolean) */
   },
+  extensions: {
+    codegenScalarType: "string",
+    jsonSchema: {
+      type: "string",
+      format: "uri",
+    },
+  },
 });

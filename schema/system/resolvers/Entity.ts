@@ -40,7 +40,6 @@ export const Entity = new GraphQLScalarType<string, string>({
   extensions: {
     codegenScalarType: "string",
     jsonSchema: {
-      title: "Entity",
       type: "string",
     },
   },
