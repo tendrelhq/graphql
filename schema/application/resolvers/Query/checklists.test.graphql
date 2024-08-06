@@ -1,72 +1,105 @@
-query checklists($timeZone: TimeZone!) {
+query Checklists($timeZone: TimeZone!) {
+  __typename
   checklists {
-    id
-    assignees {
-      edges {
-        node {
+    edges {
+      node {
+        ... on Checklist {
           id
-          assignedAt {
-            ... on Instant {
-              epochMilliseconds
-              toZonedDateTime(timeZone: $timeZone) {
-                toString
+          assignees {
+            edges {
+              node {
+                id
+                assignedAt {
+                  ... on Instant {
+                    epochMilliseconds
+                    toZonedDateTime(timeZone: $timeZone) {
+                      toString
+                    }
+                  }
+                }
+                assignedTo {
+                  displayName {
+                    value {
+                      value
+                    }
+                  }
+                }
               }
             }
+            pageInfo {
+              hasNextPage
+              hasPreviousPage
+            }
+            totalCount
           }
-          assignedTo {
-            displayName {
-              value {
-                value
+          attachments {
+            edges {
+              node {
+                id
+              }
+            }
+            pageInfo {
+              hasNextPage
+              hasPreviousPage
+            }
+            totalCount
+          }
+          auditable {
+            enabled
+          }
+          description {
+            value {
+              value
+            }
+          }
+          items {
+            edges {
+              node {
+                ... on Checklist {
+                  id
+                }
+                ... on ChecklistResult {
+                  id
+                }
+              }
+            }
+            pageInfo {
+              hasNextPage
+              hasPreviousPage
+            }
+            totalCount
+          }
+          name {
+            value {
+              value
+            }
+          }
+          required
+          schedule {
+            __typename
+          }
+          sop {
+            id
+          }
+          status {
+            ... on ChecklistOpen {
+              openedAt {
+                ... on Instant {
+                  epochMilliseconds
+                  toZonedDateTime(timeZone: $timeZone) {
+                    toString
+                  }
+                }
               }
             }
           }
         }
       }
-      pageInfo {
-        hasNextPage
-        hasPreviousPage
-      }
-      totalCount
     }
-    attachments {
-      id
-      attachment
+    pageInfo {
+      hasNextPage
+      hasPreviousPage
     }
-    auditable {
-      enabled
-    }
-    description {
-      value {
-        value
-      }
-    }
-    items {
-      __typename
-    }
-    name {
-      value {
-        value
-      }
-    }
-    required
-    schedule {
-      __typename
-    }
-    sop {
-      id
-    }
-    status {
-      __typename
-      ... on ChecklistOpen {
-        openedAt {
-          ... on Instant {
-            epochMilliseconds
-            toZonedDateTime(timeZone: $timeZone) {
-              toString
-            }
-          }
-        }
-      }
-    }
+    totalCount
   }
 }

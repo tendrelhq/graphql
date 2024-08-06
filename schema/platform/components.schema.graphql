@@ -18,6 +18,17 @@ type Attachment implements Component {
   attachment: String!
 }
 
+type AttachmentConnection implements Connection {
+  edges: [AttachmentEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+type AttachmentEdge implements Edge {
+  cursor: String!
+  node: Attachment!
+}
+
 """
   TODO
 """
@@ -28,9 +39,9 @@ type Assignee implements Component {
 }
 
 type AssigneeConnection implements Connection {
-  totalCount: Int!
-  pageInfo: PageInfo!
   edges: [AssigneeEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
 }
 
 type AssigneeEdge implements Edge {

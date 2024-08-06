@@ -1,7 +1,8 @@
-import type { QueryResolvers, ResolversTypes } from "@/schema";
+import type { ChecklistItem, QueryResolvers, Temporal } from "@/schema";
 
-const data: ResolversTypes["Checklist"][] = [
+const data: ChecklistItem[] = [
   {
+    __typename: "Checklist",
     id: "a25ceddb-b122-4825-b907-e084c295c096",
     assignees: {
       edges: [],
@@ -11,13 +12,27 @@ const data: ResolversTypes["Checklist"][] = [
       },
       totalCount: 0,
     },
-    attachments: [],
+    attachments: {
+      edges: [],
+      pageInfo: {
+        hasNextPage: false,
+        hasPreviousPage: false,
+      },
+      totalCount: 0,
+    },
     auditable: {
       id: "e8241534-f392-46f0-bd20-911c34e13572",
       enabled: false,
     },
     // description:
-    items: [],
+    items: {
+      edges: [],
+      pageInfo: {
+        hasNextPage: false,
+        hasPreviousPage: false,
+      },
+      totalCount: 0,
+    },
     name: {
       id: "9505331e-7ccd-42b0-98be-574a834c48bb",
       value: {
@@ -34,7 +49,7 @@ const data: ResolversTypes["Checklist"][] = [
       openedAt: {
         __typename: "Instant",
         epochMilliseconds: "1722928536060",
-      } as ResolversTypes["Temporal"],
+      } as Temporal,
     },
   },
 ];
@@ -44,5 +59,12 @@ export const checklists: NonNullable<QueryResolvers["checklists"]> = async (
   _arg,
   _ctx,
 ) => {
-  return data;
+  return {
+    edges: data.map(node => ({ node, cursor: node.id as string })),
+    pageInfo: {
+      hasNextPage: false,
+      hasPreviousPage: false,
+    },
+    totalCount: 1,
+  };
 };

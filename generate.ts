@@ -25,6 +25,9 @@ const config: CodegenConfig = {
       presetConfig: {
         baseTypesPath: "~@/schema",
       },
+      config: {
+        addTypenameToSelectionSets: true,
+      },
     },
   },
 };

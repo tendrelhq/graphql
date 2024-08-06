@@ -1,10 +1,14 @@
+type Query {
+  checklists(first: Int, last: Int, before: String, after: String): ChecklistConnection!
+}
+
 type Checklist implements Component {
   id: ID!
   assignees(first: Int, last: Int, before: String, after: String): AssigneeConnection!
-  attachments: [Attachment!]
+  attachments(first: Int, last: Int, before: String, after: String): AttachmentConnection!
   auditable: Auditable!
   description: Description
-  items: [ChecklistItem!]!
+  items(first: Int, last: Int, before: String, after: String): ChecklistConnection!
   name: DisplayName!
   required: Boolean
   schedule: Schedule
@@ -12,13 +16,24 @@ type Checklist implements Component {
   status: ChecklistStatus!
 }
 
+type ChecklistConnection implements Connection {
+  edges: [ChecklistEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+type ChecklistEdge implements Edge {
+  cursor: String!
+  node: ChecklistItem
+}
+
 ## We want our checklists to support nesting
 union ChecklistItem = Checklist | ChecklistResult
 type ChecklistResult implements Component {
   id: ID!
-  assignees: [Assignee!]!
+  assignees(first: Int, last: Int, before: String, after: String): AssigneeConnection!
   auditable: Auditable!
-  attachments: [Attachment!]
+  attachments(first: Int, last: Int, before: String, after: String): AttachmentConnection!
   name: DisplayName!
   required: Boolean
   value: String
@@ -49,11 +64,4 @@ type ChecklistClosedReason {
 enum ChecklistClosedReasonCode {
   success
   error
-}
-
-# Next up: Systems (mutations?)
-# These will be how we do audits, computed fields, etc...
-
-type Query {
-  checklists: [Checklist!]!
 }

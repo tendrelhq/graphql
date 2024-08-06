@@ -27,6 +27,17 @@ type Attachment implements Component {
   id: ID!
 }
 
+type AttachmentConnection implements Connection {
+  edges: [AttachmentEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+type AttachmentEdge implements Edge {
+  cursor: String!
+  node: Attachment!
+}
+
 """TODO"""
 type Auditable implements Component {
   enabled: Boolean!
@@ -50,11 +61,11 @@ enum CalendarNameOptions {
 
 type Checklist implements Component {
   assignees(after: String, before: String, first: Int, last: Int): AssigneeConnection!
-  attachments: [Attachment!]
+  attachments(after: String, before: String, first: Int, last: Int): AttachmentConnection!
   auditable: Auditable!
   description: Description
   id: ID!
-  items: [ChecklistItem!]!
+  items(after: String, before: String, first: Int, last: Int): ChecklistConnection!
   name: DisplayName!
   required: Boolean
   schedule: Schedule
@@ -79,6 +90,17 @@ enum ChecklistClosedReasonCode {
   success
 }
 
+type ChecklistConnection implements Connection {
+  edges: [ChecklistEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+type ChecklistEdge implements Edge {
+  cursor: String!
+  node: ChecklistItem
+}
+
 type ChecklistInProgress implements Component {
   id: ID!
   inProgressAt: Temporal!
@@ -94,8 +116,8 @@ type ChecklistOpen implements Component {
 }
 
 type ChecklistResult implements Component {
-  assignees: [Assignee!]!
-  attachments: [Attachment!]
+  assignees(after: String, before: String, first: Int, last: Int): AssigneeConnection!
+  attachments(after: String, before: String, first: Int, last: Int): AttachmentConnection!
   auditable: Auditable!
   id: ID!
   name: DisplayName!
@@ -376,7 +398,7 @@ type PageInfo {
 }
 
 type Query {
-  checklists: [Checklist!]!
+  checklists(after: String, before: String, first: Int, last: Int): ChecklistConnection!
   languages: [Language!]!
   node(id: ID!): Node!
   roles: [Tag!]!

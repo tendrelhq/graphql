@@ -11,47 +11,86 @@ const schema = makeExecutableSchema({
 });
 
 test("checklists", async () => {
-  const out = await execute(schema, ChecklistsDocument, {
+  const result = await execute(schema, ChecklistsDocument, {
     timeZone: "America/Denver",
   });
-  expect(out).toEqual({
+  expect(result).toEqual({
     data: {
-      checklists: [
-        {
-          id: "a25ceddb-b122-4825-b907-e084c295c096",
-          assignees: {
-            edges: [],
-            pageInfo: {
-              hasNextPage: false,
-              hasPreviousPage: false,
-            },
-            totalCount: 0,
-          },
-          attachments: [],
-          auditable: {
-            enabled: false,
-          },
-          description: null,
-          items: [],
-          name: {
-            value: {
-              value: "Test Checklist",
-            },
-          },
-          required: null,
-          schedule: null,
-          sop: null,
-          status: {
-            __typename: "ChecklistOpen",
-            openedAt: {
-              epochMilliseconds: "1722928536060",
-              toZonedDateTime: {
-                toString: "2024-08-06T01:15:36.06-06:00[America/Denver]",
+      __typename: "Query",
+      checklists: {
+        __typename: "ChecklistConnection",
+        edges: [
+          {
+            __typename: "ChecklistEdge",
+            node: {
+              __typename: "Checklist",
+              id: "a25ceddb-b122-4825-b907-e084c295c096",
+              assignees: {
+                __typename: "AssigneeConnection",
+                edges: [],
+                pageInfo: {
+                  __typename: "PageInfo",
+                  hasNextPage: false,
+                  hasPreviousPage: false,
+                },
+                totalCount: 0,
+              },
+              attachments: {
+                __typename: "AttachmentConnection",
+                edges: [],
+                pageInfo: {
+                  __typename: "PageInfo",
+                  hasNextPage: false,
+                  hasPreviousPage: false,
+                },
+                totalCount: 0,
+              },
+              auditable: {
+                __typename: "Auditable",
+                enabled: false,
+              },
+              description: null,
+              items: {
+                __typename: "ChecklistConnection",
+                edges: [],
+                pageInfo: {
+                  __typename: "PageInfo",
+                  hasNextPage: false,
+                  hasPreviousPage: false,
+                },
+                totalCount: 0,
+              },
+              name: {
+                __typename: "DisplayName",
+                value: {
+                  __typename: "DynamicString",
+                  value: "Test Checklist",
+                },
+              },
+              required: null,
+              schedule: null,
+              sop: null,
+              status: {
+                __typename: "ChecklistOpen",
+                openedAt: {
+                  __typename: "Instant",
+                  epochMilliseconds: "1722928536060",
+                  toZonedDateTime: {
+                    __typename: "ZonedDateTime",
+                    toString: "2024-08-06T01:15:36.06-06:00[America/Denver]",
+                  },
+                },
               },
             },
           },
+        ],
+        pageInfo: {
+          __typename: "PageInfo",
+          hasNextPage: false,
+          hasPreviousPage: false,
         },
-      ],
+        totalCount: 1,
+      },
     },
   });
 });
