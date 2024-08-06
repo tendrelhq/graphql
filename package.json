@@ -4,7 +4,7 @@
   "module": "lib/index.ts",
   "type": "module",
   "scripts": {
-    "clean": "rimraf lib/**/__generated__ node_modules out",
+    "clean": "rimraf **/__generated__/** node_modules out",
     "compile": "bun build.ts",
     "dev": "bun --hot --inspect ./bin/app2.ts",
     "generate": "graphql-codegen && biome format --write ./schema/__generated__/*.ts && biome check --write ./schema/*/resolvers/**/*.ts",
