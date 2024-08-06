@@ -1,3 +1,8 @@
+input AcceptInvitationInput {
+  authenticationIdentityId: ID!
+  workerId: ID!
+}
+
 """TODO"""
 type Assignee implements Component {
   assignedAt: Temporal!
@@ -39,7 +44,7 @@ type Checklist implements Component {
   description: Description
   id: ID!
   items: [ChecklistItem!]!
-  name: Name!
+  name: DisplayName!
   required: Boolean
   schedule: Schedule
   sop: Sop
@@ -82,7 +87,7 @@ type ChecklistResult implements Component {
   attachments: [Attachment!]
   auditable: Auditable!
   id: ID!
-  name: Name!
+  name: DisplayName!
   required: Boolean
   value: String
 }
@@ -95,6 +100,47 @@ They are just simple structs, holding all data necessary to model that trait.
 """
 interface Component {
   id: ID!
+}
+
+input CreateInvitationInput {
+  emailAddress: String!
+  orgId: ID!
+  workerId: ID!
+}
+
+input CreateLocationInput {
+  active: Boolean!
+  id: ID
+  name: CreateNameInput!
+  orgId: ID!
+  scanCode: ID
+}
+
+input CreateNameInput {
+  active: Boolean!
+  id: ID
+  languageId: ID!
+  value: String!
+}
+
+input CreateUserInput {
+  active: Boolean!
+  displayName: String
+  firstName: String!
+  id: ID
+  languageId: ID!
+  lastName: String!
+  username: String
+}
+
+input CreateWorkerInput {
+  active: Boolean!
+  id: ID
+  languageId: ID!
+  orgId: ID!
+  roleId: ID!
+  scanCode: ID
+  userId: ID!
 }
 
 """TODO"""
@@ -111,6 +157,12 @@ type Description implements Component {
   value: DynamicString!
 }
 
+"""TODO"""
+type DisplayName implements Component {
+  id: ID!
+  value: DynamicString!
+}
+
 """ISO 8601 duration string expressing a length of time"""
 scalar Duration
 
@@ -118,6 +170,25 @@ scalar Duration
 type DynamicString {
   locale: Locale!
   value: String!
+}
+
+type EnabledLanguage implements Node {
+  activatedAt: String
+  active: Boolean!
+  deactivatedAt: String
+  id: ID!
+  language: Language!
+  languageId: ID!
+  primary: Boolean!
+}
+
+type EnabledLanguageConnection {
+  edges: [EnabledLanguageEdge!]!
+  pageInfo: PageInfo!
+}
+
+type EnabledLanguageEdge {
+  node: EnabledLanguage!
 }
 
 """
@@ -148,15 +219,97 @@ input InstantToStringOptions {
   timeZone: TimeZone
 }
 
+type Invitation {
+  createdAt: String!
+  emailAddress: String!
+  id: ID!
+  status: InvitationStatus!
+  updatedAt: String!
+  workerId: ID!
+}
+
+enum InvitationStatus {
+  accepted
+  pending
+  revoked
+}
+
+type Language {
+  code: String!
+  id: ID!
+  name: Name!
+  nameId: ID!
+}
+
 """TODO"""
 scalar Link
 
 scalar Locale
 
-"""TODO"""
-type Name implements Component {
+type Location implements Node {
+  activatedAt: String
+  active: Boolean!
+  children(options: LocationsQueryOptions): [Location!]!
+  deactivatedAt: String
   id: ID!
-  value: DynamicString!
+  name: Name!
+  nameId: ID!
+  parent: Location
+  parentId: ID
+  scanCode: ID
+  site: Location!
+  siteId: ID!
+  tags: [Tag!]!
+}
+
+type LocationConnection {
+  edges: [LocationEdge!]!
+  pageInfo: PageInfo!
+}
+
+type LocationEdge {
+  node: Location!
+}
+
+input LocationsQueryOptions {
+  cornerstone: Boolean
+  site: Boolean
+}
+
+type Mutation {
+  acceptInvitation(input: AcceptInvitationInput!): Worker!
+  activateWorker(id: ID!): Worker!
+  createInvitation(input: CreateInvitationInput!): Invitation!
+  createLocation(input: CreateLocationInput!): Location!
+  createUser(input: CreateUserInput!): User!
+  createWorker(input: CreateWorkerInput!): Worker!
+  deactivateWorker(id: ID!): Worker!
+  disableLanguage(languageId: ID!, orgId: ID!): Boolean!
+  enableLanguage(languageId: ID!, orgId: ID!): Boolean!
+  updateLocation(input: UpdateLocationInput!): Location!
+  updateName(input: UpdateNameInput!): Name!
+  updateUser(input: UpdateUserInput!): User!
+  updateWorker(input: UpdateWorkerInput!): Worker!
+}
+
+type Name implements Node {
+  id: ID!
+  language: Language!
+  languageId: ID!
+  metadata: NameMetadata!
+  value: String!
+}
+
+type NameMetadata {
+  nameId: ID!
+  sourceLanguage: Language!
+  sourceLanguageId: ID!
+  sourceText: String!
+  translatedAt: String!
+}
+
+interface Node {
+  id: ID!
 }
 
 """TODO"""
@@ -173,8 +326,41 @@ type OnceSchedule {
   once: Temporal!
 }
 
+type Organization implements Node {
+  activatedAt: String
+  active: Boolean!
+  billingId: String
+  deactivatedAt: String
+  id: ID!
+  languages(after: String, before: String, first: Int, last: Int): EnabledLanguageConnection!
+  locations(after: String, before: String, first: Int, last: Int): LocationConnection!
+  name: Name!
+  nameId: ID!
+  workers(after: String, before: String, first: Int, last: Int): WorkerConnection!
+}
+
+type OrganizationConnection {
+  edges: [OrganizationEdge!]!
+  pageInfo: PageInfo!
+}
+
+type OrganizationEdge {
+  node: Organization!
+}
+
+type PageInfo {
+  endCursor: String
+  hasNextPage: Boolean!
+  hasPreviousPage: Boolean!
+  startCursor: String
+}
+
 type Query {
   checklists: [Checklist!]!
+  languages: [Language!]!
+  node(id: ID!): Node!
+  roles: [Tag!]!
+  user: User!
 }
 
 """Controls how rounding is performed"""
@@ -201,6 +387,15 @@ type Sop implements Component {
   link: Link!
 }
 
+type Tag {
+  id: ID!
+  name: Name!
+  nameId: ID!
+  parent: Tag
+  parentId: ID
+  type: String!
+}
+
 interface Temporal {
   """Milliseconds since the UNIX epoch of 1/1/1970 00:00+00"""
   epochMilliseconds: String!
@@ -221,12 +416,89 @@ enum TimeZoneNameOptions {
   never
 }
 
-"""TODO"""
-type Worker implements Component {
+input UpdateLocationInput {
+  activatedAt: String
+  deactivatedAt: String
+  id: ID!
+  name: UpdateNameInput
+  scanCode: ID
+}
+
+input UpdateNameInput {
+  activatedAt: String
+  deactivatedAt: String
+  id: ID!
+  languageId: ID!
+  value: String!
+}
+
+input UpdateUserInput {
+  displayName: String
+  firstName: String!
+  id: ID!
+  languageId: ID!
+  lastName: String!
+}
+
+input UpdateWorkerInput {
+  activatedAt: String
+  deactivatedAt: String
+  id: ID!
+  languageId: ID!
+  roleId: ID!
+  scanCode: ID
+}
+
+type User implements Node {
+  activatedAt: String
+  active: Boolean!
+  authenticationIdentityId: ID
+  authenticationProvider: Tag
+  authenticationProviderId: ID
+  deactivatedAt: String
   displayName: String!
   firstName: String!
   id: ID!
+  language: Language!
+  languageId: ID!
   lastName: String!
+  organizations(after: String, before: String, first: Int, last: Int): OrganizationConnection!
+  tags: [Tag!]!
+}
+
+"""TODO"""
+type Worker implements Component & Node {
+  activatedAt: String
+  active: Boolean!
+  deactivatedAt: String
+  displayName: DisplayName!
+  firstName: String!
+  id: ID!
+  invitation: Invitation
+  invitationId: ID
+  language: Language!
+  languageId: ID!
+  lastName: String!
+  role: Tag!
+  roleId: ID!
+  scanCode: String
+  tags: [Tag!]!
+  user: User!
+  userId: ID!
+}
+
+type WorkerConnection {
+  edges: [WorkerEdge!]!
+  pageInfo: PageInfo!
+}
+
+type WorkerEdge {
+  node: Worker!
+}
+
+input WorkersQueryOptions {
+  active: Boolean
+  site: ID
 }
 
 """

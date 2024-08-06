@@ -26,6 +26,8 @@
 
     "paths": {
       "@/*": ["./lib/*"],
+      "@/schema": ["./schema/index.ts"],
+      "@/schema/*": ["./schema/*"],
       "@/test/*": ["./test/*"]
     }
   },

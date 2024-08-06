@@ -5,7 +5,7 @@ type Checklist implements Component {
   auditable: Auditable!
   description: Description
   items: [ChecklistItem!]!
-  name: Name!
+  name: DisplayName!
   required: Boolean
   schedule: Schedule
   sop: Sop
@@ -19,7 +19,7 @@ type ChecklistResult implements Component {
   assignees: [Assignee!]!
   auditable: Auditable!
   attachments: [Attachment!]
-  name: Name!
+  name: DisplayName!
   required: Boolean
   value: String
 }
@@ -49,13 +49,6 @@ type ChecklistClosedReason {
 enum ChecklistClosedReasonCode {
   success
   error
-}
-
-type Worker implements Component {
-  id: ID!
-  firstName: String!
-  lastName: String!
-  displayName: String!
 }
 
 # Next up: Systems (mutations?)

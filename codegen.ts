@@ -4,7 +4,7 @@ import type { CodegenConfig } from "@graphql-codegen/cli";
 const config: CodegenConfig = {
   schema: "./schema/**/*.schema.graphql",
   generates: {
-    "./lib/schema/__generated__": defineConfig({
+    "./schema/__generated__": defineConfig({
       typesPluginsConfig: {
         contextType: "@/schema#Context",
         inputMaybeValue: "T | undefined",

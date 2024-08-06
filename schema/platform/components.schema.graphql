@@ -37,7 +37,7 @@ type Description implements Component {
 """
   TODO
 """
-type Name implements Component {
+type DisplayName implements Component {
   id: ID!
   value: DynamicString!
 }
@@ -57,5 +57,5 @@ type Worker implements Component {
   id: ID!
   firstName: String!
   lastName: String!
-  displayName: String!
+  displayName: DisplayName!
 }
