@@ -1,16 +1,32 @@
-import type { ChecklistItem, QueryResolvers, Temporal } from "@/schema";
+import type {
+  Assignee,
+  ChecklistItem,
+  QueryResolvers,
+  Temporal,
+} from "@/schema";
 
 const data: ChecklistItem[] = [
   {
     __typename: "Checklist",
     id: "a25ceddb-b122-4825-b907-e084c295c096",
     assignees: {
-      edges: [],
+      edges: [
+        {
+          node: {
+            id: "02a4b82b-4605-43fc-af2d-f377c4da63cc",
+            assignedAt: {
+              __typename: "Instant",
+              epochMilliseconds: "1722928536060",
+            } as Temporal,
+          } as Assignee,
+          cursor: "NDIwNjk=",
+        },
+      ],
       pageInfo: {
         hasNextPage: false,
         hasPreviousPage: false,
       },
-      totalCount: 0,
+      totalCount: 1,
     },
     attachments: {
       edges: [],

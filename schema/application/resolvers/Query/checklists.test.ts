@@ -27,13 +27,31 @@ test("checklists", async () => {
               id: "a25ceddb-b122-4825-b907-e084c295c096",
               assignees: {
                 __typename: "AssigneeConnection",
-                edges: [],
+                edges: [
+                  {
+                    __typename: "AssigneeEdge",
+                    node: {
+                      __typename: "Assignee",
+                      id: "02a4b82b-4605-43fc-af2d-f377c4da63cc",
+                      assignedAt: {
+                        __typename: "Instant",
+                        epochMilliseconds: "1722928536060",
+                        toString: "2024-08-06T00:15:36.06-07:00",
+                        toZonedDateTime: {
+                          __typename: "ZonedDateTime",
+                          toString:
+                            "2024-08-06T01:15:36.06-06:00[America/Denver]",
+                        },
+                      },
+                    },
+                  },
+                ],
                 pageInfo: {
                   __typename: "PageInfo",
                   hasNextPage: false,
                   hasPreviousPage: false,
                 },
-                totalCount: 0,
+                totalCount: 1,
               },
               attachments: {
                 __typename: "AttachmentConnection",

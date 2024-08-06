@@ -12,15 +12,9 @@ query Checklists($timeZone: TimeZone!) {
                 assignedAt {
                   ... on Instant {
                     epochMilliseconds
+                    toString(options: { timeZone: "America/Los_Angeles" })
                     toZonedDateTime(timeZone: $timeZone) {
                       toString
-                    }
-                  }
-                }
-                assignedTo {
-                  displayName {
-                    value {
-                      value
                     }
                   }
                 }
