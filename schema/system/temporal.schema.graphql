@@ -18,15 +18,12 @@ enum SmallestTimeUnit {
 """ISO 8601 duration string expressing a length of time"""
 scalar Duration
 
-interface Temporal {
-  """Milliseconds since the UNIX epoch of 1/1/1970 00:00+00"""
-  epochMilliseconds: String!
-}
+union Temporal = Instant | ZonedDateTime
 
 """
   Fixed point in time (i.e. "exact time") without regard to calendar or location
 """
-type Instant implements Temporal {
+type Instant {
   """Milliseconds since the UNIX epoch of 1/1/1970 00:00+00"""
   epochMilliseconds: String!
 
@@ -55,7 +52,7 @@ scalar TimeZone
   Timezone-aware, calendar-aware date/time object representing an exact time
   from the perspective of a particular geographic region
 """
-type ZonedDateTime implements Temporal {
+type ZonedDateTime {
   year: Int!
   month: Int!
   day: Int!

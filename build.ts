@@ -1,13 +1,11 @@
-import { generate } from "@graphql-codegen/cli";
 import { $ } from "bun";
 import pattycake from "pattycake";
-import config from "./codegen";
 
 // clean
 await $`rimraf lib/schema/__generated__ out`;
 
 // codegen
-await generate(config);
+await $`bun generate.ts`;
 
 // typecheck
 await $`tsc`;

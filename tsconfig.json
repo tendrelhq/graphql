@@ -29,7 +29,15 @@
       "@/schema": ["./schema/index.ts"],
       "@/schema/*": ["./schema/*"],
       "@/test/*": ["./test/*"]
-    }
+    },
+
+    "plugins": [
+      {
+        "name": "@0no-co/graphqlsp",
+        "schema": "./schema.graphql",
+        "templateIsCallExpression": false
+      }
+    ]
   },
   "exclude": ["node_modules", "out"]
 }

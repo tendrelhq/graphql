@@ -1,6 +1,6 @@
 type Checklist implements Component {
   id: ID!
-  assignees: [Assignee!]!
+  assignees(first: Int, last: Int, before: String, after: String): AssigneeConnection!
   attachments: [Attachment!]
   auditable: Auditable!
   description: Description
@@ -28,19 +28,19 @@ type ChecklistResult implements Component {
 union ChecklistStatus = ChecklistOpen | ChecklistInProgress | ChecklistClosed
 type ChecklistOpen implements Component {
   id: ID!
-  by: Worker!
-  at: Temporal!
+  openedBy: Worker
+  openedAt: Temporal!
 }
 type ChecklistInProgress implements Component {
   id: ID!
-  by: Worker!
-  at: Temporal!
+  inProgressBy: Worker!
+  inProgressAt: Temporal!
 }
 type ChecklistClosed implements Component {
   id: ID!
-  by: Worker!
-  at: Temporal!
-  reason: ChecklistClosedReason!
+  closedBy: Worker!
+  closedAt: Temporal!
+  closedBecause: ChecklistClosedReason!
 }
 type ChecklistClosedReason {
   code: ChecklistClosedReasonCode!

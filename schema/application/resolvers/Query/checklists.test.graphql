@@ -1,0 +1,72 @@
+query checklists($timeZone: TimeZone!) {
+  checklists {
+    id
+    assignees {
+      edges {
+        node {
+          id
+          assignedAt {
+            ... on Instant {
+              epochMilliseconds
+              toZonedDateTime(timeZone: $timeZone) {
+                toString
+              }
+            }
+          }
+          assignedTo {
+            displayName {
+              value {
+                value
+              }
+            }
+          }
+        }
+      }
+      pageInfo {
+        hasNextPage
+        hasPreviousPage
+      }
+      totalCount
+    }
+    attachments {
+      id
+      attachment
+    }
+    auditable {
+      enabled
+    }
+    description {
+      value {
+        value
+      }
+    }
+    items {
+      __typename
+    }
+    name {
+      value {
+        value
+      }
+    }
+    required
+    schedule {
+      __typename
+    }
+    sop {
+      id
+    }
+    status {
+      __typename
+      ... on ChecklistOpen {
+        openedAt {
+          ... on Instant {
+            epochMilliseconds
+            toZonedDateTime(timeZone: $timeZone) {
+              toString
+            }
+          }
+        }
+      }
+    }
+  }
+}

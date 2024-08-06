@@ -19,6 +19,7 @@
 ### typescript ###
 /node_modules/
 *.d.ts
+*.generated.ts
 **/__generated__/**
 
 ### macOS ###

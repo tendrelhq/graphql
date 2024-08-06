@@ -10,6 +10,17 @@ type Assignee implements Component {
   id: ID!
 }
 
+type AssigneeConnection implements Connection {
+  edges: [AssigneeEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+type AssigneeEdge implements Edge {
+  cursor: String!
+  node: Assignee!
+}
+
 """TODO"""
 type Attachment implements Component {
   attachment: String!
@@ -38,7 +49,7 @@ enum CalendarNameOptions {
 }
 
 type Checklist implements Component {
-  assignees: [Assignee!]!
+  assignees(after: String, before: String, first: Int, last: Int): AssigneeConnection!
   attachments: [Attachment!]
   auditable: Auditable!
   description: Description
@@ -52,10 +63,10 @@ type Checklist implements Component {
 }
 
 type ChecklistClosed implements Component {
-  at: Temporal!
-  by: Worker!
+  closedAt: Temporal!
+  closedBecause: ChecklistClosedReason!
+  closedBy: Worker!
   id: ID!
-  reason: ChecklistClosedReason!
 }
 
 type ChecklistClosedReason {
@@ -69,17 +80,17 @@ enum ChecklistClosedReasonCode {
 }
 
 type ChecklistInProgress implements Component {
-  at: Temporal!
-  by: Worker!
   id: ID!
+  inProgressAt: Temporal!
+  inProgressBy: Worker!
 }
 
 union ChecklistItem = Checklist | ChecklistResult
 
 type ChecklistOpen implements Component {
-  at: Temporal!
-  by: Worker!
   id: ID!
+  openedAt: Temporal!
+  openedBy: Worker
 }
 
 type ChecklistResult implements Component {
@@ -100,6 +111,11 @@ They are just simple structs, holding all data necessary to model that trait.
 """
 interface Component {
   id: ID!
+}
+
+interface Connection {
+  pageInfo: PageInfo!
+  totalCount: Int!
 }
 
 input CreateInvitationInput {
@@ -172,6 +188,10 @@ type DynamicString {
   value: String!
 }
 
+interface Edge {
+  cursor: String!
+}
+
 type EnabledLanguage implements Node {
   activatedAt: String
   active: Boolean!
@@ -194,7 +214,7 @@ type EnabledLanguageEdge {
 """
 Fixed point in time (i.e. "exact time") without regard to calendar or location
 """
-type Instant implements Temporal {
+type Instant {
   """Milliseconds since the UNIX epoch of 1/1/1970 00:00+00"""
   epochMilliseconds: String!
 
@@ -396,10 +416,7 @@ type Tag {
   type: String!
 }
 
-interface Temporal {
-  """Milliseconds since the UNIX epoch of 1/1/1970 00:00+00"""
-  epochMilliseconds: String!
-}
+union Temporal = Instant | ZonedDateTime
 
 """IANA time zone, UTC offset, or UTC itself"""
 scalar TimeZone
@@ -505,7 +522,7 @@ input WorkersQueryOptions {
 Timezone-aware, calendar-aware date/time object representing an exact time
 from the perspective of a particular geographic region
 """
-type ZonedDateTime implements Temporal {
+type ZonedDateTime {
   day: Int!
 
   """Milliseconds since the UNIX epoch of 1/1/1970 00:00+00"""

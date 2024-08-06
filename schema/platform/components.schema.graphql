@@ -1,3 +1,12 @@
+interface Connection {
+  totalCount: Int!
+  pageInfo: PageInfo!
+}
+
+interface Edge {
+  cursor: String!
+}
+
 """TODO"""
 scalar Link
 
@@ -16,6 +25,17 @@ type Assignee implements Component {
   id: ID!
   assignedTo: Worker!
   assignedAt: Temporal!
+}
+
+type AssigneeConnection implements Connection {
+  totalCount: Int!
+  pageInfo: PageInfo!
+  edges: [AssigneeEdge!]!
+}
+
+type AssigneeEdge implements Edge {
+  cursor: String!
+  node: Assignee!
 }
 
 """
