@@ -1,0 +1,66 @@
+type Checklist implements Component {
+  id: ID!
+  assignees: [Assignee!]!
+  attachments: [Attachment!]
+  auditable: Auditable!
+  description: Description
+  items: [ChecklistItem!]!
+  name: Name!
+  required: Boolean
+  schedule: Schedule
+  sop: Sop
+  status: ChecklistStatus!
+}
+
+## We want our checklists to support nesting
+union ChecklistItem = Checklist | ChecklistResult
+type ChecklistResult implements Component {
+  id: ID!
+  assignees: [Assignee!]!
+  auditable: Auditable!
+  attachments: [Attachment!]
+  name: Name!
+  required: Boolean
+  value: String
+}
+
+## Our checklists go Open > In Progress > Closed
+union ChecklistStatus = ChecklistOpen | ChecklistInProgress | ChecklistClosed
+type ChecklistOpen implements Component {
+  id: ID!
+  by: Worker!
+  at: Temporal!
+}
+type ChecklistInProgress implements Component {
+  id: ID!
+  by: Worker!
+  at: Temporal!
+}
+type ChecklistClosed implements Component {
+  id: ID!
+  by: Worker!
+  at: Temporal!
+  reason: ChecklistClosedReason!
+}
+type ChecklistClosedReason {
+  code: ChecklistClosedReasonCode!
+  note: DynamicString
+}
+enum ChecklistClosedReasonCode {
+  success
+  error
+}
+
+type Worker implements Component {
+  id: ID!
+  firstName: String!
+  lastName: String!
+  displayName: String!
+}
+
+# Next up: Systems (mutations?)
+# These will be how we do audits, computed fields, etc...
+
+type Query {
+  checklists: [Checklist!]!
+}

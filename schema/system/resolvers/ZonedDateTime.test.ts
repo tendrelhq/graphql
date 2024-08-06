@@ -1,21 +1,22 @@
 import { expect, test } from "bun:test";
-import { resolvers, typeDefs } from "@/schema2";
+import { resolvers, typeDefs } from "@/schema";
 import { mergeResolvers, mergeTypeDefs } from "@graphql-tools/merge";
 import { makeExecutableSchema } from "@graphql-tools/schema";
 import { graphqlSync } from "graphql";
 
-const I = {
+const ZDT = {
   epochMilliseconds: "1722892841208",
+  timeZone: "America/Los_Angeles",
 };
 
 const testQuery = `#graphql
   type Query {
-    test: Instant!
+    test: ZonedDateTime!
   }
 `;
 const testResolver = {
   Query: {
-    test: () => I,
+    test: () => ZDT,
   },
 };
 const schema = makeExecutableSchema({
@@ -23,17 +24,13 @@ const schema = makeExecutableSchema({
   typeDefs: mergeTypeDefs([testQuery, typeDefs]),
 });
 
-test("Instant", () => {
+test("ZonedDateTime", () => {
   const source = `#graphql
-      query TestInstant($options: InstantToStringOptions) {
+      query TestInstant($options: ZonedDateTimeToStringOptions) {
         test {
           __typename
           epochMilliseconds
           toString(options: $options)
-          toZonedDateTime(timeZone: "America/Los_Angeles") {
-            epochMilliseconds
-            timeZone
-          }
         }
       }
     `;
@@ -45,20 +42,16 @@ test("Instant", () => {
       variableValues: {
         options: {
           smallestUnit: "second",
-          timeZone: "America/New_York",
+          timeZoneName: "auto",
         },
       },
     }),
   ).toEqual({
     data: {
       test: {
-        __typename: "Instant",
-        epochMilliseconds: I.epochMilliseconds,
-        toString: "2024-08-05T17:20:41-04:00",
-        toZonedDateTime: {
-          epochMilliseconds: "1722892841208",
-          timeZone: "America/Los_Angeles",
-        },
+        __typename: "ZonedDateTime",
+        epochMilliseconds: ZDT.epochMilliseconds,
+        toString: "2024-08-05T14:20:41-07:00[America/Los_Angeles]",
       },
     },
   });

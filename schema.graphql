@@ -1,0 +1,266 @@
+"""TODO"""
+type Assignee implements Component {
+  assignedAt: Temporal!
+  assignedTo: Worker!
+  id: ID!
+}
+
+"""TODO"""
+type Attachment implements Component {
+  attachment: String!
+  id: ID!
+}
+
+"""TODO"""
+type Auditable implements Component {
+  enabled: Boolean!
+  id: ID!
+}
+
+"""TODO"""
+enum CalendarNameOptions {
+  """TODO"""
+  always
+
+  """TODO"""
+  auto
+
+  """TODO"""
+  critical
+
+  """TODO"""
+  never
+}
+
+type Checklist implements Component {
+  assignees: [Assignee!]!
+  attachments: [Attachment!]
+  auditable: Auditable!
+  description: Description
+  id: ID!
+  items: [ChecklistItem!]!
+  name: Name!
+  required: Boolean
+  schedule: Schedule
+  sop: Sop
+  status: ChecklistStatus!
+}
+
+type ChecklistClosed implements Component {
+  at: Temporal!
+  by: Worker!
+  id: ID!
+  reason: ChecklistClosedReason!
+}
+
+type ChecklistClosedReason {
+  code: ChecklistClosedReasonCode!
+  note: DynamicString
+}
+
+enum ChecklistClosedReasonCode {
+  error
+  success
+}
+
+type ChecklistInProgress implements Component {
+  at: Temporal!
+  by: Worker!
+  id: ID!
+}
+
+union ChecklistItem = Checklist | ChecklistResult
+
+type ChecklistOpen implements Component {
+  at: Temporal!
+  by: Worker!
+  id: ID!
+}
+
+type ChecklistResult implements Component {
+  assignees: [Assignee!]!
+  attachments: [Attachment!]
+  auditable: Auditable!
+  id: ID!
+  name: Name!
+  required: Boolean
+  value: String
+}
+
+union ChecklistStatus = ChecklistClosed | ChecklistInProgress | ChecklistOpen
+
+"""
+Components characterize Entities as possessing a particular trait.
+They are just simple structs, holding all data necessary to model that trait.
+"""
+interface Component {
+  id: ID!
+}
+
+"""TODO"""
+scalar CronExpression
+
+"""Schedule implementation using cron expressions"""
+type CronSchedule {
+  cron: CronExpression!
+}
+
+"""TODO"""
+type Description implements Component {
+  id: ID!
+  value: DynamicString!
+}
+
+"""ISO 8601 duration string expressing a length of time"""
+scalar Duration
+
+"""TODO"""
+type DynamicString {
+  locale: Locale!
+  value: String!
+}
+
+"""
+Fixed point in time (i.e. "exact time") without regard to calendar or location
+"""
+type Instant implements Temporal {
+  """Milliseconds since the UNIX epoch of 1/1/1970 00:00+00"""
+  epochMilliseconds: String!
+
+  """Convert an Instant to an ISO 8601 string"""
+  toString(options: InstantToStringOptions): String!
+
+  """Convert an Instant to a ZonedDateTime"""
+  toZonedDateTime(timeZone: TimeZone!): ZonedDateTime!
+}
+
+input InstantToStringOptions {
+  """How many digits to print after the decimal point in the output string"""
+  fractionalSecondDigits: Int
+
+  """How to handle the remainder"""
+  roundingMode: RoundingMode
+
+  """The smallest unit of time to include in the output string"""
+  smallestUnit: SmallestTimeUnit
+
+  """The time zone to express the Instant/ZonedDateTime in"""
+  timeZone: TimeZone
+}
+
+"""TODO"""
+scalar Link
+
+scalar Locale
+
+"""TODO"""
+type Name implements Component {
+  id: ID!
+  value: DynamicString!
+}
+
+"""TODO"""
+enum OffsetOptions {
+  """TODO"""
+  auto
+
+  """TODO"""
+  never
+}
+
+"""Schedule implementation for "oneshot" events"""
+type OnceSchedule {
+  once: Temporal!
+}
+
+type Query {
+  checklists: [Checklist!]!
+}
+
+"""Controls how rounding is performed"""
+enum RoundingMode {
+  """Always round up, towards the end of time"""
+  ceil
+
+  """Always round down, towards the beginning of time"""
+  floor
+}
+
+"""TODO"""
+union Schedule = CronSchedule | OnceSchedule
+
+enum SmallestTimeUnit {
+  millisecond
+  minute
+  second
+}
+
+"""TODO"""
+type Sop implements Component {
+  id: ID!
+  link: Link!
+}
+
+interface Temporal {
+  """Milliseconds since the UNIX epoch of 1/1/1970 00:00+00"""
+  epochMilliseconds: String!
+}
+
+"""IANA time zone, UTC offset, or UTC itself"""
+scalar TimeZone
+
+"""TODO"""
+enum TimeZoneNameOptions {
+  """TODO"""
+  auto
+
+  """TODO"""
+  critical
+
+  """TODO"""
+  never
+}
+
+"""TODO"""
+type Worker implements Component {
+  displayName: String!
+  firstName: String!
+  id: ID!
+  lastName: String!
+}
+
+"""
+Timezone-aware, calendar-aware date/time object representing an exact time
+from the perspective of a particular geographic region
+"""
+type ZonedDateTime implements Temporal {
+  day: Int!
+
+  """Milliseconds since the UNIX epoch of 1/1/1970 00:00+00"""
+  epochMilliseconds: String!
+  hour: Int!
+  millisecond: Int!
+  minute: Int!
+  month: Int!
+  second: Int!
+  timeZone: TimeZone!
+
+  """Convert a ZonedDateTime to an ISO 8601 string"""
+  toString(options: ZonedDateTimeToStringOptions): String!
+  year: Int!
+}
+
+input ZonedDateTimeToStringOptions {
+  calendarName: CalendarNameOptions
+
+  """How many digits to print after the decimal point in the output string"""
+  fractionalSecondDigits: Int
+  offset: OffsetOptions
+
+  """How to handle the remainder"""
+  roundingMode: RoundingMode
+
+  """The smallest unit of time to include in the output string"""
+  smallestUnit: SmallestTimeUnit
+  timeZoneName: TimeZoneNameOptions
+}

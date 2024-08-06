@@ -1,4 +1,5 @@
-import type { CronScheduleResolvers } from "./../../../__generated__/types.generated";
+import type { CronScheduleResolvers } from "@/schema";
+
 export const CronSchedule: CronScheduleResolvers = {
   /* Implement CronSchedule resolver logic here */
 };

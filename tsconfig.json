@@ -25,7 +25,8 @@
     "noPropertyAccessFromIndexSignature": false,
 
     "paths": {
-      "@/*": ["./lib/*"]
+      "@/*": ["./lib/*"],
+      "@/test/*": ["./test/*"]
     }
   },
   "exclude": ["node_modules", "out"]

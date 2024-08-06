@@ -1,4 +1,5 @@
-import type { DynamicStringResolvers } from "./../../../__generated__/types.generated";
+import type { DynamicStringResolvers } from "@/schema";
+
 export const DynamicString: DynamicStringResolvers = {
   /* Implement DynamicString resolver logic here */
 };

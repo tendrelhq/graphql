@@ -1,4 +1,5 @@
-import type { SopResolvers } from "./../../../__generated__/types.generated";
+import type { SopResolvers } from "@/schema";
+
 export const Sop: SopResolvers = {
   /* Implement Sop resolver logic here */
 };

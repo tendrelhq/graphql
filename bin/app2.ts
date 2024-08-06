@@ -24,6 +24,7 @@ const server = new ApolloServer<{}>({
     return formattedError;
   },
   plugins: [ApolloServerPluginDrainHttpServer({ httpServer })],
+  nodeEnv: "production",
 });
 
 await server.start();

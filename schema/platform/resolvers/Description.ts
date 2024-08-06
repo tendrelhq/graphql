@@ -1,4 +1,5 @@
-import type { DescriptionResolvers } from "./../../../__generated__/types.generated";
+import type { DescriptionResolvers } from "@/schema";
+
 export const Description: DescriptionResolvers = {
   /* Implement Description resolver logic here */
 };

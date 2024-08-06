@@ -6,8 +6,9 @@
   "scripts": {
     "clean": "rimraf lib/**/__generated__ node_modules out",
     "compile": "bun build.ts",
-    "dev": "bun --hot --inspect ./bin/app.ts",
+    "dev": "bun --hot --inspect ./bin/app2.ts",
     "generate": "graphql-codegen && biome check --write lib/schema/resolvers/**/*.ts",
+    "explore": "bunx ruru@beta -Pe http://localhost:4000",
     "start": "bun ./bin/app.ts",
     "start+tracing": "bun -r ./lib/instrument.ts ./bin/app.ts"
   },

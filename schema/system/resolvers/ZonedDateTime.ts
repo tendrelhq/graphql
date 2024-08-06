@@ -1,5 +1,5 @@
+import type { ZonedDateTimeResolvers } from "@/schema";
 import { Temporal } from "@js-temporal/polyfill";
-import type { ZonedDateTimeResolvers } from "./../__generated__/types.generated";
 
 export const ZonedDateTime: ZonedDateTimeResolvers = {
   toString(root, { options }) {

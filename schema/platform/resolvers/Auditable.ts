@@ -1,4 +1,5 @@
-import type { AuditableResolvers } from "./../../../__generated__/types.generated";
+import type { AuditableResolvers } from "@/schema";
+
 export const Auditable: AuditableResolvers = {
   /* Implement Auditable resolver logic here */
 };
