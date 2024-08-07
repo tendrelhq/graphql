@@ -1,5 +1,5 @@
 import type { QueryResolvers } from "@/schema";
-import { decodeGlobalId } from "@/util";
+import { decodeGlobalId } from "@/schema/system";
 import { GraphQLError } from "graphql";
 
 /*

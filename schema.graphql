@@ -247,6 +247,22 @@ just an opaque string, similar to ID.
 """
 scalar Entity
 
+type EntityComponentConnection implements Connection {
+  edges: [EntityComponentEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+type EntityComponentEdge implements Edge {
+  cursor: String!
+  node: Component!
+}
+
+type EntityConnection {
+  components(after: String, before: String, first: Int, last: Int): EntityComponentConnection!
+  entity: Entity!
+}
+
 """
 Fixed point in time (i.e. "exact time") without regard to calendar or location
 """
@@ -416,6 +432,7 @@ type PageInfo {
 
 type Query {
   checklists(after: String, before: String, first: Int, last: Int): ChecklistConnection!
+  entity(id: Entity!): EntityConnection!
   languages: [Language!]!
   node(id: ID!): Node!
   roles: [Tag!]!

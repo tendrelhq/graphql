@@ -1,5 +1,5 @@
 import type { LanguageResolvers, Name } from "@/schema";
-import { decodeGlobalId } from "@/util";
+import { decodeGlobalId } from "@/schema/system";
 
 export const Language: LanguageResolvers = {
   async name(parent, _, ctx) {

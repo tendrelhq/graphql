@@ -1,12 +1,11 @@
 import type { WorkerResolvers } from "@/schema";
-import { decodeGlobalId } from "@/util";
+import { decodeGlobalId } from "@/schema/system";
 
 export const Worker: WorkerResolvers = {
   invitation(parent, _, ctx) {
     if (parent.invitationId) {
       return ctx.orm.invitation.byId.load(parent.invitationId as string);
     }
-    return null;
   },
   language(parent, _, ctx) {
     return ctx.orm.language.byId.load(parent.languageId as string);

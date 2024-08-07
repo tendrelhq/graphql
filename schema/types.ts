@@ -1,8 +1,10 @@
+import type { Auth } from "@/auth";
+import type { ORM } from "@/datasources/postgres";
 import type { GraphQLScalarType } from "graphql";
 
-// biome-ignore lint/complexity/noBannedTypes: FIXME
 export type Context = {
-  //
+  auth: Auth;
+  orm: ORM;
 };
 
 export type TypedGraphQLScalarType<TInternal, TExternal> = GraphQLScalarType<

@@ -6,7 +6,8 @@ import type {
   PageInfo,
   Worker,
 } from "@/schema";
-import { type WithKey, decodeGlobalId } from "@/util";
+import { decodeGlobalId } from "@/schema/system";
+import type { WithKey } from "@/util";
 
 export const Organization: OrganizationResolvers = {
   async name(parent, _, ctx) {

@@ -1,8 +1,14 @@
 import z, { type Infer } from "myzod";
 
-const GlobalId = z.object({
-  type: z.string(),
-  id: z.string(),
+const GlobalId = z.string().map(id => {
+  const parts = id.split(":");
+  if (parts.length !== 2) {
+    throw "invariant violated: invalid global identifier";
+  }
+  return {
+    type: parts[0],
+    id: parts[1],
+  };
 });
 
 /**
@@ -13,12 +19,17 @@ const GlobalId = z.object({
  */
 type GlobalId = Infer<typeof GlobalId>;
 
-export function decodeGlobalId(id: string): GlobalId {
-  return GlobalId.parse(JSON.parse(Buffer.from(id, "base64").toString()));
+export function decodeGlobalId(id: unknown): GlobalId {
+  if (typeof id !== "string") {
+    throw "invariant violated: global ids should be string";
+  }
+  return GlobalId.parse(
+    Buffer.from(decodeURIComponent(id), "base64").toString(),
+  );
 }
 
-export function encodeGlobalId(id: GlobalId) {
-  return Buffer.from(JSON.stringify(id)).toString("base64");
+export function encodeGlobalId({ type, id }: GlobalId) {
+  return Buffer.from(`${type}:${id}`).toString("base64");
 }
 
 // biome-ignore lint/suspicious/noExplicitAny:

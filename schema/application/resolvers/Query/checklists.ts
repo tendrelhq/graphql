@@ -123,7 +123,10 @@ function makeFakeChecklist(prefix: string, assignees = 1): ChecklistItem {
         type: "worktemplate",
         id: templateId,
       }),
-      link: "https://console.tendrel.io/docs/checklists",
+      link:
+        process.env.NODE_ENV === "development"
+          ? "http://localhost:3001/docs/checklist"
+          : "https://beta.console.tendrel.io/docs/checklist",
     },
     status: {
       __typename: "ChecklistOpen",
@@ -139,13 +142,11 @@ function makeFakeChecklist(prefix: string, assignees = 1): ChecklistItem {
   };
 }
 
-const data = [
+export const FAKE_CHECKLISTS = [
   makeFakeChecklist("My", 1),
   makeFakeChecklist("Another", 2),
   makeFakeChecklist("Ultimate", 3),
 ];
-
-console.log(JSON.stringify(data, null, 2));
 
 export const checklists: NonNullable<QueryResolvers["checklists"]> = async (
   _parent,
@@ -153,7 +154,7 @@ export const checklists: NonNullable<QueryResolvers["checklists"]> = async (
   _ctx,
 ) => {
   return {
-    edges: data.map(node => ({
+    edges: FAKE_CHECKLISTS.map(node => ({
       cursor: node.id,
       node,
     })),
@@ -161,6 +162,6 @@ export const checklists: NonNullable<QueryResolvers["checklists"]> = async (
       hasNextPage: false,
       hasPreviousPage: false,
     },
-    totalCount: data.length,
+    totalCount: FAKE_CHECKLISTS.length,
   };
 };

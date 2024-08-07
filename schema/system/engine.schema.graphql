@@ -4,10 +4,40 @@
 """
 scalar Entity
 
+type Query {
+  entity(id: Entity!): EntityConnection!
+}
+
+type EntityConnection {
+  entity: Entity!
+  components(first: Int, last: Int, before: String, after: String): EntityComponentConnection!
+}
+
+type EntityComponentConnection implements Connection {
+  edges: [EntityComponentEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+type EntityComponentEdge implements Edge {
+  cursor: String! 
+  node: Component!
+}
+
 """
   Components characterize Entities as possessing a particular trait.
   They are just simple structs, holding all data necessary to model that trait.
 """
 interface Component {
   id: Entity!
+}
+
+# Pagination primitives
+#
+interface Connection {
+  totalCount: Int!
+  pageInfo: PageInfo!
+}
+interface Edge {
+  cursor: String!
 }

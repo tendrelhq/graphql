@@ -1,7 +1,7 @@
 import { protect } from "@/auth";
 import { sql } from "@/datasources/postgres";
 import type { MutationResolvers } from "@/schema";
-import { decodeGlobalId } from "@/util";
+import { decodeGlobalId } from "@/schema/system";
 import { clerkClient } from "@clerk/clerk-sdk-node";
 import { isClerkAPIResponseError } from "@clerk/shared";
 import { GraphQLError } from "graphql";

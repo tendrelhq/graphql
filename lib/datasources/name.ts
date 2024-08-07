@@ -1,6 +1,7 @@
 import { NotFoundError } from "@/errors";
 import type { Name, NameMetadata, UpdateNameInput } from "@/schema";
-import { type WithKey, decodeGlobalId } from "@/util";
+import { decodeGlobalId } from "@/schema/system";
+import type { WithKey } from "@/util";
 import Dataloader from "dataloader";
 import type { Request } from "express";
 import { type SQL, sql } from "./postgres";

@@ -1,11 +1,13 @@
 import { sql } from "@/datasources/postgres";
 import type { Organization, PageInfo, UserResolvers } from "@/schema";
-import { type WithKey, decodeGlobalId } from "@/util";
+import { decodeGlobalId } from "@/schema/system";
+import type { WithKey } from "@/util";
 
 export const User: UserResolvers = {
   async authenticationProvider(parent, _, ctx) {
-    if (!parent.authenticationProviderId) return null;
-    return ctx.orm.tag.load(parent.authenticationProviderId as string);
+    if (parent.authenticationProviderId) {
+      return ctx.orm.tag.load(parent.authenticationProviderId as string);
+    }
   },
   language(parent, _, ctx) {
     return ctx.orm.language.byId.load(parent.languageId as string);

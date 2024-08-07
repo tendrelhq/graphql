@@ -1,10 +1,10 @@
+import { decodeGlobalId } from "@/schema/system";
 import {
   ClerkExpressWithAuth,
   type StrictAuthProp,
 } from "@clerk/clerk-sdk-node";
 import type e from "express";
 import { sql } from "./datasources/postgres";
-import { decodeGlobalId } from "./util";
 
 declare global {
   namespace Express {

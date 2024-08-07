@@ -1,12 +1,3 @@
-interface Connection {
-  totalCount: Int!
-  pageInfo: PageInfo!
-}
-
-interface Edge {
-  cursor: String!
-}
-
 """TODO"""
 scalar Link
 

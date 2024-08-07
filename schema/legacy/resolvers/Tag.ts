@@ -1,5 +1,5 @@
 import type { TagResolvers } from "@/schema";
-import { decodeGlobalId } from "@/util";
+import { decodeGlobalId } from "@/schema/system";
 
 export const Tag: TagResolvers = {
   async name(parent, _, ctx) {

@@ -1,6 +1,7 @@
 import { sql } from "@/datasources/postgres";
 import type { LocationResolvers } from "@/schema";
-import { decodeGlobalId, isValue } from "@/util";
+import { decodeGlobalId } from "@/schema/system";
+import { isValue } from "@/util";
 
 export const Location: LocationResolvers = {
   async children(parent, { options }, ctx) {
