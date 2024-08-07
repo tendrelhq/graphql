@@ -1,20 +1,29 @@
+import { randomUUID } from "node:crypto";
 import type { ChecklistItem, QueryResolvers, Temporal } from "@/schema";
 import { encodeGlobalId } from "@/schema/system";
 
-const data: ChecklistItem[] = [
-  {
+const jerry = randomUUID();
+const bill = randomUUID();
+const jason = randomUUID();
+
+function makeFakeChecklist(prefix: string, assignees = 1): ChecklistItem {
+  const instanceId = randomUUID();
+  const templateId = randomUUID();
+  return {
     __typename: "Checklist",
     id: encodeGlobalId({
       type: "workinstance",
-      id: "a25ceddb-b122-4825-b907-e084c295c096",
+      id: instanceId,
     }),
     assignees: {
-      edges: [
-        {
+      edges: Array.from({ length: assignees }, (_, i) => {
+        const id = randomUUID();
+        return {
           node: {
+            __typename: "Assignee",
             id: encodeGlobalId({
               type: "workresultinstance",
-              id: "02a4b82b-4605-43fc-af2d-f377c4da63cc",
+              id: id,
             }),
             assignedAt: {
               __typename: "Instant",
@@ -24,23 +33,31 @@ const data: ChecklistItem[] = [
               __typename: "DisplayName",
               id: encodeGlobalId({
                 type: "workerinstance",
-                id: "b9facef4-b716-45fd-af3c-478194d943e2",
+                id: i === 1 ? jerry : i === 2 ? bill : jason,
               }),
               value: {
                 __typename: "DynamicString",
                 locale: "en",
-                value: "Jerry Garcia",
+                value:
+                  i === 1
+                    ? "Jerry Garcia"
+                    : i === 2
+                      ? "Bill Nye"
+                      : "Jason Bourne",
               },
             },
           },
-          cursor: "NDIwNjk=",
-        },
-      ],
+          cursor: encodeGlobalId({
+            type: "workresultinstance",
+            id: id,
+          }),
+        };
+      }),
       pageInfo: {
         hasNextPage: false,
         hasPreviousPage: false,
       },
-      totalCount: 1,
+      totalCount: assignees,
     },
     attachments: {
       edges: [],
@@ -53,20 +70,20 @@ const data: ChecklistItem[] = [
     auditable: {
       id: encodeGlobalId({
         type: "worktemplate",
-        id: "e8241534-f392-46f0-bd20-911c34e13572",
+        id: templateId,
       }),
-      enabled: false,
+      enabled: assignees % 2 === 0,
     },
     description: {
       __typename: "Description",
       id: encodeGlobalId({
         type: "workdescription",
-        id: "8efe4ad5-766b-4c1c-b3d3-60c677bc0177",
+        id: randomUUID(),
       }),
       value: {
         __typename: "DynamicString",
         locale: "en",
-        value: "It's a really cool test Checklist!",
+        value: `${prefix} checklist is so cool!`,
       },
     },
     items: {
@@ -80,22 +97,31 @@ const data: ChecklistItem[] = [
     name: {
       id: encodeGlobalId({
         type: "languagemaster",
-        id: "9505331e-7ccd-42b0-98be-574a834c48bb",
+        id: randomUUID(),
       }),
       value: {
         locale: "en",
-        value: "Test Checklist",
+        value: `${prefix} Checklist`,
       },
     },
     required: true,
-    schedule: {
-      __typename: "CronSchedule",
-      cron: "0 12 * * 3", // at noon every wednesday
-    },
+    schedule:
+      assignees % 2 === 0
+        ? {
+            __typename: "OnceSchedule",
+            once: {
+              __typename: "Instant",
+              epochMilliseconds: "1722928536060",
+            } as Temporal,
+          }
+        : {
+            __typename: "CronSchedule",
+            cron: "0 22 * * 1-5",
+          },
     sop: {
       id: encodeGlobalId({
         type: "worktemplate",
-        id: "e8241534-f392-46f0-bd20-911c34e13572",
+        id: templateId,
       }),
       link: "https://console.tendrel.io/docs/checklists",
     },
@@ -103,15 +129,23 @@ const data: ChecklistItem[] = [
       __typename: "ChecklistOpen",
       id: encodeGlobalId({
         type: "systag",
-        id: "c5fc93c2-5b44-40a7-bc08-60a6b2fdf0e9",
+        id: randomUUID(),
       }),
       openedAt: {
         __typename: "Instant",
         epochMilliseconds: "1722928536060",
       } as Temporal,
     },
-  },
+  };
+}
+
+const data = [
+  makeFakeChecklist("My", 1),
+  makeFakeChecklist("Another", 2),
+  makeFakeChecklist("Ultimate", 3),
 ];
+
+console.log(JSON.stringify(data, null, 2));
 
 export const checklists: NonNullable<QueryResolvers["checklists"]> = async (
   _parent,
@@ -127,6 +161,6 @@ export const checklists: NonNullable<QueryResolvers["checklists"]> = async (
       hasNextPage: false,
       hasPreviousPage: false,
     },
-    totalCount: 1,
+    totalCount: data.length,
   };
 };

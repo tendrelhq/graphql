@@ -1,16 +1,30 @@
-import { GraphQLScalarType } from "graphql";
+import { type ASTNode, GraphQLError, GraphQLScalarType, Kind } from "graphql";
+
+function validate(value: unknown, ast?: ASTNode) {
+  if (typeof value !== "string") {
+    throw new GraphQLError(
+      `Value is not a string: ${value}`,
+      ast ? { nodes: ast } : {},
+    );
+  }
+  return value;
+}
 
 export const Link = new GraphQLScalarType({
   name: "Link",
   description: "Link description",
-  serialize: value => {
-    /* Implement logic to turn the returned value from resolvers to a value that can be sent to clients */
-  },
-  parseValue: value => {
-    /* Implement logic to parse input that was sent to the server as variables */
-  },
+  serialize: validate,
+  parseValue: validate,
   parseLiteral: ast => {
-    /* Implement logic to parse input that was sent to the server as literal values (string, number, or boolean) */
+    if (ast.kind !== Kind.STRING) {
+      throw new GraphQLError(
+        `Can only validate strings as Links but got a: ${ast.kind}`,
+        {
+          nodes: ast,
+        },
+      );
+    }
+    return validate(ast.value, ast);
   },
   extensions: {
     codegenScalarType: "string",

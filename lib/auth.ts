@@ -28,6 +28,7 @@ export default {
     return async (req: e.Request, res: e.Response, next: e.NextFunction) => {
       if (process.env.NODE_ENV === "development") {
         const userId = req.headers["x-tendrel-user"];
+        console.log(`Backdoor hack engaged? ${userId}`);
         if (userId) {
           req.auth = {
             userId: userId as string,
