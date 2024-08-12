@@ -4,7 +4,10 @@ import type {
   EntityComponentEdge,
   EntityConnectionResolvers,
 } from "@/schema";
-import { FAKE_CHECKLISTS } from "@/schema/application/resolvers/Query/checklists";
+import {
+  FAKE_CHECKLISTS,
+  FAKE_RESULTS,
+} from "@/schema/application/resolvers/Query/checklists";
 import { decodeGlobalId } from "..";
 
 export const EntityConnection: EntityConnectionResolvers = {
@@ -53,11 +56,21 @@ async function resolveEntityComponentConnections(
   totalCount: number;
 }> {
   const { type, id } = decodeGlobalId(entity);
+  console.log(`Resolving ECC for Entity of type ${type}`);
   const { first, last, before, after } = unpackPaginationArgs(args);
 
   switch (type) {
     case "workinstance": {
       const data = FAKE_CHECKLISTS.find(e => e.id === entity);
+      return {
+        nodes: data ? [data] : [],
+        hasNext: false,
+        hasPrev: false,
+        totalCount: data ? 1 : 0,
+      };
+    }
+    case "workresultinstance": {
+      const data = FAKE_RESULTS.find(e => e.id === entity);
       return {
         nodes: data ? [data] : [],
         hasNext: false,

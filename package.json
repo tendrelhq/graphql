@@ -1,7 +1,7 @@
 {
   "name": "@tendrelhq/graphql",
   "version": "0.2.0",
-  "module": "lib/index.ts",
+  "module": "schema/index.ts",
   "type": "module",
   "scripts": {
     "clean": "rimraf **/__generated__/** node_modules out",

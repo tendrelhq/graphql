@@ -15,6 +15,14 @@ function makeFakeChecklist(prefix: string, assignees = 1): ChecklistItem {
       type: "workinstance",
       id: instanceId,
     }),
+    active: {
+      id: templateId,
+      active: assignees % 2 === 0,
+      updatedAt: {
+        __typename: "Instant",
+        epochMilliseconds: "1722928536060",
+      } as Temporal,
+    },
     assignees: {
       edges: Array.from({ length: assignees }, (_, i) => {
         const id = randomUUID();
@@ -83,7 +91,8 @@ function makeFakeChecklist(prefix: string, assignees = 1): ChecklistItem {
       value: {
         __typename: "DynamicString",
         locale: "en",
-        value: `${prefix} checklist is so cool!`,
+        value:
+          "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.",
       },
     },
     items: {
@@ -101,7 +110,7 @@ function makeFakeChecklist(prefix: string, assignees = 1): ChecklistItem {
       }),
       value: {
         locale: "en",
-        value: `${prefix} Checklist`,
+        value: `${prefix} Checklist with a ${"really ".repeat(25)} long name`,
       },
     },
     required: true,
@@ -110,8 +119,9 @@ function makeFakeChecklist(prefix: string, assignees = 1): ChecklistItem {
         ? {
             __typename: "OnceSchedule",
             once: {
-              __typename: "Instant",
+              __typename: "ZonedDateTime",
               epochMilliseconds: "1722928536060",
+              timeZone: "Asia/Tokyo",
             } as Temporal,
           }
         : {
@@ -147,6 +157,10 @@ export const FAKE_CHECKLISTS = [
   makeFakeChecklist("Another", 2),
   makeFakeChecklist("Ultimate", 3),
 ];
+
+export const FAKE_RESULTS = FAKE_CHECKLISTS.flatMap(node =>
+  node.assignees.edges.map(e => e.node),
+);
 
 export const checklists: NonNullable<QueryResolvers["checklists"]> = async (
   _parent,

@@ -4,6 +4,7 @@ type Query {
 
 type Checklist implements Component {
   id: Entity!
+  active: Activatable!
   assignees(first: Int, last: Int, before: String, after: String): AssigneeConnection!
   attachments(first: Int, last: Int, before: String, after: String): AttachmentConnection!
   auditable: Auditable!

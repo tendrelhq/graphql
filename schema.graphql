@@ -4,6 +4,13 @@ input AcceptInvitationInput {
 }
 
 """TODO"""
+type Activatable implements Component {
+  active: Boolean!
+  id: Entity!
+  updatedAt: Temporal!
+}
+
+"""TODO"""
 type Actor implements Component {
   displayName: DisplayName!
   firstName: String!
@@ -68,6 +75,7 @@ enum CalendarNameOptions {
 }
 
 type Checklist implements Component {
+  active: Activatable!
   assignees(after: String, before: String, first: Int, last: Int): AssigneeConnection!
   attachments(after: String, before: String, first: Int, last: Int): AttachmentConnection!
   auditable: Auditable!

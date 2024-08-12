@@ -92,6 +92,10 @@
               entry = "biome check --write";
             };
           };
+          processes = {
+            app.exec = "bun dev";
+            ruru.exec = "bun explore";
+          };
           services.postgres = {
             enable = true;
             extensions = exts:

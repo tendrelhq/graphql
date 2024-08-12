@@ -1,6 +1,13 @@
 """TODO"""
 scalar Link
 
+"""TODO"""
+type Activatable implements Component {
+  id: Entity!
+  active: Boolean!
+  updatedAt: Temporal!
+}
+
 """
   TODO
 """
