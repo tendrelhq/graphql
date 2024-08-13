@@ -1,4 +1,4 @@
-import type { EnabledLanguageEdgeResolvers } from "./../__generated__/types.generated";
+import type { EnabledLanguageEdgeResolvers } from "@/schema";
 export const EnabledLanguageEdge: EnabledLanguageEdgeResolvers = {
   /* Implement EnabledLanguageEdge resolver logic here */
 };

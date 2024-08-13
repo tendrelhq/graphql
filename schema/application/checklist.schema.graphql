@@ -15,6 +15,8 @@ type Checklist implements Component {
   schedule: Schedule
   sop: Sop
   status: ChecklistStatus!
+  # TODO: not sure about this... :/
+  children: ChecklistConnection!
 }
 
 type ChecklistConnection implements Connection {
@@ -25,7 +27,7 @@ type ChecklistConnection implements Connection {
 
 type ChecklistEdge implements Edge {
   cursor: String!
-  node: ChecklistItem
+  node: ChecklistItem!
 }
 
 ## We want our checklists to support nesting
@@ -37,24 +39,26 @@ type ChecklistResult implements Component {
   attachments(first: Int, last: Int, before: String, after: String): AttachmentConnection!
   name: DisplayName!
   required: Boolean
-  value: String
+  value: ChecklistResultValue!
 }
+
+union ChecklistResultValue = Counter | Flag | Register
 
 ## Our checklists go Open > In Progress > Closed
 union ChecklistStatus = ChecklistOpen | ChecklistInProgress | ChecklistClosed
 type ChecklistOpen implements Component {
   id: Entity!
-  openedBy: Worker
+  openedBy: Actor
   openedAt: Temporal!
 }
 type ChecklistInProgress implements Component {
   id: Entity!
-  inProgressBy: Worker!
+  inProgressBy: Actor!
   inProgressAt: Temporal!
 }
 type ChecklistClosed implements Component {
   id: Entity!
-  closedBy: Worker!
+  closedBy: Actor!
   closedAt: Temporal!
   closedBecause: ChecklistClosedReason!
 }

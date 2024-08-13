@@ -33,6 +33,7 @@ const config: CodegenConfig = {
       },
     },
   },
+  verbose: true,
 };
 
 await generate(config);

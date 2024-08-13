@@ -1,4 +1,4 @@
-import type { InstantResolvers, ZonedDateTime } from "@/schema2";
+import type { InstantResolvers, ZonedDateTime } from "@/schema";
 import { Temporal } from "@js-temporal/polyfill";
 
 export const Instant: InstantResolvers = {

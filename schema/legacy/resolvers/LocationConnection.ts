@@ -1,4 +1,4 @@
-import type { LocationConnectionResolvers } from "./../__generated__/types.generated";
+import type { LocationConnectionResolvers } from "@/schema";
 export const LocationConnection: LocationConnectionResolvers = {
   /* Implement LocationConnection resolver logic here */
 };

@@ -11,6 +11,14 @@ type Activatable implements Component {
 """
   TODO
 """
+type Actor implements Component {
+  id: Entity!
+  user: User!
+}
+
+"""
+  TODO
+"""
 type Attachment implements Component {
   id: Entity!
   attachment: String!
@@ -32,7 +40,7 @@ type AttachmentEdge implements Edge {
 """
 type Assignee implements Component {
   id: Entity!
-  assignedTo: DisplayName!
+  assignedTo: Actor!
   assignedAt: Temporal!
 }
 
@@ -77,14 +85,4 @@ type DisplayName implements Component {
 type Sop implements Component {
   id: Entity!
   link: Link!
-}
-
-"""
-  TODO
-"""
-type Actor implements Component {
-  id: Entity!
-  firstName: String!
-  lastName: String!
-  displayName: DisplayName!
 }

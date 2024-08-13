@@ -1,4 +1,4 @@
-import type { WorkerEdgeResolvers } from "./../__generated__/types.generated";
+import type { WorkerEdgeResolvers } from "@/schema";
 export const WorkerEdge: WorkerEdgeResolvers = {
   /* Implement WorkerEdge resolver logic here */
 };

@@ -4,7 +4,8 @@
   "module": "schema/index.ts",
   "type": "module",
   "scripts": {
-    "clean": "rimraf **/__generated__/** node_modules out",
+    "check": "tsc",
+    "clean": "rimraf **/__generated__/** **/*.generated.ts node_modules out",
     "compile": "bun build.ts",
     "dev": "bun --hot --inspect ./bin/app2.ts",
     "generate": "bun generate.ts",

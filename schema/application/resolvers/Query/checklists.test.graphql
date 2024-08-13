@@ -19,9 +19,8 @@ query Checklists($timeZone: TimeZone!) {
                 }
                 assignedTo {
                   id
-                  displayName: value {
-                    locale
-                    value
+                  user {
+                    displayName
                   }
                 }
               }

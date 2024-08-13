@@ -1,0 +1,25 @@
+"""
+  Data type for tracking an incrementable/decrementable integer value.
+  Counters have two operations: increment and decrement.
+"""
+type Counter {
+  count: Int!
+}
+
+"""
+  Data type for tracking Boolean-like values in the form of "enabled" or
+  "disabled".
+  Flags only support two operations: enable and disable.
+"""
+type Flag {
+  enabled: Boolean!
+}
+
+"""
+  Data type for tracking named binaries (like strings). Any binary value can act
+  as the value of a register. Registers can only have the binaries stored within
+  them changed.
+"""
+type Register {
+  binary: String!
+}
