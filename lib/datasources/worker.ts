@@ -1,12 +1,13 @@
 import { NotFoundError } from "@/errors";
 import type { Worker } from "@/schema";
+import type { WithKey } from "@/util";
 import Dataloader from "dataloader";
 import type { Request } from "express";
 import { sql } from "./postgres";
 
 export default (_: Request) =>
   new Dataloader<string, Worker>(async keys => {
-    const rows = await sql<Worker[]>`
+    const rows = await sql<WithKey<Worker>[]>`
         SELECT
             w.workerinstanceuuid AS _key,
             encode(('worker:' || w.workerinstanceuuid)::bytea, 'base64') as id,
