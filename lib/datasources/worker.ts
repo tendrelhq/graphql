@@ -8,7 +8,8 @@ export default (_: Request) =>
   new Dataloader<string, Worker>(async keys => {
     const rows = await sql<Worker[]>`
         SELECT
-            w.workerinstanceuuid AS id,
+            w.workerinstanceuuid AS _key,
+            encode(('worker:' || w.workerinstanceuuid)::bytea, 'base64') as id,
             (w.workerinstanceenddate IS NULL OR w.workerinstanceenddate > now()) AS active,
             w.workerinstancestartdate::text AS "activatedAt",
             w.workerinstanceenddate::text AS "deactivatedAt",
@@ -27,7 +28,7 @@ export default (_: Request) =>
     `;
 
     const byKey = rows.reduce(
-      (acc, row) => acc.set(row.id as string, row),
+      (acc, row) => acc.set(row._key as string, row),
       new Map<string, Worker>(),
     );
 
