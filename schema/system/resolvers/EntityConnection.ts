@@ -70,10 +70,7 @@ async function resolveEntityComponentConnections(
   // only temporary during development and testing.
   switch (type) {
     case "workinstance": {
-      const data = CHECKLISTS.flatMap(e => [
-        e,
-        ...e.children.edges.map(e => e.node),
-      ]).find(e => e.id === entity);
+      const data = CHECKLISTS.flatMap(e => [e]).find(e => e.id === entity);
       return {
         nodes: data ? [data] : [],
         hasNext: false,
