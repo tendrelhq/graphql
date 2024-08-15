@@ -143,7 +143,7 @@ function makeSop(id: string, link: string) {
   return { id, link };
 }
 
-function makeOpen(at: Date, by: USER) {
+function makeOpen({ at, by }: { at: Date; by: USER }) {
   return {
     __typename: "ChecklistOpen" as const,
     id: encodeGlobalId({
@@ -155,7 +155,7 @@ function makeOpen(at: Date, by: USER) {
   };
 }
 
-function makeInProgress(at: Date, by: USER) {
+function makeInProgress({ at, by }: { at: Date; by: USER }) {
   return {
     __typename: "ChecklistInProgress" as const,
     id: encodeGlobalId({
@@ -167,7 +167,11 @@ function makeInProgress(at: Date, by: USER) {
   };
 }
 
-function makeClosed(at: Date, by: USER, success = true) {
+function makeClosed({
+  at,
+  by,
+  success,
+}: { at: Date; by: USER; success: boolean }) {
   return {
     __typename: "ChecklistClosed" as const,
     id: encodeGlobalId({
@@ -225,11 +229,16 @@ function makeResult({
   assignees,
   name,
   required,
+  status,
   value,
 }: {
   assignees: ReturnType<typeof makeAssignee>[];
   name: string;
   required: boolean;
+  status:
+    | ReturnType<typeof makeOpen>
+    | ReturnType<typeof makeInProgress>
+    | ReturnType<typeof makeClosed>;
   value:
     | ReturnType<typeof makeCounter>
     | ReturnType<typeof makeFlag>
@@ -252,6 +261,7 @@ function makeResult({
     ),
     name: makeDisplayName(name),
     required,
+    status,
     value,
   };
 }
@@ -323,24 +333,40 @@ const KELLER_TODOLIST = makeChecklist({
       name: "Read people's standup notes",
       assignees: [],
       required: true,
+      status: makeOpen({
+        at: new Date("2024-08-15T08:00:00"),
+        by: BOT,
+      }),
       value: makeFlag(false),
     }),
     makeResult({
       name: "Write some arcane SQL procedure code",
       assignees: [],
       required: true,
+      status: makeOpen({
+        at: new Date("2024-08-15T08:00:00"),
+        by: BOT,
+      }),
       value: makeFlag(false),
     }),
     makeResult({
       name: "Note how many alarms are firing",
       assignees: [],
       required: true,
+      status: makeOpen({
+        at: new Date("2024-08-15T08:00:00"),
+        by: BOT,
+      }),
       value: makeCounter(0),
     }),
     makeResult({
       name: "Fix the SQL code and ensure alarms recover",
       assignees: [],
       required: true,
+      status: makeOpen({
+        at: new Date("2024-08-15T08:00:00"),
+        by: BOT,
+      }),
       value: makeFlag(false),
     }),
   ],
@@ -348,7 +374,7 @@ const KELLER_TODOLIST = makeChecklist({
   required: true,
   schedule: makeCronSchedule("0 08,18 * * 1-5"),
   sop: "https://www.youtube.com/watch?v=Vofkw9-O18c&list=PLi1CK-rsvz1Nfz83RMBp_9YaIgBWd0l9x",
-  status: makeOpen(new Date("2024-08-15T08:00:00"), USERS.Mark),
+  status: makeOpen({ at: new Date("2024-08-15T08:00:00"), by: BOT }),
 });
 
 const GREENHOUSE_CHECK_OPEN = makeChecklist({
@@ -362,12 +388,20 @@ const GREENHOUSE_CHECK_OPEN = makeChecklist({
       name: "Doors locked properly?",
       assignees: [],
       required: true,
+      status: makeOpen({
+        at: new Date("2024-08-15T08:00:00"),
+        by: BOT,
+      }),
       value: makeFlag(false),
     }),
     makeResult({
       name: "Count of broken panels",
       assignees: [],
       required: true,
+      status: makeOpen({
+        at: new Date("2024-08-15T08:00:00"),
+        by: BOT,
+      }),
       value: makeCounter(0),
     }),
   ],
@@ -375,7 +409,7 @@ const GREENHOUSE_CHECK_OPEN = makeChecklist({
   required: true,
   schedule: makeCronSchedule("0 08,18 * * 1-5"),
   sop: "https://big-green.uk/sop/greenhouse-check",
-  status: makeOpen(new Date("2024-08-15T08:00:00"), USERS.Mark),
+  status: makeOpen({ at: new Date("2024-08-15T08:00:00"), by: BOT }),
 });
 
 const GREENHOUSE_CHECK_SUC = makeChecklist({
@@ -389,12 +423,22 @@ const GREENHOUSE_CHECK_SUC = makeChecklist({
       name: "Doors locked properly?",
       assignees: [],
       required: true,
+      status: makeClosed({
+        at: new Date("2024-08-13T08:11:05"),
+        by: USERS.Fed,
+        success: true,
+      }),
       value: makeFlag(false),
     }),
     makeResult({
       name: "Count of broken panels",
       assignees: [],
       required: true,
+      status: makeClosed({
+        at: new Date("2024-08-13T08:11:14"),
+        by: USERS.Fed,
+        success: true,
+      }),
       value: makeCounter(0),
     }),
   ],
@@ -402,23 +446,58 @@ const GREENHOUSE_CHECK_SUC = makeChecklist({
   required: true,
   schedule: makeCronSchedule("0 08,18 * * 1-5"),
   sop: "https://big-green.uk/sop/greenhouse-check",
-  status: makeClosed(new Date("2024-08-13T08:12:14"), USERS.Fed),
+  status: makeClosed({
+    at: new Date("2024-08-13T08:12:14"),
+    by: USERS.Fed,
+    success: true,
+  }),
 });
 
-const GREENHOUSE_CHECK_ERR = {
-  ...GREENHOUSE_CHECK_SUC,
-  id: encodeGlobalId({
-    type: "workinstance",
-    id: randomUUID(),
-  }),
-  assignees: makeConnection([
+const GREENHOUSE_CHECK_ERR = makeChecklist({
+  active: true,
+  activeAt: new Date("2024-08-01T00:00:00"),
+  assignees: [
     makeAssignee(new Date("2024-08-12T08:00:00"), USERS.Rugg),
     makeAssignee(new Date("2024-08-12T08:00:00"), USERS.Akash),
     makeAssignee(new Date("2024-08-12T08:00:00"), USERS.Connor),
     makeAssignee(new Date("2024-08-12T08:00:00"), USERS.Mark),
-  ]),
-  status: makeClosed(new Date("2024-08-13T09:27:10"), USERS.Rugg, false),
-};
+  ],
+  children: [],
+  description: "Make sure the greenhouse is in shape",
+  items: [
+    makeResult({
+      name: "Doors locked properly?",
+      assignees: [],
+      required: true,
+      status: makeClosed({
+        at: new Date("2024-08-13T08:11:05"),
+        by: USERS.Akash,
+        success: true,
+      }),
+      value: makeFlag(false),
+    }),
+    makeResult({
+      name: "Count of broken panels",
+      assignees: [],
+      required: true,
+      status: makeClosed({
+        at: new Date("2024-08-13T08:11:14"),
+        by: USERS.Rugg,
+        success: false,
+      }),
+      value: makeCounter(2),
+    }),
+  ],
+  name: "Greenhouse Check",
+  required: true,
+  schedule: makeCronSchedule("0 08,18 * * 1-5"),
+  sop: "https://big-green.uk/sop/greenhouse-check",
+  status: makeClosed({
+    at: new Date("2024-08-13T09:27:10"),
+    by: USERS.Rugg,
+    success: false,
+  }),
+});
 
 const ONCALL_DAILY = makeChecklist({
   active: true,
@@ -436,12 +515,22 @@ const ONCALL_DAILY = makeChecklist({
           name: "Check Cloudwatch alarms",
           assignees: [],
           required: true,
+          status: makeClosed({
+            at: new Date("2024-08-15T08:02:36"),
+            by: USERS.Twait,
+            success: true,
+          }),
           value: makeFlag(false),
         }),
         makeResult({
           name: "Check superset alarms",
           assignees: [],
           required: true,
+          status: makeClosed({
+            at: new Date("2024-08-15T08:07:36"),
+            by: USERS.Twait,
+            success: true,
+          }),
           value: makeFlag(false),
         }),
       ],
@@ -449,7 +538,11 @@ const ONCALL_DAILY = makeChecklist({
       required: true,
       schedule: makeCronSchedule("0 08,18 * * 1-5"),
       sop: "https://www.notion.so/tendrel/Oncall-Responsibilities-c57c310cf24a48078bf76b8f7213330c#f0d81e702e7c4f26804ea491a5ccb2f7",
-      status: makeClosed(new Date("2024-08-15T08:07:00"), USERS.Twait),
+      status: makeClosed({
+        at: new Date("2024-08-15T08:07:45"),
+        by: USERS.Twait,
+        success: true,
+      }),
       //
       children: [],
     }),
@@ -463,6 +556,10 @@ const ONCALL_DAILY = makeChecklist({
           name: "Check to see if there are failing tests",
           assignees: [],
           required: true,
+          status: makeInProgress({
+            at: new Date("2024-08-15T08:10:00"),
+            by: USERS.Twait,
+          }),
           value: makeFlag(false),
         }),
       ],
@@ -470,7 +567,10 @@ const ONCALL_DAILY = makeChecklist({
       required: true,
       schedule: makeCronSchedule("0 08,18 * * 1-5"),
       sop: "https://www.notion.so/tendrel/Oncall-Responsibilities-c57c310cf24a48078bf76b8f7213330c#f0d81e702e7c4f26804ea491a5ccb2f7",
-      status: makeInProgress(new Date("2024-08-15T08:10:00"), USERS.Twait),
+      status: makeInProgress({
+        at: new Date("2024-08-15T08:10:00"),
+        by: USERS.Twait,
+      }),
       //
       children: [],
     }),
@@ -484,6 +584,10 @@ const ONCALL_DAILY = makeChecklist({
           name: "Go through old tickets and make sure they are all in the right state",
           assignees: [],
           required: true,
+          status: makeOpen({
+            at: new Date("2024-08-15T08:10:00"),
+            by: BOT,
+          }),
           value: makeFlag(false),
         }),
       ],
@@ -491,7 +595,7 @@ const ONCALL_DAILY = makeChecklist({
       required: true,
       schedule: makeCronSchedule("0 08,18 * * 1-5"),
       sop: "https://www.notion.so/tendrel/Oncall-Responsibilities-c57c310cf24a48078bf76b8f7213330c#f0d81e702e7c4f26804ea491a5ccb2f7",
-      status: makeOpen(new Date("2024-08-15T08:00:36"), BOT),
+      status: makeOpen({ at: new Date("2024-08-15T08:00:00"), by: BOT }),
       //
       children: [],
     }),
@@ -505,6 +609,10 @@ const ONCALL_DAILY = makeChecklist({
           name: "Check that work data from today is flowing through to the dashboards",
           assignees: [],
           required: true,
+          status: makeOpen({
+            at: new Date("2024-08-15T08:10:00"),
+            by: BOT,
+          }),
           value: makeFlag(false),
         }),
       ],
@@ -512,7 +620,7 @@ const ONCALL_DAILY = makeChecklist({
       required: true,
       schedule: makeCronSchedule("0 08,18 * * 1-5"),
       sop: "https://www.notion.so/tendrel/Oncall-Responsibilities-c57c310cf24a48078bf76b8f7213330c#f0d81e702e7c4f26804ea491a5ccb2f7",
-      status: makeOpen(new Date("2024-08-15T08:00:00"), BOT),
+      status: makeOpen({ at: new Date("2024-08-15T08:00:00"), by: BOT }),
       //
       children: [],
     }),
@@ -521,7 +629,10 @@ const ONCALL_DAILY = makeChecklist({
   required: true,
   schedule: makeCronSchedule("0 08,18 * * 1-5"),
   sop: "https://www.notion.so/tendrel/Oncall-Responsibilities-c57c310cf24a48078bf76b8f7213330c#f0d81e702e7c4f26804ea491a5ccb2f7",
-  status: makeInProgress(new Date("2024-08-15T08:00:00"), USERS.Twait),
+  status: makeInProgress({
+    at: new Date("2024-08-15T08:01:07"),
+    by: USERS.Twait,
+  }),
   //
   children: [
     //

@@ -32,6 +32,7 @@ type ChecklistEdge implements Edge {
 
 ## We want our checklists to support nesting
 union ChecklistItem = Checklist | ChecklistResult
+
 type ChecklistResult implements Component {
   id: Entity!
   assignees(first: Int, last: Int, before: String, after: String): AssigneeConnection!
@@ -39,6 +40,7 @@ type ChecklistResult implements Component {
   attachments(first: Int, last: Int, before: String, after: String): AttachmentConnection!
   name: DisplayName!
   required: Boolean
+  status: ChecklistStatus!
   value: ChecklistResultValue!
 }
 
