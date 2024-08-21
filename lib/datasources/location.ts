@@ -17,7 +17,8 @@ export default (_: Request) =>
           encode(('name:' || n.languagemasteruuid)::bytea, 'base64') AS "nameId",
           encode(('location:' || p.locationuuid)::bytea, 'base64') AS "parentId",
           l.locationscanid AS "scanCode",
-          encode(('location:' || s.locationuuid)::bytea, 'base64') AS "siteId"
+          encode(('location:' || s.locationuuid)::bytea, 'base64') AS "siteId",
+          l.locationtimezone AS "timeZone"
       FROM public.location AS l
       INNER JOIN public.languagemaster AS n
           ON l.locationnameid = n.languagemasterid
