@@ -74,11 +74,26 @@ type Organization implements Node {
   activatedAt: String
   deactivatedAt: String
   billingId: String
-  languages(first: Int, last: Int, before: String, after: String): EnabledLanguageConnection!
-  locations(first: Int, last: Int, before: String, after: String): LocationConnection!
+  languages(
+    first: Int
+    last: Int
+    before: String
+    after: String
+  ): EnabledLanguageConnection!
+  locations(
+    first: Int
+    last: Int
+    before: String
+    after: String
+  ): LocationConnection!
   name: Name!
   nameId: ID!
-  workers(first: Int, last: Int, before: String, after: String): WorkerConnection!
+  workers(
+    first: Int
+    last: Int
+    before: String
+    after: String
+  ): WorkerConnection!
 }
 
 type Location implements Node {
@@ -95,6 +110,7 @@ type Location implements Node {
   site: Location!
   siteId: ID!
   tags: [Tag!]!
+  timeZone: String!
 }
 
 type LocationConnection {
@@ -119,7 +135,12 @@ type User implements Node {
   lastName: String!
   language: Language!
   languageId: ID!
-  organizations(first: Int, last: Int, after: String, before: String): OrganizationConnection!
+  organizations(
+    first: Int
+    last: Int
+    after: String
+    before: String
+  ): OrganizationConnection!
   tags: [Tag!]!
 }
 

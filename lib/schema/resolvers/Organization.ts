@@ -84,9 +84,13 @@ export const Organization: OrganizationResolvers = {
                       AND customerrequestedlanguageid > (
                           SELECT customerrequestedlanguageid
                           FROM public.customerrequestedlanguage
-                          WHERE customerrequestedlanguageuuid = ${endCursor?._key ?? null}
+                          WHERE customerrequestedlanguageuuid = ${
+                            endCursor?._key ?? null
+                          }
                       )
-                  ORDER BY customerrequestedlanguageid ${last ? sql`DESC` : sql`ASC`}
+                  ORDER BY customerrequestedlanguageid ${
+                    last ? sql`DESC` : sql`ASC`
+                  }
 
               )
           ) AS "hasNextPage",
@@ -103,9 +107,13 @@ export const Organization: OrganizationResolvers = {
                       AND customerrequestedlanguageid < (
                           SELECT customerrequestedlanguageid
                           FROM public.customerrequestedlanguage
-                          WHERE customerrequestedlanguageuuid = ${startCursor?._key ?? null}
+                          WHERE customerrequestedlanguageuuid = ${
+                            startCursor?._key ?? null
+                          }
                       )
-                  ORDER BY customerrequestedlanguageid ${last ? sql`DESC` : sql`ASC`}
+                  ORDER BY customerrequestedlanguageid ${
+                    last ? sql`DESC` : sql`ASC`
+                  }
 
               )
           ) AS "hasPreviousPage"
@@ -137,7 +145,8 @@ export const Organization: OrganizationResolvers = {
           encode(('name:' || n.languagemasteruuid)::bytea, 'base64') AS "nameId",
           encode(('location:' || p.locationuuid)::bytea, 'base64') AS "parentId",
           l.locationscanid AS "scanCode",
-          encode(('location:' || s.locationuuid)::bytea, 'base64') AS "siteId"
+          encode(('location:' || s.locationuuid)::bytea, 'base64') AS "siteId",
+          l.locationtimezone AS "timeZone"
       FROM public.location AS l
       INNER JOIN public.languagemaster AS n
           ON l.locationnameid = n.languagemasterid
@@ -329,7 +338,9 @@ export const Organization: OrganizationResolvers = {
                       AND workerinstanceid < (
                           SELECT workerinstanceid
                           FROM public.workerinstance
-                          WHERE workerinstanceuuid = ${startCursor?._key ?? null}
+                          WHERE workerinstanceuuid = ${
+                            startCursor?._key ?? null
+                          }
                       )
                   ORDER BY workerinstanceid ${last ? sql`DESC` : sql`ASC`}
 
