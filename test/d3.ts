@@ -68,6 +68,15 @@ function makeInstant(d: Date) {
   } as Temporal;
 }
 
+// FIXME: globally unique id violation.
+// Our fake data returns the same gid for Active and Sop. This is a violation of
+// the server specification and needs to be fixed. This is an interesting case.
+// One could argue that we could separate SOP and Active *in the database* and
+// use foreign keys instead, but right now sop and active are both columns in
+// the worktemplate table. This is in the case where we want to treat Active and
+// Sop as *components*, rather than just raw data. If we were to say they are
+// just types, rather than components, neither would have an entity reference
+// and thus avoid this problem all together.
 function makeActive(id: string, active = true, updatedAt = new Date()) {
   return {
     id,

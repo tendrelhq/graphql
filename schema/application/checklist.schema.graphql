@@ -2,6 +2,63 @@ type Query {
   checklists(first: Int, last: Int, before: String, after: String): ChecklistConnection!
 }
 
+type Mutation {
+  createChecklistType(input: ChecklistTypeInput!): ChecklistType!
+}
+
+input ChecklistTypeInput {
+  id: Entity!
+  active: ActivatableTypeInput!
+  assignees: AssigneesTypeInput!
+  auditable: AuditableTypeInput!
+  description: DescriptionInput!
+  name: DisplayNameInput!
+  required: RequiredTypeInput!
+  schedule: ScheduleTypeInput!
+  sop: SopTypeInput!
+  status: StatusTypeInput!
+}
+
+input ActivatableTypeInput {
+  active: Boolean!
+  activatedAt: String # todo: TemporalInput?
+}
+
+input AssigneesTypeInput {
+  minAllowed: Int
+  maxAllowed: Int
+}
+
+input AuditableTypeInput {
+  auditable: Boolean!
+}
+
+input DescriptionInput {
+  locale: Locale!
+  value: String!
+}
+
+input DisplayNameInput {
+  locale: Locale!
+  value: String!
+}
+
+input RequiredTypeInput {
+  required: Boolean!
+}
+
+input ScheduleTypeInput {
+  kind: String!
+}
+
+input SopTypeInput {
+  link: Link!
+}
+
+input StatusTypeInput {
+  default: String!
+}
+
 type Checklist implements Component {
   id: Entity!
   active: Activatable!
@@ -28,6 +85,21 @@ type ChecklistConnection implements Connection {
 type ChecklistEdge implements Edge {
   cursor: String!
   node: ChecklistItem!
+  type: ChecklistType!
+}
+
+type ChecklistType implements Component {
+  id: Entity!
+  name: DisplayName!
+  description: Description!
+  items: [ChecklistItemType!]!
+}
+
+type ChecklistItemType implements Component {
+  id: Entity!
+  name: DisplayName!
+  description: Description!
+  type: Type!
 }
 
 ## We want our checklists to support nesting

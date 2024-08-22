@@ -4,14 +4,14 @@ type Query {
 }
 
 """
-  An entity represents a general-purpose object. The scalar representation is
-  just an opaque string, similar to ID.
+An entity represents a general-purpose object. The scalar representation is
+just an opaque string, similar to ID.
 """
 scalar Entity
 
 """
-  Components characterize Entities as possessing a particular trait.
-  They are just simple structs, holding all data necessary to model that trait.
+Components characterize Entities as possessing a particular trait.
+They are just simple structs, holding all data necessary to model that trait.
 """
 interface Component {
   id: Entity!
@@ -19,7 +19,12 @@ interface Component {
 
 type EntityConnection {
   entity: Entity!
-  components(first: Int, last: Int, before: String, after: String): EntityComponentConnection!
+  components(
+    first: Int
+    last: Int
+    before: String
+    after: String
+  ): EntityComponentConnection!
 }
 
 type EntityComponentConnection implements Connection {
@@ -29,7 +34,7 @@ type EntityComponentConnection implements Connection {
 }
 
 type EntityComponentEdge implements Edge {
-  cursor: String! 
+  cursor: String!
   node: Component!
 }
 
@@ -43,4 +48,65 @@ interface Connection {
 
 interface Edge {
   cursor: String!
+}
+
+type Mutation {
+  createEntity: CreateEntity!
+}
+
+type CreateEntity {
+  id: Entity!
+  components: CreateEntityComponentConnection!
+}
+
+type CreateEntityComponentConnection {
+  type(type: String!): CreateEntityComponentType!
+  node(id: Entity!): CreateEntityComponentNode!
+}
+
+type CreateEntityComponentType {
+  name(value: String!, locale: Locale): Void
+  description(value: String!, locale: Locale): Void
+  components: CreateEntityComponentConnection!
+}
+
+union CreateEntityComponentNode = CreateNamedNode | CreateLeafNode
+
+type CreateLeafNode {
+  value: ValueNode
+}
+
+union ValueNode = CounterNode | FlagNode | RegisterNode
+
+type CounterNode {
+  count(value: Int!): Void
+}
+type FlagNode {
+  flag(value: Boolean!): Void
+}
+type RegisterNode {
+  register(value: String!): Void
+}
+
+type CreateNamedNode {
+  name(value: String!, locale: Locale): Void
+  description(value: String!, locale: Locale): Void
+  components: CreateEntityComponentConnection!
+}
+
+scalar Void
+
+type ComponentConstructor {
+  node(id: ID!): NodeConstructor!
+  type(type: String!): TypeConstructor!
+}
+
+type NodeConstructor {
+  name(value: String!, locale: Locale): Void
+  description(value: String!, locale: Locale): Void
+}
+
+type TypeConstructor {
+  name(value: String!, locale: Locale): Void
+  description(value: String!, locale: Locale): Void
 }
