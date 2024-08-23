@@ -94,7 +94,7 @@ type Checklist implements Component {
   children: ChecklistConnection!
   description: Description
   id: Entity!
-  items(after: String, before: String, first: Int, last: Int): ChecklistConnection!
+  items(after: String, before: String, first: Int, last: Int): ChecklistItemConnection!
   name: DisplayName!
   required: Boolean
   schedule: Schedule
@@ -127,8 +127,7 @@ type ChecklistConnection implements Connection {
 
 type ChecklistEdge implements Edge {
   cursor: String!
-  node: ChecklistItem!
-  type: ChecklistType!
+  node: Checklist!
 }
 
 type ChecklistInProgress implements Component {
@@ -138,6 +137,17 @@ type ChecklistInProgress implements Component {
 }
 
 union ChecklistItem = Checklist | ChecklistResult
+
+type ChecklistItemConnection implements Connection {
+  edges: [ChecklistItemEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+type ChecklistItemEdge implements Edge {
+  cursor: String!
+  node: ChecklistItem!
+}
 
 type ChecklistItemType implements Component {
   description: Description!

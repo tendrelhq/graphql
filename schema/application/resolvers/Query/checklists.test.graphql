@@ -3,91 +3,90 @@ query Checklists($timeZone: TimeZone!) {
   checklists {
     edges {
       node {
-        ... on Checklist {
-          id
-          assignees {
-            edges {
-              node {
-                id
-                assignedAt {
-                  ... on Instant {
-                    epochMilliseconds
-                    toZonedDateTime(timeZone: $timeZone) {
-                      toString
-                    }
-                  }
-                }
-                assignedTo {
-                  id
-                  user {
-                    displayName
-                  }
-                }
-              }
-            }
-            pageInfo {
-              hasNextPage
-              hasPreviousPage
-            }
-            totalCount
-          }
-          attachments {
-            edges {
-              node {
-                id
-              }
-            }
-            pageInfo {
-              hasNextPage
-              hasPreviousPage
-            }
-            totalCount
-          }
-          auditable {
-            enabled
-          }
-          description {
-            value {
-              value
-            }
-          }
-          items {
-            edges {
-              node {
-                ... on Checklist {
-                  id
-                }
-                ... on ChecklistResult {
-                  id
-                }
-              }
-            }
-            pageInfo {
-              hasNextPage
-              hasPreviousPage
-            }
-            totalCount
-          }
-          name {
-            value {
-              value
-            }
-          }
-          required
-          schedule {
-            __typename
-          }
-          sop {
-            id
-          }
-          status {
-            ... on ChecklistOpen {
-              openedAt {
+        id
+        assignees {
+          edges {
+            node {
+              id
+              assignedAt {
                 ... on Instant {
                   epochMilliseconds
                   toZonedDateTime(timeZone: $timeZone) {
                     toString
                   }
+                }
+              }
+              assignedTo {
+                id
+                user {
+                  displayName
+                }
+              }
+            }
+          }
+          pageInfo {
+            hasNextPage
+            hasPreviousPage
+          }
+          totalCount
+        }
+        attachments {
+          edges {
+            node {
+              id
+            }
+          }
+          pageInfo {
+            hasNextPage
+            hasPreviousPage
+          }
+          totalCount
+        }
+        auditable {
+          enabled
+        }
+        description {
+          value {
+            value
+          }
+        }
+        items {
+          edges {
+            node {
+              __typename
+              ... on Checklist {
+                id
+              }
+              ... on ChecklistResult {
+                id
+              }
+            }
+          }
+          pageInfo {
+            hasNextPage
+            hasPreviousPage
+          }
+          totalCount
+        }
+        name {
+          value {
+            value
+          }
+        }
+        required
+        schedule {
+          __typename
+        }
+        sop {
+          id
+        }
+        status {
+          ... on ChecklistOpen {
+            openedAt {
+              ... on Instant {
+                epochMilliseconds
+                toZonedDateTime(timeZone: $timeZone) {
+                  toString
                 }
               }
             }

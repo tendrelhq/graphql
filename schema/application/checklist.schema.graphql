@@ -1,5 +1,10 @@
 type Query {
-  checklists(first: Int, last: Int, before: String, after: String): ChecklistConnection!
+  checklists(
+    first: Int
+    last: Int
+    before: String
+    after: String
+  ): ChecklistConnection!
 }
 
 type Mutation {
@@ -62,11 +67,26 @@ input StatusTypeInput {
 type Checklist implements Component {
   id: Entity!
   active: Activatable!
-  assignees(first: Int, last: Int, before: String, after: String): AssigneeConnection!
-  attachments(first: Int, last: Int, before: String, after: String): AttachmentConnection!
+  assignees(
+    first: Int
+    last: Int
+    before: String
+    after: String
+  ): AssigneeConnection!
+  attachments(
+    first: Int
+    last: Int
+    before: String
+    after: String
+  ): AttachmentConnection!
   auditable: Auditable!
   description: Description
-  items(first: Int, last: Int, before: String, after: String): ChecklistConnection!
+  items(
+    first: Int
+    last: Int
+    before: String
+    after: String
+  ): ChecklistItemConnection!
   name: DisplayName!
   required: Boolean
   schedule: Schedule
@@ -74,6 +94,17 @@ type Checklist implements Component {
   status: ChecklistStatus!
   # TODO: not sure about this... :/
   children: ChecklistConnection!
+}
+
+type ChecklistItemConnection implements Connection {
+  edges: [ChecklistItemEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+type ChecklistItemEdge implements Edge {
+  cursor: String!
+  node: ChecklistItem!
 }
 
 type ChecklistConnection implements Connection {
@@ -84,8 +115,7 @@ type ChecklistConnection implements Connection {
 
 type ChecklistEdge implements Edge {
   cursor: String!
-  node: ChecklistItem!
-  type: ChecklistType!
+  node: Checklist!
 }
 
 type ChecklistType implements Component {
@@ -107,9 +137,19 @@ union ChecklistItem = Checklist | ChecklistResult
 
 type ChecklistResult implements Component {
   id: Entity!
-  assignees(first: Int, last: Int, before: String, after: String): AssigneeConnection!
+  assignees(
+    first: Int
+    last: Int
+    before: String
+    after: String
+  ): AssigneeConnection!
   auditable: Auditable!
-  attachments(first: Int, last: Int, before: String, after: String): AttachmentConnection!
+  attachments(
+    first: Int
+    last: Int
+    before: String
+    after: String
+  ): AttachmentConnection!
   name: DisplayName!
   required: Boolean
   status: ChecklistStatus!

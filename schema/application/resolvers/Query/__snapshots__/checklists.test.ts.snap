@@ -20,22 +20,21 @@ exports[`checklists 1`] = `
                     "__typename": "Assignee",
                     "assignedAt": {
                       "__typename": "Instant",
-                      "epochMilliseconds": "1722928536060",
+                      "epochMilliseconds": "1723708800000",
                       "toZonedDateTime": {
                         "__typename": "ZonedDateTime",
-                        "toString": "2024-08-06T01:15:36.06-06:00[America/Denver]",
+                        "toString": "2024-08-15T02:00:00-06:00[America/Denver]",
                       },
                     },
                     "assignedTo": {
-                      "__typename": "DisplayName",
-                      "displayName": {
-                        "__typename": "DynamicString",
-                        "locale": "en",
-                        "value": "Jason Bourne",
+                      "__typename": "Actor",
+                      "id": "d29ya2VyaW5zdGFuY2U6ZDI5eWEyVnlPbVl6WVdNd05ESmpMVFl4WTJFdE5EVXpNeTA1WkRZd0xURmpNakl6Wm1aaFpHRTFOUT09",
+                      "user": {
+                        "__typename": "User",
+                        "displayName": "Mark Keller",
                       },
-                      "id": "d29ya2VyaW5zdGFuY2U6MjliNTY3MTMtMDRhNS00ZjgxLTgzODctYzQxOTZmNGExNWFi",
                     },
-                    "id": "d29ya3Jlc3VsdGluc3RhbmNlOmUwNWZiNzE1LTZhN2ItNGEzNS1hZTU1LWUxZjc2ZmZhOTZjNw==",
+                    "id": "d29ya3Jlc3VsdGluc3RhbmNlOjA2ZjAwZGEyLTk1NDAtNGQxNi04NTdlLTBiY2ZmMmVlN2M2YQ==",
                   },
                 },
               ],
@@ -58,31 +57,60 @@ exports[`checklists 1`] = `
             },
             "auditable": {
               "__typename": "Auditable",
-              "enabled": false,
+              "enabled": true,
             },
             "description": {
               "__typename": "Description",
               "value": {
                 "__typename": "DynamicString",
-                "value": "My checklist is so cool!",
+                "value": "A Day in the Life of Keller (abridged, volume 3.82)",
               },
             },
-            "id": "d29ya2luc3RhbmNlOmNlMGNiMTYzLWQzNzMtNDFiMi1iMWUwLTMxNzVmNGRmOGJlNQ==",
+            "id": "d29ya2luc3RhbmNlOmJjZTU2ZWVmLTg3YmItNDg3ZC1iZjUxLWViZGQwYzAyYTAyNw==",
             "items": {
-              "__typename": "ChecklistConnection",
-              "edges": [],
+              "__typename": "ChecklistItemConnection",
+              "edges": [
+                {
+                  "__typename": "ChecklistItemEdge",
+                  "node": {
+                    "__typename": "ChecklistResult",
+                    "id": "d29ya3Jlc3VsdGluc3RhbmNlOjE1OTI5MzViLWUwN2EtNGVhNS04OTBmLTYxZTgyMGJjYmJlOA==",
+                  },
+                },
+                {
+                  "__typename": "ChecklistItemEdge",
+                  "node": {
+                    "__typename": "ChecklistResult",
+                    "id": "d29ya3Jlc3VsdGluc3RhbmNlOjUwZDI2ZDllLWY2NWQtNDkzYi04ZTJhLWE5OWM0MzI3Y2RiMw==",
+                  },
+                },
+                {
+                  "__typename": "ChecklistItemEdge",
+                  "node": {
+                    "__typename": "ChecklistResult",
+                    "id": "d29ya3Jlc3VsdGluc3RhbmNlOjllZjBhOTgyLWM3ZjYtNGQ3OC1iYTY0LWRlZmY5NmEyMDUyNg==",
+                  },
+                },
+                {
+                  "__typename": "ChecklistItemEdge",
+                  "node": {
+                    "__typename": "ChecklistResult",
+                    "id": "d29ya3Jlc3VsdGluc3RhbmNlOjlhNjcxZjI4LWEyYmUtNGQ2ZC04NDAxLTAyYTJlYWUzNzc1Mg==",
+                  },
+                },
+              ],
               "pageInfo": {
                 "__typename": "PageInfo",
                 "hasNextPage": false,
                 "hasPreviousPage": false,
               },
-              "totalCount": 0,
+              "totalCount": 4,
             },
             "name": {
               "__typename": "DisplayName",
               "value": {
                 "__typename": "DynamicString",
-                "value": "My Checklist",
+                "value": "Keller's Personal Todos",
               },
             },
             "required": true,
@@ -91,16 +119,16 @@ exports[`checklists 1`] = `
             },
             "sop": {
               "__typename": "Sop",
-              "id": "d29ya3RlbXBsYXRlOmVkZWViOTAyLTI5MGYtNGFjMy1hZjNhLTcyM2JhODkyNWYxYg==",
+              "id": "d29ya3RlbXBsYXRlOjQ5NDgzNTU4LTljNjQtNDA4ZC04NWVmLWFlODZhNzcyNTBlYQ==",
             },
             "status": {
               "__typename": "ChecklistOpen",
               "openedAt": {
                 "__typename": "Instant",
-                "epochMilliseconds": "1722928536060",
+                "epochMilliseconds": "1723708800000",
                 "toZonedDateTime": {
                   "__typename": "ZonedDateTime",
-                  "toString": "2024-08-06T01:15:36.06-06:00[America/Denver]",
+                  "toString": "2024-08-15T02:00:00-06:00[America/Denver]",
                 },
               },
             },
@@ -119,46 +147,21 @@ exports[`checklists 1`] = `
                     "__typename": "Assignee",
                     "assignedAt": {
                       "__typename": "Instant",
-                      "epochMilliseconds": "1722928536060",
+                      "epochMilliseconds": "1723708800000",
                       "toZonedDateTime": {
                         "__typename": "ZonedDateTime",
-                        "toString": "2024-08-06T01:15:36.06-06:00[America/Denver]",
+                        "toString": "2024-08-15T02:00:00-06:00[America/Denver]",
                       },
                     },
                     "assignedTo": {
-                      "__typename": "DisplayName",
-                      "displayName": {
-                        "__typename": "DynamicString",
-                        "locale": "en",
-                        "value": "Jason Bourne",
-                      },
-                      "id": "d29ya2VyaW5zdGFuY2U6MjliNTY3MTMtMDRhNS00ZjgxLTgzODctYzQxOTZmNGExNWFi",
-                    },
-                    "id": "d29ya3Jlc3VsdGluc3RhbmNlOmViNjQwN2VhLTdmYTAtNGFkMy1iOTQwLWJiYmFiYzQ0ODdlZQ==",
-                  },
-                },
-                {
-                  "__typename": "AssigneeEdge",
-                  "node": {
-                    "__typename": "Assignee",
-                    "assignedAt": {
-                      "__typename": "Instant",
-                      "epochMilliseconds": "1722928536060",
-                      "toZonedDateTime": {
-                        "__typename": "ZonedDateTime",
-                        "toString": "2024-08-06T01:15:36.06-06:00[America/Denver]",
+                      "__typename": "Actor",
+                      "id": "d29ya2VyaW5zdGFuY2U6ZDI5eWEyVnlPakF6TkRkak1tTTJMVFZsTWpFdE5HWXlNeTA0WW1JMkxUazRNMll3TURCak5qQTNZUT09",
+                      "user": {
+                        "__typename": "User",
+                        "displayName": "Will Twait",
                       },
                     },
-                    "assignedTo": {
-                      "__typename": "DisplayName",
-                      "displayName": {
-                        "__typename": "DynamicString",
-                        "locale": "en",
-                        "value": "Jerry Garcia",
-                      },
-                      "id": "d29ya2VyaW5zdGFuY2U6MWI5MWEwYmEtODg1Zi00Zjg4LWJiZDctYzkwZGM2YWZhYjMy",
-                    },
-                    "id": "d29ya3Jlc3VsdGluc3RhbmNlOjNmYThmZjc5LTBiZmQtNDNlNC05NGYxLTRlNWIwMTI2N2M2ZQ==",
+                    "id": "d29ya3Jlc3VsdGluc3RhbmNlOmU0NmRmYjJhLTg4ZjktNDU0Mi1hYzBjLWYxZjIwNzEzYzEwNA==",
                   },
                 },
               ],
@@ -167,7 +170,7 @@ exports[`checklists 1`] = `
                 "hasNextPage": false,
                 "hasPreviousPage": false,
               },
-              "totalCount": 2,
+              "totalCount": 1,
             },
             "attachments": {
               "__typename": "AttachmentConnection",
@@ -187,45 +190,66 @@ exports[`checklists 1`] = `
               "__typename": "Description",
               "value": {
                 "__typename": "DynamicString",
-                "value": "Another checklist is so cool!",
+                "value": "Do these things every day",
               },
             },
-            "id": "d29ya2luc3RhbmNlOjIwMmQyOWVmLTM4OGEtNDU0NS05YzIwLWU4OWQyNTMxODE5NQ==",
+            "id": "d29ya2luc3RhbmNlOmE1ZmQ4YTdhLTEyZDYtNDBkZi1hYzY4LTRjMzNkMzhkYzE5ZA==",
             "items": {
-              "__typename": "ChecklistConnection",
-              "edges": [],
+              "__typename": "ChecklistItemConnection",
+              "edges": [
+                {
+                  "__typename": "ChecklistItemEdge",
+                  "node": {
+                    "__typename": "Checklist",
+                    "id": "d29ya2luc3RhbmNlOmQ3Yzc4NmYxLTBmMDMtNGIzOC05ZGIwLTEwNTU4MGFkNTI1ZQ==",
+                  },
+                },
+                {
+                  "__typename": "ChecklistItemEdge",
+                  "node": {
+                    "__typename": "Checklist",
+                    "id": "d29ya2luc3RhbmNlOjk1OTQ1NGE1LWUxMzMtNGQwNi04YjU2LWFjZjM4MGYzMWM5Nw==",
+                  },
+                },
+                {
+                  "__typename": "ChecklistItemEdge",
+                  "node": {
+                    "__typename": "Checklist",
+                    "id": "d29ya2luc3RhbmNlOmE2ZWE2NTJjLWQ0NTEtNGRhYS1iMzEwLTNmMDgxM2YwMjhmMA==",
+                  },
+                },
+                {
+                  "__typename": "ChecklistItemEdge",
+                  "node": {
+                    "__typename": "Checklist",
+                    "id": "d29ya2luc3RhbmNlOjNhMjE0YmMyLTYzZTQtNGI1Ni04NmY0LTc0MDg2ZjY2YTQyYg==",
+                  },
+                },
+              ],
               "pageInfo": {
                 "__typename": "PageInfo",
                 "hasNextPage": false,
                 "hasPreviousPage": false,
               },
-              "totalCount": 0,
+              "totalCount": 4,
             },
             "name": {
               "__typename": "DisplayName",
               "value": {
                 "__typename": "DynamicString",
-                "value": "Another Checklist",
+                "value": "Daily Oncall Checks",
               },
             },
             "required": true,
             "schedule": {
-              "__typename": "OnceSchedule",
+              "__typename": "CronSchedule",
             },
             "sop": {
               "__typename": "Sop",
-              "id": "d29ya3RlbXBsYXRlOjFhMGI5NTA1LWI1OWMtNGMwOC05Yzk5LTUwZWUxMzk5MWQ2Ng==",
+              "id": "d29ya3RlbXBsYXRlOjEwNGM4MmRiLWFjNjItNDZiOC1iNTE5LTcwMTExZjk1ZDUyMw==",
             },
             "status": {
-              "__typename": "ChecklistOpen",
-              "openedAt": {
-                "__typename": "Instant",
-                "epochMilliseconds": "1722928536060",
-                "toZonedDateTime": {
-                  "__typename": "ZonedDateTime",
-                  "toString": "2024-08-06T01:15:36.06-06:00[America/Denver]",
-                },
-              },
+              "__typename": "ChecklistInProgress",
             },
           },
         },
@@ -242,70 +266,21 @@ exports[`checklists 1`] = `
                     "__typename": "Assignee",
                     "assignedAt": {
                       "__typename": "Instant",
-                      "epochMilliseconds": "1722928536060",
+                      "epochMilliseconds": "1723708800000",
                       "toZonedDateTime": {
                         "__typename": "ZonedDateTime",
-                        "toString": "2024-08-06T01:15:36.06-06:00[America/Denver]",
+                        "toString": "2024-08-15T02:00:00-06:00[America/Denver]",
                       },
                     },
                     "assignedTo": {
-                      "__typename": "DisplayName",
-                      "displayName": {
-                        "__typename": "DynamicString",
-                        "locale": "en",
-                        "value": "Jason Bourne",
-                      },
-                      "id": "d29ya2VyaW5zdGFuY2U6MjliNTY3MTMtMDRhNS00ZjgxLTgzODctYzQxOTZmNGExNWFi",
-                    },
-                    "id": "d29ya3Jlc3VsdGluc3RhbmNlOmJmZDQ3NzYyLWNkNDktNGQ3NS1iNmRhLTFlMTA3OGU2ZTUyMw==",
-                  },
-                },
-                {
-                  "__typename": "AssigneeEdge",
-                  "node": {
-                    "__typename": "Assignee",
-                    "assignedAt": {
-                      "__typename": "Instant",
-                      "epochMilliseconds": "1722928536060",
-                      "toZonedDateTime": {
-                        "__typename": "ZonedDateTime",
-                        "toString": "2024-08-06T01:15:36.06-06:00[America/Denver]",
+                      "__typename": "Actor",
+                      "id": "d29ya2VyaW5zdGFuY2U6ZDI5eWEyVnlPbVkxTkRrMU1XRXlMV0ZpTkRFdE5HWTNaUzFpWW1aaUxXVmhPRFZsTm1Wa016ZzFOQT09",
+                      "user": {
+                        "__typename": "User",
+                        "displayName": "Federico Rozenberg",
                       },
                     },
-                    "assignedTo": {
-                      "__typename": "DisplayName",
-                      "displayName": {
-                        "__typename": "DynamicString",
-                        "locale": "en",
-                        "value": "Jerry Garcia",
-                      },
-                      "id": "d29ya2VyaW5zdGFuY2U6MWI5MWEwYmEtODg1Zi00Zjg4LWJiZDctYzkwZGM2YWZhYjMy",
-                    },
-                    "id": "d29ya3Jlc3VsdGluc3RhbmNlOjFmY2I4YWYxLTE4N2EtNDI3ZC1iMWY5LWVmNTFiMGZkZmY0Ng==",
-                  },
-                },
-                {
-                  "__typename": "AssigneeEdge",
-                  "node": {
-                    "__typename": "Assignee",
-                    "assignedAt": {
-                      "__typename": "Instant",
-                      "epochMilliseconds": "1722928536060",
-                      "toZonedDateTime": {
-                        "__typename": "ZonedDateTime",
-                        "toString": "2024-08-06T01:15:36.06-06:00[America/Denver]",
-                      },
-                    },
-                    "assignedTo": {
-                      "__typename": "DisplayName",
-                      "displayName": {
-                        "__typename": "DynamicString",
-                        "locale": "en",
-                        "value": "Bill Nye",
-                      },
-                      "id": "d29ya2VyaW5zdGFuY2U6ZGViMmZjZDQtMGQ0MC00ZWZlLWI4MmEtOTljM2EwNzM5NDAy",
-                    },
-                    "id": "d29ya3Jlc3VsdGluc3RhbmNlOjQ1NzgyMjA0LWQ0YWMtNDQwNy04ZjU3LTU1Njc4ZmUxNGEzNA==",
+                    "id": "d29ya3Jlc3VsdGluc3RhbmNlOjk0MGIxZmU3LTc2ZTktNGY5MS05MmQ1LWRhNWEyNTRhMDI4Mw==",
                   },
                 },
               ],
@@ -314,7 +289,7 @@ exports[`checklists 1`] = `
                 "hasNextPage": false,
                 "hasPreviousPage": false,
               },
-              "totalCount": 3,
+              "totalCount": 1,
             },
             "attachments": {
               "__typename": "AttachmentConnection",
@@ -328,31 +303,46 @@ exports[`checklists 1`] = `
             },
             "auditable": {
               "__typename": "Auditable",
-              "enabled": false,
+              "enabled": true,
             },
             "description": {
               "__typename": "Description",
               "value": {
                 "__typename": "DynamicString",
-                "value": "Ultimate checklist is so cool!",
+                "value": "Make sure the greenhouse is in shape",
               },
             },
-            "id": "d29ya2luc3RhbmNlOmNhMTBjOTFlLTQ1YTUtNGQ4NS04ZDM2LTBmMTdmNWE3NjVhOA==",
+            "id": "d29ya2luc3RhbmNlOjMxYTgyOTIzLWU5MWMtNDgwNS05ODRiLTY2OWRlZjZiNWNlNw==",
             "items": {
-              "__typename": "ChecklistConnection",
-              "edges": [],
+              "__typename": "ChecklistItemConnection",
+              "edges": [
+                {
+                  "__typename": "ChecklistItemEdge",
+                  "node": {
+                    "__typename": "ChecklistResult",
+                    "id": "d29ya3Jlc3VsdGluc3RhbmNlOjM3MWUzYTNiLTBlOTUtNDE2My05OTZmLTY0MjRiMWUyMGUxNg==",
+                  },
+                },
+                {
+                  "__typename": "ChecklistItemEdge",
+                  "node": {
+                    "__typename": "ChecklistResult",
+                    "id": "d29ya3Jlc3VsdGluc3RhbmNlOmYzZGU2ZjA3LTUwNjItNDdkMS04NGEyLTU0NWNkMmEwYWZiZA==",
+                  },
+                },
+              ],
               "pageInfo": {
                 "__typename": "PageInfo",
                 "hasNextPage": false,
                 "hasPreviousPage": false,
               },
-              "totalCount": 0,
+              "totalCount": 2,
             },
             "name": {
               "__typename": "DisplayName",
               "value": {
                 "__typename": "DynamicString",
-                "value": "Ultimate Checklist",
+                "value": "Greenhouse Check",
               },
             },
             "required": true,
@@ -361,18 +351,184 @@ exports[`checklists 1`] = `
             },
             "sop": {
               "__typename": "Sop",
-              "id": "d29ya3RlbXBsYXRlOmQzNzkxMTU0LWRhZDgtNGIyZS1iOTg2LWYxOTE4NTFlMGNlYg==",
+              "id": "d29ya3RlbXBsYXRlOjI2NWYzZjI5LWI0YmMtNGMwNi04MDJlLTJkMzA2OTA5YWU1MQ==",
             },
             "status": {
-              "__typename": "ChecklistOpen",
-              "openedAt": {
-                "__typename": "Instant",
-                "epochMilliseconds": "1722928536060",
-                "toZonedDateTime": {
-                  "__typename": "ZonedDateTime",
-                  "toString": "2024-08-06T01:15:36.06-06:00[America/Denver]",
+              "__typename": "ChecklistClosed",
+            },
+          },
+        },
+        {
+          "__typename": "ChecklistEdge",
+          "node": {
+            "__typename": "Checklist",
+            "assignees": {
+              "__typename": "AssigneeConnection",
+              "edges": [
+                {
+                  "__typename": "AssigneeEdge",
+                  "node": {
+                    "__typename": "Assignee",
+                    "assignedAt": {
+                      "__typename": "Instant",
+                      "epochMilliseconds": "1723449600000",
+                      "toZonedDateTime": {
+                        "__typename": "ZonedDateTime",
+                        "toString": "2024-08-12T02:00:00-06:00[America/Denver]",
+                      },
+                    },
+                    "assignedTo": {
+                      "__typename": "Actor",
+                      "id": "d29ya2VyaW5zdGFuY2U6ZDI5eWEyVnlPalZrWVROalkyWXdMV0V3TlRNdE5EQTVPQzA1TmpNNExXRTVPV1V3WTJZeE1EbGxNUT09",
+                      "user": {
+                        "__typename": "User",
+                        "displayName": "Will Ruggiano",
+                      },
+                    },
+                    "id": "d29ya3Jlc3VsdGluc3RhbmNlOmY3ZTIwYTc0LWQ3NzktNDkyMS1hYzE4LTNhMzc4MjY3MjE4MA==",
+                  },
                 },
+                {
+                  "__typename": "AssigneeEdge",
+                  "node": {
+                    "__typename": "Assignee",
+                    "assignedAt": {
+                      "__typename": "Instant",
+                      "epochMilliseconds": "1723449600000",
+                      "toZonedDateTime": {
+                        "__typename": "ZonedDateTime",
+                        "toString": "2024-08-12T02:00:00-06:00[America/Denver]",
+                      },
+                    },
+                    "assignedTo": {
+                      "__typename": "Actor",
+                      "id": "d29ya2VyaW5zdGFuY2U6ZDI5eWEyVnlPbVkyTTJNMFl6VmhMVGd6WXpBdE5HTXdOeTFpTlRBeExXWXlORFprT1dJeFpXRXpNdz09",
+                      "user": {
+                        "__typename": "User",
+                        "displayName": "Akash Nandi",
+                      },
+                    },
+                    "id": "d29ya3Jlc3VsdGluc3RhbmNlOmJjNDAwMmFiLWNhNTItNGFlZS05YjgxLWE5YTUzODJkYThjNg==",
+                  },
+                },
+                {
+                  "__typename": "AssigneeEdge",
+                  "node": {
+                    "__typename": "Assignee",
+                    "assignedAt": {
+                      "__typename": "Instant",
+                      "epochMilliseconds": "1723449600000",
+                      "toZonedDateTime": {
+                        "__typename": "ZonedDateTime",
+                        "toString": "2024-08-12T02:00:00-06:00[America/Denver]",
+                      },
+                    },
+                    "assignedTo": {
+                      "__typename": "Actor",
+                      "id": "d29ya2VyaW5zdGFuY2U6ZDI5eWEyVnlPams1T0RsaE1tRmxMVGd3WmpVdE5HVmhOaTFpWVRBeExUZGtNMlkxTldVNE1qZ3hZZz09",
+                      "user": {
+                        "__typename": "User",
+                        "displayName": "Connor Smith",
+                      },
+                    },
+                    "id": "d29ya3Jlc3VsdGluc3RhbmNlOjI4MDI3MTI4LWQyY2ItNDE4ZC1hYmQzLThhMzZiYjRiMDYwMA==",
+                  },
+                },
+                {
+                  "__typename": "AssigneeEdge",
+                  "node": {
+                    "__typename": "Assignee",
+                    "assignedAt": {
+                      "__typename": "Instant",
+                      "epochMilliseconds": "1723449600000",
+                      "toZonedDateTime": {
+                        "__typename": "ZonedDateTime",
+                        "toString": "2024-08-12T02:00:00-06:00[America/Denver]",
+                      },
+                    },
+                    "assignedTo": {
+                      "__typename": "Actor",
+                      "id": "d29ya2VyaW5zdGFuY2U6ZDI5eWEyVnlPbVl6WVdNd05ESmpMVFl4WTJFdE5EVXpNeTA1WkRZd0xURmpNakl6Wm1aaFpHRTFOUT09",
+                      "user": {
+                        "__typename": "User",
+                        "displayName": "Mark Keller",
+                      },
+                    },
+                    "id": "d29ya3Jlc3VsdGluc3RhbmNlOjIwZjA0NzU5LTNkN2ItNDk3OS05MGM5LWU5ZWRlODRkNjI0MA==",
+                  },
+                },
+              ],
+              "pageInfo": {
+                "__typename": "PageInfo",
+                "hasNextPage": false,
+                "hasPreviousPage": false,
               },
+              "totalCount": 4,
+            },
+            "attachments": {
+              "__typename": "AttachmentConnection",
+              "edges": [],
+              "pageInfo": {
+                "__typename": "PageInfo",
+                "hasNextPage": false,
+                "hasPreviousPage": false,
+              },
+              "totalCount": 0,
+            },
+            "auditable": {
+              "__typename": "Auditable",
+              "enabled": true,
+            },
+            "description": {
+              "__typename": "Description",
+              "value": {
+                "__typename": "DynamicString",
+                "value": "Make sure the greenhouse is in shape",
+              },
+            },
+            "id": "d29ya2luc3RhbmNlOmQ1YTRlOTE1LTg3NTEtNGU5OC04MDZiLTdlNmQ4YTU1ZjZjMA==",
+            "items": {
+              "__typename": "ChecklistItemConnection",
+              "edges": [
+                {
+                  "__typename": "ChecklistItemEdge",
+                  "node": {
+                    "__typename": "ChecklistResult",
+                    "id": "d29ya3Jlc3VsdGluc3RhbmNlOmRkMzIzY2Q4LTZlNDEtNGE1ZS1iZGZiLTgxZTQ5MzQzNDljNg==",
+                  },
+                },
+                {
+                  "__typename": "ChecklistItemEdge",
+                  "node": {
+                    "__typename": "ChecklistResult",
+                    "id": "d29ya3Jlc3VsdGluc3RhbmNlOmM2NDBkMTUyLWY4ZmItNDA3My1iNGY3LTM5NzAwYTdjZGZkOQ==",
+                  },
+                },
+              ],
+              "pageInfo": {
+                "__typename": "PageInfo",
+                "hasNextPage": false,
+                "hasPreviousPage": false,
+              },
+              "totalCount": 2,
+            },
+            "name": {
+              "__typename": "DisplayName",
+              "value": {
+                "__typename": "DynamicString",
+                "value": "Greenhouse Check",
+              },
+            },
+            "required": true,
+            "schedule": {
+              "__typename": "CronSchedule",
+            },
+            "sop": {
+              "__typename": "Sop",
+              "id": "d29ya3RlbXBsYXRlOmQyOTE4OTFmLTFmMDQtNGEzOS04ZTAxLTkyMDkzOTFiZWVjMw==",
+            },
+            "status": {
+              "__typename": "ChecklistClosed",
             },
           },
         },
@@ -382,7 +538,7 @@ exports[`checklists 1`] = `
         "hasNextPage": false,
         "hasPreviousPage": false,
       },
-      "totalCount": 3,
+      "totalCount": 4,
     },
   },
 }
