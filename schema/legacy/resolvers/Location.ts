@@ -1,9 +1,25 @@
 import { sql } from "@/datasources/postgres";
-import type { LocationResolvers } from "@/schema";
+import type { ActivationStatus, LocationResolvers } from "@/schema";
 import { decodeGlobalId } from "@/schema/system";
 import { isValue } from "@/util";
 
 export const Location: LocationResolvers = {
+  async active(parent) {
+    const { id } = decodeGlobalId(parent.id as string);
+    const [row] = await sql<[ActivationStatus]>`
+      SELECT
+          (
+              locationenddate IS null
+              OR
+              locationenddate > now()
+          ) AS active,
+          locationstartdate::text AS "activatedAt",
+          locationenddate::text AS "deactivatedAt"
+      FROM public.location
+      WHERE locationuuid = ${id};
+    `;
+    return row;
+  },
   async children(parent, { options }, ctx) {
     const parentId = decodeGlobalId(parent.id as string).id;
     const childIds = await sql<{ id: string }[]>`

@@ -8,6 +8,7 @@ export const updateUser: NonNullable<MutationResolvers["updateUser"]> = async (
   ctx,
 ) => {
   const { id } = decodeGlobalId(input.id);
+
   const rows = await sql`
       UPDATE public.worker
       SET
@@ -28,5 +29,5 @@ export const updateUser: NonNullable<MutationResolvers["updateUser"]> = async (
     throw new Error("Failed to update user");
   }
 
-  return ctx.orm.user.byId.load(id);
+  return ctx.orm.user.byId.clear(id).load(id);
 };

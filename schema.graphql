@@ -15,6 +15,12 @@ input ActivatableTypeInput {
   active: Boolean!
 }
 
+type ActivationStatus {
+  activatedAt: String
+  active: Boolean!
+  deactivatedAt: String
+}
+
 """TODO"""
 type Actor implements Component {
   id: Entity!
@@ -288,12 +294,15 @@ input CreateUserInput {
 
 input CreateWorkerInput {
   active: Boolean!
+  displayName: String
+  firstName: String!
   id: ID
   languageId: ID!
+  lastName: String!
   orgId: ID!
   roleId: ID!
   scanCode: ID
-  userId: ID!
+  userId: ID
 }
 
 """A string representing a cron schedule expression"""
@@ -340,9 +349,7 @@ interface Edge {
 }
 
 type EnabledLanguage implements Node {
-  activatedAt: String
-  active: Boolean!
-  deactivatedAt: String
+  active: ActivationStatus!
   id: ID!
   language: Language!
   languageId: ID!
@@ -355,7 +362,13 @@ type EnabledLanguageConnection {
 }
 
 type EnabledLanguageEdge {
+  cursor: String!
   node: EnabledLanguage!
+}
+
+input EnabledLanguageSearchOptions {
+  active: Boolean
+  primary: Boolean
 }
 
 """
@@ -458,10 +471,8 @@ A string representing a locale conforming to the BCP 47 (RFC 5646) standard
 scalar Locale
 
 type Location implements Node {
-  activatedAt: String
-  active: Boolean!
+  active: ActivationStatus!
   children(options: LocationsQueryOptions): [Location!]!
-  deactivatedAt: String
   id: ID!
   name: Name!
   nameId: ID!
@@ -479,7 +490,13 @@ type LocationConnection {
 }
 
 type LocationEdge {
+  cursor: String!
   node: Location!
+}
+
+input LocationSearchOptions {
+  active: Boolean
+  isSite: Boolean
 }
 
 input LocationsQueryOptions {
@@ -495,14 +512,14 @@ type Mutation {
   createInvitation(input: CreateInvitationInput!): Invitation!
   createLocation(input: CreateLocationInput!): Location!
   createUser(input: CreateUserInput!): User!
-  createWorker(input: CreateWorkerInput!): Worker!
+  createWorker(input: CreateWorkerInput!): WorkerEdge!
   deactivateWorker(id: ID!): Worker!
-  disableLanguage(languageId: ID!, orgId: ID!): Boolean!
-  enableLanguage(languageId: ID!, orgId: ID!): Boolean!
+  disableLanguage(languageId: ID!, orgId: ID!): EnabledLanguageEdge!
+  enableLanguage(languageId: ID!, orgId: ID!): EnabledLanguageEdge!
   updateLocation(input: UpdateLocationInput!): Location!
   updateName(input: UpdateNameInput!): Name!
   updateUser(input: UpdateUserInput!): User!
-  updateWorker(input: UpdateWorkerInput!): Worker!
+  updateWorker(input: UpdateWorkerInput!): WorkerEdge!
 }
 
 type Name implements Node {
@@ -550,8 +567,8 @@ type Organization implements Node {
   billingId: String
   deactivatedAt: String
   id: ID!
-  languages(after: String, before: String, first: Int, last: Int): EnabledLanguageConnection!
-  locations(after: String, before: String, first: Int, last: Int): LocationConnection!
+  languages(after: String, before: String, first: Int, last: Int, search: EnabledLanguageSearchOptions): EnabledLanguageConnection!
+  locations(after: String, before: String, first: Int, last: Int, search: LocationSearchOptions): LocationConnection!
   name: Name!
   nameId: ID!
   workers(after: String, before: String, first: Int, last: Int): WorkerConnection!
@@ -631,6 +648,18 @@ input SopTypeInput {
   link: Link!
 }
 
+"""
+Defines the sort order for queries that support edge ordering.
+Ordering depends on the scalar type:
+  - Boolean scalars are sorted false < true
+  - Int scalars are sorted numerically
+  - String scalars are sorted lexicographically
+"""
+enum SortOrder {
+  asc
+  desc
+}
+
 input StatusTypeInput {
   default: String!
 }
@@ -707,11 +736,13 @@ input UpdateUserInput {
 }
 
 input UpdateWorkerInput {
-  activatedAt: String
-  deactivatedAt: String
+  active: Boolean
+  displayName: String
+  firstName: String
   id: ID!
-  languageId: ID!
-  roleId: ID!
+  languageId: ID
+  lastName: String
+  roleId: ID
   scanCode: ID
 }
 
@@ -742,9 +773,7 @@ union ValueNode = CounterNode | FlagNode | RegisterNode
 scalar Void
 
 type Worker implements Node {
-  activatedAt: String
-  active: Boolean!
-  deactivatedAt: String
+  active: ActivationStatus!
   id: ID!
   invitation: Invitation
   invitationId: ID
@@ -764,6 +793,7 @@ type WorkerConnection {
 }
 
 type WorkerEdge {
+  cursor: String!
   node: Worker!
 }
 

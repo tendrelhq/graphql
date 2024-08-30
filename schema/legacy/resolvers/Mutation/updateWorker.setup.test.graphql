@@ -1,0 +1,20 @@
+mutation SetupTestUpdateWorker($input: CreateWorkerInput!) {
+  createWorker(input: $input) {
+    node {
+      id
+      language {
+        id
+      }
+      role {
+        id
+      }
+      scanCode
+      user {
+        id
+        firstName
+        lastName
+        displayName
+      }
+    }
+  }
+}

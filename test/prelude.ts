@@ -1,3 +1,5 @@
+import { orm } from "@/datasources/postgres";
+import type { Context } from "@/schema";
 import type { TypedDocumentNode as DocumentNode } from "@graphql-typed-document-node/core";
 import {
   type ExecutionResult,
@@ -13,10 +15,26 @@ export async function execute<R, V extends Record<any, any>>(
   ...[variables]: V extends Record<string, never> ? [] : [V]
 ) {
   const result = await graphql({
+    contextValue: await createTestContext(),
     schema,
     source: print(query),
     variableValues: variables,
   });
 
   return result as ExecutionResult<R>;
+}
+
+const DEFAULT_REQUEST = {
+  i18n: {
+    language: "en",
+  },
+};
+
+async function createTestContext(): Promise<Context> {
+  return {
+    // biome-ignore lint/suspicious/noExplicitAny: i know i know...
+    auth: {} as any,
+    // biome-ignore lint/suspicious/noExplicitAny: ...room for improvement
+    orm: orm(DEFAULT_REQUEST as any),
+  };
 }

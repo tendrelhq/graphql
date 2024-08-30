@@ -28,6 +28,7 @@
     "@graphql-tools/merge": "^9.0.4",
     "@graphql-tools/mock": "^9.0.4",
     "@graphql-tools/schema": "^10.0.4",
+    "@tendrel/ui": "^1.0.8",
     "@types/bun": "latest",
     "@types/cors": "^2.8.17",
     "@types/morgan": "^1.9.9",

@@ -1,0 +1,41 @@
+// Bun Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`createWorker creates worker without conflict 1`] = `
+{
+  "data": {
+    "createWorker": {
+      "__typename": "WorkerEdge",
+      "node": {
+        "__typename": "Worker",
+        "active": {
+          "__typename": "ActivationStatus",
+          "active": true,
+        },
+        "language": {
+          "__typename": "Language",
+          "code": "en",
+        },
+        "role": {
+          "__typename": "Tag",
+          "name": {
+            "__typename": "Name",
+            "value": "Admin",
+          },
+        },
+        "scanCode": null,
+        "user": {
+          "__typename": "User",
+          "active": true,
+          "displayName": "User 1337",
+          "firstName": "User",
+          "language": {
+            "__typename": "Language",
+            "code": "en",
+          },
+          "lastName": "1337",
+        },
+      },
+    },
+  },
+}
+`;

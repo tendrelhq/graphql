@@ -2,6 +2,7 @@ import z from "myzod";
 import postgres from "postgres";
 
 import type { Request } from "express";
+import makeCustomerRequestedLanguageLoader from "./crl";
 import makeInvitationLoader from "./invitation";
 import makeLanguageLoader from "./language";
 import makeLocationLoader from "./location";
@@ -52,6 +53,7 @@ export type TxSQL = Parameters<Parameters<typeof sql.begin>[1]>[0];
 
 export function orm(req: Request) {
   return {
+    crl: makeCustomerRequestedLanguageLoader(req),
     invitation: makeInvitationLoader(req),
     language: makeLanguageLoader(req),
     location: makeLocationLoader(req),

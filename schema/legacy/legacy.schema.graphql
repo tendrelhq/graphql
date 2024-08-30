@@ -1,3 +1,15 @@
+"""
+Defines the sort order for queries that support edge ordering.
+Ordering depends on the scalar type:
+  - Boolean scalars are sorted false < true
+  - Int scalars are sorted numerically
+  - String scalars are sorted lexicographically
+"""
+enum SortOrder {
+  asc
+  desc
+}
+
 interface Node {
   id: ID!
 }
@@ -34,14 +46,23 @@ type Tag {
   parentId: ID
 }
 
-type EnabledLanguage implements Node {
-  id: ID!
+type ActivationStatus {
   active: Boolean!
   activatedAt: String
   deactivatedAt: String
+}
+
+type EnabledLanguage implements Node {
+  id: ID!
+  active: ActivationStatus!
   language: Language!
   languageId: ID!
   primary: Boolean!
+}
+
+input EnabledLanguageSearchOptions {
+  active: Boolean
+  primary: Boolean
 }
 
 type EnabledLanguageConnection {
@@ -50,6 +71,7 @@ type EnabledLanguageConnection {
 }
 
 type EnabledLanguageEdge {
+  cursor: String!
   node: EnabledLanguage!
 }
 
@@ -79,12 +101,14 @@ type Organization implements Node {
     last: Int
     before: String
     after: String
+    search: EnabledLanguageSearchOptions
   ): EnabledLanguageConnection!
   locations(
     first: Int
     last: Int
     before: String
     after: String
+    search: LocationSearchOptions
   ): LocationConnection!
   name: Name!
   nameId: ID!
@@ -98,9 +122,7 @@ type Organization implements Node {
 
 type Location implements Node {
   id: ID!
-  active: Boolean!
-  activatedAt: String
-  deactivatedAt: String
+  active: ActivationStatus!
   children(options: LocationsQueryOptions): [Location!]!
   name: Name!
   nameId: ID!
@@ -113,12 +135,18 @@ type Location implements Node {
   timeZone: String!
 }
 
+input LocationSearchOptions {
+  active: Boolean
+  isSite: Boolean
+}
+
 type LocationConnection {
   edges: [LocationEdge!]!
   pageInfo: PageInfo!
 }
 
 type LocationEdge {
+  cursor: String!
   node: Location!
 }
 
@@ -163,9 +191,7 @@ type PageInfo {
 type Worker implements Node {
   id: ID!
   _hack_numeric_id: Int!
-  active: Boolean!
-  activatedAt: String
-  deactivatedAt: String
+  active: ActivationStatus!
   invitation: Invitation
   invitationId: ID
   language: Language!
@@ -184,6 +210,7 @@ type WorkerConnection {
 }
 
 type WorkerEdge {
+  cursor: String!
   node: Worker!
 }
 
@@ -221,8 +248,8 @@ type Mutation {
 
   # Worker
   ## CRUD
-  createWorker(input: CreateWorkerInput!): Worker!
-  updateWorker(input: UpdateWorkerInput!): Worker!
+  createWorker(input: CreateWorkerInput!): WorkerEdge!
+  updateWorker(input: UpdateWorkerInput!): WorkerEdge!
   ## Helpers
   activateWorker(id: ID!): Worker!
   deactivateWorker(id: ID!): Worker!
@@ -230,8 +257,8 @@ type Mutation {
   acceptInvitation(input: AcceptInvitationInput!): Worker!
 
   # Organization helpers
-  enableLanguage(orgId: ID!, languageId: ID!): Boolean!
-  disableLanguage(orgId: ID!, languageId: ID!): Boolean!
+  enableLanguage(orgId: ID!, languageId: ID!): EnabledLanguageEdge!
+  disableLanguage(orgId: ID!, languageId: ID!): EnabledLanguageEdge!
 }
 
 input CreateLocationInput {
@@ -271,19 +298,24 @@ input UpdateUserInput {
 input CreateWorkerInput {
   id: ID
   active: Boolean!
+  displayName: String
+  firstName: String!
   languageId: ID!
+  lastName: String!
   orgId: ID!
   roleId: ID!
   scanCode: ID
-  userId: ID!
+  userId: ID
 }
 
 input UpdateWorkerInput {
   id: ID!
-  activatedAt: String
-  deactivatedAt: String
-  languageId: ID!
-  roleId: ID!
+  active: Boolean
+  displayName: String
+  firstName: String
+  languageId: ID
+  lastName: String
+  roleId: ID
   scanCode: ID
 }
 

@@ -28,13 +28,11 @@ exports[`checklists 1`] = `
                     },
                     "assignedTo": {
                       "__typename": "Actor",
-                      "id": "d29ya2VyaW5zdGFuY2U6ZDI5eWEyVnlPbVl6WVdNd05ESmpMVFl4WTJFdE5EVXpNeTA1WkRZd0xURmpNakl6Wm1aaFpHRTFOUT09",
                       "user": {
                         "__typename": "User",
                         "displayName": "Mark Keller",
                       },
                     },
-                    "id": "d29ya3Jlc3VsdGluc3RhbmNlOjA2ZjAwZGEyLTk1NDAtNGQxNi04NTdlLTBiY2ZmMmVlN2M2YQ==",
                   },
                 },
               ],
@@ -66,7 +64,6 @@ exports[`checklists 1`] = `
                 "value": "A Day in the Life of Keller (abridged, volume 3.82)",
               },
             },
-            "id": "d29ya2luc3RhbmNlOmJjZTU2ZWVmLTg3YmItNDg3ZC1iZjUxLWViZGQwYzAyYTAyNw==",
             "items": {
               "__typename": "ChecklistItemConnection",
               "edges": [
@@ -74,28 +71,52 @@ exports[`checklists 1`] = `
                   "__typename": "ChecklistItemEdge",
                   "node": {
                     "__typename": "ChecklistResult",
-                    "id": "d29ya3Jlc3VsdGluc3RhbmNlOjE1OTI5MzViLWUwN2EtNGVhNS04OTBmLTYxZTgyMGJjYmJlOA==",
+                    "name": {
+                      "__typename": "DisplayName",
+                      "value": {
+                        "__typename": "DynamicString",
+                        "value": "Read people's standup notes",
+                      },
+                    },
                   },
                 },
                 {
                   "__typename": "ChecklistItemEdge",
                   "node": {
                     "__typename": "ChecklistResult",
-                    "id": "d29ya3Jlc3VsdGluc3RhbmNlOjUwZDI2ZDllLWY2NWQtNDkzYi04ZTJhLWE5OWM0MzI3Y2RiMw==",
+                    "name": {
+                      "__typename": "DisplayName",
+                      "value": {
+                        "__typename": "DynamicString",
+                        "value": "Write some arcane SQL procedure code",
+                      },
+                    },
                   },
                 },
                 {
                   "__typename": "ChecklistItemEdge",
                   "node": {
                     "__typename": "ChecklistResult",
-                    "id": "d29ya3Jlc3VsdGluc3RhbmNlOjllZjBhOTgyLWM3ZjYtNGQ3OC1iYTY0LWRlZmY5NmEyMDUyNg==",
+                    "name": {
+                      "__typename": "DisplayName",
+                      "value": {
+                        "__typename": "DynamicString",
+                        "value": "Note how many alarms are firing",
+                      },
+                    },
                   },
                 },
                 {
                   "__typename": "ChecklistItemEdge",
                   "node": {
                     "__typename": "ChecklistResult",
-                    "id": "d29ya3Jlc3VsdGluc3RhbmNlOjlhNjcxZjI4LWEyYmUtNGQ2ZC04NDAxLTAyYTJlYWUzNzc1Mg==",
+                    "name": {
+                      "__typename": "DisplayName",
+                      "value": {
+                        "__typename": "DynamicString",
+                        "value": "Fix the SQL code and ensure alarms recover",
+                      },
+                    },
                   },
                 },
               ],
@@ -119,7 +140,7 @@ exports[`checklists 1`] = `
             },
             "sop": {
               "__typename": "Sop",
-              "id": "d29ya3RlbXBsYXRlOjQ5NDgzNTU4LTljNjQtNDA4ZC04NWVmLWFlODZhNzcyNTBlYQ==",
+              "link": "https://www.youtube.com/watch?v=Vofkw9-O18c&list=PLi1CK-rsvz1Nfz83RMBp_9YaIgBWd0l9x",
             },
             "status": {
               "__typename": "ChecklistOpen",
@@ -155,13 +176,11 @@ exports[`checklists 1`] = `
                     },
                     "assignedTo": {
                       "__typename": "Actor",
-                      "id": "d29ya2VyaW5zdGFuY2U6ZDI5eWEyVnlPakF6TkRkak1tTTJMVFZsTWpFdE5HWXlNeTA0WW1JMkxUazRNMll3TURCak5qQTNZUT09",
                       "user": {
                         "__typename": "User",
                         "displayName": "Will Twait",
                       },
                     },
-                    "id": "d29ya3Jlc3VsdGluc3RhbmNlOmU0NmRmYjJhLTg4ZjktNDU0Mi1hYzBjLWYxZjIwNzEzYzEwNA==",
                   },
                 },
               ],
@@ -193,7 +212,6 @@ exports[`checklists 1`] = `
                 "value": "Do these things every day",
               },
             },
-            "id": "d29ya2luc3RhbmNlOmE1ZmQ4YTdhLTEyZDYtNDBkZi1hYzY4LTRjMzNkMzhkYzE5ZA==",
             "items": {
               "__typename": "ChecklistItemConnection",
               "edges": [
@@ -201,28 +219,52 @@ exports[`checklists 1`] = `
                   "__typename": "ChecklistItemEdge",
                   "node": {
                     "__typename": "Checklist",
-                    "id": "d29ya2luc3RhbmNlOmQ3Yzc4NmYxLTBmMDMtNGIzOC05ZGIwLTEwNTU4MGFkNTI1ZQ==",
+                    "name": {
+                      "__typename": "DisplayName",
+                      "value": {
+                        "__typename": "DynamicString",
+                        "value": "Alarm Monitoring",
+                      },
+                    },
                   },
                 },
                 {
                   "__typename": "ChecklistItemEdge",
                   "node": {
                     "__typename": "Checklist",
-                    "id": "d29ya2luc3RhbmNlOjk1OTQ1NGE1LWUxMzMtNGQwNi04YjU2LWFjZjM4MGYzMWM5Nw==",
+                    "name": {
+                      "__typename": "DisplayName",
+                      "value": {
+                        "__typename": "DynamicString",
+                        "value": "Pipeline health",
+                      },
+                    },
                   },
                 },
                 {
                   "__typename": "ChecklistItemEdge",
                   "node": {
                     "__typename": "Checklist",
-                    "id": "d29ya2luc3RhbmNlOmE2ZWE2NTJjLWQ0NTEtNGRhYS1iMzEwLTNmMDgxM2YwMjhmMA==",
+                    "name": {
+                      "__typename": "DisplayName",
+                      "value": {
+                        "__typename": "DynamicString",
+                        "value": "Ticket queue monitoring",
+                      },
+                    },
                   },
                 },
                 {
                   "__typename": "ChecklistItemEdge",
                   "node": {
                     "__typename": "Checklist",
-                    "id": "d29ya2luc3RhbmNlOjNhMjE0YmMyLTYzZTQtNGI1Ni04NmY0LTc0MDg2ZjY2YTQyYg==",
+                    "name": {
+                      "__typename": "DisplayName",
+                      "value": {
+                        "__typename": "DynamicString",
+                        "value": "DB/DW monitoring",
+                      },
+                    },
                   },
                 },
               ],
@@ -246,7 +288,7 @@ exports[`checklists 1`] = `
             },
             "sop": {
               "__typename": "Sop",
-              "id": "d29ya3RlbXBsYXRlOjEwNGM4MmRiLWFjNjItNDZiOC1iNTE5LTcwMTExZjk1ZDUyMw==",
+              "link": "https://www.notion.so/tendrel/Oncall-Responsibilities-c57c310cf24a48078bf76b8f7213330c#f0d81e702e7c4f26804ea491a5ccb2f7",
             },
             "status": {
               "__typename": "ChecklistInProgress",
@@ -274,13 +316,11 @@ exports[`checklists 1`] = `
                     },
                     "assignedTo": {
                       "__typename": "Actor",
-                      "id": "d29ya2VyaW5zdGFuY2U6ZDI5eWEyVnlPbVkxTkRrMU1XRXlMV0ZpTkRFdE5HWTNaUzFpWW1aaUxXVmhPRFZsTm1Wa016ZzFOQT09",
                       "user": {
                         "__typename": "User",
                         "displayName": "Federico Rozenberg",
                       },
                     },
-                    "id": "d29ya3Jlc3VsdGluc3RhbmNlOjk0MGIxZmU3LTc2ZTktNGY5MS05MmQ1LWRhNWEyNTRhMDI4Mw==",
                   },
                 },
               ],
@@ -312,7 +352,6 @@ exports[`checklists 1`] = `
                 "value": "Make sure the greenhouse is in shape",
               },
             },
-            "id": "d29ya2luc3RhbmNlOjMxYTgyOTIzLWU5MWMtNDgwNS05ODRiLTY2OWRlZjZiNWNlNw==",
             "items": {
               "__typename": "ChecklistItemConnection",
               "edges": [
@@ -320,14 +359,26 @@ exports[`checklists 1`] = `
                   "__typename": "ChecklistItemEdge",
                   "node": {
                     "__typename": "ChecklistResult",
-                    "id": "d29ya3Jlc3VsdGluc3RhbmNlOjM3MWUzYTNiLTBlOTUtNDE2My05OTZmLTY0MjRiMWUyMGUxNg==",
+                    "name": {
+                      "__typename": "DisplayName",
+                      "value": {
+                        "__typename": "DynamicString",
+                        "value": "Doors locked properly?",
+                      },
+                    },
                   },
                 },
                 {
                   "__typename": "ChecklistItemEdge",
                   "node": {
                     "__typename": "ChecklistResult",
-                    "id": "d29ya3Jlc3VsdGluc3RhbmNlOmYzZGU2ZjA3LTUwNjItNDdkMS04NGEyLTU0NWNkMmEwYWZiZA==",
+                    "name": {
+                      "__typename": "DisplayName",
+                      "value": {
+                        "__typename": "DynamicString",
+                        "value": "Count of broken panels",
+                      },
+                    },
                   },
                 },
               ],
@@ -351,7 +402,7 @@ exports[`checklists 1`] = `
             },
             "sop": {
               "__typename": "Sop",
-              "id": "d29ya3RlbXBsYXRlOjI2NWYzZjI5LWI0YmMtNGMwNi04MDJlLTJkMzA2OTA5YWU1MQ==",
+              "link": "https://big-green.uk/sop/greenhouse-check",
             },
             "status": {
               "__typename": "ChecklistClosed",
@@ -379,13 +430,11 @@ exports[`checklists 1`] = `
                     },
                     "assignedTo": {
                       "__typename": "Actor",
-                      "id": "d29ya2VyaW5zdGFuY2U6ZDI5eWEyVnlPalZrWVROalkyWXdMV0V3TlRNdE5EQTVPQzA1TmpNNExXRTVPV1V3WTJZeE1EbGxNUT09",
                       "user": {
                         "__typename": "User",
                         "displayName": "Will Ruggiano",
                       },
                     },
-                    "id": "d29ya3Jlc3VsdGluc3RhbmNlOmY3ZTIwYTc0LWQ3NzktNDkyMS1hYzE4LTNhMzc4MjY3MjE4MA==",
                   },
                 },
                 {
@@ -402,13 +451,11 @@ exports[`checklists 1`] = `
                     },
                     "assignedTo": {
                       "__typename": "Actor",
-                      "id": "d29ya2VyaW5zdGFuY2U6ZDI5eWEyVnlPbVkyTTJNMFl6VmhMVGd6WXpBdE5HTXdOeTFpTlRBeExXWXlORFprT1dJeFpXRXpNdz09",
                       "user": {
                         "__typename": "User",
                         "displayName": "Akash Nandi",
                       },
                     },
-                    "id": "d29ya3Jlc3VsdGluc3RhbmNlOmJjNDAwMmFiLWNhNTItNGFlZS05YjgxLWE5YTUzODJkYThjNg==",
                   },
                 },
                 {
@@ -425,13 +472,11 @@ exports[`checklists 1`] = `
                     },
                     "assignedTo": {
                       "__typename": "Actor",
-                      "id": "d29ya2VyaW5zdGFuY2U6ZDI5eWEyVnlPams1T0RsaE1tRmxMVGd3WmpVdE5HVmhOaTFpWVRBeExUZGtNMlkxTldVNE1qZ3hZZz09",
                       "user": {
                         "__typename": "User",
                         "displayName": "Connor Smith",
                       },
                     },
-                    "id": "d29ya3Jlc3VsdGluc3RhbmNlOjI4MDI3MTI4LWQyY2ItNDE4ZC1hYmQzLThhMzZiYjRiMDYwMA==",
                   },
                 },
                 {
@@ -448,13 +493,11 @@ exports[`checklists 1`] = `
                     },
                     "assignedTo": {
                       "__typename": "Actor",
-                      "id": "d29ya2VyaW5zdGFuY2U6ZDI5eWEyVnlPbVl6WVdNd05ESmpMVFl4WTJFdE5EVXpNeTA1WkRZd0xURmpNakl6Wm1aaFpHRTFOUT09",
                       "user": {
                         "__typename": "User",
                         "displayName": "Mark Keller",
                       },
                     },
-                    "id": "d29ya3Jlc3VsdGluc3RhbmNlOjIwZjA0NzU5LTNkN2ItNDk3OS05MGM5LWU5ZWRlODRkNjI0MA==",
                   },
                 },
               ],
@@ -486,7 +529,6 @@ exports[`checklists 1`] = `
                 "value": "Make sure the greenhouse is in shape",
               },
             },
-            "id": "d29ya2luc3RhbmNlOmQ1YTRlOTE1LTg3NTEtNGU5OC04MDZiLTdlNmQ4YTU1ZjZjMA==",
             "items": {
               "__typename": "ChecklistItemConnection",
               "edges": [
@@ -494,14 +536,26 @@ exports[`checklists 1`] = `
                   "__typename": "ChecklistItemEdge",
                   "node": {
                     "__typename": "ChecklistResult",
-                    "id": "d29ya3Jlc3VsdGluc3RhbmNlOmRkMzIzY2Q4LTZlNDEtNGE1ZS1iZGZiLTgxZTQ5MzQzNDljNg==",
+                    "name": {
+                      "__typename": "DisplayName",
+                      "value": {
+                        "__typename": "DynamicString",
+                        "value": "Doors locked properly?",
+                      },
+                    },
                   },
                 },
                 {
                   "__typename": "ChecklistItemEdge",
                   "node": {
                     "__typename": "ChecklistResult",
-                    "id": "d29ya3Jlc3VsdGluc3RhbmNlOmM2NDBkMTUyLWY4ZmItNDA3My1iNGY3LTM5NzAwYTdjZGZkOQ==",
+                    "name": {
+                      "__typename": "DisplayName",
+                      "value": {
+                        "__typename": "DynamicString",
+                        "value": "Count of broken panels",
+                      },
+                    },
                   },
                 },
               ],
@@ -525,7 +579,7 @@ exports[`checklists 1`] = `
             },
             "sop": {
               "__typename": "Sop",
-              "id": "d29ya3RlbXBsYXRlOmQyOTE4OTFmLTFmMDQtNGEzOS04ZTAxLTkyMDkzOTFiZWVjMw==",
+              "link": "https://big-green.uk/sop/greenhouse-check",
             },
             "status": {
               "__typename": "ChecklistClosed",

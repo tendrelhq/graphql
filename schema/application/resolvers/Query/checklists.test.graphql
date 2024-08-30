@@ -3,11 +3,9 @@ query Checklists($timeZone: TimeZone!) {
   checklists {
     edges {
       node {
-        id
         assignees {
           edges {
             node {
-              id
               assignedAt {
                 ... on Instant {
                   epochMilliseconds
@@ -17,7 +15,6 @@ query Checklists($timeZone: TimeZone!) {
                 }
               }
               assignedTo {
-                id
                 user {
                   displayName
                 }
@@ -33,7 +30,7 @@ query Checklists($timeZone: TimeZone!) {
         attachments {
           edges {
             node {
-              id
+              __typename
             }
           }
           pageInfo {
@@ -55,10 +52,18 @@ query Checklists($timeZone: TimeZone!) {
             node {
               __typename
               ... on Checklist {
-                id
+                name {
+                  value {
+                    value
+                  }
+                }
               }
               ... on ChecklistResult {
-                id
+                name {
+                  value {
+                    value
+                  }
+                }
               }
             }
           }
@@ -78,7 +83,7 @@ query Checklists($timeZone: TimeZone!) {
           __typename
         }
         sop {
-          id
+          link
         }
         status {
           ... on ChecklistOpen {

@@ -1,0 +1,27 @@
+mutation TestCreateWorker($input: CreateWorkerInput!) {
+  createWorker(input: $input) {
+    node {
+      active {
+        active
+      }
+      language {
+        code
+      }
+      role {
+        name {
+          value
+        }
+      }
+      scanCode
+      user {
+        active
+        firstName
+        lastName
+        displayName
+        language {
+          code
+        }
+      }
+    }
+  }
+}

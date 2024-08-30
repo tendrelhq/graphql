@@ -1,13 +1,8 @@
 import { sql } from "@/datasources/postgres";
-import type {
-  EnabledLanguage,
-  Location,
-  OrganizationResolvers,
-  PageInfo,
-  Worker,
-} from "@/schema";
+import type { OrganizationResolvers, PageInfo } from "@/schema";
 import { decodeGlobalId } from "@/schema/system";
 import type { WithKey } from "@/util";
+import { match } from "ts-pattern";
 
 export const Organization: OrganizationResolvers = {
   async name(parent, _, ctx) {
@@ -19,30 +14,18 @@ export const Organization: OrganizationResolvers = {
     const after = args.after ? decodeGlobalId(args.after).id : null;
     const before = args.before ? decodeGlobalId(args.before).id : null;
 
-    const rows = await sql<WithKey<EnabledLanguage>[]>`
-      SELECT
-          l.customerrequestedlanguageuuid AS _key,
-          encode(('enabled-language:' || l.customerrequestedlanguageuuid)::bytea, 'base64') AS id,
-          (
-              l.customerrequestedlanguageenddate IS null
-              OR
-              l.customerrequestedlanguageenddate > now()
-          ) AS active,
-          l.customerrequestedlanguagestartdate::text AS "activatedAt",
-          l.customerrequestedlanguageenddate::text AS "deactivatedAt",
-          s.systaguuid AS "languageId",
-          (l.customerrequestedlanguagelanguageid = o.customerlanguagetypeid) AS primary
-      FROM public.customerrequestedlanguage AS l
-      INNER JOIN public.customer AS o
-          ON l.customerrequestedlanguagecustomerid = o.customerid
-      INNER JOIN public.systag AS s
-          ON l.customerrequestedlanguagelanguageid = s.systagid
+    // biome-ignore lint/complexity/noBannedTypes:
+    const keys = await sql<WithKey<{}>[]>`
+      SELECT customerrequestedlanguageuuid AS _key
+      FROM public.customerrequestedlanguage
+      INNER JOIN public.customer
+          ON customerrequestedlanguagecustomerid = customerid
       WHERE
-          o.customeruuid = ${parentId}
+          customeruuid = ${parentId}
           ${
             after
               ? sql`
-          AND l.customerrequestedlanguageid > (
+          AND customerrequestedlanguageid > (
               SELECT customerrequestedlanguageid
               FROM public.customerrequestedlanguage
               WHERE customerrequestedlanguageuuid = ${after}
@@ -53,7 +36,7 @@ export const Organization: OrganizationResolvers = {
           ${
             before
               ? sql`
-          AND l.customerrequestedlanguageid < (
+          AND customerrequestedlanguageid < (
               SELECT customerrequestedlanguageid
               FROM public.customerrequestedlanguage
               WHERE customerrequestedlanguageuuid = ${before}
@@ -61,12 +44,33 @@ export const Organization: OrganizationResolvers = {
               `
               : sql``
           }
-      ORDER BY l.customerrequestedlanguageid ${last ? sql`DESC` : sql`ASC`}
+          AND ${match(args.search?.primary)
+            .with(
+              true,
+              () =>
+                sql`customerrequestedlanguagelanguageid = customerlanguagetypeid`,
+            )
+            .with(
+              false,
+              () =>
+                sql`customerrequestedlanguagelanguageid != customerlanguagetypeid`,
+            )
+            .otherwise(() => sql`TRUE`)}
+          AND ${match(args.search?.active)
+            .with(
+              true,
+              () =>
+                sql`(customerrequestedlanguageenddate IS null OR customerrequestedlanguageenddate > now())`,
+            )
+            .with(
+              false,
+              () =>
+                sql`(customerrequestedlanguageenddate IS NOT null AND customerrequestedlanguageenddate < now())`,
+            )
+            .otherwise(() => sql`TRUE`)}
+      ORDER BY customerrequestedlanguageid ${last ? sql`DESC` : sql`ASC`}
       LIMIT ${first ?? last ?? null};
     `;
-
-    const startCursor = rows.at(0);
-    const endCursor = rows.at(rows.length - 1);
 
     const [{ hasNextPage, hasPreviousPage }] = await sql<
       [Pick<PageInfo, "hasNextPage" | "hasPreviousPage">]
@@ -76,22 +80,40 @@ export const Organization: OrganizationResolvers = {
               EXISTS (
                   SELECT 1
                   FROM public.customerrequestedlanguage
+                  INNER JOIN public.customer
+                      ON customerrequestedlanguagecustomerid = customerid
                   WHERE
-                      customerrequestedlanguagecustomerid = (
-                          SELECT customerid
-                          FROM public.customer
-                          WHERE customeruuid = ${parentId}
-                      )
+                      customeruuid = ${parentId}
                       AND customerrequestedlanguageid > (
                           SELECT customerrequestedlanguageid
                           FROM public.customerrequestedlanguage
-                          WHERE customerrequestedlanguageuuid = ${
-                            endCursor?._key ?? null
-                          }
+                          WHERE customerrequestedlanguageuuid = ${keys.at(-1)?._key ?? null}
                       )
-                  ORDER BY customerrequestedlanguageid ${
-                    last ? sql`DESC` : sql`ASC`
-                  }
+                      AND ${match(args.search?.primary)
+                        .with(
+                          true,
+                          () =>
+                            sql`customerrequestedlanguagelanguageid = customerlanguagetypeid`,
+                        )
+                        .with(
+                          false,
+                          () =>
+                            sql`customerrequestedlanguagelanguageid != customerlanguagetypeid`,
+                        )
+                        .otherwise(() => sql`TRUE`)}
+                      AND ${match(args.search?.active)
+                        .with(
+                          true,
+                          () =>
+                            sql`customerrequestedlanguageenddate IS null OR customerrequestedlanguageenddate > now()`,
+                        )
+                        .with(
+                          false,
+                          () =>
+                            sql`customerrequestedlanguageenddate IS NOT null AND customerrequestedlanguageenddate < now()`,
+                        )
+                        .otherwise(() => sql`TRUE`)}
+                  ORDER BY customerrequestedlanguageid ${last ? sql`DESC` : sql`ASC`}
 
               )
           ) AS "hasNextPage",
@@ -99,29 +121,67 @@ export const Organization: OrganizationResolvers = {
               EXISTS (
                   SELECT 1
                   FROM public.customerrequestedlanguage
+                  INNER JOIN public.customer
+                      ON customerrequestedlanguagecustomerid = customerid
                   WHERE
-                      customerrequestedlanguagecustomerid = (
-                          SELECT customerid
-                          FROM public.customer
-                          WHERE customeruuid = ${parentId}
-                      )
+                      customeruuid = ${parentId}
                       AND customerrequestedlanguageid < (
                           SELECT customerrequestedlanguageid
                           FROM public.customerrequestedlanguage
-                          WHERE customerrequestedlanguageuuid = ${
-                            startCursor?._key ?? null
-                          }
+                          WHERE customerrequestedlanguageuuid = ${keys.at(0)?._key ?? null}
                       )
-                  ORDER BY customerrequestedlanguageid ${
-                    last ? sql`DESC` : sql`ASC`
-                  }
+                      AND ${match(args.search?.primary)
+                        .with(
+                          true,
+                          () =>
+                            sql`customerrequestedlanguagelanguageid = customerlanguagetypeid`,
+                        )
+                        .with(
+                          false,
+                          () =>
+                            sql`customerrequestedlanguagelanguageid != customerlanguagetypeid`,
+                        )
+                        .otherwise(() => sql`TRUE`)}
+                      AND ${match(args.search?.active)
+                        .with(
+                          true,
+                          () =>
+                            sql`customerrequestedlanguageenddate IS null OR customerrequestedlanguageenddate > now()`,
+                        )
+                        .with(
+                          false,
+                          () =>
+                            sql`customerrequestedlanguageenddate IS NOT null AND customerrequestedlanguageenddate < now()`,
+                        )
+                        .otherwise(() => sql`TRUE`)}
+                  ORDER BY customerrequestedlanguageid ${last ? sql`DESC` : sql`ASC`}
 
               )
           ) AS "hasPreviousPage"
     `;
 
+    const rows = await ctx.orm.crl.loadMany(keys.map(e => e._key));
+    const startCursor = rows.at(0);
+    const endCursor = rows.at(-1);
+
+    if (startCursor instanceof Error) {
+      throw startCursor;
+    }
+    if (endCursor instanceof Error) {
+      throw endCursor;
+    }
+
     return {
-      edges: rows.map(row => ({ node: row })),
+      edges: rows.map(row => {
+        if (row instanceof Error) {
+          throw row;
+        }
+
+        return {
+          cursor: row.id as string,
+          node: row,
+        };
+      }),
       pageInfo: {
         startCursor: startCursor?.id as string,
         endCursor: endCursor?.id as string,
@@ -136,27 +196,12 @@ export const Organization: OrganizationResolvers = {
     const after = args.after ? decodeGlobalId(args.after).id : null;
     const before = args.before ? decodeGlobalId(args.before).id : null;
 
-    const rows = await sql<WithKey<Location>[]>`
-      SELECT
-          l.locationuuid AS _key,
-          encode(('location:' || l.locationuuid)::bytea, 'base64') AS id,
-          (l.locationenddate IS null OR l.locationenddate > now()) AS active,
-          l.locationstartdate::text AS "activatedAt",
-          l.locationenddate::text AS "deactivatedAt",
-          encode(('name:' || n.languagemasteruuid)::bytea, 'base64') AS "nameId",
-          encode(('location:' || p.locationuuid)::bytea, 'base64') AS "parentId",
-          l.locationscanid AS "scanCode",
-          encode(('location:' || s.locationuuid)::bytea, 'base64') AS "siteId",
-          l.locationtimezone AS "timeZone"
-      FROM public.location AS l
-      INNER JOIN public.languagemaster AS n
-          ON l.locationnameid = n.languagemasterid
-      INNER JOIN public.location AS s
-          ON l.locationsiteid = s.locationid
-      LEFT JOIN public.location AS p
-          ON l.locationparentid = p.locationid
+    // biome-ignore lint/complexity/noBannedTypes:
+    const keys = await sql<WithKey<{}>[]>`
+      SELECT locationuuid AS _key
+      FROM public.location
       WHERE
-          l.locationcustomerid = (
+          locationcustomerid = (
               SELECT customerid
               FROM public.customer
               WHERE customeruuid = ${parentId}
@@ -164,7 +209,7 @@ export const Organization: OrganizationResolvers = {
           ${
             after
               ? sql`
-          AND l.locationid > (
+          AND locationid > (
               SELECT locationid
               FROM public.location
               WHERE locationuuid = ${after}
@@ -175,7 +220,7 @@ export const Organization: OrganizationResolvers = {
           ${
             before
               ? sql`
-          AND l.locationid < (
+          AND locationid < (
               SELECT locationid
               FROM public.location
               WHERE locationuuid = ${before}
@@ -183,12 +228,24 @@ export const Organization: OrganizationResolvers = {
               `
               : sql``
           }
-      ORDER BY l.locationid ${last ? sql`DESC` : sql`ASC`}
+          AND ${match(args.search?.active)
+            .with(
+              true,
+              () => sql`(locationenddate IS null OR locationenddate > now())`,
+            )
+            .with(
+              false,
+              () =>
+                sql`(locationenddate IS NOT null AND locationenddate < now())`,
+            )
+            .otherwise(() => sql`TRUE`)}
+          AND ${match(args.search?.isSite)
+            .with(true, () => sql`locationistop = TRUE`)
+            .with(false, () => sql`locationistop = FALSE`)
+            .otherwise(() => sql`TRUE`)}
+      ORDER BY locationid ${last ? sql`DESC` : sql`ASC`}
       LIMIT ${first ?? last ?? null};
     `;
-
-    const startCursor = rows.at(0);
-    const endCursor = rows.at(rows.length - 1);
 
     const [{ hasNextPage, hasPreviousPage }] = await sql<
       [Pick<PageInfo, "hasNextPage" | "hasPreviousPage">]
@@ -207,8 +264,24 @@ export const Organization: OrganizationResolvers = {
                       AND locationid > (
                           SELECT locationid
                           FROM public.location
-                          WHERE locationuuid = ${endCursor?._key ?? null}
+                          WHERE locationuuid = ${keys.at(-1)?._key ?? null}
                       )
+                      AND ${match(args.search?.active)
+                        .with(
+                          true,
+                          () =>
+                            sql`(locationenddate IS null OR locationenddate > now())`,
+                        )
+                        .with(
+                          false,
+                          () =>
+                            sql`(locationenddate IS NOT null AND locationenddate < now())`,
+                        )
+                        .otherwise(() => sql`TRUE`)}
+                      AND ${match(args.search?.isSite)
+                        .with(true, () => sql`locationistop = TRUE`)
+                        .with(false, () => sql`locationistop = FALSE`)
+                        .otherwise(() => sql`TRUE`)}
                   ORDER BY locationid ${last ? sql`DESC` : sql`ASC`}
 
               )
@@ -226,16 +299,52 @@ export const Organization: OrganizationResolvers = {
                       AND locationid < (
                           SELECT locationid
                           FROM public.location
-                          WHERE locationuuid = ${startCursor?._key ?? null}
+                          WHERE locationuuid = ${keys.at(1)?._key ?? null}
                       )
+                      AND ${match(args.search?.active)
+                        .with(
+                          true,
+                          () =>
+                            sql`(locationenddate IS null OR locationenddate > now())`,
+                        )
+                        .with(
+                          false,
+                          () =>
+                            sql`(locationenddate IS NOT null AND locationenddate < now())`,
+                        )
+                        .otherwise(() => sql`TRUE`)}
+                      AND ${match(args.search?.isSite)
+                        .with(true, () => sql`locationistop = TRUE`)
+                        .with(false, () => sql`locationistop = FALSE`)
+                        .otherwise(() => sql`TRUE`)}
                   ORDER BY locationid ${last ? sql`DESC` : sql`ASC`}
 
               )
           ) AS "hasPreviousPage"
     `;
 
+    const rows = await ctx.orm.location.loadMany(keys.map(e => e._key));
+    const startCursor = rows.at(0);
+    const endCursor = rows.at(-1);
+
+    if (startCursor instanceof Error) {
+      throw startCursor;
+    }
+    if (endCursor instanceof Error) {
+      throw endCursor;
+    }
+
     return {
-      edges: rows.map(row => ({ node: row })),
+      edges: rows.map(row => {
+        if (row instanceof Error) {
+          throw row;
+        }
+
+        return {
+          cursor: row.id as string,
+          node: row,
+        };
+      }),
       pageInfo: {
         startCursor: startCursor?.id as string,
         endCursor: endCursor?.id as string,
@@ -250,59 +359,41 @@ export const Organization: OrganizationResolvers = {
     const after = args.after ? decodeGlobalId(args.after).id : null;
     const before = args.before ? decodeGlobalId(args.before).id : null;
 
-    const rows = await sql<WithKey<Worker>[]>`
-      SELECT
-          w.workerinstanceuuid AS _key,
-          encode(('worker:' || w.workerinstanceuuid)::bytea, 'base64') AS id,
-          w.workerinstanceid AS _hack_numeric_id,
-          (w.workerinstanceenddate IS null OR w.workerinstanceenddate > now()) AS active,
-          w.workerinstancestartdate::text AS "activatedAt",
-          w.workerinstanceenddate::text AS "deactivatedAt",
-          l.systaguuid AS "languageId",
-          r.systaguuid AS "roleId",
-          w.workerinstancescanid AS "scanCode",
-          encode(('user:' || u.workeruuid)::bytea, 'base64') AS "userId"
-      FROM public.workerinstance AS w
-      INNER JOIN public.systag AS l
-          ON w.workerinstancelanguageid = l.systagid
-      INNER JOIN public.systag AS r
-          ON w.workerinstanceuserroleid = r.systagid
-      INNER JOIN public.worker AS u
-          ON w.workerinstanceworkerid = u.workerid
-      WHERE
-          w.workerinstancecustomerid = (
-              SELECT customerid
-              FROM public.customer
-              WHERE customeruuid = ${parentId}
-          )
-          ${
-            after
-              ? sql`
-          AND w.workerinstanceid > (
-              SELECT workerinstanceid
-              FROM public.workerinstance
-              WHERE workerinstanceuuid = ${after}
-          )
-              `
-              : sql``
-          }
-          ${
-            before
-              ? sql`
-          AND w.workerinstanceid < (
-              SELECT workerinstanceid
-              FROM public.workerinstance
-              WHERE workerinstanceuuid = ${before}
-          )
-              `
-              : sql``
-          }
-      ORDER BY workerinstanceid ${last ? sql`DESC` : sql`ASC`}
-      LIMIT ${first ?? last ?? null};
+    // biome-ignore lint/complexity/noBannedTypes:
+    const keys = await sql<WithKey<{}>[]>`
+        SELECT w.workerinstanceuuid AS _key
+        FROM public.workerinstance AS w
+        WHERE
+            w.workerinstancecustomerid = (
+                SELECT customerid
+                FROM public.customer
+                WHERE customeruuid = ${parentId}
+            )
+            ${
+              after
+                ? sql`
+            AND w.workerinstanceid > (
+                SELECT workerinstanceid
+                FROM public.workerinstance
+                WHERE workerinstanceuuid = ${after}
+            )
+                `
+                : sql``
+            }
+            ${
+              before
+                ? sql`
+            AND w.workerinstanceid < (
+                SELECT workerinstanceid
+                FROM public.workerinstance
+                WHERE workerinstanceuuid = ${before}
+            )
+                `
+                : sql``
+            }
+        ORDER BY workerinstanceid ${last ? sql`DESC` : sql`ASC`}
+        LIMIT ${first ?? last ?? null};
     `;
-
-    const startCursor = rows.at(0);
-    const endCursor = rows.at(rows.length - 1);
 
     const [{ hasNextPage, hasPreviousPage }] = await sql<
       [Pick<PageInfo, "hasNextPage" | "hasPreviousPage">]
@@ -321,7 +412,7 @@ export const Organization: OrganizationResolvers = {
                       AND workerinstanceid > (
                           SELECT workerinstanceid
                           FROM public.workerinstance
-                          WHERE workerinstanceuuid = ${endCursor?._key ?? null}
+                          WHERE workerinstanceuuid = ${keys.at(-1)?._key ?? null}
                       )
                   ORDER BY workerinstanceid ${last ? sql`DESC` : sql`ASC`}
 
@@ -340,9 +431,7 @@ export const Organization: OrganizationResolvers = {
                       AND workerinstanceid < (
                           SELECT workerinstanceid
                           FROM public.workerinstance
-                          WHERE workerinstanceuuid = ${
-                            startCursor?._key ?? null
-                          }
+                          WHERE workerinstanceuuid = ${keys.at(0)?._key ?? null}
                       )
                   ORDER BY workerinstanceid ${last ? sql`DESC` : sql`ASC`}
 
@@ -350,8 +439,28 @@ export const Organization: OrganizationResolvers = {
           ) AS "hasPreviousPage"
     `;
 
+    const rows = await ctx.orm.worker.loadMany(keys.map(e => e._key));
+    const startCursor = rows.at(0);
+    const endCursor = rows.at(-1);
+
+    if (startCursor instanceof Error) {
+      throw startCursor;
+    }
+    if (endCursor instanceof Error) {
+      throw endCursor;
+    }
+
     return {
-      edges: rows.map(row => ({ node: row })),
+      edges: rows.map(row => {
+        if (row instanceof Error) {
+          throw row;
+        }
+
+        return {
+          cursor: row.id as string,
+          node: row,
+        };
+      }),
       pageInfo: {
         startCursor: startCursor?.id as string,
         endCursor: endCursor?.id as string,

@@ -1,4 +1,4 @@
-import { NotFoundError } from "@/errors";
+import { EntityNotFound } from "@/errors";
 import type { Language } from "@/schema";
 import Dataloader from "dataloader";
 import type { Request } from "express";
@@ -25,9 +25,7 @@ export default (_: Request) => {
         new Map<string, Language>(),
       );
 
-      return keys.map(
-        key => byId.get(key) ?? new NotFoundError(key, "language"),
-      );
+      return keys.map(key => byId.get(key) ?? new EntityNotFound("language"));
     }),
     byId: new Dataloader<string, Language>(async keys => {
       const rows = await sql<Language[]>`
@@ -46,9 +44,7 @@ export default (_: Request) => {
         new Map<string, Language>(),
       );
 
-      return keys.map(
-        key => byId.get(key) ?? new NotFoundError(key, "language"),
-      );
+      return keys.map(key => byId.get(key) ?? new EntityNotFound("language"));
     }),
   };
 };

@@ -1,4 +1,4 @@
-import { NotFoundError } from "@/errors";
+import { EntityNotFound } from "@/errors";
 import type { Location } from "@/schema";
 import type { WithKey } from "@/util";
 import Dataloader from "dataloader";
@@ -34,5 +34,5 @@ export default (_: Request) =>
       new Map<string, Location>(),
     );
 
-    return keys.map(key => byId.get(key) ?? new NotFoundError(key, "location"));
+    return keys.map(key => byId.get(key) ?? new EntityNotFound("location"));
   });

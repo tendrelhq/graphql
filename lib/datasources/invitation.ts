@@ -1,4 +1,4 @@
-import { NotFoundError } from "@/errors";
+import { EntityNotFound } from "@/errors";
 import type { Invitation } from "@/schema";
 import {
   type Invitation as ClerkInvitation,
@@ -59,7 +59,7 @@ export default (_: Request) => ({
           workerId: i.publicMetadata?.tendrel_id as string,
         };
       }
-      return new NotFoundError(key, "invitation");
+      return new EntityNotFound("invitation");
     });
   }),
   byWorkerId: new Dataloader<string, Invitation>(async keys => {
@@ -85,7 +85,7 @@ export default (_: Request) => ({
           workerId: i.publicMetadata?.tendrel_id as string,
         };
       }
-      return new NotFoundError(key, "invitation:worker");
+      return new EntityNotFound("invitation");
     });
   }),
 });
