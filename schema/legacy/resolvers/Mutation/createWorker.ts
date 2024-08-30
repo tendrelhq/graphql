@@ -72,6 +72,7 @@ export const createWorker: NonNullable<
 };
 
 async function execute(input: CreateWorkerInput, ctx: Context) {
+  console.log(input);
   // biome-ignore lint/complexity/noBannedTypes:
   const [row] = await sql<[WithKey<{}>?]>`
       WITH i(userid, customerid, customeruuid, languageid, languageuuid, startdate, enddate, roleid, roleuuid, scancode) AS (
@@ -113,7 +114,7 @@ async function execute(input: CreateWorkerInput, ctx: Context) {
               coalesce(${input.userId ?? null}, gen_random_uuid()::text),
               ${input.firstName},
               ${input.lastName},
-              ${input.displayName ?? `${input.firstName} ${input.lastName}`},
+              ${input.displayName?.length ? input.displayName : `${input.firstName} ${input.lastName}`},
               (
                   SELECT systagid
                   FROM public.systag
