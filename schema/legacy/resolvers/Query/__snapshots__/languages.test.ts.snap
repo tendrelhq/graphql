@@ -1,0 +1,310 @@
+// Bun Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`languages works 1`] = `
+{
+  "data": {
+    "languages": [
+      {
+        "__typename": "Language",
+        "code": "af",
+      },
+      {
+        "__typename": "Language",
+        "code": "am",
+      },
+      {
+        "__typename": "Language",
+        "code": "ar",
+      },
+      {
+        "__typename": "Language",
+        "code": "az",
+      },
+      {
+        "__typename": "Language",
+        "code": "bg",
+      },
+      {
+        "__typename": "Language",
+        "code": "bn",
+      },
+      {
+        "__typename": "Language",
+        "code": "bs",
+      },
+      {
+        "__typename": "Language",
+        "code": "ca",
+      },
+      {
+        "__typename": "Language",
+        "code": "cs",
+      },
+      {
+        "__typename": "Language",
+        "code": "cy",
+      },
+      {
+        "__typename": "Language",
+        "code": "da",
+      },
+      {
+        "__typename": "Language",
+        "code": "de",
+      },
+      {
+        "__typename": "Language",
+        "code": "el",
+      },
+      {
+        "__typename": "Language",
+        "code": "en",
+      },
+      {
+        "__typename": "Language",
+        "code": "es",
+      },
+      {
+        "__typename": "Language",
+        "code": "et",
+      },
+      {
+        "__typename": "Language",
+        "code": "fa",
+      },
+      {
+        "__typename": "Language",
+        "code": "fi",
+      },
+      {
+        "__typename": "Language",
+        "code": "fr",
+      },
+      {
+        "__typename": "Language",
+        "code": "gu",
+      },
+      {
+        "__typename": "Language",
+        "code": "he",
+      },
+      {
+        "__typename": "Language",
+        "code": "hi",
+      },
+      {
+        "__typename": "Language",
+        "code": "hr",
+      },
+      {
+        "__typename": "Language",
+        "code": "hu",
+      },
+      {
+        "__typename": "Language",
+        "code": "hy",
+      },
+      {
+        "__typename": "Language",
+        "code": "id",
+      },
+      {
+        "__typename": "Language",
+        "code": "is",
+      },
+      {
+        "__typename": "Language",
+        "code": "it",
+      },
+      {
+        "__typename": "Language",
+        "code": "ja",
+      },
+      {
+        "__typename": "Language",
+        "code": "ka",
+      },
+      {
+        "__typename": "Language",
+        "code": "kk",
+      },
+      {
+        "__typename": "Language",
+        "code": "kn",
+      },
+      {
+        "__typename": "Language",
+        "code": "ko",
+      },
+      {
+        "__typename": "Language",
+        "code": "lt",
+      },
+      {
+        "__typename": "Language",
+        "code": "lv",
+      },
+      {
+        "__typename": "Language",
+        "code": "mk",
+      },
+      {
+        "__typename": "Language",
+        "code": "ml",
+      },
+      {
+        "__typename": "Language",
+        "code": "mn",
+      },
+      {
+        "__typename": "Language",
+        "code": "mr",
+      },
+      {
+        "__typename": "Language",
+        "code": "ms",
+      },
+      {
+        "__typename": "Language",
+        "code": "mt",
+      },
+      {
+        "__typename": "Language",
+        "code": "nl",
+      },
+      {
+        "__typename": "Language",
+        "code": "pa",
+      },
+      {
+        "__typename": "Language",
+        "code": "pl",
+      },
+      {
+        "__typename": "Language",
+        "code": "pt",
+      },
+      {
+        "__typename": "Language",
+        "code": "ro",
+      },
+      {
+        "__typename": "Language",
+        "code": "ru",
+      },
+      {
+        "__typename": "Language",
+        "code": "si",
+      },
+      {
+        "__typename": "Language",
+        "code": "sk",
+      },
+      {
+        "__typename": "Language",
+        "code": "sl",
+      },
+      {
+        "__typename": "Language",
+        "code": "so",
+      },
+      {
+        "__typename": "Language",
+        "code": "sq",
+      },
+      {
+        "__typename": "Language",
+        "code": "sr",
+      },
+      {
+        "__typename": "Language",
+        "code": "sv",
+      },
+      {
+        "__typename": "Language",
+        "code": "sw",
+      },
+      {
+        "__typename": "Language",
+        "code": "ta",
+      },
+      {
+        "__typename": "Language",
+        "code": "te",
+      },
+      {
+        "__typename": "Language",
+        "code": "th",
+      },
+      {
+        "__typename": "Language",
+        "code": "tr",
+      },
+      {
+        "__typename": "Language",
+        "code": "uk",
+      },
+      {
+        "__typename": "Language",
+        "code": "ur",
+      },
+      {
+        "__typename": "Language",
+        "code": "uz",
+      },
+      {
+        "__typename": "Language",
+        "code": "vi",
+      },
+      {
+        "__typename": "Language",
+        "code": "zh",
+      },
+      {
+        "__typename": "Language",
+        "code": "zh-TW",
+      },
+      {
+        "__typename": "Language",
+        "code": "fa-AF",
+      },
+      {
+        "__typename": "Language",
+        "code": "tl",
+      },
+      {
+        "__typename": "Language",
+        "code": "fr-CA",
+      },
+      {
+        "__typename": "Language",
+        "code": "ht",
+      },
+      {
+        "__typename": "Language",
+        "code": "ha",
+      },
+      {
+        "__typename": "Language",
+        "code": "ga",
+      },
+      {
+        "__typename": "Language",
+        "code": "no",
+      },
+      {
+        "__typename": "Language",
+        "code": "ps",
+      },
+      {
+        "__typename": "Language",
+        "code": "pt-PT",
+      },
+      {
+        "__typename": "Language",
+        "code": "es-MX",
+      },
+    ],
+  },
+}
+`;

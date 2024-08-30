@@ -13,7 +13,7 @@ export const languages: NonNullable<QueryResolvers["languages"]> = async (
         encode(('name:' || languagemasteruuid)::bytea, 'base64') AS "nameId"
     FROM public.systag
     INNER JOIN public.languagemaster
-        ON systagnameid = n.languagemasterid
+        ON systagnameid = languagemasterid
     WHERE systagparentid = 2
     ORDER BY systagorder ASC, systagid ASC;
   `;
