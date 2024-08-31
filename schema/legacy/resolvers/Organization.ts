@@ -16,34 +16,26 @@ export const Organization: OrganizationResolvers = {
 
     // biome-ignore lint/complexity/noBannedTypes:
     const keys = await sql<WithKey<{}>[]>`
+      WITH cursor AS (
+          SELECT
+              systagorder,
+              customerrequestedlanguageid
+          FROM public.customerrequestedlanguage
+          INNER JOIN public.systag
+              ON customerrequestedlanguagelanguageid = systagid
+          WHERE customerrequestedlanguageuuid = ${after ?? before}
+      )
+
       SELECT customerrequestedlanguageuuid AS _key
       FROM public.customerrequestedlanguage
       INNER JOIN public.customer
           ON customerrequestedlanguagecustomerid = customerid
+      INNER JOIN public.systag
+          ON customerrequestedlanguagelanguageid = systagid
       WHERE
           customeruuid = ${parentId}
-          ${
-            after
-              ? sql`
-          AND customerrequestedlanguageid > (
-              SELECT customerrequestedlanguageid
-              FROM public.customerrequestedlanguage
-              WHERE customerrequestedlanguageuuid = ${after}
-          )
-              `
-              : sql``
-          }
-          ${
-            before
-              ? sql`
-          AND customerrequestedlanguageid < (
-              SELECT customerrequestedlanguageid
-              FROM public.customerrequestedlanguage
-              WHERE customerrequestedlanguageuuid = ${before}
-          )
-              `
-              : sql``
-          }
+          AND ${after ? sql`(systagorder, customerrequestedlanguageid) > (SELECT * FROM cursor)` : sql`TRUE`}
+          AND ${before ? sql`(systagorder, customerrequestedlanguageid) < (SELECT * FROM cursor)` : sql`TRUE`}
           AND ${match(args.search?.primary)
             .with(
               true,
@@ -68,7 +60,9 @@ export const Organization: OrganizationResolvers = {
                 sql`(customerrequestedlanguageenddate IS NOT null AND customerrequestedlanguageenddate < now())`,
             )
             .otherwise(() => sql`TRUE`)}
-      ORDER BY customerrequestedlanguageid ${last ? sql`DESC` : sql`ASC`}
+      ORDER BY
+          systagorder ${last ? sql`DESC` : sql`ASC`},
+          customerrequestedlanguageid ${last ? sql`DESC` : sql`ASC`}
       LIMIT ${first ?? last ?? null};
     `;
 
@@ -78,17 +72,25 @@ export const Organization: OrganizationResolvers = {
       SELECT
           (
               EXISTS (
+                  WITH cursor AS (
+                      SELECT
+                          systagorder,
+                          customerrequestedlanguageid
+                      FROM public.customerrequestedlanguage
+                      INNER JOIN public.systag
+                          ON customerrequestedlanguagelanguageid = systagid
+                      WHERE customerrequestedlanguageuuid = ${keys.at(-1)?._key ?? null}
+                  )
+
                   SELECT 1
                   FROM public.customerrequestedlanguage
                   INNER JOIN public.customer
                       ON customerrequestedlanguagecustomerid = customerid
+                  INNER JOIN public.systag
+                      ON customerrequestedlanguagelanguageid = systagid
                   WHERE
                       customeruuid = ${parentId}
-                      AND customerrequestedlanguageid > (
-                          SELECT customerrequestedlanguageid
-                          FROM public.customerrequestedlanguage
-                          WHERE customerrequestedlanguageuuid = ${keys.at(-1)?._key ?? null}
-                      )
+                      AND (systagorder, customerrequestedlanguageid) > (SELECT * FROM cursor)
                       AND ${match(args.search?.primary)
                         .with(
                           true,
@@ -105,31 +107,41 @@ export const Organization: OrganizationResolvers = {
                         .with(
                           true,
                           () =>
-                            sql`customerrequestedlanguageenddate IS null OR customerrequestedlanguageenddate > now()`,
+                            sql`(customerrequestedlanguageenddate IS null OR customerrequestedlanguageenddate > now())`,
                         )
                         .with(
                           false,
                           () =>
-                            sql`customerrequestedlanguageenddate IS NOT null AND customerrequestedlanguageenddate < now()`,
+                            sql`(customerrequestedlanguageenddate IS NOT null AND customerrequestedlanguageenddate < now())`,
                         )
                         .otherwise(() => sql`TRUE`)}
-                  ORDER BY customerrequestedlanguageid ${last ? sql`DESC` : sql`ASC`}
+                  ORDER BY
+                      systagorder ${last ? sql`DESC` : sql`ASC`},
+                      customerrequestedlanguageid ${last ? sql`DESC` : sql`ASC`}
 
               )
           ) AS "hasNextPage",
           (
               EXISTS (
+                  WITH cursor AS (
+                      SELECT
+                          systagorder,
+                          customerrequestedlanguageid
+                      FROM public.customerrequestedlanguage
+                      INNER JOIN public.systag
+                          ON customerrequestedlanguagelanguageid = systagid
+                      WHERE customerrequestedlanguageuuid = ${keys.at(0)?._key ?? null}
+                  )
+
                   SELECT 1
                   FROM public.customerrequestedlanguage
                   INNER JOIN public.customer
                       ON customerrequestedlanguagecustomerid = customerid
+                  INNER JOIN public.systag
+                      ON customerrequestedlanguagelanguageid = systagid
                   WHERE
                       customeruuid = ${parentId}
-                      AND customerrequestedlanguageid < (
-                          SELECT customerrequestedlanguageid
-                          FROM public.customerrequestedlanguage
-                          WHERE customerrequestedlanguageuuid = ${keys.at(0)?._key ?? null}
-                      )
+                      AND (systagorder, customerrequestedlanguageid) < (SELECT * FROM cursor)
                       AND ${match(args.search?.primary)
                         .with(
                           true,
@@ -146,15 +158,17 @@ export const Organization: OrganizationResolvers = {
                         .with(
                           true,
                           () =>
-                            sql`customerrequestedlanguageenddate IS null OR customerrequestedlanguageenddate > now()`,
+                            sql`(customerrequestedlanguageenddate IS null OR customerrequestedlanguageenddate > now())`,
                         )
                         .with(
                           false,
                           () =>
-                            sql`customerrequestedlanguageenddate IS NOT null AND customerrequestedlanguageenddate < now()`,
+                            sql`(customerrequestedlanguageenddate IS NOT null AND customerrequestedlanguageenddate < now())`,
                         )
                         .otherwise(() => sql`TRUE`)}
-                  ORDER BY customerrequestedlanguageid ${last ? sql`DESC` : sql`ASC`}
+                  ORDER BY
+                      systagorder ${last ? sql`DESC` : sql`ASC`},
+                      customerrequestedlanguageid ${last ? sql`DESC` : sql`ASC`}
 
               )
           ) AS "hasPreviousPage"
@@ -188,6 +202,16 @@ export const Organization: OrganizationResolvers = {
         hasNextPage,
         hasPreviousPage,
       },
+      totalCount: (
+        await sql<[{ count: number }]>`
+          SELECT count(*)
+          FROM public.customerrequestedlanguage
+          WHERE customerrequestedlanguagecustomerid = (
+              SELECT customerid
+              FROM public.customer
+              WHERE customeruuid = ${parentId}
+        );`
+      )[0].count,
     };
   },
   async locations(root, args, ctx) {
@@ -351,6 +375,34 @@ export const Organization: OrganizationResolvers = {
         hasNextPage,
         hasPreviousPage,
       },
+      totalCount: (
+        await sql<[{ count: number }]>`
+          SELECT count(*)
+          FROM public.location
+          WHERE
+              locationcustomerid = (
+                  SELECT customerid
+                  FROM public.customer
+                  WHERE customeruuid = ${parentId}
+              )
+              AND ${match(args.search?.active)
+                .with(
+                  true,
+                  () =>
+                    sql`(locationenddate IS null OR locationenddate > now())`,
+                )
+                .with(
+                  false,
+                  () =>
+                    sql`(locationenddate IS NOT null AND locationenddate < now())`,
+                )
+                .otherwise(() => sql`TRUE`)}
+              AND ${match(args.search?.isSite)
+                .with(true, () => sql`locationistop = TRUE`)
+                .with(false, () => sql`locationistop = FALSE`)
+                .otherwise(() => sql`TRUE`)};
+        `
+      )[0].count,
     };
   },
   async workers(root, args, ctx) {
@@ -361,10 +413,12 @@ export const Organization: OrganizationResolvers = {
 
     // biome-ignore lint/complexity/noBannedTypes:
     const keys = await sql<WithKey<{}>[]>`
-        SELECT w.workerinstanceuuid AS _key
-        FROM public.workerinstance AS w
+        SELECT workerinstanceuuid AS _key
+        FROM public.workerinstance
+        INNER JOIN public.worker
+            ON workerinstanceworkerid = workerid
         WHERE
-            w.workerinstancecustomerid = (
+            workerinstancecustomerid = (
                 SELECT customerid
                 FROM public.customer
                 WHERE customeruuid = ${parentId}
@@ -372,7 +426,7 @@ export const Organization: OrganizationResolvers = {
             ${
               after
                 ? sql`
-            AND w.workerinstanceid > (
+            AND workerinstanceid > (
                 SELECT workerinstanceid
                 FROM public.workerinstance
                 WHERE workerinstanceuuid = ${after}
@@ -383,13 +437,30 @@ export const Organization: OrganizationResolvers = {
             ${
               before
                 ? sql`
-            AND w.workerinstanceid < (
+            AND workerinstanceid < (
                 SELECT workerinstanceid
                 FROM public.workerinstance
                 WHERE workerinstanceuuid = ${before}
             )
                 `
                 : sql``
+            }
+            AND ${match(args.search?.active)
+              .with(
+                true,
+                () =>
+                  sql`(workerinstanceenddate IS null OR workerinstanceenddate > now())`,
+              )
+              .with(
+                false,
+                () =>
+                  sql`(workerinstanceenddate IS NOT null AND workerinstanceenddate < now())`,
+              )
+              .otherwise(() => sql`TRUE`)}
+            AND ${
+              args.search?.user?.displayName?.length
+                ? sql`workerfullname ILIKE '%' || ${args.search.user.displayName}::text || '%'`
+                : sql`TRUE`
             }
         ORDER BY workerinstanceid ${last ? sql`DESC` : sql`ASC`}
         LIMIT ${first ?? last ?? null};
@@ -403,6 +474,8 @@ export const Organization: OrganizationResolvers = {
               EXISTS (
                   SELECT 1
                   FROM public.workerinstance
+                  INNER JOIN public.worker
+                      ON workerinstanceworkerid = workerid
                   WHERE
                       workerinstancecustomerid = (
                           SELECT customerid
@@ -414,6 +487,23 @@ export const Organization: OrganizationResolvers = {
                           FROM public.workerinstance
                           WHERE workerinstanceuuid = ${keys.at(-1)?._key ?? null}
                       )
+                      AND ${match(args.search?.active)
+                        .with(
+                          true,
+                          () =>
+                            sql`(workerinstanceenddate IS null OR workerinstanceenddate > now())`,
+                        )
+                        .with(
+                          false,
+                          () =>
+                            sql`(workerinstanceenddate IS NOT null AND workerinstanceenddate < now())`,
+                        )
+                        .otherwise(() => sql`TRUE`)}
+                      AND ${
+                        args.search?.user?.displayName?.length
+                          ? sql`workerfullname ILIKE '%' || ${args.search.user.displayName}::text || '%'`
+                          : sql`TRUE`
+                      }
                   ORDER BY workerinstanceid ${last ? sql`DESC` : sql`ASC`}
 
               )
@@ -422,6 +512,8 @@ export const Organization: OrganizationResolvers = {
               EXISTS (
                   SELECT 1
                   FROM public.workerinstance
+                  INNER JOIN public.worker
+                      ON workerinstanceworkerid = workerid
                   WHERE
                       workerinstancecustomerid = (
                           SELECT customerid
@@ -433,6 +525,23 @@ export const Organization: OrganizationResolvers = {
                           FROM public.workerinstance
                           WHERE workerinstanceuuid = ${keys.at(0)?._key ?? null}
                       )
+                      AND ${match(args.search?.active)
+                        .with(
+                          true,
+                          () =>
+                            sql`(workerinstanceenddate IS null OR workerinstanceenddate > now())`,
+                        )
+                        .with(
+                          false,
+                          () =>
+                            sql`(workerinstanceenddate IS NOT null AND workerinstanceenddate < now())`,
+                        )
+                        .otherwise(() => sql`TRUE`)}
+                      AND ${
+                        args.search?.user?.displayName?.length
+                          ? sql`workerfullname ILIKE '%' || ${args.search.user.displayName}::text || '%'`
+                          : sql`TRUE`
+                      }
                   ORDER BY workerinstanceid ${last ? sql`DESC` : sql`ASC`}
 
               )
@@ -467,6 +576,37 @@ export const Organization: OrganizationResolvers = {
         hasNextPage,
         hasPreviousPage,
       },
+      totalCount: (
+        await sql<[{ count: number }]>`
+          SELECT count(*)
+          FROM public.workerinstance
+          INNER JOIN public.worker
+              ON workerinstanceworkerid = workerid
+          WHERE
+              workerinstancecustomerid = (
+                  SELECT customerid
+                  FROM public.customer
+                  WHERE customeruuid = ${parentId}
+              )
+              AND ${match(args.search?.active)
+                .with(
+                  true,
+                  () =>
+                    sql`(workerinstanceenddate IS null OR workerinstanceenddate > now())`,
+                )
+                .with(
+                  false,
+                  () =>
+                    sql`(workerinstanceenddate IS NOT null AND workerinstanceenddate < now())`,
+                )
+                .otherwise(() => sql`TRUE`)}
+              AND ${
+                args.search?.user?.displayName?.length
+                  ? sql`workerfullname ILIKE '%' || ${args.search.user.displayName}::text || '%'`
+                  : sql`TRUE`
+              };
+        `
+      )[0].count,
     };
   },
 };

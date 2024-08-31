@@ -68,6 +68,7 @@ input EnabledLanguageSearchOptions {
 type EnabledLanguageConnection {
   edges: [EnabledLanguageEdge!]!
   pageInfo: PageInfo!
+  totalCount: Int!
 }
 
 type EnabledLanguageEdge {
@@ -117,6 +118,7 @@ type Organization implements Node {
     last: Int
     before: String
     after: String
+    search: WorkerSearchOptions
   ): WorkerConnection!
 }
 
@@ -143,6 +145,7 @@ input LocationSearchOptions {
 type LocationConnection {
   edges: [LocationEdge!]!
   pageInfo: PageInfo!
+  totalCount: Int!
 }
 
 type LocationEdge {
@@ -170,6 +173,10 @@ type User implements Node {
     before: String
   ): OrganizationConnection!
   tags: [Tag!]!
+}
+
+input UserSearchOptions {
+  displayName: String
 }
 
 type OrganizationConnection {
@@ -204,9 +211,18 @@ type Worker implements Node {
   userId: ID!
 }
 
+input WorkerSearchOptions {
+  active: Boolean
+  # invitation: InvitationStatus
+  # language: LanguageSearchOptions
+  # role: RoleSearchOptions
+  user: UserSearchOptions
+}
+
 type WorkerConnection {
   edges: [WorkerEdge!]!
   pageInfo: PageInfo!
+  totalCount: Int!
 }
 
 type WorkerEdge {

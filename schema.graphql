@@ -359,6 +359,7 @@ type EnabledLanguage implements Node {
 type EnabledLanguageConnection {
   edges: [EnabledLanguageEdge!]!
   pageInfo: PageInfo!
+  totalCount: Int!
 }
 
 type EnabledLanguageEdge {
@@ -487,6 +488,7 @@ type Location implements Node {
 type LocationConnection {
   edges: [LocationEdge!]!
   pageInfo: PageInfo!
+  totalCount: Int!
 }
 
 type LocationEdge {
@@ -571,7 +573,7 @@ type Organization implements Node {
   locations(after: String, before: String, first: Int, last: Int, search: LocationSearchOptions): LocationConnection!
   name: Name!
   nameId: ID!
-  workers(after: String, before: String, first: Int, last: Int): WorkerConnection!
+  workers(after: String, before: String, first: Int, last: Int, search: WorkerSearchOptions): WorkerConnection!
 }
 
 type OrganizationConnection {
@@ -763,6 +765,10 @@ type User implements Node {
   tags: [Tag!]!
 }
 
+input UserSearchOptions {
+  displayName: String
+}
+
 type Value {
   description: String
   name: String!
@@ -790,11 +796,17 @@ type Worker implements Node {
 type WorkerConnection {
   edges: [WorkerEdge!]!
   pageInfo: PageInfo!
+  totalCount: Int!
 }
 
 type WorkerEdge {
   cursor: String!
   node: Worker!
+}
+
+input WorkerSearchOptions {
+  active: Boolean
+  user: UserSearchOptions
 }
 
 input WorkersQueryOptions {
