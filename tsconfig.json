@@ -37,7 +37,10 @@
         "schema": "./schema.graphql",
         "templateIsCallExpression": false
       }
-    ]
+    ],
+
+    // DX
+    "pretty": false
   },
   "exclude": ["node_modules", "out"]
 }

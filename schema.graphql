@@ -10,11 +10,6 @@ type Activatable implements Component {
   updatedAt: Temporal!
 }
 
-input ActivatableTypeInput {
-  activatedAt: String
-  active: Boolean!
-}
-
 type ActivationStatus {
   activatedAt: String
   active: Boolean!
@@ -45,11 +40,6 @@ type AssigneeEdge implements Edge {
   node: Assignee!
 }
 
-input AssigneesTypeInput {
-  maxAllowed: Int
-  minAllowed: Int
-}
-
 """TODO"""
 type Attachment implements Component {
   attachment: String!
@@ -73,10 +63,6 @@ type Auditable implements Component {
   id: Entity!
 }
 
-input AuditableTypeInput {
-  auditable: Boolean!
-}
-
 """TODO"""
 enum CalendarNameOptions {
   """TODO"""
@@ -97,10 +83,11 @@ type Checklist implements Component {
   assignees(after: String, before: String, first: Int, last: Int): AssigneeConnection!
   attachments(after: String, before: String, first: Int, last: Int): AttachmentConnection!
   auditable: Auditable!
-  children: ChecklistConnection!
+  children(after: String, before: String, first: Int, last: Int, search: ChecklistSearchOptions): ChecklistConnection!
   description: Description
   id: Entity!
   items(after: String, before: String, first: Int, last: Int): ChecklistItemConnection!
+  metadata: Metadata!
   name: DisplayName!
   required: Boolean
   schedule: Schedule
@@ -155,13 +142,6 @@ type ChecklistItemEdge implements Edge {
   node: ChecklistItem!
 }
 
-type ChecklistItemType implements Component {
-  description: Description!
-  id: Entity!
-  name: DisplayName!
-  type: Type!
-}
-
 type ChecklistOpen implements Component {
   id: Entity!
   openedAt: Temporal!
@@ -181,27 +161,16 @@ type ChecklistResult implements Component {
 
 union ChecklistResultValue = Counter | Flag | Register
 
+input ChecklistSearchOptions {
+  active: Boolean
+  order: ChecklistSearchOrderOptions
+}
+
+input ChecklistSearchOrderOptions {
+  completedAt: SortOrder
+}
+
 union ChecklistStatus = ChecklistClosed | ChecklistInProgress | ChecklistOpen
-
-type ChecklistType implements Component {
-  description: Description!
-  id: Entity!
-  items: [ChecklistItemType!]!
-  name: DisplayName!
-}
-
-input ChecklistTypeInput {
-  active: ActivatableTypeInput!
-  assignees: AssigneesTypeInput!
-  auditable: AuditableTypeInput!
-  description: DescriptionInput!
-  id: Entity!
-  name: DisplayNameInput!
-  required: RequiredTypeInput!
-  schedule: ScheduleTypeInput!
-  sop: SopTypeInput!
-  status: StatusTypeInput!
-}
 
 """
 Components characterize Entities as possessing a particular trait.
@@ -209,11 +178,6 @@ They are just simple structs, holding all data necessary to model that trait.
 """
 interface Component {
   id: Entity!
-}
-
-type ComponentConstructor {
-  node(id: ID!): NodeConstructor!
-  type(type: String!): TypeConstructor!
 }
 
 interface Connection {
@@ -229,36 +193,10 @@ type Counter {
   count: Int
 }
 
-type CounterNode {
-  count(value: Int!): Void
-}
-
-type CreateEntity {
-  components: CreateEntityComponentConnection!
-  id: Entity!
-}
-
-type CreateEntityComponentConnection {
-  node(id: Entity!): CreateEntityComponentNode!
-  type(type: String!): CreateEntityComponentType!
-}
-
-union CreateEntityComponentNode = CreateLeafNode | CreateNamedNode
-
-type CreateEntityComponentType {
-  components: CreateEntityComponentConnection!
-  description(locale: Locale, value: String!): Void
-  name(locale: Locale, value: String!): Void
-}
-
 input CreateInvitationInput {
   emailAddress: String!
   orgId: ID!
   workerId: ID!
-}
-
-type CreateLeafNode {
-  value: ValueNode
 }
 
 input CreateLocationInput {
@@ -274,12 +212,6 @@ input CreateNameInput {
   id: ID
   languageId: ID!
   value: String!
-}
-
-type CreateNamedNode {
-  components: CreateEntityComponentConnection!
-  description(locale: Locale, value: String!): Void
-  name(locale: Locale, value: String!): Void
 }
 
 input CreateUserInput {
@@ -319,20 +251,10 @@ type Description implements Component {
   value: DynamicString!
 }
 
-input DescriptionInput {
-  locale: Locale!
-  value: String!
-}
-
 """TODO"""
 type DisplayName implements Component {
   id: Entity!
   value: DynamicString!
-}
-
-input DisplayNameInput {
-  locale: Locale!
-  value: String!
 }
 
 """ISO 8601 duration string expressing a length of time"""
@@ -394,12 +316,6 @@ type EntityConnection {
   entity: Entity!
 }
 
-type Field {
-  description: String
-  name: String!
-  type: Type!
-}
-
 """
 Data type for tracking Boolean-like values in the form of "enabled" or
 "disabled".
@@ -407,10 +323,6 @@ Flags only support two operations: enable and disable.
 """
 type Flag {
   enabled: Boolean
-}
-
-type FlagNode {
-  flag(value: Boolean!): Void
 }
 
 """
@@ -506,11 +418,15 @@ input LocationsQueryOptions {
   site: Boolean
 }
 
+type Metadata {
+  updatedAt: Temporal!
+  updatedBy: Actor
+  updatedById: ID
+}
+
 type Mutation {
   acceptInvitation(input: AcceptInvitationInput!): Worker!
   activateWorker(id: ID!): Worker!
-  createChecklistType(input: ChecklistTypeInput!): ChecklistType!
-  createEntity: CreateEntity!
   createInvitation(input: CreateInvitationInput!): Invitation!
   createLocation(input: CreateLocationInput!): Location!
   createUser(input: CreateUserInput!): User!
@@ -542,11 +458,6 @@ type NameMetadata {
 
 interface Node {
   id: ID!
-}
-
-type NodeConstructor {
-  description(locale: Locale, value: String!): Void
-  name(locale: Locale, value: String!): Void
 }
 
 """TODO"""
@@ -593,7 +504,7 @@ type PageInfo {
 }
 
 type Query {
-  checklists(after: String, before: String, first: Int, last: Int): ChecklistConnection!
+  checklists(after: String, before: String, first: Int, last: Int, search: ChecklistSearchOptions): ChecklistConnection!
   entity(id: Entity!): EntityConnection!
   languages: [Language!]!
   node(id: ID!): Node!
@@ -610,14 +521,6 @@ type Register {
   binary: String
 }
 
-type RegisterNode {
-  register(value: String!): Void
-}
-
-input RequiredTypeInput {
-  required: Boolean!
-}
-
 """Controls how rounding is performed"""
 enum RoundingMode {
   """Always round up, towards the end of time"""
@@ -629,10 +532,6 @@ enum RoundingMode {
 
 """TODO"""
 union Schedule = CronSchedule | OnceSchedule
-
-input ScheduleTypeInput {
-  kind: String!
-}
 
 enum SmallestTimeUnit {
   millisecond
@@ -646,10 +545,6 @@ type Sop implements Component {
   link: Link!
 }
 
-input SopTypeInput {
-  link: Link!
-}
-
 """
 Defines the sort order for queries that support edge ordering.
 Ordering depends on the scalar type:
@@ -660,10 +555,6 @@ Ordering depends on the scalar type:
 enum SortOrder {
   asc
   desc
-}
-
-input StatusTypeInput {
-  default: String!
 }
 
 type Tag {
@@ -690,27 +581,6 @@ enum TimeZoneNameOptions {
 
   """TODO"""
   never
-}
-
-type Type {
-  description: String
-  fields: [Field!]
-  kind: TypeKind!
-  name: String
-  ofType: Type
-  possibleTypes: [Type!]
-  possibleValues: [Value!]
-}
-
-type TypeConstructor {
-  description(locale: Locale, value: String!): Void
-  name(locale: Locale, value: String!): Void
-}
-
-enum TypeKind {
-  COUNTER
-  FLAG
-  REGISTER
 }
 
 input UpdateLocationInput {
@@ -769,16 +639,8 @@ input UserSearchOptions {
   displayName: String
 }
 
-type Value {
-  description: String
-  name: String!
-}
-
-union ValueNode = CounterNode | FlagNode | RegisterNode
-
-scalar Void
-
 type Worker implements Node {
+  _hack_numericId: Int!
   active: ActivationStatus!
   id: ID!
   invitation: Invitation

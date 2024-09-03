@@ -323,6 +323,9 @@ function makeChecklist({
     children: makeConnection(children),
     description: makeDescription(description),
     items: makeConnection(items),
+    metadata: {
+      updatedAt: makeInstant(new Date("2024-08-01T00:00:00")),
+    },
     name: makeDisplayName(name),
     required,
     schedule,
@@ -453,7 +456,7 @@ const GREENHOUSE_CHECK_SUC = makeChecklist({
   ],
   name: "Greenhouse Check",
   required: true,
-  schedule: makeCronSchedule("0 08,18 * * 1-5"),
+  schedule: makeCronSchedule("*/30 * * * *"),
   sop: "https://big-green.uk/sop/greenhouse-check",
   status: makeClosed({
     at: new Date("2024-08-13T08:12:14"),
@@ -499,7 +502,7 @@ const GREENHOUSE_CHECK_ERR = makeChecklist({
   ],
   name: "Greenhouse Check",
   required: true,
-  schedule: makeCronSchedule("0 08,18 * * 1-5"),
+  schedule: makeCronSchedule("*/30 * * * *"),
   sop: "https://big-green.uk/sop/greenhouse-check",
   status: makeClosed({
     at: new Date("2024-08-13T09:27:10"),
@@ -648,19 +651,12 @@ const ONCALL_DAILY = makeChecklist({
   ],
 });
 
-export const CHECKLISTS: Checklist[] = [
+// biome-ignore lint/style/useConst:
+export let CHECKLISTS: Checklist[] = [
   KELLER_TODOLIST,
   ONCALL_DAILY,
   {
     ...GREENHOUSE_CHECK_SUC,
-    children: makeConnection([
-      GREENHOUSE_CHECK_OPEN,
-      GREENHOUSE_CHECK_SUC,
-      GREENHOUSE_CHECK_ERR,
-    ]),
-  },
-  {
-    ...GREENHOUSE_CHECK_ERR,
     children: makeConnection([
       GREENHOUSE_CHECK_OPEN,
       GREENHOUSE_CHECK_SUC,

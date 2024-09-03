@@ -30,11 +30,34 @@ export const FAKE_RESULTS = CHECKLISTS.reduce((acc, node) => {
 
 export const checklists: NonNullable<QueryResolvers["checklists"]> = async (
   _parent,
-  _arg,
+  args,
   _ctx,
 ) => {
+  const data = CHECKLISTS.filter(node => {
+    if (typeof args.search?.active === "boolean") {
+      return node.active.active === args.search.active;
+    }
+    return true;
+  }).toSorted((a, b) => {
+    if (args.search?.order?.completedAt) {
+      if (
+        a.status.__typename === "ChecklistClosed" &&
+        b.status.__typename === "ChecklistClosed"
+      ) {
+        return (
+          Number(a.status.closedAt.epochMilliseconds) -
+          Number(b.status.closedAt.epochMilliseconds)
+        );
+      }
+      return (
+        Number(a.status.__typename === "ChecklistClosed") -
+        Number(b.status.__typename === "ChecklistClosed")
+      );
+    }
+    return 0;
+  });
   return {
-    edges: CHECKLISTS.map(node => ({
+    edges: data.map(node => ({
       cursor: node.id,
       node,
     })),
