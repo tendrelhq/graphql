@@ -162,6 +162,7 @@ type PageInfo {
 
 type Worker implements Node {
   id: ID!
+  _hack_numeric_id: Int!
   active: Boolean!
   activatedAt: String
   deactivatedAt: String

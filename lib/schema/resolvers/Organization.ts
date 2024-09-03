@@ -253,6 +253,7 @@ export const Organization: OrganizationResolvers = {
       SELECT
           w.workerinstanceuuid AS _key,
           encode(('worker:' || w.workerinstanceuuid)::bytea, 'base64') AS id,
+          w.workerinstanceid AS _hack_numeric_id,
           (w.workerinstanceenddate IS null OR w.workerinstanceenddate > now()) AS active,
           w.workerinstancestartdate::text AS "activatedAt",
           w.workerinstanceenddate::text AS "deactivatedAt",
