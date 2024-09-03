@@ -11,6 +11,7 @@ export default (_: Request) =>
         SELECT
             w.workerinstanceuuid AS _key,
             encode(('worker:' || w.workerinstanceuuid)::bytea, 'base64') as id,
+            w.workerinstanceid AS _hack_numeric_id,
             (w.workerinstanceenddate IS NULL OR w.workerinstanceenddate > now()) AS active,
             w.workerinstancestartdate::text AS "activatedAt",
             w.workerinstanceenddate::text AS "deactivatedAt",
