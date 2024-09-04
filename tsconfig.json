@@ -31,14 +31,6 @@
       "@/test/*": ["./test/*"]
     },
 
-    "plugins": [
-      {
-        "name": "@0no-co/graphqlsp",
-        "schema": "./schema.graphql",
-        "templateIsCallExpression": false
-      }
-    ],
-
     // DX
     "pretty": false
   },
