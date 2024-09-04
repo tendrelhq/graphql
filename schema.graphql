@@ -395,6 +395,7 @@ type Location implements Node {
   site: Location!
   siteId: ID!
   tags: [Tag!]!
+  timeZone: String!
 }
 
 type LocationConnection {
@@ -640,7 +641,7 @@ input UserSearchOptions {
 }
 
 type Worker implements Node {
-  _hack_numericId: Int!
+  _hack_numeric_id: Int!
   active: ActivationStatus!
   id: ID!
   invitation: Invitation
