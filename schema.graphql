@@ -294,10 +294,6 @@ input EnabledLanguageSearchOptions {
   primary: Boolean
 }
 
-"""
-An entity represents a general-purpose object. The scalar representation is
-just an opaque string, similar to ID.
-"""
 scalar Entity
 
 type EntityComponentConnection implements Connection {
@@ -419,10 +415,13 @@ input LocationsQueryOptions {
   site: Boolean
 }
 
+"""
+Metadata pertaining to an individual Entity, e.g. when it was last updated and
+by whom.
+"""
 type Metadata {
   updatedAt: Temporal!
   updatedBy: Actor
-  updatedById: ID
 }
 
 type Mutation {

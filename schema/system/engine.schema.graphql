@@ -3,10 +3,6 @@ type Query {
   entity(id: Entity!): EntityConnection!
 }
 
-"""
-An entity represents a general-purpose object. The scalar representation is
-just an opaque string, similar to ID.
-"""
 scalar Entity
 
 """
@@ -48,4 +44,19 @@ interface Connection {
 
 interface Edge {
   cursor: String!
+}
+
+#
+# Sort/filter/search primitives
+#
+"""
+Defines the sort order for queries that support edge ordering.
+Ordering depends on the scalar type:
+  - Boolean scalars are sorted false < true
+  - Int scalars are sorted numerically
+  - String scalars are sorted lexicographically
+"""
+enum SortOrder {
+  asc
+  desc
 }

@@ -1,7 +1,11 @@
-"""TODO"""
+"""
+TODO
+"""
 scalar Link
 
-"""TODO"""
+"""
+TODO
+"""
 type Activatable implements Component {
   id: Entity!
   active: Boolean!
@@ -9,7 +13,7 @@ type Activatable implements Component {
 }
 
 """
-  TODO
+TODO
 """
 type Actor implements Component {
   id: Entity!
@@ -17,7 +21,7 @@ type Actor implements Component {
 }
 
 """
-  TODO
+TODO
 """
 type Attachment implements Component {
   id: Entity!
@@ -36,7 +40,7 @@ type AttachmentEdge implements Edge {
 }
 
 """
-  TODO
+TODO
 """
 type Assignee implements Component {
   id: Entity!
@@ -56,7 +60,7 @@ type AssigneeEdge implements Edge {
 }
 
 """
-  TODO
+TODO
 """
 type Auditable implements Component {
   id: Entity!
@@ -64,7 +68,7 @@ type Auditable implements Component {
 }
 
 """
-  TODO
+TODO
 """
 type Description implements Component {
   id: Entity!
@@ -72,7 +76,7 @@ type Description implements Component {
 }
 
 """
-  TODO
+TODO
 """
 type DisplayName implements Component {
   id: Entity!
@@ -80,7 +84,16 @@ type DisplayName implements Component {
 }
 
 """
-  TODO
+Metadata pertaining to an individual Entity, e.g. when it was last updated and
+by whom.
+"""
+type Metadata {
+  updatedAt: Temporal!
+  updatedBy: Actor
+}
+
+"""
+TODO
 """
 type Sop implements Component {
   id: Entity!

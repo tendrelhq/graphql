@@ -1,15 +1,3 @@
-"""
-Defines the sort order for queries that support edge ordering.
-Ordering depends on the scalar type:
-  - Boolean scalars are sorted false < true
-  - Int scalars are sorted numerically
-  - String scalars are sorted lexicographically
-"""
-enum SortOrder {
-  asc
-  desc
-}
-
 interface Node {
   id: ID!
 }

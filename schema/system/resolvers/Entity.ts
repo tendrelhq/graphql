@@ -20,10 +20,8 @@ function validate(value: unknown, ast?: ASTNode) {
 
 export const Entity = new GraphQLScalarType<string, string>({
   name: "Entity",
-  description: `
-    An entity represents a general-purpose object. The scalar representation is
-    just an opaque string, similar to ID.
-  `,
+  description:
+    "An entity represents a general-purpose object. The scalar representation is just an opaque string, similar to ID.",
   serialize: validate,
   parseValue: validate,
   parseLiteral: ast => {
