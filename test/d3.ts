@@ -10,7 +10,7 @@ import type {
   Temporal,
   User,
 } from "@/schema";
-import { encodeGlobalId } from "@/schema/system";
+import { decodeGlobalId, encodeGlobalId } from "@/schema/system";
 
 function makeUser(
   firstName: string,
@@ -36,7 +36,7 @@ function makeUser(
 
 const BOT = makeUser("Beep", "Boop");
 
-const USERS = {
+export const USERS = {
   Akash: makeUser("Akash", "Nandi"),
   Connor: makeUser("Connor", "Smith"),
   Fed: makeUser("Federico", "Rozenberg"),
@@ -79,7 +79,7 @@ function makeInstant(d: Date) {
 // and thus avoid this problem all together.
 function makeActive(id: string, active = true, updatedAt = new Date()) {
   return {
-    id,
+    id: encodeGlobalId({ type: "worktemplate", id, suffix: ["active"] }),
     active,
     updatedAt: makeInstant(updatedAt),
   };
@@ -105,7 +105,10 @@ function makeAssignee(at: Date, to: USER): Assignee {
 }
 
 function makeAuditable(id: string, enabled = true) {
-  return { id, enabled };
+  return {
+    id: encodeGlobalId({ type: "worktemplate", id, suffix: "auditable" }),
+    enabled,
+  };
 }
 
 function makeDescription(value: string, locale = "en") {
@@ -148,11 +151,14 @@ function makeCronSchedule(cron: string) {
   };
 }
 
-function makeSop(id: string, link: string) {
-  return { id, link };
+function makeSop(id: string, link: string | URL) {
+  return {
+    id: encodeGlobalId({ type: "worktemplate", id, suffix: "sop" }),
+    link: link.toString(),
+  };
 }
 
-function makeOpen({ at, by }: { at: Date; by: USER }) {
+export function makeOpen({ at, by }: { at: Date; by: USER }) {
   return {
     __typename: "ChecklistOpen" as const,
     id: encodeGlobalId({
@@ -287,41 +293,41 @@ function makeChecklist({
   schedule,
   sop,
   status,
+  ...rest
 }: {
+  id?: string;
   active: boolean;
   activeAt: Date;
   assignees: ReturnType<typeof makeAssignee>[];
   children: ReturnType<typeof makeChecklist>[];
-  description: string;
+  description?: string;
   items: (ReturnType<typeof makeChecklist> | ReturnType<typeof makeResult>)[];
   name: string;
-  required: boolean;
-  schedule:
+  required?: boolean;
+  schedule?:
     | ReturnType<typeof makeOnceSchedule>
     | ReturnType<typeof makeCronSchedule>;
-  sop: string;
+  sop?: string | URL;
   status:
     | ReturnType<typeof makeOpen>
     | ReturnType<typeof makeInProgress>
     | ReturnType<typeof makeClosed>;
 }): Checklist {
-  const wi = encodeGlobalId({
-    type: "workinstance",
-    id: randomUUID(),
-  });
-  const wt = encodeGlobalId({
-    type: "worktemplate",
-    id: randomUUID(),
-  });
+  const id = rest.id ? decodeGlobalId(rest.id).id : randomUUID();
   return {
     __typename: "Checklist" as const,
-    id: wi,
-    active: makeActive(wt, active, activeAt),
+    id:
+      rest.id ??
+      encodeGlobalId({
+        type: "worktemplate",
+        id,
+      }),
+    active: makeActive(id, active, activeAt),
     assignees: makeConnection(assignees),
     attachments: makeConnection([]),
-    auditable: makeAuditable(wt),
+    auditable: makeAuditable(id),
     children: makeConnection(children),
-    description: makeDescription(description),
+    description: description ? makeDescription(description) : undefined,
     items: makeConnection(items),
     metadata: {
       updatedAt: makeInstant(new Date("2024-08-01T00:00:00")),
@@ -329,7 +335,7 @@ function makeChecklist({
     name: makeDisplayName(name),
     required,
     schedule,
-    sop: makeSop(wt, sop),
+    sop: sop ? makeSop(id, sop) : undefined,
     status,
   };
 }
@@ -664,3 +670,9 @@ export let CHECKLISTS: Checklist[] = [
     ]),
   },
 ];
+
+export function appendChecklist(args: Parameters<typeof makeChecklist>[0]) {
+  const c = makeChecklist(args);
+  CHECKLISTS.push(c);
+  return c;
+}

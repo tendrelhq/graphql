@@ -9,6 +9,9 @@
 ### dotenv ###
 /.env*.local
 
+### generated ###
+/schema.graphql
+
 ### neovim ###
 /.db.json
 

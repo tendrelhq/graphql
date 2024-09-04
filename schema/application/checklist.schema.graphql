@@ -8,6 +8,20 @@ type Query {
   ): ChecklistConnection!
 }
 
+type Mutation {
+  createChecklist(input: CreateChecklistInput!): ChecklistEdge!
+}
+
+input CreateChecklistInput {
+  id: Entity!
+  active: Boolean!
+  auditable: Boolean!
+  customerId: ID!
+  description: String
+  name: String!
+  sop: URL
+}
+
 type Checklist implements Component {
   id: Entity!
   active: Activatable!

@@ -3,6 +3,10 @@ type Query {
   entity(id: Entity!): EntityConnection!
 }
 
+type Mutation {
+  createEntity(type: String!, id: String, suffix: [String!]): Entity!
+}
+
 scalar Entity
 
 """

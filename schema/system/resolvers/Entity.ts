@@ -12,6 +12,7 @@ function validate(value: unknown, ast?: ASTNode) {
   try {
     decodeGlobalId(value);
   } catch (e) {
+    console.log("Value:", value);
     throw new GraphQLError("Value is not a valid Entity", { nodes: ast });
   }
 

@@ -1,7 +1,5 @@
-"""
-TODO
-"""
-scalar Link
+# via graphql-scalars
+scalar URL
 
 """
 TODO
@@ -97,5 +95,5 @@ TODO
 """
 type Sop implements Component {
   id: Entity!
-  link: Link!
+  link: URL!
 }
