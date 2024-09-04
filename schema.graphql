@@ -257,7 +257,6 @@ type DisplayName implements Component {
   value: DynamicString!
 }
 
-"""ISO 8601 duration string expressing a length of time"""
 scalar Duration
 
 """TODO"""
@@ -374,9 +373,6 @@ type Language {
 """TODO"""
 scalar Link
 
-"""
-A string representing a locale conforming to the BCP 47 (RFC 5646) standard
-"""
 scalar Locale
 
 type Location implements Node {
@@ -568,7 +564,6 @@ type Tag {
 
 union Temporal = Instant | ZonedDateTime
 
-"""IANA time zone, UTC offset, or UTC itself"""
 scalar TimeZone
 
 """TODO"""

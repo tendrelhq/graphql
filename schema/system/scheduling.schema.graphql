@@ -1,16 +1,23 @@
-"""A string representing a cron schedule expression"""
+"""
+A string representing a cron schedule expression
+"""
 scalar CronExpression
 
-
-"""Schedule implementation using cron expressions"""
+"""
+Schedule implementation using cron expressions
+"""
 type CronSchedule {
   cron: CronExpression!
 }
 
-"""Schedule implementation for "oneshot" events"""
+"""
+Schedule implementation for "oneshot" events
+"""
 type OnceSchedule {
   once: Temporal!
 }
 
-"""TODO"""
+"""
+TODO
+"""
 union Schedule = CronSchedule | OnceSchedule

@@ -91,6 +91,10 @@
               enable = true;
               entry = "biome check --write";
             };
+            prettier = {
+              enable = true;
+              types = ["file" "graphql"];
+            };
           };
           processes = {
             app.exec = "bun dev";

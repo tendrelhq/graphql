@@ -1,8 +1,8 @@
-"""A string representing a locale conforming to the BCP 47 (RFC 5646) standard"""
+# via graphql-scalars
 scalar Locale
 
 """
-  TODO
+TODO
 """
 type DynamicString {
   locale: Locale!
