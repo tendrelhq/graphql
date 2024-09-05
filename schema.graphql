@@ -1,0 +1,865 @@
+input AcceptInvitationInput {
+  authenticationIdentityId: ID!
+  workerId: ID!
+}
+
+"""
+TODO
+"""
+type Activatable implements Component {
+  active: Boolean!
+  id: Entity!
+  updatedAt: Temporal!
+}
+
+type ActivationStatus {
+  activatedAt: String
+  active: Boolean!
+  deactivatedAt: String
+}
+
+"""
+TODO
+"""
+type Actor implements Component {
+  id: Entity!
+  user: User!
+}
+
+"""
+TODO
+"""
+type Assignee implements Component {
+  assignedAt: Temporal!
+  assignedTo: Actor!
+  id: Entity!
+}
+
+type AssigneeConnection implements Connection {
+  edges: [AssigneeEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+type AssigneeEdge implements Edge {
+  cursor: String!
+  node: Assignee!
+}
+
+"""
+TODO
+"""
+type Attachment implements Component {
+  attachment: String!
+  id: Entity!
+}
+
+type AttachmentConnection implements Connection {
+  edges: [AttachmentEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+type AttachmentEdge implements Edge {
+  cursor: String!
+  node: Attachment!
+}
+
+"""
+TODO
+"""
+type Auditable implements Component {
+  enabled: Boolean!
+  id: Entity!
+}
+
+"""
+TODO
+"""
+enum CalendarNameOptions {
+  """
+  TODO
+  """
+  always
+
+  """
+  TODO
+  """
+  auto
+
+  """
+  TODO
+  """
+  critical
+
+  """
+  TODO
+  """
+  never
+}
+
+type Checklist implements Component {
+  active: Activatable!
+  assignees(
+    after: String
+    before: String
+    first: Int
+    last: Int
+  ): AssigneeConnection!
+  attachments(
+    after: String
+    before: String
+    first: Int
+    last: Int
+  ): AttachmentConnection!
+  auditable: Auditable!
+  children(
+    after: String
+    before: String
+    first: Int
+    last: Int
+    search: ChecklistSearchOptions
+  ): ChecklistConnection!
+  description: Description
+  id: Entity!
+  items(
+    after: String
+    before: String
+    first: Int
+    last: Int
+  ): ChecklistItemConnection!
+  metadata: Metadata!
+  name: DisplayName!
+  required: Boolean
+  schedule: Schedule
+  sop: Sop
+  status: ChecklistStatus!
+}
+
+type ChecklistClosed implements Component {
+  closedAt: Temporal!
+  closedBecause: ChecklistClosedReason!
+  closedBy: Actor!
+  id: Entity!
+}
+
+type ChecklistClosedReason {
+  code: ChecklistClosedReasonCode!
+  note: DynamicString
+}
+
+enum ChecklistClosedReasonCode {
+  error
+  success
+}
+
+type ChecklistConnection implements Connection {
+  edges: [ChecklistEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+type ChecklistEdge implements Edge {
+  cursor: String!
+  node: Checklist!
+}
+
+type ChecklistInProgress implements Component {
+  id: Entity!
+  inProgressAt: Temporal!
+  inProgressBy: Actor!
+}
+
+union ChecklistItem = Checklist | ChecklistResult
+
+type ChecklistItemConnection implements Connection {
+  edges: [ChecklistItemEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+type ChecklistItemEdge implements Edge {
+  cursor: String!
+  node: ChecklistItem!
+}
+
+type ChecklistOpen implements Component {
+  id: Entity!
+  openedAt: Temporal!
+  openedBy: Actor
+}
+
+type ChecklistResult implements Component {
+  assignees(
+    after: String
+    before: String
+    first: Int
+    last: Int
+  ): AssigneeConnection!
+  attachments(
+    after: String
+    before: String
+    first: Int
+    last: Int
+  ): AttachmentConnection!
+  auditable: Auditable!
+  id: Entity!
+  name: DisplayName!
+  required: Boolean
+  status: ChecklistStatus!
+  value: ChecklistResultValue!
+}
+
+union ChecklistResultValue = Counter | Flag | Register
+
+input ChecklistSearchOptions {
+  active: Boolean
+  order: ChecklistSearchOrderOptions
+}
+
+input ChecklistSearchOrderOptions {
+  completedAt: SortOrder
+}
+
+union ChecklistStatus = ChecklistClosed | ChecklistInProgress | ChecklistOpen
+
+"""
+Components characterize Entities as possessing a particular trait.
+They are just simple structs, holding all data necessary to model that trait.
+"""
+interface Component {
+  id: Entity!
+}
+
+interface Connection {
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+"""
+Data type for tracking an incrementable/decrementable integer value.
+Counters have two operations: increment and decrement.
+"""
+type Counter {
+  count: Int
+}
+
+input CreateChecklistInput {
+  active: Boolean!
+  auditable: Boolean!
+  customerId: ID!
+  description: String
+  id: Entity!
+  name: String!
+  sop: URL
+}
+
+input CreateInvitationInput {
+  emailAddress: String!
+  orgId: ID!
+  workerId: ID!
+}
+
+input CreateLocationInput {
+  active: Boolean!
+  id: ID
+  name: CreateNameInput!
+  orgId: ID!
+  scanCode: ID
+}
+
+input CreateNameInput {
+  active: Boolean!
+  id: ID
+  languageId: ID!
+  value: String!
+}
+
+input CreateUserInput {
+  active: Boolean!
+  displayName: String
+  firstName: String!
+  id: ID
+  languageId: ID!
+  lastName: String!
+  username: String
+}
+
+input CreateWorkerInput {
+  active: Boolean!
+  displayName: String
+  firstName: String!
+  id: ID
+  languageId: ID!
+  lastName: String!
+  orgId: ID!
+  roleId: ID!
+  scanCode: ID
+  userId: ID
+}
+
+"""
+A string representing a cron schedule expression
+"""
+scalar CronExpression
+
+"""
+Schedule implementation using cron expressions
+"""
+type CronSchedule {
+  cron: CronExpression!
+}
+
+"""
+TODO
+"""
+type Description implements Component {
+  id: Entity!
+  value: DynamicString!
+}
+
+"""
+TODO
+"""
+type DisplayName implements Component {
+  id: Entity!
+  value: DynamicString!
+}
+
+scalar Duration
+
+"""
+TODO
+"""
+type DynamicString {
+  locale: Locale!
+  value: String!
+}
+
+interface Edge {
+  cursor: String!
+}
+
+type EnabledLanguage implements Node {
+  active: ActivationStatus!
+  id: ID!
+  language: Language!
+  languageId: ID!
+  primary: Boolean!
+}
+
+type EnabledLanguageConnection {
+  edges: [EnabledLanguageEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+type EnabledLanguageEdge {
+  cursor: String!
+  node: EnabledLanguage!
+}
+
+input EnabledLanguageSearchOptions {
+  active: Boolean
+  primary: Boolean
+}
+
+scalar Entity
+
+type EntityComponentConnection implements Connection {
+  edges: [EntityComponentEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+type EntityComponentEdge implements Edge {
+  cursor: String!
+  node: Component!
+}
+
+type EntityConnection {
+  components(
+    after: String
+    before: String
+    first: Int
+    last: Int
+  ): EntityComponentConnection!
+  entity: Entity!
+}
+
+"""
+Data type for tracking Boolean-like values in the form of "enabled" or
+"disabled".
+Flags only support two operations: enable and disable.
+"""
+type Flag {
+  enabled: Boolean
+}
+
+"""
+Fixed point in time (i.e. "exact time") without regard to calendar or location
+"""
+type Instant {
+  """
+  Milliseconds since the UNIX epoch of 1/1/1970 00:00+00
+  """
+  epochMilliseconds: String!
+
+  """
+  Convert an Instant to an ISO 8601 string
+  """
+  toString(options: InstantToStringOptions): String!
+
+  """
+  Convert an Instant to a ZonedDateTime
+  """
+  toZonedDateTime(timeZone: TimeZone!): ZonedDateTime!
+}
+
+input InstantToStringOptions {
+  """
+  How many digits to print after the decimal point in the output string
+  """
+  fractionalSecondDigits: Int
+
+  """
+  How to handle the remainder
+  """
+  roundingMode: RoundingMode
+
+  """
+  The smallest unit of time to include in the output string
+  """
+  smallestUnit: SmallestTimeUnit
+
+  """
+  The time zone to express the Instant/ZonedDateTime in
+  """
+  timeZone: TimeZone
+}
+
+type Invitation {
+  createdAt: String!
+  emailAddress: String!
+  id: ID!
+  status: InvitationStatus!
+  updatedAt: String!
+  workerId: ID!
+}
+
+enum InvitationStatus {
+  accepted
+  pending
+  revoked
+}
+
+type Language {
+  code: String!
+  id: ID!
+  name: Name!
+  nameId: ID!
+}
+
+scalar Locale
+
+type Location implements Node {
+  active: ActivationStatus!
+  children(options: LocationsQueryOptions): [Location!]!
+  id: ID!
+  name: Name!
+  nameId: ID!
+  parent: Location
+  parentId: ID
+  scanCode: ID
+  site: Location!
+  siteId: ID!
+  tags: [Tag!]!
+  timeZone: String!
+}
+
+type LocationConnection {
+  edges: [LocationEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+type LocationEdge {
+  cursor: String!
+  node: Location!
+}
+
+input LocationSearchOptions {
+  active: Boolean
+  isSite: Boolean
+}
+
+input LocationsQueryOptions {
+  cornerstone: Boolean
+  site: Boolean
+}
+
+"""
+Metadata pertaining to an individual Entity, e.g. when it was last updated and
+by whom.
+"""
+type Metadata {
+  updatedAt: Temporal!
+  updatedBy: Actor
+}
+
+type Mutation {
+  acceptInvitation(input: AcceptInvitationInput!): Worker!
+  activateWorker(id: ID!): Worker!
+  createChecklist(input: CreateChecklistInput!): ChecklistEdge!
+  createEntity(id: String, suffix: [String!], type: String!): Entity!
+  createInvitation(input: CreateInvitationInput!): Invitation!
+  createLocation(input: CreateLocationInput!): Location!
+  createUser(input: CreateUserInput!): User!
+  createWorker(input: CreateWorkerInput!): WorkerEdge!
+  deactivateWorker(id: ID!): Worker!
+  disableLanguage(languageId: ID!, orgId: ID!): EnabledLanguageEdge!
+  enableLanguage(languageId: ID!, orgId: ID!): EnabledLanguageEdge!
+  updateLocation(input: UpdateLocationInput!): Location!
+  updateName(input: UpdateNameInput!): Name!
+  updateUser(input: UpdateUserInput!): User!
+  updateWorker(input: UpdateWorkerInput!): WorkerEdge!
+}
+
+type Name implements Node {
+  id: ID!
+  language: Language!
+  languageId: ID!
+  metadata: NameMetadata!
+  value: String!
+}
+
+type NameMetadata {
+  nameId: ID!
+  sourceLanguage: Language!
+  sourceLanguageId: ID!
+  sourceText: String!
+  translatedAt: String!
+}
+
+interface Node {
+  id: ID!
+}
+
+"""
+TODO
+"""
+enum OffsetOptions {
+  """
+  TODO
+  """
+  auto
+
+  """
+  TODO
+  """
+  never
+}
+
+"""
+Schedule implementation for "oneshot" events
+"""
+type OnceSchedule {
+  once: Temporal!
+}
+
+type Organization implements Node {
+  activatedAt: String
+  active: Boolean!
+  billingId: String
+  deactivatedAt: String
+  id: ID!
+  languages(
+    after: String
+    before: String
+    first: Int
+    last: Int
+    search: EnabledLanguageSearchOptions
+  ): EnabledLanguageConnection!
+  locations(
+    after: String
+    before: String
+    first: Int
+    last: Int
+    search: LocationSearchOptions
+  ): LocationConnection!
+  me: Worker!
+  name: Name!
+  nameId: ID!
+  workers(
+    after: String
+    before: String
+    first: Int
+    last: Int
+    search: WorkerSearchOptions
+  ): WorkerConnection!
+}
+
+type OrganizationConnection {
+  edges: [OrganizationEdge!]!
+  pageInfo: PageInfo!
+}
+
+type OrganizationEdge {
+  node: Organization!
+}
+
+type PageInfo {
+  endCursor: String
+  hasNextPage: Boolean!
+  hasPreviousPage: Boolean!
+  startCursor: String
+}
+
+type Query {
+  checklists(
+    after: String
+    before: String
+    first: Int
+    last: Int
+    search: ChecklistSearchOptions
+  ): ChecklistConnection!
+  entity(id: Entity!): EntityConnection!
+  languages: [Language!]!
+  node(id: ID!): Node!
+  roles: [Tag!]!
+  user: User!
+}
+
+"""
+Data type for tracking named binaries (like strings). Any binary value can act
+as the value of a register. Registers can only have the binaries stored within
+them changed.
+"""
+type Register {
+  binary: String
+}
+
+"""
+Controls how rounding is performed
+"""
+enum RoundingMode {
+  """
+  Always round up, towards the end of time
+  """
+  ceil
+
+  """
+  Always round down, towards the beginning of time
+  """
+  floor
+}
+
+"""
+TODO
+"""
+union Schedule = CronSchedule | OnceSchedule
+
+enum SmallestTimeUnit {
+  millisecond
+  minute
+  second
+}
+
+"""
+TODO
+"""
+type Sop implements Component {
+  id: Entity!
+  link: URL!
+}
+
+"""
+Defines the sort order for queries that support edge ordering.
+Ordering depends on the scalar type:
+  - Boolean scalars are sorted false < true
+  - Int scalars are sorted numerically
+  - String scalars are sorted lexicographically
+"""
+enum SortOrder {
+  asc
+  desc
+}
+
+type Tag {
+  id: ID!
+  name: Name!
+  nameId: ID!
+  parent: Tag
+  parentId: ID
+  type: String!
+}
+
+union Temporal = Instant | ZonedDateTime
+
+scalar TimeZone
+
+"""
+TODO
+"""
+enum TimeZoneNameOptions {
+  """
+  TODO
+  """
+  auto
+
+  """
+  TODO
+  """
+  critical
+
+  """
+  TODO
+  """
+  never
+}
+
+scalar URL
+
+input UpdateLocationInput {
+  activatedAt: String
+  deactivatedAt: String
+  id: ID!
+  name: UpdateNameInput
+  scanCode: ID
+}
+
+input UpdateNameInput {
+  activatedAt: String
+  deactivatedAt: String
+  id: ID!
+  languageId: ID!
+  value: String!
+}
+
+input UpdateUserInput {
+  displayName: String
+  firstName: String!
+  id: ID!
+  languageId: ID!
+  lastName: String!
+}
+
+input UpdateWorkerInput {
+  active: Boolean
+  displayName: String
+  firstName: String
+  id: ID!
+  languageId: ID
+  lastName: String
+  roleId: ID
+  scanCode: ID
+}
+
+type User implements Node {
+  activatedAt: String
+  active: Boolean!
+  authenticationIdentityId: ID
+  authenticationProvider: Tag
+  authenticationProviderId: ID
+  deactivatedAt: String
+  displayName: String!
+  firstName: String!
+  id: ID!
+  language: Language!
+  languageId: ID!
+  lastName: String!
+  organizations(
+    after: String
+    before: String
+    first: Int
+    last: Int
+  ): OrganizationConnection!
+  tags: [Tag!]!
+}
+
+input UserSearchOptions {
+  displayName: String
+}
+
+type Worker implements Node {
+  _hack_numeric_id: Int!
+  active: ActivationStatus!
+  id: ID!
+  invitation: Invitation
+  invitationId: ID
+  language: Language!
+  languageId: ID!
+  role: Tag!
+  roleId: ID!
+  scanCode: String
+  tags: [Tag!]!
+  user: User!
+  userId: ID!
+}
+
+type WorkerConnection {
+  edges: [WorkerEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+type WorkerEdge {
+  cursor: String!
+  node: Worker!
+}
+
+input WorkerSearchOptions {
+  active: Boolean
+  user: UserSearchOptions
+}
+
+input WorkersQueryOptions {
+  active: Boolean
+  site: ID
+}
+
+"""
+Timezone-aware, calendar-aware date/time object representing an exact time
+from the perspective of a particular geographic region
+"""
+type ZonedDateTime {
+  day: Int!
+
+  """
+  Milliseconds since the UNIX epoch of 1/1/1970 00:00+00
+  """
+  epochMilliseconds: String!
+  hour: Int!
+  millisecond: Int!
+  minute: Int!
+  month: Int!
+  second: Int!
+  timeZone: TimeZone!
+
+  """
+  Convert a ZonedDateTime to an ISO 8601 string
+  """
+  toString(options: ZonedDateTimeToStringOptions): String!
+  year: Int!
+}
+
+input ZonedDateTimeToStringOptions {
+  calendarName: CalendarNameOptions
+
+  """
+  How many digits to print after the decimal point in the output string
+  """
+  fractionalSecondDigits: Int
+  offset: OffsetOptions
+
+  """
+  How to handle the remainder
+  """
+  roundingMode: RoundingMode
+
+  """
+  The smallest unit of time to include in the output string
+  """
+  smallestUnit: SmallestTimeUnit
+  timeZoneName: TimeZoneNameOptions
+}

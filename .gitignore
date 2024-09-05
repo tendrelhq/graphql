@@ -10,7 +10,7 @@
 /.env*.local
 
 ### generated ###
-/schema.graphql
+# /schema.graphql Keep this for now. Need to have better bundling.
 
 ### neovim ###
 /.db.json
