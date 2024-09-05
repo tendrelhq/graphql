@@ -30,6 +30,5 @@ FROM base AS release
 COPY --from=prerelease /usr/src/app .
 
 # run the app
-USER bun
 EXPOSE 4000/tcp
 CMD ["bun", "start+tracing"]
