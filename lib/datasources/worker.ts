@@ -1,4 +1,4 @@
-import { NotFoundError } from "@/errors";
+import { EntityNotFound } from "@/errors";
 import type { Worker } from "@/schema";
 import type { WithKey } from "@/util";
 import Dataloader from "dataloader";
@@ -10,15 +10,12 @@ export default (_: Request) =>
     const rows = await sql<WithKey<Worker>[]>`
         SELECT
             w.workerinstanceuuid AS _key,
-            encode(('worker:' || w.workerinstanceuuid)::bytea, 'base64') as id,
+            encode(('worker:' || w.workerinstanceuuid)::bytea, 'base64') AS id,
             w.workerinstanceid AS _hack_numeric_id,
-            (w.workerinstanceenddate IS NULL OR w.workerinstanceenddate > now()) AS active,
-            w.workerinstancestartdate::text AS "activatedAt",
-            w.workerinstanceenddate::text AS "deactivatedAt",
             l.systaguuid AS "languageId",
             r.systaguuid AS "roleId",
             w.workerinstancescanid AS "scanCode",
-            u.workeruuid AS "userId"
+            encode(('user:' || u.workeruuid)::bytea, 'base64') AS "userId"
         FROM public.workerinstance AS w
         INNER JOIN public.systag AS l
             ON w.workerinstancelanguageid = l.systagid
@@ -34,5 +31,5 @@ export default (_: Request) =>
       new Map<string, Worker>(),
     );
 
-    return keys.map(key => byKey.get(key) ?? new NotFoundError(key, "worker"));
+    return keys.map(key => byKey.get(key) ?? new EntityNotFound("worker"));
   });

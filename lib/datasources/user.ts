@@ -1,4 +1,4 @@
-import { NotFoundError } from "@/errors";
+import { EntityNotFound } from "@/errors";
 import type { User } from "@/schema";
 import type { WithKey } from "@/util";
 import Dataloader from "dataloader";
@@ -40,7 +40,7 @@ export default (_: Request) => {
         new Map(),
       );
 
-      return keys.map(key => byKey.get(key) ?? new NotFoundError(key, "user"));
+      return keys.map(key => byKey.get(key) ?? new EntityNotFound("user"));
     }),
     byIdentityId: new Dataloader<string, User>(async keys => {
       const rows = await selectUsers("workeridentityid", keys);
@@ -49,7 +49,7 @@ export default (_: Request) => {
         new Map(),
       );
 
-      return keys.map(key => byKey.get(key) ?? new NotFoundError(key, "user"));
+      return keys.map(key => byKey.get(key) ?? new EntityNotFound("user"));
     }),
   };
 };

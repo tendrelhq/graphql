@@ -1,0 +1,158 @@
+mutation M {
+  createChecklistType(
+    input: {
+      id: "d29ya2luc3RhbmNlOmMwNzU2MWRmLWRiOWUtNDY1Yi05YzIzLWY3ZjBiODc5YTgxZg=="
+      active: { active: true }
+      assignees: { maxAllowed: 1 }
+      auditable: { auditable: true }
+      description: { locale: "en", value: "..." }
+      items: [
+        { name: "Doors locked properly?", type: "Flag" }
+        { name: "Count of broken panes", type: "Counter" }
+      ]
+      name: { locale: "en", value: "..." }
+      required: { required: true }
+      schedule: { kind: "..." }
+      sop: { link: "..." }
+      status: { default: "open" }
+    }
+  ) {
+    id
+  }
+
+  # the more generic, meta approach
+  # this method effectively exposes two entrypoints into the system:
+  #  1. a "type" constructor -- basically templates
+  #  2. a "node" constructor -- basically instances
+  # what is interesting about this method is that it is far more declarative;
+  # the mutation execution result is NOT the modified data! that is: the
+  # mutation does not return an Entity object type which you can then select from.
+  # instead the mutation *declares* its changes and the execution result would
+  # be some sort of "changeset". Pretty cool idea! This would be a great way to do
+  # local (optimistic) updates, "op log" synchronization, undo/redo etc...
+  createEntity {
+    id
+    components {
+      ... on CreateEntityComponentTypeConnection {
+        type(type: "Checklist") {
+          name(value: "Daily Oncall Checklist")
+          description(
+            value: "Oncall responsibities to be performed on a daily basis"
+          )
+          # or maybe children?
+          components {
+            alarms: type(type: "Checklist") {
+              __typename
+            }
+            pipeline: type(type: "Checklist") {
+              __typename
+            }
+            slack: type(type: "Flag") {
+              name(value: "Send a status update to #tendrel-devs")
+              description(value: "...")
+            }
+          }
+        }
+      }
+
+      ... on CreateEntityComponentNodeConnection {
+        node(id: "...") {
+          ... on CreateNamedNode {
+            # type level defaults can be overridden
+            name(value: "Oncall Update 08/15/24")
+            components {
+              # note: exact alias name does not matter
+              alarms: node(id: "...") {
+                ... on CreateNamedNode {
+                  components {
+                    node(id: "...") {
+                      ... on CreateLeafNode {
+                        value {
+                          ... on CounterNode {
+                            count(value: 0)
+                          }
+                        }
+                      }
+                    }
+                    node(id: "...") {
+                      ... on CreateLeafNode {
+                        value {
+                          ... on CounterNode {
+                            count(value: 0)
+                          }
+                        }
+                      }
+                    }
+                    node(id: "...") {
+                      ... on CreateLeafNode {
+                        value {
+                          ... on FlagNode {
+                            flag(value: true)
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+query Q {
+  entity(id: "...") {
+    entity
+    components {
+      edges {
+        node {
+          ... on Checklist {
+            items {
+              edges {
+                node {
+                  ... on ChecklistResult {
+                    value {
+                      ... on Counter {
+                        count
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+query NodesAndTypes {
+  checklists {
+    edges {
+      node {
+        ... on Checklist {
+          id # "work instance id"
+          name {
+            # "work instance name"
+            value {
+              value
+            }
+          }
+        }
+      }
+      type {
+        id # "work template id"
+        name {
+          # "work template name"
+          value {
+            value
+          }
+        }
+      }
+    }
+  }
+}

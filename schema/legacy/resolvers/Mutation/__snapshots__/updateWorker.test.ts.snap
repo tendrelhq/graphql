@@ -1,0 +1,29 @@
+// Bun Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`updateWorker updates worker without conflict 1`] = `
+{
+  "__typename": "Worker",
+  "active": {
+    "__typename": "ActivationStatus",
+    "active": true,
+  },
+  "language": {
+    "__typename": "Language",
+    "code": "en",
+  },
+  "role": {
+    "__typename": "Tag",
+    "name": {
+      "__typename": "Name",
+      "value": "Admin",
+    },
+  },
+  "scanCode": null,
+  "user": {
+    "__typename": "User",
+    "displayName": "1337 User",
+    "firstName": "1337",
+    "lastName": "User",
+  },
+}
+`;

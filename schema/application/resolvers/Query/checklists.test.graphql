@@ -1,0 +1,108 @@
+query Checklists($timeZone: TimeZone!) {
+  __typename
+  checklists {
+    edges {
+      node {
+        assignees {
+          edges {
+            node {
+              assignedAt {
+                ... on Instant {
+                  epochMilliseconds
+                  toZonedDateTime(timeZone: $timeZone) {
+                    toString
+                  }
+                }
+              }
+              assignedTo {
+                user {
+                  displayName
+                }
+              }
+            }
+          }
+          pageInfo {
+            hasNextPage
+            hasPreviousPage
+          }
+          totalCount
+        }
+        attachments {
+          edges {
+            node {
+              __typename
+            }
+          }
+          pageInfo {
+            hasNextPage
+            hasPreviousPage
+          }
+          totalCount
+        }
+        auditable {
+          enabled
+        }
+        description {
+          value {
+            value
+          }
+        }
+        items {
+          edges {
+            node {
+              __typename
+              ... on Checklist {
+                name {
+                  value {
+                    value
+                  }
+                }
+              }
+              ... on ChecklistResult {
+                name {
+                  value {
+                    value
+                  }
+                }
+              }
+            }
+          }
+          pageInfo {
+            hasNextPage
+            hasPreviousPage
+          }
+          totalCount
+        }
+        name {
+          value {
+            value
+          }
+        }
+        required
+        schedule {
+          __typename
+        }
+        sop {
+          link
+        }
+        status {
+          ... on ChecklistOpen {
+            openedAt {
+              ... on Instant {
+                epochMilliseconds
+                toZonedDateTime(timeZone: $timeZone) {
+                  toString
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+    pageInfo {
+      hasNextPage
+      hasPreviousPage
+    }
+    totalCount
+  }
+}

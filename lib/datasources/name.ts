@@ -1,6 +1,7 @@
-import { NotFoundError } from "@/errors";
+import { EntityNotFound } from "@/errors";
 import type { Name, NameMetadata, UpdateNameInput } from "@/schema";
-import { type WithKey, decodeGlobalId } from "@/util";
+import { decodeGlobalId } from "@/schema/system";
+import type { WithKey } from "@/util";
 import Dataloader from "dataloader";
 import type { Request } from "express";
 import { type SQL, sql } from "./postgres";
@@ -37,7 +38,7 @@ export function makeNameLoader(req: Request) {
         new Map<string, Name>(),
       );
 
-      return keys.map(key => byId.get(key) ?? new NotFoundError(key, "name"));
+      return keys.map(key => byId.get(key) ?? new EntityNotFound("name"));
     },
     {
       cacheKeyFn: key => `${key}:${req.i18n.language}`,
@@ -105,7 +106,7 @@ export function makeNameMetadataLoader(_: Request) {
     );
 
     return keys.map(
-      key => byId.get(key) ?? new NotFoundError(key, "name-metadata"),
+      key => byId.get(key) ?? new EntityNotFound("name-metadata"),
     );
   });
 }

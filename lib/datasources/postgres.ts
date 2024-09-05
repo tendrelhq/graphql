@@ -2,6 +2,7 @@ import z from "myzod";
 import postgres from "postgres";
 
 import type { Request } from "express";
+import makeCustomerRequestedLanguageLoader from "./crl";
 import makeInvitationLoader from "./invitation";
 import makeLanguageLoader from "./language";
 import makeLocationLoader from "./location";
@@ -27,6 +28,7 @@ const {
   DB_PASSWORD,
   DB_NAME,
   DB_MAX_CONNECTIONS,
+  DB_STATEMENT_TIMEOUT,
 } = z
   .object({
     DB_HOST: z.string(),
@@ -35,6 +37,7 @@ const {
     DB_PASSWORD: z.string(),
     DB_NAME: z.string(),
     DB_MAX_CONNECTIONS: z.number({ coerce: true }).default(3),
+    DB_STATEMENT_TIMEOUT: z.number({ coerce: true }).default(10),
   })
   .parse(process.env, { allowUnknown: true });
 
@@ -45,6 +48,10 @@ export const sql = postgres({
   port: DB_PORT,
   database: DB_NAME,
   max: DB_MAX_CONNECTIONS,
+  // TODO: this is probably a good idea...
+  // connection: {
+  //   statement_timeout: DB_STATEMENT_TIMEOUT * 1000 // milliseconds
+  // },
 });
 
 export type SQL = typeof sql;
@@ -52,6 +59,7 @@ export type TxSQL = Parameters<Parameters<typeof sql.begin>[1]>[0];
 
 export function orm(req: Request) {
   return {
+    crl: makeCustomerRequestedLanguageLoader(req),
     invitation: makeInvitationLoader(req),
     language: makeLanguageLoader(req),
     location: makeLocationLoader(req),

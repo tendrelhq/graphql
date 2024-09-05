@@ -24,6 +24,9 @@ jobs:
       - run: bun install --frozen-lockfile
       - run: bun compile
       - run: bun test
+        env:
+          CI: true
+          DATABASE_URL: postgres://localhost:5432/postgres # fake, for now
 
   build-docker-image:
     name: packaging

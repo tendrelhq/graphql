@@ -1,4 +1,4 @@
-import { NotFoundError } from "@/errors";
+import { EntityNotFound } from "@/errors";
 import type { Tag } from "@/schema";
 import Dataloader from "dataloader";
 import type { Request } from "express";
@@ -25,5 +25,5 @@ export default (_: Request) =>
       new Map<string, Tag>(),
     );
 
-    return keys.map(key => byKey.get(key) ?? new NotFoundError(key, "tag"));
+    return keys.map(key => byKey.get(key) ?? new EntityNotFound("tag"));
   });

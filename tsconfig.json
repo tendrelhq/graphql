@@ -25,8 +25,14 @@
     "noPropertyAccessFromIndexSignature": false,
 
     "paths": {
-      "@/*": ["./lib/*"]
-    }
+      "@/*": ["./lib/*"],
+      "@/schema": ["./schema/index.ts"],
+      "@/schema/*": ["./schema/*"],
+      "@/test/*": ["./test/*"]
+    },
+
+    // DX
+    "pretty": false
   },
   "exclude": ["node_modules", "out"]
 }

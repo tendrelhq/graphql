@@ -1,0 +1,10 @@
+# via graphql-scalars
+scalar Locale
+
+"""
+TODO
+"""
+type DynamicString {
+  locale: Locale!
+  value: String!
+}

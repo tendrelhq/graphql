@@ -1,0 +1,99 @@
+# via graphql-scalars
+scalar URL
+
+"""
+TODO
+"""
+type Activatable implements Component {
+  id: Entity!
+  active: Boolean!
+  updatedAt: Temporal!
+}
+
+"""
+TODO
+"""
+type Actor implements Component {
+  id: Entity!
+  user: User!
+}
+
+"""
+TODO
+"""
+type Attachment implements Component {
+  id: Entity!
+  attachment: String!
+}
+
+type AttachmentConnection implements Connection {
+  edges: [AttachmentEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+type AttachmentEdge implements Edge {
+  cursor: String!
+  node: Attachment!
+}
+
+"""
+TODO
+"""
+type Assignee implements Component {
+  id: Entity!
+  assignedTo: Actor!
+  assignedAt: Temporal!
+}
+
+type AssigneeConnection implements Connection {
+  edges: [AssigneeEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+type AssigneeEdge implements Edge {
+  cursor: String!
+  node: Assignee!
+}
+
+"""
+TODO
+"""
+type Auditable implements Component {
+  id: Entity!
+  enabled: Boolean!
+}
+
+"""
+TODO
+"""
+type Description implements Component {
+  id: Entity!
+  value: DynamicString!
+}
+
+"""
+TODO
+"""
+type DisplayName implements Component {
+  id: Entity!
+  value: DynamicString!
+}
+
+"""
+Metadata pertaining to an individual Entity, e.g. when it was last updated and
+by whom.
+"""
+type Metadata {
+  updatedAt: Temporal!
+  updatedBy: Actor
+}
+
+"""
+TODO
+"""
+type Sop implements Component {
+  id: Entity!
+  link: URL!
+}

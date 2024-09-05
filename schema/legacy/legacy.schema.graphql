@@ -1,0 +1,350 @@
+interface Node {
+  id: ID!
+}
+
+type Language {
+  id: ID!
+  code: String!
+  name: Name!
+  nameId: ID!
+}
+
+type Name implements Node {
+  id: ID!
+  language: Language!
+  languageId: ID!
+  metadata: NameMetadata!
+  value: String!
+}
+
+type NameMetadata {
+  nameId: ID!
+  sourceText: String!
+  sourceLanguageId: ID!
+  sourceLanguage: Language!
+  translatedAt: String!
+}
+
+type Tag {
+  id: ID!
+  name: Name!
+  nameId: ID!
+  type: String!
+  parent: Tag
+  parentId: ID
+}
+
+type ActivationStatus {
+  active: Boolean!
+  activatedAt: String
+  deactivatedAt: String
+}
+
+type EnabledLanguage implements Node {
+  id: ID!
+  active: ActivationStatus!
+  language: Language!
+  languageId: ID!
+  primary: Boolean!
+}
+
+input EnabledLanguageSearchOptions {
+  active: Boolean
+  primary: Boolean
+}
+
+type EnabledLanguageConnection {
+  edges: [EnabledLanguageEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+type EnabledLanguageEdge {
+  cursor: String!
+  node: EnabledLanguage!
+}
+
+enum InvitationStatus {
+  pending
+  accepted
+  revoked
+}
+
+type Invitation {
+  id: ID!
+  status: InvitationStatus!
+  emailAddress: String!
+  workerId: ID!
+  createdAt: String!
+  updatedAt: String!
+}
+
+type Organization implements Node {
+  id: ID!
+  active: Boolean!
+  activatedAt: String
+  deactivatedAt: String
+  billingId: String
+  languages(
+    first: Int
+    last: Int
+    before: String
+    after: String
+    search: EnabledLanguageSearchOptions
+  ): EnabledLanguageConnection!
+  locations(
+    first: Int
+    last: Int
+    before: String
+    after: String
+    search: LocationSearchOptions
+  ): LocationConnection!
+  name: Name!
+  nameId: ID!
+  workers(
+    first: Int
+    last: Int
+    before: String
+    after: String
+    search: WorkerSearchOptions
+  ): WorkerConnection!
+}
+
+type Location implements Node {
+  id: ID!
+  active: ActivationStatus!
+  children(options: LocationsQueryOptions): [Location!]!
+  name: Name!
+  nameId: ID!
+  parent: Location
+  parentId: ID
+  scanCode: ID
+  site: Location!
+  siteId: ID!
+  tags: [Tag!]!
+  timeZone: String!
+}
+
+input LocationSearchOptions {
+  active: Boolean
+  isSite: Boolean
+}
+
+type LocationConnection {
+  edges: [LocationEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+type LocationEdge {
+  cursor: String!
+  node: Location!
+}
+
+type User implements Node {
+  id: ID!
+  active: Boolean!
+  activatedAt: String
+  deactivatedAt: String
+  authenticationIdentityId: ID
+  authenticationProvider: Tag
+  authenticationProviderId: ID
+  displayName: String!
+  firstName: String!
+  lastName: String!
+  language: Language!
+  languageId: ID!
+  organizations(
+    first: Int
+    last: Int
+    after: String
+    before: String
+  ): OrganizationConnection!
+  tags: [Tag!]!
+}
+
+input UserSearchOptions {
+  displayName: String
+}
+
+type OrganizationConnection {
+  edges: [OrganizationEdge!]!
+  pageInfo: PageInfo!
+}
+
+type OrganizationEdge {
+  node: Organization!
+}
+
+type PageInfo {
+  hasNextPage: Boolean!
+  hasPreviousPage: Boolean!
+  startCursor: String
+  endCursor: String
+}
+
+type Worker implements Node {
+  id: ID!
+  _hack_numeric_id: Int!
+  active: ActivationStatus!
+  invitation: Invitation
+  invitationId: ID
+  language: Language!
+  languageId: ID!
+  role: Tag!
+  roleId: ID!
+  scanCode: String
+  tags: [Tag!]!
+  user: User!
+  userId: ID!
+}
+
+input WorkerSearchOptions {
+  active: Boolean
+  # invitation: InvitationStatus
+  # language: LanguageSearchOptions
+  # role: RoleSearchOptions
+  user: UserSearchOptions
+}
+
+type WorkerConnection {
+  edges: [WorkerEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+type WorkerEdge {
+  cursor: String!
+  node: Worker!
+}
+
+type Query {
+  languages: [Language!]!
+  roles: [Tag!]!
+
+  # v2
+  node(id: ID!): Node!
+  user: User!
+}
+
+input LocationsQueryOptions {
+  cornerstone: Boolean
+  site: Boolean
+}
+
+input WorkersQueryOptions {
+  active: Boolean
+  site: ID
+}
+
+type Mutation {
+  # Location CRUD
+  createLocation(input: CreateLocationInput!): Location!
+  updateLocation(input: UpdateLocationInput!): Location!
+
+  # Name CRUD
+  updateName(input: UpdateNameInput!): Name!
+
+  # User
+  ## CRUD
+  createUser(input: CreateUserInput!): User!
+  updateUser(input: UpdateUserInput!): User!
+
+  # Worker
+  ## CRUD
+  createWorker(input: CreateWorkerInput!): WorkerEdge!
+  updateWorker(input: UpdateWorkerInput!): WorkerEdge!
+  ## Helpers
+  activateWorker(id: ID!): Worker!
+  deactivateWorker(id: ID!): Worker!
+  createInvitation(input: CreateInvitationInput!): Invitation!
+  acceptInvitation(input: AcceptInvitationInput!): Worker!
+
+  # Organization helpers
+  enableLanguage(orgId: ID!, languageId: ID!): EnabledLanguageEdge!
+  disableLanguage(orgId: ID!, languageId: ID!): EnabledLanguageEdge!
+}
+
+input CreateLocationInput {
+  id: ID
+  active: Boolean!
+  name: CreateNameInput!
+  orgId: ID!
+  scanCode: ID
+}
+
+input UpdateLocationInput {
+  id: ID!
+  activatedAt: String
+  deactivatedAt: String
+  name: UpdateNameInput
+  scanCode: ID
+}
+
+input CreateUserInput {
+  id: ID
+  active: Boolean!
+  languageId: ID!
+  firstName: String!
+  lastName: String!
+  displayName: String
+  username: String
+}
+
+input UpdateUserInput {
+  id: ID!
+  languageId: ID!
+  firstName: String!
+  lastName: String!
+  displayName: String
+}
+
+input CreateWorkerInput {
+  id: ID
+  active: Boolean!
+  displayName: String
+  firstName: String!
+  languageId: ID!
+  lastName: String!
+  orgId: ID!
+  roleId: ID!
+  scanCode: ID
+  userId: ID
+}
+
+input UpdateWorkerInput {
+  id: ID!
+  active: Boolean
+  displayName: String
+  firstName: String
+  languageId: ID
+  lastName: String
+  roleId: ID
+  scanCode: ID
+}
+
+input CreateNameInput {
+  id: ID
+  active: Boolean!
+  languageId: ID!
+  value: String!
+}
+
+input UpdateNameInput {
+  id: ID!
+  activatedAt: String
+  deactivatedAt: String
+  languageId: ID!
+  value: String!
+}
+
+input CreateInvitationInput {
+  emailAddress: String!
+  orgId: ID!
+  workerId: ID!
+}
+
+input AcceptInvitationInput {
+  authenticationIdentityId: ID!
+  workerId: ID!
+}

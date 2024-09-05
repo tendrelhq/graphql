@@ -1,0 +1,66 @@
+# Entrypoints into the "engine"
+type Query {
+  entity(id: Entity!): EntityConnection!
+}
+
+type Mutation {
+  createEntity(type: String!, id: String, suffix: [String!]): Entity!
+}
+
+scalar Entity
+
+"""
+Components characterize Entities as possessing a particular trait.
+They are just simple structs, holding all data necessary to model that trait.
+"""
+interface Component {
+  id: Entity!
+}
+
+type EntityConnection {
+  entity: Entity!
+  components(
+    first: Int
+    last: Int
+    before: String
+    after: String
+  ): EntityComponentConnection!
+}
+
+type EntityComponentConnection implements Connection {
+  edges: [EntityComponentEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+type EntityComponentEdge implements Edge {
+  cursor: String!
+  node: Component!
+}
+
+#
+# Pagination primitives
+#
+interface Connection {
+  totalCount: Int!
+  pageInfo: PageInfo!
+}
+
+interface Edge {
+  cursor: String!
+}
+
+#
+# Sort/filter/search primitives
+#
+"""
+Defines the sort order for queries that support edge ordering.
+Ordering depends on the scalar type:
+  - Boolean scalars are sorted false < true
+  - Int scalars are sorted numerically
+  - String scalars are sorted lexicographically
+"""
+enum SortOrder {
+  asc
+  desc
+}

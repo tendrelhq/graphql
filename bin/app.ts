@@ -10,7 +10,7 @@ import { expressMiddleware } from "@apollo/server/express4";
 import { ApolloServerPluginDrainHttpServer } from "@apollo/server/plugin/drainHttpServer";
 import cors from "cors";
 import express from "express";
-import { GraphQLError, getIntrospectionQuery, parse, print } from "graphql";
+import { GraphQLError } from "graphql";
 import morgan from "morgan";
 
 console.log(`NODE_ENV: ${process.env.NODE_ENV}`);
@@ -27,6 +27,7 @@ const server = new ApolloServer<Context>({
     return formattedError;
   },
   plugins: [ApolloServerPluginDrainHttpServer({ httpServer })],
+  nodeEnv: "production",
 });
 
 await server.start();

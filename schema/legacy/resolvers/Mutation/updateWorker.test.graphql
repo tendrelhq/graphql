@@ -1,0 +1,23 @@
+mutation TestUpdateWorker($input: UpdateWorkerInput!) {
+  updateWorker(input: $input) {
+    node {
+      active {
+        active
+      }
+      language {
+        code
+      }
+      role {
+        name {
+          value
+        }
+      }
+      scanCode
+      user {
+        firstName
+        lastName
+        displayName
+      }
+    }
+  }
+}

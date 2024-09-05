@@ -1,0 +1,147 @@
+type Query {
+  checklists(
+    first: Int
+    last: Int
+    before: String
+    after: String
+    search: ChecklistSearchOptions
+  ): ChecklistConnection!
+}
+
+type Mutation {
+  createChecklist(input: CreateChecklistInput!): ChecklistEdge!
+}
+
+input CreateChecklistInput {
+  id: Entity!
+  active: Boolean!
+  auditable: Boolean!
+  customerId: ID!
+  description: String
+  name: String!
+  sop: URL
+}
+
+type Checklist implements Component {
+  id: Entity!
+  active: Activatable!
+  assignees(
+    first: Int
+    last: Int
+    before: String
+    after: String
+  ): AssigneeConnection!
+  attachments(
+    first: Int
+    last: Int
+    before: String
+    after: String
+  ): AttachmentConnection!
+  auditable: Auditable!
+  description: Description
+  items(
+    first: Int
+    last: Int
+    before: String
+    after: String
+  ): ChecklistItemConnection!
+  name: DisplayName!
+  required: Boolean
+  schedule: Schedule
+  sop: Sop
+  status: ChecklistStatus!
+
+  # experimental - subject to change
+  children(
+    first: Int
+    last: Int
+    before: String
+    after: String
+    search: ChecklistSearchOptions
+  ): ChecklistConnection!
+  metadata: Metadata!
+}
+
+input ChecklistSearchOptions {
+  active: Boolean
+  order: ChecklistSearchOrderOptions
+}
+
+input ChecklistSearchOrderOptions {
+  completedAt: SortOrder
+}
+
+type ChecklistItemConnection implements Connection {
+  edges: [ChecklistItemEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+type ChecklistItemEdge implements Edge {
+  cursor: String!
+  node: ChecklistItem!
+}
+
+type ChecklistConnection implements Connection {
+  edges: [ChecklistEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+type ChecklistEdge implements Edge {
+  cursor: String!
+  node: Checklist!
+}
+
+## We want our checklists to support nesting
+union ChecklistItem = Checklist | ChecklistResult
+
+type ChecklistResult implements Component {
+  id: Entity!
+  assignees(
+    first: Int
+    last: Int
+    before: String
+    after: String
+  ): AssigneeConnection!
+  auditable: Auditable!
+  attachments(
+    first: Int
+    last: Int
+    before: String
+    after: String
+  ): AttachmentConnection!
+  name: DisplayName!
+  required: Boolean
+  status: ChecklistStatus!
+  value: ChecklistResultValue!
+}
+
+union ChecklistResultValue = Counter | Flag | Register
+
+## Our checklists go Open > In Progress > Closed
+union ChecklistStatus = ChecklistOpen | ChecklistInProgress | ChecklistClosed
+type ChecklistOpen implements Component {
+  id: Entity!
+  openedBy: Actor
+  openedAt: Temporal!
+}
+type ChecklistInProgress implements Component {
+  id: Entity!
+  inProgressBy: Actor!
+  inProgressAt: Temporal!
+}
+type ChecklistClosed implements Component {
+  id: Entity!
+  closedBy: Actor!
+  closedAt: Temporal!
+  closedBecause: ChecklistClosedReason!
+}
+type ChecklistClosedReason {
+  code: ChecklistClosedReasonCode!
+  note: DynamicString
+}
+enum ChecklistClosedReasonCode {
+  success
+  error
+}

@@ -1,4 +1,4 @@
-import { NotFoundError } from "@/errors";
+import { EntityNotFound } from "@/errors";
 import type { Location } from "@/schema";
 import type { WithKey } from "@/util";
 import Dataloader from "dataloader";
@@ -11,9 +11,6 @@ export default (_: Request) =>
       SELECT
           l.locationuuid AS _key,
           encode(('location:' || l.locationuuid)::bytea, 'base64') AS id,
-          (l.locationenddate IS NULL OR l.locationenddate > now()) AS active,
-          l.locationstartdate::text AS "activatedAt",
-          l.locationenddate::text AS "deactivatedAt",
           encode(('name:' || n.languagemasteruuid)::bytea, 'base64') AS "nameId",
           encode(('location:' || p.locationuuid)::bytea, 'base64') AS "parentId",
           l.locationscanid AS "scanCode",
@@ -34,5 +31,5 @@ export default (_: Request) =>
       new Map<string, Location>(),
     );
 
-    return keys.map(key => byId.get(key) ?? new NotFoundError(key, "location"));
+    return keys.map(key => byId.get(key) ?? new EntityNotFound("location"));
   });

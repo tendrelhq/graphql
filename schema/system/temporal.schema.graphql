@@ -1,0 +1,165 @@
+# via graphql-scalars
+scalar Duration
+
+"""
+Controls how rounding is performed
+"""
+enum RoundingMode {
+  """
+  Always round up, towards the end of time
+  """
+  ceil
+  """
+  Always round down, towards the beginning of time
+  """
+  floor
+  # HALF_CEIL
+  # HALF_FLOOR
+  # HALF_EVEN
+}
+enum SmallestTimeUnit {
+  minute
+  second
+  millisecond
+}
+
+union Temporal = Instant | ZonedDateTime
+
+"""
+Fixed point in time (i.e. "exact time") without regard to calendar or location
+"""
+type Instant {
+  """
+  Milliseconds since the UNIX epoch of 1/1/1970 00:00+00
+  """
+  epochMilliseconds: String!
+
+  """
+  Convert an Instant to an ISO 8601 string
+  """
+  toString(options: InstantToStringOptions): String!
+
+  """
+  Convert an Instant to a ZonedDateTime
+  """
+  toZonedDateTime(timeZone: TimeZone!): ZonedDateTime!
+}
+
+input InstantToStringOptions {
+  """
+  How many digits to print after the decimal point in the output string
+  """
+  fractionalSecondDigits: Int
+  """
+  How to handle the remainder
+  """
+  roundingMode: RoundingMode
+  """
+  The smallest unit of time to include in the output string
+  """
+  smallestUnit: SmallestTimeUnit
+  """
+  The time zone to express the Instant/ZonedDateTime in
+  """
+  timeZone: TimeZone
+}
+
+# via graphql-scalars
+scalar TimeZone
+
+"""
+Timezone-aware, calendar-aware date/time object representing an exact time
+from the perspective of a particular geographic region
+"""
+type ZonedDateTime {
+  year: Int!
+  month: Int!
+  day: Int!
+  hour: Int!
+  minute: Int!
+  second: Int!
+  millisecond: Int!
+  timeZone: TimeZone!
+
+  """
+  Milliseconds since the UNIX epoch of 1/1/1970 00:00+00
+  """
+  epochMilliseconds: String!
+
+  """
+  Convert a ZonedDateTime to an ISO 8601 string
+  """
+  toString(options: ZonedDateTimeToStringOptions): String!
+}
+
+input ZonedDateTimeToStringOptions {
+  """
+  How many digits to print after the decimal point in the output string
+  """
+  fractionalSecondDigits: Int
+  """
+  How to handle the remainder
+  """
+  roundingMode: RoundingMode
+  """
+  The smallest unit of time to include in the output string
+  """
+  smallestUnit: SmallestTimeUnit
+  calendarName: CalendarNameOptions
+  timeZoneName: TimeZoneNameOptions
+  offset: OffsetOptions
+}
+
+"""
+TODO
+"""
+enum CalendarNameOptions {
+  """
+  TODO
+  """
+  auto
+  """
+  TODO
+  """
+  always
+  """
+  TODO
+  """
+  never
+  """
+  TODO
+  """
+  critical
+}
+
+"""
+TODO
+"""
+enum TimeZoneNameOptions {
+  """
+  TODO
+  """
+  auto
+  """
+  TODO
+  """
+  never
+  """
+  TODO
+  """
+  critical
+}
+
+"""
+TODO
+"""
+enum OffsetOptions {
+  """
+  TODO
+  """
+  auto
+  """
+  TODO
+  """
+  never
+}
