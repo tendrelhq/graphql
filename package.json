@@ -11,7 +11,8 @@
     "generate": "bun generate.ts",
     "explore": "bunx ruru@beta -Pe http://localhost:4000",
     "start": "bun ./bin/app.ts",
-    "start+tracing": "bun -r ./lib/instrument.ts ./bin/app.ts"
+    "start+tracing": "bun -r ./lib/instrument.ts ./bin/app.ts",
+    "postinstall": "bun generate"
   },
   "devDependencies": {
     "@biomejs/biome": "^1.8.3",
