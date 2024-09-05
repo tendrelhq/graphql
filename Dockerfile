@@ -6,13 +6,13 @@ WORKDIR /usr/src/app
 FROM base AS install
 RUN mkdir -p /tmp/dev
 COPY package.json bun.lockb .env* /tmp/dev
-RUN cd /tmp/dev && bun install --frozen-lockfile
+RUN cd /tmp/dev && bun install --frozen-lockfile --ignore-scripts
 
 # copy production dependencies into temporary directory.
 # "production" =: exclude devDependencies
 RUN mkdir -p /tmp/prod
 COPY package.json bun.lockb .env* /tmp/prod
-RUN cd /tmp/prod && bun install --frozen-lockfile --production
+RUN cd /tmp/prod && bun install --frozen-lockfile --ignore-scripts --production
 
 # copy node_modules from temporary directory.
 # then copy all (non-ignored) project files into the image
