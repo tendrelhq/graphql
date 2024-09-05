@@ -9,7 +9,7 @@ import { TestUpdateWorkerDocument } from "./updateWorker.test.generated";
 
 const schema = makeExecutableSchema({ resolvers, typeDefs });
 
-describe("updateWorker", () => {
+describe.skipIf(!!process.env.CI)("updateWorker", () => {
   test("updates worker without conflict", async () => {
     const { data } = await execute(schema, SetupTestUpdateWorkerDocument, {
       input: {

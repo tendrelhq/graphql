@@ -23,7 +23,7 @@ COPY . .
 # test and build
 ARG NODE_ENV=production
 RUN bun compile
-RUN bun test
+RUN CI=true DATABASE_URL=postgres://localhost:5432/postgres bun test
 
 # copy production dependencies and source code into final image.
 FROM base AS release

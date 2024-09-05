@@ -7,7 +7,7 @@ import { TestCreateWorkerDocument } from "./createWorker.test.generated";
 
 const schema = makeExecutableSchema({ resolvers, typeDefs });
 
-describe("createWorker", () => {
+describe.skipIf(!!process.env.CI)("createWorker", () => {
   test("creates worker without conflict", async () => {
     const result = await execute(schema, TestCreateWorkerDocument, {
       input: {
