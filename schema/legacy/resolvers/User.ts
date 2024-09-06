@@ -1,5 +1,5 @@
 import { sql } from "@/datasources/postgres";
-import type { Organization, PageInfo, UserResolvers } from "@/schema";
+import type { PageInfo, UserResolvers } from "@/schema";
 import { decodeGlobalId } from "@/schema/system";
 import type { WithKey } from "@/util";
 
@@ -12,26 +12,18 @@ export const User: UserResolvers = {
   language(parent, _, ctx) {
     return ctx.orm.language.byId.load(parent.languageId as string);
   },
-  async organizations(parent, args, _) {
+  async organizations(parent, args, ctx) {
     const { first, last } = args;
     const parentId = decodeGlobalId(parent.id as string).id;
     const after = args.after ? decodeGlobalId(args.after).id : null;
     const before = args.before ? decodeGlobalId(args.before).id : null;
 
-    const rows = await sql<WithKey<Organization>[]>`
-      SELECT
-          customeruuid AS _key,
-          encode(('organization:' || customeruuid)::bytea, 'base64') AS id,
-          (customerenddate IS null OR customerenddate > now()) AS active,
-          customerstartdate::text AS "activatedAt",
-          customerenddate::text AS "deactivatedAt",
-          customerexternalid AS "billingId",
-          encode(('name:' || languagemasteruuid)::bytea, 'base64') AS "nameId"
+    // biome-ignore lint/complexity/noBannedTypes:
+    const keys = await sql<WithKey<{}>[]>`
+      SELECT customeruuid AS _key
       FROM public.workerinstance
       INNER JOIN public.customer
           ON workerinstancecustomerid = customerid
-      INNER JOIN public.languagemaster
-          ON customernamelanguagemasterid = languagemasterid
       WHERE
           workerinstanceworkerid = (
               SELECT workerid
@@ -64,9 +56,6 @@ export const User: UserResolvers = {
       LIMIT ${first ?? last ?? null};
     `;
 
-    const startCursor = rows.at(0);
-    const endCursor = rows.at(rows.length - 1);
-
     const [{ hasNextPage, hasPreviousPage }] = await sql<
       [Pick<PageInfo, "hasNextPage" | "hasPreviousPage">]
     >`
@@ -84,7 +73,7 @@ export const User: UserResolvers = {
                       AND workerinstancecustomerid > (
                           SELECT customerid
                           FROM public.customer
-                          WHERE customeruuid = ${endCursor?._key ?? null}
+                          WHERE customeruuid = ${keys.at(-1)?._key ?? null}
                       )
                   ORDER BY workerinstancecustomerid ${last ? sql`DESC` : sql`ASC`}
               )
@@ -102,21 +91,51 @@ export const User: UserResolvers = {
                       AND workerinstancecustomerid < (
                           SELECT customerid
                           FROM public.customer
-                          WHERE customeruuid = ${startCursor?._key ?? null}
+                          WHERE customeruuid = ${keys.at(0)?._key ?? null}
                       )
                   ORDER BY workerinstancecustomerid ${last ? sql`DESC` : sql`ASC`}
               )
           ) AS "hasPreviousPage"
     `;
 
+    const rows = await ctx.orm.organization.loadMany(keys.map(e => e._key));
+    const startCursor = rows.at(0);
+    const endCursor = rows.at(-1);
+
+    if (startCursor instanceof Error) {
+      throw startCursor;
+    }
+    if (endCursor instanceof Error) {
+      throw endCursor;
+    }
+
     return {
-      edges: rows.map(row => ({ node: row })),
+      edges: rows.map(row => {
+        if (row instanceof Error) {
+          throw row;
+        }
+
+        return {
+          cursor: row.id as string,
+          node: row,
+        };
+      }),
       pageInfo: {
         startCursor: startCursor?.id as string,
         endCursor: endCursor?.id as string,
         hasNextPage,
         hasPreviousPage,
       },
+      totalCount: (
+        await sql<[{ count: number }]>`
+          SELECT count(*)
+          FROM public.workerinstance
+          WHERE workerinstanceworkerid = (
+              SELECT workerid
+              FROM public.worker
+              WHERE workeruuid = ${parentId}
+        );`
+      )[0].count,
     };
   },
   tags() {

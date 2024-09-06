@@ -5,6 +5,24 @@ import type { WithKey } from "@/util";
 import { match } from "ts-pattern";
 
 export const Organization: OrganizationResolvers = {
+  async me(parent, _, ctx) {
+    const [row] = await sql<[{ id: string }]>`
+      SELECT workerinstanceuuid AS id
+      FROM public.workerinstance
+      WHERE
+          workerinstancecustomerid = (
+              SELECT customerid
+              FROM public.customer
+              WHERE customeruuid = ${decodeGlobalId(parent.id).id}
+          )
+          AND workerinstanceworkerid = (
+              SELECT workerid
+              FROM public.worker
+              WHERE workeridentityid = ${ctx.auth.userId}
+          );
+    `;
+    return ctx.orm.worker.load(row.id);
+  },
   async name(parent, _, ctx) {
     return ctx.orm.name.load(decodeGlobalId(parent.nameId).id);
   },

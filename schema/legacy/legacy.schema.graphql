@@ -99,6 +99,7 @@ type Organization implements Node {
     after: String
     search: LocationSearchOptions
   ): LocationConnection!
+  me: Worker!
   name: Name!
   nameId: ID!
   workers(
@@ -170,6 +171,7 @@ input UserSearchOptions {
 type OrganizationConnection {
   edges: [OrganizationEdge!]!
   pageInfo: PageInfo!
+  totalCount: Int!
 }
 
 type OrganizationEdge {

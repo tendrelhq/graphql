@@ -19,6 +19,22 @@
           "types": ["file"],
           "types_or": ["javascript", "jsx", "ts", "tsx", "json"],
           "verbose": false
+        },
+        {
+          "always_run": false,
+          "entry": "prettier --ignore-unknown --list-different --write",
+          "exclude": "^$",
+          "fail_fast": false,
+          "files": "",
+          "id": "prettier",
+          "language": "system",
+          "name": "prettier",
+          "pass_filenames": true,
+          "require_serial": false,
+          "stages": ["pre-commit"],
+          "types": ["file","graphql"],
+          "types_or": [],
+          "verbose": false
         }
       ],
       "repo": "local"
