@@ -12,11 +12,17 @@ export default (_: Request) =>
             w.workerinstanceuuid AS _key,
             encode(('worker:' || w.workerinstanceuuid)::bytea, 'base64') AS id,
             w.workerinstanceid AS _hack_numeric_id,
+            u.workerfullname AS "displayName",
+            u.workerfirstname AS "firstName",
+            u.workerlastname AS "lastName",
             l.systaguuid AS "languageId",
+            encode(('organization:' || o.customeruuid)::bytea, 'base64') AS "organizationId",
             r.systaguuid AS "roleId",
             w.workerinstancescanid AS "scanCode",
             encode(('user:' || u.workeruuid)::bytea, 'base64') AS "userId"
         FROM public.workerinstance AS w
+        INNER JOIN public.customer AS o
+            ON w.workerinstancecustomerid = o.customerid
         INNER JOIN public.systag AS l
             ON w.workerinstancelanguageid = l.systagid
         INNER JOIN public.systag AS r

@@ -24,24 +24,36 @@ export const createInvitation: NonNullable<
   // Will be fixed when we (hopefully) integrate with Clerk organizations.
   const i = await clerkClient.invitations
     .createInvitation({
+      ignoreExisting: true,
       emailAddress: input.emailAddress,
       publicMetadata: {
-        needs_sync: "yes",
         tendrel_id: input.workerId,
       },
+      redirectUrl: input.redirectUrl,
     })
     .catch(e => {
       if (isClerkAPIResponseError(e)) {
-        const ce = e.errors.at(0);
-        throw new GraphQLError(ce?.longMessage ?? ce?.message ?? e.message, {
-          extensions: {
-            code: ce?.code ?? "BAD_REQUEST",
-          },
-        });
+        const match = e.errors.find(e => e.code === "form_identifier_exists");
+        if (match?.meta?.paramName === "email_address") {
+          throw new GraphQLError("unique_constraint_violation", {
+            extensions: {
+              code: "email_address_taken",
+            },
+          });
+        }
+        console.log(e);
       }
-
       throw e;
     });
+
+  ctx.orm.invitation.byWorkerId.prime(decodeGlobalId(input.workerId).id, {
+    id: i.id,
+    status: i.status,
+    emailAddress: i.emailAddress,
+    createdAt: new Date(i.createdAt).toISOString(),
+    updatedAt: new Date(i.updatedAt).toISOString(),
+    workerId: input.workerId,
+  });
 
   // HACK: we need workerusername so these guys can log into the mobile app.
   // Doesn't work without it :/
@@ -68,15 +80,9 @@ export const createInvitation: NonNullable<
       FROM public.workerinstance AS w
       WHERE
           u.workerid = w.workerinstanceworkerid
-          AND w.workerinstanceuuid = ${decodeGlobalId(input.workerId).id};
+          AND w.workerinstanceuuid = ${decodeGlobalId(input.workerId).id}
+          AND u.workerusername <> ${input.emailAddress};
   `;
 
-  return {
-    id: i.id,
-    status: i.status,
-    emailAddress: i.emailAddress,
-    createdAt: new Date(i.createdAt).toISOString(),
-    updatedAt: new Date(i.updatedAt).toISOString(),
-    workerId: input.workerId,
-  };
+  return ctx.orm.worker.load(decodeGlobalId(input.workerId).id);
 };

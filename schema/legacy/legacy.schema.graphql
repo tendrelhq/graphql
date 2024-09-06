@@ -189,16 +189,24 @@ type Worker implements Node {
   id: ID!
   _hack_numeric_id: Int!
   active: ActivationStatus!
-  invitation: Invitation
-  invitationId: ID
+  auth: AuthenticationStatus!
+  displayName: String!
+  firstName: String!
+  lastName: String!
   language: Language!
   languageId: ID!
+  organizationId: ID!
   role: Tag!
   roleId: ID!
   scanCode: String
   tags: [Tag!]!
   user: User!
   userId: ID!
+}
+
+type AuthenticationStatus {
+  canLogin: Boolean!
+  invitation: Invitation
 }
 
 input WorkerSearchOptions {
@@ -259,7 +267,7 @@ type Mutation {
   ## Helpers
   activateWorker(id: ID!): Worker!
   deactivateWorker(id: ID!): Worker!
-  createInvitation(input: CreateInvitationInput!): Invitation!
+  createInvitation(input: CreateInvitationInput!): Worker!
   acceptInvitation(input: AcceptInvitationInput!): Worker!
 
   # Organization helpers
@@ -343,6 +351,7 @@ input UpdateNameInput {
 input CreateInvitationInput {
   emailAddress: String!
   orgId: ID!
+  redirectUrl: String
   workerId: ID!
 }
 
