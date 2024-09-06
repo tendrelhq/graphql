@@ -8,6 +8,7 @@
     "clean": "rimraf **/__generated__/** **/*.generated.ts node_modules out",
     "compile": "bun build.ts",
     "dev": "bun --hot --inspect ./bin/app.ts",
+    "format": "biome format --write && prettier --write '**/*.graphql'",
     "generate": "bun generate.ts",
     "explore": "bunx ruru@beta -Pe http://localhost:4000",
     "start": "bun ./bin/app.ts",
