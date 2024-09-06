@@ -73,6 +73,11 @@ type Auditable implements Component {
   id: Entity!
 }
 
+type AuthenticationStatus {
+  canLogin: Boolean!
+  invitation: Invitation
+}
+
 """
 TODO
 """
@@ -257,6 +262,7 @@ input CreateChecklistInput {
 input CreateInvitationInput {
   emailAddress: String!
   orgId: ID!
+  redirectUrl: String
   workerId: ID!
 }
 
@@ -512,7 +518,7 @@ type Mutation {
   activateWorker(id: ID!): Worker!
   createChecklist(input: CreateChecklistInput!): ChecklistEdge!
   createEntity(id: String, suffix: [String!], type: String!): Entity!
-  createInvitation(input: CreateInvitationInput!): Invitation!
+  createInvitation(input: CreateInvitationInput!): Worker!
   createLocation(input: CreateLocationInput!): Location!
   createUser(input: CreateUserInput!): User!
   createWorker(input: CreateWorkerInput!): WorkerEdge!
@@ -785,11 +791,14 @@ input UserSearchOptions {
 type Worker implements Node {
   _hack_numeric_id: Int!
   active: ActivationStatus!
+  auth: AuthenticationStatus!
+  displayName: String!
+  firstName: String!
   id: ID!
-  invitation: Invitation
-  invitationId: ID
   language: Language!
   languageId: ID!
+  lastName: String!
+  organizationId: ID!
   role: Tag!
   roleId: ID!
   scanCode: String

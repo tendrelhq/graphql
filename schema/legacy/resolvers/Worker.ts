@@ -1,4 +1,5 @@
 import { sql } from "@/datasources/postgres";
+import { EntityNotFound } from "@/errors";
 import type { ActivationStatus, WorkerResolvers } from "@/schema";
 import { decodeGlobalId } from "@/schema/system";
 
@@ -19,9 +20,29 @@ export const Worker: WorkerResolvers = {
     `;
     return row;
   },
-  invitation(parent, _, ctx) {
-    if (parent.invitationId) {
-      return ctx.orm.invitation.byId.load(parent.invitationId as string);
+  async auth(parent, _, ctx) {
+    const user = await ctx.orm.user.byId.load(decodeGlobalId(parent.userId).id);
+    try {
+      const invitation = await ctx.orm.invitation.byWorkerId.load(
+        parent.id as string,
+      );
+      return {
+        // There is an invitaton, but it has been accepted and properly
+        // propagated to workeridentityid.
+        canLogin:
+          typeof user.authenticationIdentityId === "string" &&
+          invitation.status === "accepted",
+        invitation,
+      };
+    } catch (e) {
+      if (e instanceof EntityNotFound) {
+        // There is no invitation. This doesn't mean that the user can't login
+        // though...
+        return {
+          canLogin: typeof user.authenticationIdentityId === "string",
+        };
+      }
+      throw e;
     }
   },
   language(parent, _, ctx) {
