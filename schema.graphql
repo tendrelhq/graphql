@@ -602,6 +602,7 @@ type Organization implements Node {
 type OrganizationConnection {
   edges: [OrganizationEdge!]!
   pageInfo: PageInfo!
+  totalCount: Int!
 }
 
 type OrganizationEdge {
