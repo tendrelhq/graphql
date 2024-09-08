@@ -3,14 +3,18 @@
 
 import { randomUUID } from "node:crypto";
 import type {
-  Actor,
+  Assignable,
   Assignee,
   Checklist,
   ChecklistResult,
   Temporal,
   User,
+  Worker,
 } from "@/schema";
 import { decodeGlobalId, encodeGlobalId } from "@/schema/system";
+import { CronExpression } from "@/schema/system/scalars";
+import { mergeAndConcat } from "merge-anything";
+import z from "myzod";
 
 function makeUser(
   firstName: string,
@@ -50,15 +54,17 @@ export const USERS = {
 };
 type USER = (typeof USERS)[keyof typeof USERS];
 
-function makeActor(user: USER): Actor {
+function makeActingIdentity(user: USER) {
   return {
-    __typename: "Actor" as const,
+    __typename: "Worker" as const,
     id: encodeGlobalId({
       type: "workerinstance",
-      id: randomUUID(),
+      id: user.id as string,
     }),
-    user: user as User,
-  };
+    firstName: user.firstName,
+    lastName: user.lastName,
+    displayName: user.displayName,
+  } as Worker;
 }
 
 function makeInstant(d: Date) {
@@ -85,7 +91,8 @@ function makeActive(id: string, active = true, updatedAt = new Date()) {
   };
 }
 
-function makeAssignee(at: Date, to: USER): Assignee {
+function makeAssignee({ at, to }: { at: Date; to: USER["id"] }): Assignee {
+  const user = Object.values(USERS).find(u => u.id === to);
   return {
     __typename: "Assignee" as const,
     id: encodeGlobalId({
@@ -94,13 +101,15 @@ function makeAssignee(at: Date, to: USER): Assignee {
     }),
     assignedAt: makeInstant(at),
     assignedTo: {
-      __typename: "Actor" as const,
+      __typename: "Worker" as const,
       id: encodeGlobalId({
         type: "workerinstance",
-        id: to.id as string,
+        id: to as string,
       }),
-      user: to as User,
-    },
+      firstName: user?.firstName,
+      lastName: user?.lastName,
+      displayName: user?.displayName,
+    } as Assignable,
   };
 }
 
@@ -137,6 +146,33 @@ function makeDisplayName(value: string, locale = "en") {
   };
 }
 
+const ScheduleInput = z.union([
+  z.object(
+    {
+      type: z.literal("CronSchedule"),
+      repr: z.string().map(CronExpression.parseValue),
+    },
+    { allowUnknown: true },
+  ),
+  z.object(
+    {
+      type: z.literal("OnceSchedule"),
+      repr: z.string(),
+    },
+    { allowUnknown: true },
+  ),
+]);
+
+export function parseScheduleInput(input: { type: string; repr: unknown }) {
+  const schedule = ScheduleInput.parse(input);
+  switch (schedule.type) {
+    case "CronSchedule":
+      return makeCronSchedule(schedule.repr);
+    case "OnceSchedule":
+      return makeOnceSchedule(new Date(schedule.repr));
+  }
+}
+
 function makeOnceSchedule(d: Date) {
   return {
     __typename: "OnceSchedule" as const,
@@ -158,6 +194,128 @@ function makeSop(id: string, link: string | URL) {
   };
 }
 
+const StatusInput = z.union(
+  [
+    z.object(
+      {
+        type: z.literal("ChecklistOpen"),
+        repr: z.object(
+          {
+            id: z.string(),
+            openedAt: z.object(
+              {
+                epochMilliseconds: z.number({ coerce: true }),
+              },
+              {
+                allowUnknown: true,
+              },
+            ),
+            openedBy: z.object(
+              {
+                id: z.string(),
+              },
+              { allowUnknown: true },
+            ),
+          },
+          { allowUnknown: true },
+        ),
+      },
+      { allowUnknown: true },
+    ),
+    z.object(
+      {
+        type: z.literal("ChecklistInProgress"),
+        repr: z.object(
+          {
+            id: z.string(),
+            inProgressAt: z.object(
+              {
+                epochMilliseconds: z.number({ coerce: true }),
+              },
+              { allowUnknown: true },
+            ),
+            inProgressBy: z.object(
+              {
+                id: z.string(),
+              },
+              { allowUnknown: true },
+            ),
+          },
+          { allowUnknown: true },
+        ),
+      },
+      { allowUnknown: true },
+    ),
+    z.object(
+      {
+        type: z.literal("ChecklistClosed"),
+        repr: z.object(
+          {
+            id: z.string(),
+            closedAt: z.object(
+              {
+                epochMilliseconds: z.number({ coerce: true }),
+              },
+              { allowUnknown: true },
+            ),
+            closedBy: z.object(
+              {
+                id: z.string(),
+              },
+              { allowUnknown: true },
+            ),
+            closedBecause: z
+              .object(
+                {
+                  code: z.union([z.literal("success"), z.literal("error")]),
+                  note: z.object(
+                    {
+                      locale: z.string(),
+                      value: z.string(),
+                    },
+                    { allowUnknown: true },
+                  ),
+                },
+                { allowUnknown: true },
+              )
+              .optional(),
+          },
+          { allowUnknown: true },
+        ),
+      },
+      { allowUnknown: true },
+    ),
+  ],
+  {
+    strict: false,
+  },
+);
+
+export function parseStatusInput(input: { type: string; repr: unknown }) {
+  const status = StatusInput.parse({
+    ...input,
+    repr: typeof input.repr === "string" ? JSON.parse(input.repr) : input.repr,
+  });
+  switch (status.type) {
+    case "ChecklistOpen":
+      return makeOpen({
+        at: new Date(status.repr.openedAt.epochMilliseconds),
+        by: USERS.Rugg,
+      });
+    case "ChecklistInProgress":
+      return makeInProgress({
+        at: new Date(status.repr.inProgressAt.epochMilliseconds),
+        by: USERS.Rugg,
+      });
+    case "ChecklistClosed":
+      return makeClosed({
+        at: new Date(status.repr.closedAt.epochMilliseconds),
+        by: USERS.Rugg,
+        success: status.repr.closedBecause?.code !== "error",
+      });
+  }
+}
+
 export function makeOpen({ at, by }: { at: Date; by: USER }) {
   return {
     __typename: "ChecklistOpen" as const,
@@ -166,7 +324,7 @@ export function makeOpen({ at, by }: { at: Date; by: USER }) {
       id: randomUUID(),
     }),
     openedAt: makeInstant(at),
-    openedBy: makeActor(by),
+    openedBy: makeActingIdentity(by),
   };
 }
 
@@ -178,7 +336,7 @@ function makeInProgress({ at, by }: { at: Date; by: USER }) {
       id: randomUUID(),
     }),
     inProgressAt: makeInstant(at),
-    inProgressBy: makeActor(by),
+    inProgressBy: makeActingIdentity(by),
   };
 }
 
@@ -194,7 +352,7 @@ function makeClosed({
       id: randomUUID(),
     }),
     closedAt: makeInstant(at),
-    closedBy: makeActor(by),
+    closedBy: makeActingIdentity(by),
     closedBecause: {
       code: success ? ("success" as const) : ("error" as const),
     },
@@ -240,6 +398,85 @@ function makeRegister(binary: string) {
   };
 }
 
+const ChecklistItemInput = z.union([
+  z.object(
+    {
+      type: z.literal("ChecklistResult"),
+      repr: z.object(
+        {
+          id: z.string(),
+          auditable: z.object(
+            {
+              enabled: z.boolean(),
+            },
+            { allowUnknown: true },
+          ),
+          name: z.object(
+            {
+              value: z.object({
+                value: z.string(),
+              }),
+            },
+            { allowUnknown: true },
+          ),
+          required: z.boolean().optional(),
+          status: z.string().map(StatusInput.parse).or(StatusInput),
+          value: z
+            .union([
+              z.object(
+                {
+                  count: z.number(),
+                },
+                { allowUnknown: true },
+              ),
+              z.object(
+                {
+                  enabled: z.boolean(),
+                },
+                { allowUnknown: true },
+              ),
+              z.object(
+                {
+                  binary: z.string(),
+                },
+                { allowUnknown: true },
+              ),
+            ])
+            .optional(),
+        },
+        { allowUnknown: true },
+      ),
+    },
+    { allowUnknown: true },
+  ),
+]);
+
+export function parseChecklistItemInput(input: {
+  type: string;
+  repr: unknown;
+}) {
+  const item = ChecklistItemInput.parse({
+    ...input,
+    repr: typeof input.repr === "string" ? JSON.parse(input.repr) : input.repr,
+  });
+  switch (item.type) {
+    case "ChecklistResult":
+      return makeResult({
+        assignees: [],
+        name: item.repr.name.value.value,
+        required: item.repr.required ?? false,
+        status: parseStatusInput(item.repr.status),
+        value: item.repr.value
+          ? "count" in item.repr.value
+            ? makeCounter(item.repr.value.count)
+            : "enabled" in item.repr.value
+              ? makeFlag(item.repr.value.enabled)
+              : makeRegister(item.repr.value.binary)
+          : undefined,
+      });
+  }
+}
+
 function makeResult({
   assignees,
   name,
@@ -254,7 +491,7 @@ function makeResult({
     | ReturnType<typeof makeOpen>
     | ReturnType<typeof makeInProgress>
     | ReturnType<typeof makeClosed>;
-  value:
+  value?:
     | ReturnType<typeof makeCounter>
     | ReturnType<typeof makeFlag>
     | ReturnType<typeof makeRegister>;
@@ -285,6 +522,7 @@ function makeChecklist({
   active,
   activeAt,
   assignees,
+  auditable,
   children,
   description,
   items,
@@ -298,7 +536,8 @@ function makeChecklist({
   id?: string;
   active: boolean;
   activeAt: Date;
-  assignees: ReturnType<typeof makeAssignee>[];
+  assignees: Parameters<typeof makeAssignee>[0][];
+  auditable?: boolean;
   children: ReturnType<typeof makeChecklist>[];
   description?: string;
   items: (ReturnType<typeof makeChecklist> | ReturnType<typeof makeResult>)[];
@@ -308,7 +547,7 @@ function makeChecklist({
     | ReturnType<typeof makeOnceSchedule>
     | ReturnType<typeof makeCronSchedule>;
   sop?: string | URL;
-  status:
+  status?:
     | ReturnType<typeof makeOpen>
     | ReturnType<typeof makeInProgress>
     | ReturnType<typeof makeClosed>;
@@ -323,9 +562,9 @@ function makeChecklist({
         id,
       }),
     active: makeActive(id, active, activeAt),
-    assignees: makeConnection(assignees),
+    assignees: makeConnection(assignees.map(makeAssignee)),
     attachments: makeConnection([]),
-    auditable: makeAuditable(id),
+    auditable: makeAuditable(id, auditable),
     children: makeConnection(children),
     description: description ? makeDescription(description) : undefined,
     items: makeConnection(items),
@@ -343,7 +582,7 @@ function makeChecklist({
 const KELLER_TODOLIST = makeChecklist({
   active: true,
   activeAt: new Date("2024-08-01T00:00:00"),
-  assignees: [makeAssignee(new Date("2024-08-15T08:00:00"), USERS.Mark)],
+  assignees: [{ at: new Date("2024-08-15T08:00:00"), to: USERS.Mark.id }],
   children: [],
   description: "A Day in the Life of Keller (abridged, volume 3.82)",
   items: [
@@ -398,7 +637,7 @@ const KELLER_TODOLIST = makeChecklist({
 const GREENHOUSE_CHECK_OPEN = makeChecklist({
   active: true,
   activeAt: new Date("2024-08-01T00:00:00"),
-  assignees: [makeAssignee(new Date("2024-08-15T08:00:00"), USERS.Murphy)],
+  assignees: [{ at: new Date("2024-08-15T08:00:00"), to: USERS.Murphy.id }],
   children: [],
   description: "Make sure the greenhouse is in shape",
   items: [
@@ -433,7 +672,7 @@ const GREENHOUSE_CHECK_OPEN = makeChecklist({
 const GREENHOUSE_CHECK_SUC = makeChecklist({
   active: true,
   activeAt: new Date("2024-08-01T00:00:00"),
-  assignees: [makeAssignee(new Date("2024-08-15T08:00:00"), USERS.Fed)],
+  assignees: [{ at: new Date("2024-08-15T08:00:00"), to: USERS.Fed.id }],
   children: [],
   description: "Make sure the greenhouse is in shape",
   items: [
@@ -475,10 +714,10 @@ const GREENHOUSE_CHECK_ERR = makeChecklist({
   active: true,
   activeAt: new Date("2024-08-01T00:00:00"),
   assignees: [
-    makeAssignee(new Date("2024-08-12T08:00:00"), USERS.Rugg),
-    makeAssignee(new Date("2024-08-12T08:00:00"), USERS.Akash),
-    makeAssignee(new Date("2024-08-12T08:00:00"), USERS.Connor),
-    makeAssignee(new Date("2024-08-12T08:00:00"), USERS.Mark),
+    { at: new Date("2024-08-12T08:00:00"), to: USERS.Rugg.id },
+    { at: new Date("2024-08-12T08:00:00"), to: USERS.Akash.id },
+    { at: new Date("2024-08-12T08:00:00"), to: USERS.Connor.id },
+    { at: new Date("2024-08-12T08:00:00"), to: USERS.Mark.id },
   ],
   children: [],
   description: "Make sure the greenhouse is in shape",
@@ -520,7 +759,7 @@ const GREENHOUSE_CHECK_ERR = makeChecklist({
 const ONCALL_DAILY = makeChecklist({
   active: true,
   activeAt: new Date("2024-08-01T00:00:00"),
-  assignees: [makeAssignee(new Date("2024-08-15T08:00:00"), USERS.Twait)],
+  assignees: [{ at: new Date("2024-08-15T08:00:00"), to: USERS.Twait.id }],
   description: "Do these things every day",
   items: [
     makeChecklist({
@@ -657,7 +896,6 @@ const ONCALL_DAILY = makeChecklist({
   ],
 });
 
-// biome-ignore lint/style/useConst:
 export let CHECKLISTS: Checklist[] = [
   KELLER_TODOLIST,
   ONCALL_DAILY,
@@ -673,6 +911,15 @@ export let CHECKLISTS: Checklist[] = [
 
 export function appendChecklist(args: Parameters<typeof makeChecklist>[0]) {
   const c = makeChecklist(args);
-  CHECKLISTS.push(c);
+  const i = CHECKLISTS.findIndex(e => e.id === c.id);
+  if (i !== -1) {
+    CHECKLISTS = [
+      ...CHECKLISTS.slice(0, i),
+      mergeAndConcat(CHECKLISTS[i], c) as Checklist,
+      ...CHECKLISTS.slice(i + 1),
+    ];
+  } else {
+    CHECKLISTS.push(c);
+  }
   return c;
 }

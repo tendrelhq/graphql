@@ -1,0 +1,3 @@
+interface Identity implements Component {
+  id: Entity!
+}

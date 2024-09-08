@@ -1,5 +1,7 @@
+import { randomUUID } from "node:crypto";
 import { orm } from "@/datasources/postgres";
 import type { Context } from "@/schema";
+import { encodeGlobalId } from "@/schema/system";
 import type { TypedDocumentNode as DocumentNode } from "@graphql-typed-document-node/core";
 import {
   type ExecutionResult,
@@ -38,3 +40,9 @@ async function createTestContext(): Promise<Context> {
     orm: orm(DEFAULT_REQUEST as any),
   };
 }
+
+export function testGlobalId() {
+  return encodeGlobalId({ type: "__test__", id: "1" });
+}
+
+export const NOW = new Date(1725823905364);

@@ -1,0 +1,110 @@
+mutation TestSaveChecklist($input: ChecklistInput!) {
+  saveChecklist(input: $input) {
+    node {
+      id
+      name {
+        value {
+          value
+        }
+      }
+      active {
+        active
+      }
+      assignees {
+        edges {
+          node {
+            assignedAt {
+              epochMilliseconds
+            }
+            assignedTo {
+              id
+            }
+          }
+        }
+      }
+      auditable {
+        enabled
+      }
+      description {
+        value {
+          value
+        }
+      }
+      items {
+        edges {
+          node {
+            ... on ChecklistResult {
+              auditable {
+                enabled
+              }
+              name {
+                value {
+                  value
+                }
+              }
+              required
+              status {
+                ... on ChecklistOpen {
+                  openedAt {
+                    epochMilliseconds
+                  }
+                }
+                ... on ChecklistInProgress {
+                  inProgressAt {
+                    epochMilliseconds
+                  }
+                }
+                ... on ChecklistClosed {
+                  closedAt {
+                    epochMilliseconds
+                  }
+                }
+              }
+              value {
+                ... on Counter {
+                  count
+                }
+                ... on Flag {
+                  enabled
+                }
+                ... on Register {
+                  binary
+                }
+              }
+            }
+          }
+        }
+      }
+      schedule {
+        ... on CronSchedule {
+          cron
+        }
+        ... on OnceSchedule {
+          once {
+            epochMilliseconds
+          }
+        }
+      }
+      sop {
+        link
+      }
+      status {
+        ... on ChecklistOpen {
+          openedAt {
+            epochMilliseconds
+          }
+        }
+        ... on ChecklistInProgress {
+          inProgressAt {
+            epochMilliseconds
+          }
+        }
+        ... on ChecklistClosed {
+          closedAt {
+            epochMilliseconds
+          }
+        }
+      }
+    }
+  }
+}

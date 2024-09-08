@@ -13,14 +13,6 @@ type Activatable implements Component {
 """
 TODO
 """
-type Actor implements Component {
-  id: Entity!
-  user: User!
-}
-
-"""
-TODO
-"""
 type Attachment implements Component {
   id: Entity!
   attachment: String!
@@ -37,13 +29,26 @@ type AttachmentEdge implements Edge {
   node: Attachment!
 }
 
+interface Assignable implements Component {
+  id: Entity!
+}
+
 """
 TODO
 """
 type Assignee implements Component {
   id: Entity!
-  assignedTo: Actor!
+  assignedTo: Assignable!
   assignedAt: Temporal!
+}
+
+"""
+TODO
+"""
+input AssigneeInput {
+  id: Entity!
+  assignTo: Entity!
+  assignAt: String!
 }
 
 type AssigneeConnection implements Connection {
@@ -87,7 +92,7 @@ by whom.
 """
 type Metadata {
   updatedAt: Temporal!
-  updatedBy: Actor
+  updatedBy: Identity
 }
 
 """

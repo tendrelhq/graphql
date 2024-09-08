@@ -18,12 +18,8 @@ type ActivationStatus {
   deactivatedAt: String
 }
 
-"""
-TODO
-"""
-type Actor implements Component {
+interface Assignable implements Component {
   id: Entity!
-  user: User!
 }
 
 """
@@ -31,7 +27,7 @@ TODO
 """
 type Assignee implements Component {
   assignedAt: Temporal!
-  assignedTo: Actor!
+  assignedTo: Assignable!
   id: Entity!
 }
 
@@ -44,6 +40,15 @@ type AssigneeConnection implements Connection {
 type AssigneeEdge implements Edge {
   cursor: String!
   node: Assignee!
+}
+
+"""
+TODO
+"""
+input AssigneeInput {
+  assignAt: String!
+  assignTo: Entity!
+  id: Entity!
 }
 
 """
@@ -138,13 +143,13 @@ type Checklist implements Component {
   required: Boolean
   schedule: Schedule
   sop: Sop
-  status: ChecklistStatus!
+  status: ChecklistStatus
 }
 
 type ChecklistClosed implements Component {
   closedAt: Temporal!
   closedBecause: ChecklistClosedReason!
-  closedBy: Actor!
+  closedBy: Identity!
   id: Entity!
 }
 
@@ -172,7 +177,21 @@ type ChecklistEdge implements Edge {
 type ChecklistInProgress implements Component {
   id: Entity!
   inProgressAt: Temporal!
-  inProgressBy: Actor!
+  inProgressBy: Identity!
+}
+
+input ChecklistInput {
+  active: Boolean!
+  assignees: [AssigneeInput!]
+  auditable: Boolean!
+  customerId: ID!
+  description: String
+  id: Entity!
+  items: [ChecklistItemInput!]
+  name: String!
+  schedule: ScheduleInput
+  sop: URL
+  status: ChecklistStatusInput
 }
 
 union ChecklistItem = Checklist | ChecklistResult
@@ -188,10 +207,19 @@ type ChecklistItemEdge implements Edge {
   node: ChecklistItem!
 }
 
+input ChecklistItemInput {
+  repr: String!
+  type: ChecklistItemInputType!
+}
+
+enum ChecklistItemInputType {
+  ChecklistResult
+}
+
 type ChecklistOpen implements Component {
   id: Entity!
   openedAt: Temporal!
-  openedBy: Actor
+  openedBy: Identity!
 }
 
 type ChecklistResult implements Component {
@@ -211,8 +239,8 @@ type ChecklistResult implements Component {
   id: Entity!
   name: DisplayName!
   required: Boolean
-  status: ChecklistStatus!
-  value: ChecklistResultValue!
+  status: ChecklistStatus
+  value: ChecklistResultValue
 }
 
 union ChecklistResultValue = Counter | Flag | Register
@@ -227,6 +255,17 @@ input ChecklistSearchOrderOptions {
 }
 
 union ChecklistStatus = ChecklistClosed | ChecklistInProgress | ChecklistOpen
+
+input ChecklistStatusInput {
+  repr: String!
+  type: ChecklistStatusInputType!
+}
+
+enum ChecklistStatusInputType {
+  ChecklistClosed
+  ChecklistInProgress
+  ChecklistOpen
+}
 
 """
 Components characterize Entities as possessing a particular trait.
@@ -246,17 +285,7 @@ Data type for tracking an incrementable/decrementable integer value.
 Counters have two operations: increment and decrement.
 """
 type Counter {
-  count: Int
-}
-
-input CreateChecklistInput {
-  active: Boolean!
-  auditable: Boolean!
-  customerId: ID!
-  description: String
-  id: Entity!
-  name: String!
-  sop: URL
+  count: Int!
 }
 
 input CreateInvitationInput {
@@ -399,13 +428,17 @@ Data type for tracking Boolean-like values in the form of "enabled" or
 Flags only support two operations: enable and disable.
 """
 type Flag {
-  enabled: Boolean
+  enabled: Boolean!
+}
+
+interface Identity implements Component {
+  id: Entity!
 }
 
 """
 Fixed point in time (i.e. "exact time") without regard to calendar or location
 """
-type Instant {
+type Instant implements Temporal {
   """
   Milliseconds since the UNIX epoch of 1/1/1970 00:00+00
   """
@@ -510,13 +543,12 @@ by whom.
 """
 type Metadata {
   updatedAt: Temporal!
-  updatedBy: Actor
+  updatedBy: Identity
 }
 
 type Mutation {
   acceptInvitation(input: AcceptInvitationInput!): Worker!
   activateWorker(id: ID!): Worker!
-  createChecklist(input: CreateChecklistInput!): ChecklistEdge!
   createEntity(id: String, suffix: [String!], type: String!): Entity!
   createInvitation(input: CreateInvitationInput!): Worker!
   createLocation(input: CreateLocationInput!): Location!
@@ -525,6 +557,7 @@ type Mutation {
   deactivateWorker(id: ID!): Worker!
   disableLanguage(languageId: ID!, orgId: ID!): EnabledLanguageEdge!
   enableLanguage(languageId: ID!, orgId: ID!): EnabledLanguageEdge!
+  saveChecklist(input: ChecklistInput!): ChecklistEdge!
   updateLocation(input: UpdateLocationInput!): Location!
   updateName(input: UpdateNameInput!): Name!
   updateUser(input: UpdateUserInput!): User!
@@ -643,7 +676,7 @@ as the value of a register. Registers can only have the binaries stored within
 them changed.
 """
 type Register {
-  binary: String
+  binary: String!
 }
 
 """
@@ -665,6 +698,22 @@ enum RoundingMode {
 TODO
 """
 union Schedule = CronSchedule | OnceSchedule
+
+"""
+TODO
+"""
+input ScheduleInput {
+  repr: String!
+  type: ScheduleType!
+}
+
+"""
+TODO
+"""
+enum ScheduleType {
+  CronSchedule
+  OnceSchedule
+}
 
 enum SmallestTimeUnit {
   millisecond
@@ -701,7 +750,12 @@ type Tag {
   type: String!
 }
 
-union Temporal = Instant | ZonedDateTime
+interface Temporal {
+  """
+  Milliseconds since the UNIX epoch of 1/1/1970 00:00+00
+  """
+  epochMilliseconds: String!
+}
 
 scalar TimeZone
 
@@ -788,13 +842,13 @@ input UserSearchOptions {
   displayName: String
 }
 
-type Worker implements Node {
+type Worker implements Assignable & Component & Identity {
   _hack_numeric_id: Int!
   active: ActivationStatus!
   auth: AuthenticationStatus!
   displayName: String!
   firstName: String!
-  id: ID!
+  id: Entity!
   language: Language!
   languageId: ID!
   lastName: String!
@@ -832,7 +886,7 @@ input WorkersQueryOptions {
 Timezone-aware, calendar-aware date/time object representing an exact time
 from the perspective of a particular geographic region
 """
-type ZonedDateTime {
+type ZonedDateTime implements Temporal {
   day: Int!
 
   """

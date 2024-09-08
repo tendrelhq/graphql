@@ -74,16 +74,9 @@
               '';
             })
           ];
-          pre-commit.hooks = {
-            alejandra.enable = true;
-            biome = {
-              enable = true;
-              entry = "biome check --write";
-            };
-            prettier = {
-              enable = true;
-              types = ["file" "graphql"];
-            };
+          pre-commit.hooks.treefmt = {
+            enable = true;
+            package = config.treefmt.build.wrapper;
           };
           processes = {
             app.exec = "bun dev";

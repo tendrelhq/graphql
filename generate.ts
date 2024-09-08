@@ -20,6 +20,9 @@ const config: CodegenConfig = {
     }),
     "./schema.graphql": {
       plugins: ["schema-ast"],
+      config: {
+        sort: true,
+      },
     },
     ".": {
       preset: "near-operation-file",
@@ -30,6 +33,7 @@ const config: CodegenConfig = {
       config: {
         addTypenameToSelectionSets: true,
         scalars: scalarsConfig,
+        useTypeImports: true,
       },
     },
   },

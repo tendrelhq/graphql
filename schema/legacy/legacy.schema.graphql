@@ -185,8 +185,8 @@ type PageInfo {
   endCursor: String
 }
 
-type Worker implements Node {
-  id: ID!
+type Worker implements Component & Assignable & Identity {
+  id: Entity!
   _hack_numeric_id: Int!
   active: ActivationStatus!
   auth: AuthenticationStatus!

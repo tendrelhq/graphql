@@ -1,8 +1,13 @@
 import type { MutationResolvers } from "@/schema";
-import { USERS, appendChecklist, makeOpen } from "@/test/d3";
+import {
+  appendChecklist,
+  parseChecklistItemInput,
+  parseScheduleInput,
+  parseStatusInput,
+} from "@/test/d3";
 
-export const createChecklist: NonNullable<
-  MutationResolvers["createChecklist"]
+export const saveChecklist: NonNullable<
+  MutationResolvers["saveChecklist"]
 > = async (_, { input }) => {
   // simulate some latency
   await new Promise(resolve => setTimeout(resolve, 2000));
@@ -11,16 +16,19 @@ export const createChecklist: NonNullable<
     id: input.id,
     active: input.active,
     activeAt: new Date(),
-    assignees: [],
+    assignees:
+      input.assignees?.map(node => ({
+        at: new Date(node.assignAt),
+        to: node.assignTo,
+      })) ?? [],
+    auditable: input.auditable,
     children: [],
     description: input.description,
-    items: [],
+    items: input.items?.map(parseChecklistItemInput) ?? [],
     name: input.name,
+    schedule: input.schedule ? parseScheduleInput(input.schedule) : undefined,
     sop: input.sop,
-    status: makeOpen({
-      at: new Date(),
-      by: USERS.Rugg,
-    }),
+    status: input.status ? parseStatusInput(input.status) : undefined,
   });
 
   return {
