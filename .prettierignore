@@ -1,8 +1,0 @@
-# ignore everything
-*
-
-# except graphql files
-!*.graphql
-
-# potentially in subdirectories
-!*/
