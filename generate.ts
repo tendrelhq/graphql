@@ -38,5 +38,5 @@ const config: CodegenConfig = {
 
 await generate(config);
 
-await $`biome format --write ./schema/__generated__/*.ts`;
+await $`biome format --vcs-enabled=false --write ./schema/__generated__/*.ts`;
 await $`biome check --write ./schema/*/resolvers/**/*.ts`;

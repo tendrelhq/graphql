@@ -1,10 +1,19 @@
 {
   inputs = {
-    devenv.url = "github:cachix/devenv";
-    git-hooks.url = "github:cachix/git-hooks.nix";
+    devenv = {
+      url = "github:cachix/devenv";
+      inputs.nixpkgs.follows = "nixpkgs";
+      inputs.pre-commit-hooks.follows = "git-hooks";
+    };
+    git-hooks = {
+      url = "github:cachix/git-hooks.nix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
     nixpkgs.url = "github:nixos/nixpkgs/nixpkgs-unstable";
-
-    devenv.inputs.pre-commit-hooks.follows = "git-hooks";
+    treefmt = {
+      url = "github:numtide/treefmt-nix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
   nixConfig = {
@@ -20,6 +29,7 @@
     flake-parts.lib.mkFlake {inherit inputs;} {
       imports = [
         inputs.devenv.flakeModule
+        inputs.treefmt.flakeModule
       ];
       systems = ["x86_64-linux"];
       perSystem = {
@@ -31,33 +41,11 @@
       }: {
         devenv.shells.default = let
           cfg = config.devenv.shells.default;
-          pkg = lib.importJSON ./package.json;
-          biome = pkgs.stdenv.mkDerivation rec {
-            pname = "biome";
-            version = let
-              v = pkg.devDependencies."@biomejs/biome";
-            in "v${lib.strings.removePrefix "^" v}";
-
-            src = pkgs.fetchurl {
-              url = "https://github.com/biomejs/biome/releases/download/cli%2F${version}/biome-linux-x64";
-              hash = "sha256-VJXy9p7dlOnybtGtue2AI9fBQ8PMbydfkKvd7WEiF+Q=";
-            };
-
-            nativeBuildInputs = [pkgs.autoPatchelfHook];
-            buildInputs = [pkgs.stdenv.cc.cc.libgcc];
-
-            dontUnpack = true;
-            installPhase = ''
-              install -D -m755 $src $out/bin/biome
-            '';
-
-            meta.mainProgram = "biome";
-          };
         in {
           name = "tendrel-graphql";
           containers = lib.mkForce {};
           env = {
-            BIOME_BINARY = lib.getExe biome;
+            BIOME_BINARY = lib.getExe config.packages.biome;
           };
           packages = with pkgs; [
             act
@@ -67,6 +55,7 @@
             just
             nodejs # required by biome's entrypoint
             cfg.services.postgres.package
+            config.treefmt.build.wrapper
             (stdenv.mkDerivation rec {
               pname = "copilot-cli";
               version = "1.33.3";
@@ -136,7 +125,47 @@
           };
         };
 
-        packages.default = self'.devShells.default;
+        packages = {
+          biome = let
+            pkg = lib.importJSON ./package.json;
+          in
+            pkgs.stdenv.mkDerivation rec {
+              pname = "biome";
+              version = let
+                v = pkg.devDependencies."@biomejs/biome";
+              in "v${lib.strings.removePrefix "^" v}";
+
+              src = pkgs.fetchurl {
+                url = "https://github.com/biomejs/biome/releases/download/cli%2F${version}/biome-linux-x64";
+                hash = "sha256-VJXy9p7dlOnybtGtue2AI9fBQ8PMbydfkKvd7WEiF+Q=";
+              };
+
+              nativeBuildInputs = [pkgs.autoPatchelfHook];
+              buildInputs = [pkgs.stdenv.cc.cc.libgcc];
+
+              dontUnpack = true;
+              installPhase = ''
+                install -D -m755 $src $out/bin/biome
+              '';
+
+              meta.mainProgram = "biome";
+            };
+        };
+
+        treefmt.config = {
+          projectRootFile = "flake.nix";
+          programs = {
+            alejandra.enable = true;
+            biome = {
+              enable = true;
+              package = config.packages.biome;
+            };
+            prettier = {
+              enable = true;
+              includes = ["*.graphql" "*.md" "*.yaml" "*.yml"];
+            };
+          };
+        };
       };
     };
 }
