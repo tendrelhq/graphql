@@ -21,17 +21,10 @@ exports[`checklists 1`] = `
                     "assignedAt": {
                       "__typename": "Instant",
                       "epochMilliseconds": "1723708800000",
-                      "toZonedDateTime": {
-                        "__typename": "ZonedDateTime",
-                        "toString": "2024-08-15T02:00:00-06:00[America/Denver]",
-                      },
                     },
                     "assignedTo": {
-                      "__typename": "Actor",
-                      "user": {
-                        "__typename": "User",
-                        "displayName": "Mark Keller",
-                      },
+                      "__typename": "Worker",
+                      "displayName": "Mark Keller",
                     },
                   },
                 },
@@ -147,10 +140,6 @@ exports[`checklists 1`] = `
               "openedAt": {
                 "__typename": "Instant",
                 "epochMilliseconds": "1723708800000",
-                "toZonedDateTime": {
-                  "__typename": "ZonedDateTime",
-                  "toString": "2024-08-15T02:00:00-06:00[America/Denver]",
-                },
               },
             },
           },
@@ -169,17 +158,10 @@ exports[`checklists 1`] = `
                     "assignedAt": {
                       "__typename": "Instant",
                       "epochMilliseconds": "1723708800000",
-                      "toZonedDateTime": {
-                        "__typename": "ZonedDateTime",
-                        "toString": "2024-08-15T02:00:00-06:00[America/Denver]",
-                      },
                     },
                     "assignedTo": {
-                      "__typename": "Actor",
-                      "user": {
-                        "__typename": "User",
-                        "displayName": "Will Twait",
-                      },
+                      "__typename": "Worker",
+                      "displayName": "Will Twait",
                     },
                   },
                 },
@@ -309,17 +291,10 @@ exports[`checklists 1`] = `
                     "assignedAt": {
                       "__typename": "Instant",
                       "epochMilliseconds": "1723708800000",
-                      "toZonedDateTime": {
-                        "__typename": "ZonedDateTime",
-                        "toString": "2024-08-15T02:00:00-06:00[America/Denver]",
-                      },
                     },
                     "assignedTo": {
-                      "__typename": "Actor",
-                      "user": {
-                        "__typename": "User",
-                        "displayName": "Federico Rozenberg",
-                      },
+                      "__typename": "Worker",
+                      "displayName": "Federico Rozenberg",
                     },
                   },
                 },

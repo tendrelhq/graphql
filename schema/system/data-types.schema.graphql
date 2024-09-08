@@ -3,7 +3,7 @@ Data type for tracking an incrementable/decrementable integer value.
 Counters have two operations: increment and decrement.
 """
 type Counter {
-  count: Int
+  count: Int!
 }
 
 """
@@ -12,7 +12,7 @@ Data type for tracking Boolean-like values in the form of "enabled" or
 Flags only support two operations: enable and disable.
 """
 type Flag {
-  enabled: Boolean
+  enabled: Boolean!
 }
 
 """
@@ -21,5 +21,5 @@ as the value of a register. Registers can only have the binaries stored within
 them changed.
 """
 type Register {
-  binary: String
+  binary: String!
 }

@@ -9,17 +9,30 @@ type Query {
 }
 
 type Mutation {
-  createChecklist(input: CreateChecklistInput!): ChecklistEdge!
+  saveChecklist(input: ChecklistInput!): ChecklistEdge!
 }
 
-input CreateChecklistInput {
+input ChecklistInput {
   id: Entity!
   active: Boolean!
+  assignees: [AssigneeInput!]
   auditable: Boolean!
   customerId: ID!
   description: String
+  items: [ChecklistItemInput!]
   name: String!
+  schedule: ScheduleInput
   sop: URL
+  status: ChecklistStatusInput
+}
+
+input ChecklistItemInput {
+  type: ChecklistItemInputType!
+  repr: String!
+}
+
+enum ChecklistItemInputType {
+  ChecklistResult
 }
 
 type Checklist implements Component {
@@ -49,7 +62,7 @@ type Checklist implements Component {
   required: Boolean
   schedule: Schedule
   sop: Sop
-  status: ChecklistStatus!
+  status: ChecklistStatus
 
   # experimental - subject to change
   children(
@@ -113,27 +126,39 @@ type ChecklistResult implements Component {
   ): AttachmentConnection!
   name: DisplayName!
   required: Boolean
-  status: ChecklistStatus!
-  value: ChecklistResultValue!
+  status: ChecklistStatus
+  value: ChecklistResultValue
 }
 
 union ChecklistResultValue = Counter | Flag | Register
 
 ## Our checklists go Open > In Progress > Closed
 union ChecklistStatus = ChecklistOpen | ChecklistInProgress | ChecklistClosed
+
+input ChecklistStatusInput {
+  type: ChecklistStatusInputType!
+  repr: String!
+}
+
+enum ChecklistStatusInputType {
+  ChecklistOpen
+  ChecklistInProgress
+  ChecklistClosed
+}
+
 type ChecklistOpen implements Component {
   id: Entity!
-  openedBy: Actor
+  openedBy: Identity!
   openedAt: Temporal!
 }
 type ChecklistInProgress implements Component {
   id: Entity!
-  inProgressBy: Actor!
+  inProgressBy: Identity!
   inProgressAt: Temporal!
 }
 type ChecklistClosed implements Component {
   id: Entity!
-  closedBy: Actor!
+  closedBy: Identity!
   closedAt: Temporal!
   closedBecause: ChecklistClosedReason!
 }

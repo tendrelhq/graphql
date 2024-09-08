@@ -11,8 +11,6 @@ const schema = makeExecutableSchema({
 });
 
 test("checklists", async () => {
-  const result = await execute(schema, ChecklistsDocument, {
-    timeZone: "America/Denver",
-  });
+  const result = await execute(schema, ChecklistsDocument);
   expect(result).toMatchSnapshot();
 });

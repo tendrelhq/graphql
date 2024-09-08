@@ -21,3 +21,19 @@ type OnceSchedule {
 TODO
 """
 union Schedule = CronSchedule | OnceSchedule
+
+"""
+TODO
+"""
+input ScheduleInput {
+  type: ScheduleType!
+  repr: String!
+}
+
+"""
+TODO
+"""
+enum ScheduleType {
+  CronSchedule
+  OnceSchedule
+}

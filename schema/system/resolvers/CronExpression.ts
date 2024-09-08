@@ -20,7 +20,7 @@ function validate(value: unknown, ast?: ASTNode) {
   return value;
 }
 
-export const CronExpression = new GraphQLScalarType({
+export const CronExpression = new GraphQLScalarType<string, string>({
   name: "CronExpression",
   description: "CronExpression description",
   serialize: validate,

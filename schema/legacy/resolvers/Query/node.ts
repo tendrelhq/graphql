@@ -35,11 +35,6 @@ export const node: NonNullable<QueryResolvers["node"]> = async (
         __typename: "User",
         ...(await ctx.orm.user.byId.load(id)),
       };
-    case "worker":
-      return {
-        __typename: "Worker",
-        ...(await ctx.orm.worker.load(id)),
-      };
     default:
       throw new GraphQLError("Unknown node type", {
         extensions: {

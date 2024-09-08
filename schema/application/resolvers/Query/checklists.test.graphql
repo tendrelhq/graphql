@@ -1,4 +1,4 @@
-query Checklists($timeZone: TimeZone!) {
+query Checklists {
   __typename
   checklists {
     edges {
@@ -7,15 +7,10 @@ query Checklists($timeZone: TimeZone!) {
           edges {
             node {
               assignedAt {
-                ... on Instant {
-                  epochMilliseconds
-                  toZonedDateTime(timeZone: $timeZone) {
-                    toString
-                  }
-                }
+                epochMilliseconds
               }
               assignedTo {
-                user {
+                ... on Worker {
                   displayName
                 }
               }
@@ -88,12 +83,7 @@ query Checklists($timeZone: TimeZone!) {
         status {
           ... on ChecklistOpen {
             openedAt {
-              ... on Instant {
-                epochMilliseconds
-                toZonedDateTime(timeZone: $timeZone) {
-                  toString
-                }
-              }
+              epochMilliseconds
             }
           }
         }
