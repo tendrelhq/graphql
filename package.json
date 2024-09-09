@@ -35,6 +35,7 @@
     "@types/negotiator": "^0.6.3",
     "graphql-language-service-cli": "^3.4.1",
     "merge-anything": "^6.0.2",
+    "prettier": "^3.3.3",
     "rimraf": "^5.0.7",
     "typescript-language-server": "^4.3.3"
   },

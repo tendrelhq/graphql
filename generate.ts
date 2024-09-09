@@ -44,3 +44,4 @@ await generate(config);
 
 await $`biome format --vcs-enabled=false --write ./schema/__generated__/*.ts`;
 await $`biome check --write ./schema/*/resolvers/**/*.ts`;
+await $`prettier --write **/*.graphql`;
