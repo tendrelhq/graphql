@@ -1,0 +1,14 @@
+# ignore everything
+*
+
+# except for:
+# - graphql
+# - markdown
+# - yaml
+!*.graphql
+!*.md
+!*.yaml
+!*.yml
+
+# recurse into subdirectories
+!*/
