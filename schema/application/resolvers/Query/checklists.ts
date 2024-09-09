@@ -41,8 +41,8 @@ export const checklists: NonNullable<QueryResolvers["checklists"]> = async (
   }).toSorted((a, b) => {
     if (args.search?.order?.completedAt) {
       if (
-        a.status.__typename === "ChecklistClosed" &&
-        b.status.__typename === "ChecklistClosed"
+        a.status?.__typename === "ChecklistClosed" &&
+        b.status?.__typename === "ChecklistClosed"
       ) {
         return (
           Number(a.status.closedAt.epochMilliseconds) -
@@ -50,8 +50,8 @@ export const checklists: NonNullable<QueryResolvers["checklists"]> = async (
         );
       }
       return (
-        Number(a.status.__typename === "ChecklistClosed") -
-        Number(b.status.__typename === "ChecklistClosed")
+        Number(a.status?.__typename === "ChecklistClosed") -
+        Number(b.status?.__typename === "ChecklistClosed")
       );
     }
     return 0;
