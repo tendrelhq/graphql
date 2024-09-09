@@ -74,7 +74,11 @@ async function execute(input: UpdateWorkerInput, ctx: Context) {
       workerfirstname: input.firstName,
       workerlastname: input.lastName,
       workerfullname: input.displayName,
-      workerlanguageid: input.languageId,
+      workerlanguageid: sql`(
+        SELECT systagid
+        FROM public.systag
+        WHERE systaguuid = ${input.languageId ?? ""}
+      )`,
     };
     const userColumns = [
       shouldUpdate(input.firstName, user.firstName) &&
@@ -83,21 +87,9 @@ async function execute(input: UpdateWorkerInput, ctx: Context) {
         ("workerlastname" as const),
       shouldUpdate(input.displayName, user.displayName) &&
         ("workerfullname" as const),
+      shouldUpdate(input.languageId, user.languageId) &&
+        ("workerlanguageid" as const),
     ].filter(e => e !== false);
-
-    if (shouldUpdate(input.languageId, user.languageId)) {
-      await sql`
-        UPDATE public.worker
-        SET
-            workerlanguageid = (
-                SELECT systagid
-                FROM public.systag
-                WHERE systaguuid = ${input.languageId}
-            ),
-            workermodifieddate = now()
-        WHERE workeruuid = ${userId};
-      `;
-    }
 
     if (userColumns.length) {
       await sql`
@@ -111,45 +103,32 @@ async function execute(input: UpdateWorkerInput, ctx: Context) {
       ctx.orm.user.byId.clear(userId);
     }
 
-    // Update the worker with any relevant changes.
-    // Language first, because we're in flux with bigint vs uuid :/
-    if (shouldUpdate(input.languageId, worker.languageId)) {
-      await sql`
-        UPDATE public.workerinstance
-        SET
-            workerinstancelanguageuuid = ${input.languageId},
-            workerinstancelanguageid = (
-                SELECT systagid
-                FROM public.systag
-                WHERE systaguuid = ${input.languageId}
-            ),
-            workerinstancemodifieddate = now()
-        WHERE workerinstanceuuid = ${userId};
-      `;
-    }
-
-    // Also role, for the same "in flux" reason :/
-    if (shouldUpdate(input.roleId, worker.roleId)) {
-      await sql`
-        UPDATE public.workerinstance
-        SET
-            workerinstanceuserroleuuid = ${input.roleId},
-            workerinstanceuserroleid = (
-                SELECT systagid
-                FROM public.systag
-                WHERE systaguuid = ${input.roleId}
-            ),
-            workerinstancemodifieddate = now()
-        WHERE workerinstanceuuid = ${userId};
-      `;
-    }
-
     const workerUpdates = {
       workerinstancescanid: input.scanCode,
+      workerinstancelanguageid: sql`(
+          SELECT systagid
+          FROM public.systag
+          WHERE systaguuid = ${input.languageId ?? ""}
+      )`,
+      workerinstancelanguageuuid: input.languageId,
+      workerinstanceuserroleid: sql`(
+          SELECT systagid
+          FROM public.systag
+          WHERE systaguuid = ${input.roleId ?? ""}
+      )`,
+      workerinstanceuserroleuuid: input.roleId,
     };
     const workerColumns = [
       shouldUpdate(input.scanCode, worker.scanCode) &&
         ("workerinstancescanid" as const),
+      shouldUpdate(input.languageId, worker.languageId) &&
+        ("workerinstancelanguageid" as const),
+      shouldUpdate(input.languageId, worker.languageId) &&
+        ("workerinstancelanguageuuid" as const),
+      shouldUpdate(input.roleId, worker.roleId) &&
+        ("workerinstanceuserroleid" as const),
+      shouldUpdate(input.roleId, worker.roleId) &&
+        ("workerinstanceuserroleuuid" as const),
     ].filter(e => e !== false);
 
     if (workerColumns.length) {
