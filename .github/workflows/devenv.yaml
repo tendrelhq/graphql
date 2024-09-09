@@ -26,4 +26,4 @@ jobs:
         with:
           name: tendrelhq
           authToken: ${{ secrets.CACHIX_AUTH_TOKEN }}
-      - run: nix build --impure .
+      - run: nix build --impure .#devShells.x86_64-linux.default
