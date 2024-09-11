@@ -259,6 +259,7 @@ type Mutation {
   ## CRUD
   createUser(input: CreateUserInput!): User!
   updateUser(input: UpdateUserInput!): User!
+  signUp(input: SignUpInput!): User!
 
   # Worker
   ## CRUD
@@ -292,9 +293,19 @@ input UpdateLocationInput {
 }
 
 input CreateUserInput {
-  id: ID
+  identityId: String!
   active: Boolean!
-  languageId: ID!
+  language: Locale!
+  firstName: String!
+  lastName: String!
+  displayName: String
+  username: String
+}
+
+input SignUpInput {
+  identityId: String!
+  active: Boolean!
+  language: Locale!
   firstName: String!
   lastName: String!
   displayName: String
