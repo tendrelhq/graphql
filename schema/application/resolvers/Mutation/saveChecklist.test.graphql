@@ -1,7 +1,6 @@
 mutation TestSaveChecklist($input: ChecklistInput!) {
   saveChecklist(input: $input) {
     node {
-      id
       name {
         value {
           value
@@ -17,7 +16,9 @@ mutation TestSaveChecklist($input: ChecklistInput!) {
               epochMilliseconds
             }
             assignedTo {
-              id
+              ... on Worker {
+                displayName
+              }
             }
           }
         }

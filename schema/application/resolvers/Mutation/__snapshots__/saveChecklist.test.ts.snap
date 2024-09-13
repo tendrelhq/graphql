@@ -24,7 +24,7 @@ exports[`saveChecklist create a new checklist 1`] = `
                 },
                 "assignedTo": {
                   "__typename": "Worker",
-                  "id": "d29ya2VyaW5zdGFuY2U6WDE5MFpYTjBYMTg2TVE9PQ==",
+                  "displayName": "Mark Keller",
                 },
               },
             },
@@ -41,7 +41,6 @@ exports[`saveChecklist create a new checklist 1`] = `
             "value": "This is a test checklist",
           },
         },
-        "id": "X190ZXN0X186MQ==",
         "items": {
           "__typename": "ChecklistItemConnection",
           "edges": [
