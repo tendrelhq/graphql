@@ -25,9 +25,9 @@ union Schedule = CronSchedule | OnceSchedule
 """
 TODO
 """
-input ScheduleInput {
-  type: ScheduleType!
-  repr: String!
+input ScheduleInput @oneOf {
+  cron: String
+  once: TemporalInput
 }
 
 """

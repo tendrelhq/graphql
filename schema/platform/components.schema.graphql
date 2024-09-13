@@ -13,6 +13,15 @@ type Activatable implements Component {
 """
 TODO
 """
+input ActiveInput {
+  id: Entity!
+  active: Boolean!
+  updatedAt: TemporalInput!
+}
+
+"""
+TODO
+"""
 type Attachment implements Component {
   id: Entity!
   attachment: String!
@@ -48,7 +57,7 @@ TODO
 input AssigneeInput {
   id: Entity!
   assignTo: Entity!
-  assignAt: String!
+  assignAt: TemporalInput!
 }
 
 type AssigneeConnection implements Connection {
@@ -73,6 +82,14 @@ type Auditable implements Component {
 """
 TODO
 """
+input AuditableInput {
+  id: Entity!
+  enabled: Boolean!
+}
+
+"""
+TODO
+"""
 type Description implements Component {
   id: Entity!
   value: DynamicString!
@@ -81,9 +98,25 @@ type Description implements Component {
 """
 TODO
 """
+input DescriptionInput {
+  id: Entity!
+  value: DynamicStringInput!
+}
+
+"""
+TODO
+"""
 type DisplayName implements Component {
   id: Entity!
   value: DynamicString!
+}
+
+"""
+TODO
+"""
+input DisplayNameInput {
+  id: Entity!
+  value: DynamicStringInput!
 }
 
 """
@@ -99,6 +132,14 @@ type Metadata {
 TODO
 """
 type Sop implements Component {
+  id: Entity!
+  link: URL!
+}
+
+"""
+TODO
+"""
+input SopInput {
   id: Entity!
   link: URL!
 }

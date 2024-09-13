@@ -1,36 +1,12 @@
 import type { MutationResolvers } from "@/schema";
-import {
-  appendChecklist,
-  parseChecklistItemInput,
-  parseScheduleInput,
-  parseStatusInput,
-} from "@/test/d3";
+import { appendChecklist } from "@/test/d3";
 
 export const saveChecklist: NonNullable<
   MutationResolvers["saveChecklist"]
 > = async (_, { input }) => {
   // simulate some latency
   await new Promise(resolve => setTimeout(resolve, 2000));
-
-  const checklist = appendChecklist({
-    id: input.id,
-    active: input.active,
-    activeAt: new Date(),
-    assignees:
-      input.assignees?.map(node => ({
-        at: new Date(node.assignAt),
-        to: node.assignTo,
-      })) ?? [],
-    auditable: input.auditable,
-    children: [],
-    description: input.description,
-    items: input.items?.map(parseChecklistItemInput) ?? [],
-    name: input.name,
-    schedule: input.schedule ? parseScheduleInput(input.schedule) : undefined,
-    sop: input.sop,
-    status: input.status ? parseStatusInput(input.status) : undefined,
-  });
-
+  const checklist = appendChecklist(input);
   return {
     node: checklist,
     cursor: checklist.id,

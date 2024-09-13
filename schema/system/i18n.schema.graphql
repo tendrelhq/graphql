@@ -8,3 +8,11 @@ type DynamicString {
   locale: Locale!
   value: String!
 }
+
+"""
+TODO
+"""
+input DynamicStringInput {
+  locale: Locale!
+  value: String!
+}
