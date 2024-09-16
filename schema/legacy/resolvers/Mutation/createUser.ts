@@ -1,5 +1,5 @@
 import { sql } from "@/datasources/postgres";
-import type { MutationResolvers } from "@/schema";
+import type { Context, CreateUserInput, MutationResolvers } from "@/schema";
 import { GraphQLError } from "graphql";
 
 export const createUser: NonNullable<MutationResolvers["createUser"]> = async (
@@ -7,16 +7,24 @@ export const createUser: NonNullable<MutationResolvers["createUser"]> = async (
   { input },
   ctx,
 ) => {
+  return await createUserHelper(input, ctx);
+};
+
+export async function createUserHelper(input: CreateUserInput, ctx: Context) {
   const [user] = await sql<[{ id: string }?]>`
       INSERT INTO public.worker (
+          workeridentityid,
           workerusername,
           workerfirstname,
           workerlastname,
           workerfullname,
           workerlanguageid,
           workerstartdate,
-          workerenddate
+          workerenddate,
+          workeridentitysystemid,
+          workeridentitysystemuuid
       ) VALUES (
+          ${input.identityId},
           ${input.username ?? null},
           ${input.firstName},
           ${input.lastName},
@@ -24,10 +32,17 @@ export const createUser: NonNullable<MutationResolvers["createUser"]> = async (
           (
               SELECT systagid
               FROM public.systag
-              WHERE systaguuid = ${input.languageId}
+              WHERE systagparentid = 2
+              AND systagtype = ${input.language}
           ),
           ${new Date()},
-          ${input.active ? null : new Date()}
+          ${input.active ? null : new Date()},
+          915, -- Clerk
+          (
+              SELECT systaguuid
+              FROM systag
+              WHERE systagid = 915
+          )
       )
       ON CONFLICT (workerusername) DO NOTHING
       RETURNING workeruuid AS id;
@@ -47,4 +62,4 @@ export const createUser: NonNullable<MutationResolvers["createUser"]> = async (
   }
 
   return ctx.orm.user.byId.load(user.id);
-};
+}

@@ -314,8 +314,8 @@ input CreateUserInput {
   active: Boolean!
   displayName: String
   firstName: String!
-  id: ID
-  languageId: ID!
+  identityId: String!
+  language: Locale!
   lastName: String!
   username: String
 }
@@ -558,6 +558,7 @@ type Mutation {
   disableLanguage(languageId: ID!, orgId: ID!): EnabledLanguageEdge!
   enableLanguage(languageId: ID!, orgId: ID!): EnabledLanguageEdge!
   saveChecklist(input: ChecklistInput!): ChecklistEdge!
+  signUp(input: SignUpInput!): User!
   updateLocation(input: UpdateLocationInput!): Location!
   updateName(input: UpdateNameInput!): Name!
   updateUser(input: UpdateUserInput!): User!
@@ -713,6 +714,16 @@ TODO
 enum ScheduleType {
   CronSchedule
   OnceSchedule
+}
+
+input SignUpInput {
+  active: Boolean!
+  displayName: String
+  firstName: String!
+  identityId: String!
+  language: Locale!
+  lastName: String!
+  username: String
 }
 
 enum SmallestTimeUnit {
