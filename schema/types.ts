@@ -4,4 +4,5 @@ import type { ORM } from "@/datasources/postgres";
 export type Context = {
   auth: Auth;
   orm: ORM;
+  req: Express.Request;
 };

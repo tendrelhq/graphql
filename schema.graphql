@@ -315,7 +315,6 @@ input CreateUserInput {
   displayName: String
   firstName: String!
   identityId: String!
-  language: Locale!
   lastName: String!
   username: String
 }
@@ -721,7 +720,6 @@ input SignUpInput {
   displayName: String
   firstName: String!
   identityId: String!
-  language: Locale!
   lastName: String!
   username: String
 }

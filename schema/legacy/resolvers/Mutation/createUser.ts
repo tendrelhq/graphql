@@ -33,7 +33,7 @@ export async function createUserHelper(input: CreateUserInput, ctx: Context) {
               SELECT systagid
               FROM public.systag
               WHERE systagparentid = 2
-              AND systagtype = ${input.language}
+              AND systagtype = ${ctx.req.i18n.language}
           ),
           ${new Date()},
           ${input.active ? null : new Date()},

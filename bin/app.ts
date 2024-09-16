@@ -70,6 +70,7 @@ app.use(
       return {
         auth: req.auth,
         orm: orm(req),
+        req,
       };
     },
   }),

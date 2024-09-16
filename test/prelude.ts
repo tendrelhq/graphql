@@ -38,6 +38,8 @@ async function createTestContext(): Promise<Context> {
     auth: {} as any,
     // biome-ignore lint/suspicious/noExplicitAny: ...room for improvement
     orm: orm(DEFAULT_REQUEST as any),
+    // biome-ignore lint/suspicious/noExplicitAny: i know i know x 2...
+    req: {} as any,
   };
 }
 
