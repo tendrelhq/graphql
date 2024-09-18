@@ -3,7 +3,7 @@ query TestChecklistResult {
     organizations(last: 1) {
       edges {
         node {
-          checklists {
+          checklists(first: 1) {
             edges {
               node {
                 items {

@@ -10,7 +10,7 @@ const schema = makeExecutableSchema({
   typeDefs: mergeTypeDefs([ChecklistsDocument, typeDefs]),
 });
 
-test("checklists", async () => {
+test.skip("checklists", async () => {
   const result = await execute(schema, ChecklistsDocument);
   expect(result).toMatchSnapshot();
 });

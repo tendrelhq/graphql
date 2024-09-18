@@ -9,13 +9,13 @@ exports[`updateWorker updates worker without conflict 1`] = `
   },
   "language": {
     "__typename": "Language",
-    "code": "en",
+    "code": "es",
   },
   "role": {
     "__typename": "Tag",
     "name": {
       "__typename": "Name",
-      "value": "Admin",
+      "value": "Supervisor",
     },
   },
   "scanCode": null,

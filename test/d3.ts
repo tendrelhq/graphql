@@ -58,7 +58,7 @@ function makeWorker(
 ) {
   return {
     __typename: "Worker" as const,
-    id: encodeGlobalId({ type: "worker", id: randomUUID() }),
+    id: encodeGlobalId({ type: "workerinstance", id: randomUUID() }),
     active: {
       __typename: "ActivationStatus",
       active: options?.active ?? true,
