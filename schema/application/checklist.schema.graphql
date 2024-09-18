@@ -12,29 +12,6 @@ type Mutation {
   saveChecklist(input: ChecklistInput!): ChecklistEdge!
 }
 
-input ChecklistInput {
-  id: Entity!
-  active: Boolean!
-  assignees: [AssigneeInput!]
-  auditable: Boolean!
-  customerId: ID!
-  description: String
-  items: [ChecklistItemInput!]
-  name: String!
-  schedule: ScheduleInput
-  sop: URL
-  status: ChecklistStatusInput
-}
-
-input ChecklistItemInput {
-  type: ChecklistItemInputType!
-  repr: String!
-}
-
-enum ChecklistItemInputType {
-  ChecklistResult
-}
-
 type Checklist implements Component {
   id: Entity!
   active: Activatable!
@@ -75,6 +52,21 @@ type Checklist implements Component {
   metadata: Metadata!
 }
 
+input ChecklistInput {
+  id: Entity!
+  active: ActiveInput!
+  assignees: [AssigneeInput!]
+  auditable: AuditableInput!
+  customerId: ID!
+  description: DescriptionInput
+  items: [ChecklistItemInput!]
+  name: DisplayNameInput!
+  required: Boolean
+  schedule: ScheduleInput
+  sop: SopInput
+  status: ChecklistStatusInput
+}
+
 input ChecklistSearchOptions {
   active: Boolean
   order: ChecklistSearchOrderOptions
@@ -109,6 +101,14 @@ type ChecklistEdge implements Edge {
 ## We want our checklists to support nesting
 union ChecklistItem = Checklist | ChecklistResult
 
+input ChecklistItemInput @oneOf {
+  checklist: ChecklistInput
+  result: ChecklistResultInput
+}
+
+"""
+TODO
+"""
 type ChecklistResult implements Component {
   id: Entity!
   assignees(
@@ -130,20 +130,34 @@ type ChecklistResult implements Component {
   value: ChecklistResultValue
 }
 
+"""
+TODO
+"""
+input ChecklistResultInput {
+  id: Entity!
+  assignees: [AssigneeInput!]!
+  auditable: AuditableInput!
+  name: DisplayNameInput!
+  required: Boolean
+  status: ChecklistStatusInput
+  value: ChecklistResultValueInput
+}
+
 union ChecklistResultValue = Counter | Flag | Register
+
+input ChecklistResultValueInput @oneOf {
+  counter: Int
+  flag: Boolean
+  register: String
+}
 
 ## Our checklists go Open > In Progress > Closed
 union ChecklistStatus = ChecklistOpen | ChecklistInProgress | ChecklistClosed
 
-input ChecklistStatusInput {
-  type: ChecklistStatusInputType!
-  repr: String!
-}
-
-enum ChecklistStatusInputType {
-  ChecklistOpen
-  ChecklistInProgress
-  ChecklistClosed
+input ChecklistStatusInput @oneOf {
+  open: ChecklistOpenInput
+  inProgress: ChecklistInProgressInput
+  closed: ChecklistClosedInput
 }
 
 type ChecklistOpen implements Component {
@@ -151,21 +165,49 @@ type ChecklistOpen implements Component {
   openedBy: Identity!
   openedAt: Temporal!
 }
+
+input ChecklistOpenInput {
+  id: Entity!
+  by: Entity!
+  at: TemporalInput!
+}
+
 type ChecklistInProgress implements Component {
   id: Entity!
   inProgressBy: Identity!
   inProgressAt: Temporal!
 }
+
+input ChecklistInProgressInput {
+  id: Entity!
+  by: Entity!
+  at: TemporalInput!
+}
+
 type ChecklistClosed implements Component {
   id: Entity!
   closedBy: Identity!
   closedAt: Temporal!
   closedBecause: ChecklistClosedReason!
 }
+
+input ChecklistClosedInput {
+  id: Entity!
+  by: Entity!
+  at: TemporalInput!
+  because: ChecklistClosedReasonInput!
+}
+
 type ChecklistClosedReason {
   code: ChecklistClosedReasonCode!
   note: DynamicString
 }
+
+input ChecklistClosedReasonInput {
+  code: ChecklistClosedReasonCode!
+  note: DynamicStringInput
+}
+
 enum ChecklistClosedReasonCode {
   success
   error

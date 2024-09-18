@@ -1,5 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import { resolvers, typeDefs } from "@/schema";
+import { WORKERS } from "@/test/d3";
 import { NOW, execute, testGlobalId } from "@/test/prelude";
 import { makeExecutableSchema } from "@graphql-tools/schema";
 import { TestSaveChecklistDocument } from "./saveChecklist.test.generated";
@@ -11,66 +12,90 @@ describe.skipIf(!!process.env.CI)("saveChecklist", () => {
     const result = await execute(schema, TestSaveChecklistDocument, {
       input: {
         id: testGlobalId(),
-        name: "Test checklist",
-        active: true,
+        name: {
+          id: testGlobalId(),
+          value: {
+            locale: "en",
+            value: "Test checklist",
+          },
+        },
+        active: {
+          id: testGlobalId(),
+          active: true,
+          updatedAt: {
+            instant: NOW.valueOf().toString(),
+          },
+        },
         assignees: [
           {
             id: testGlobalId(),
-            assignTo: testGlobalId(),
-            assignAt: NOW.toISOString(),
+            assignTo: WORKERS.Mark.id,
+            assignAt: {
+              instant: NOW.valueOf().toString(),
+            },
           },
         ],
-        auditable: true,
-        description: "This is a test checklist",
+        auditable: {
+          id: testGlobalId(),
+          enabled: true,
+        },
+        description: {
+          id: testGlobalId(),
+          value: {
+            locale: "en",
+            value: "This is a test checklist",
+          },
+        },
         customerId: testGlobalId(),
         items: [
           {
-            type: "ChecklistResult",
-            repr: JSON.stringify({
+            result: {
               id: testGlobalId(),
+              assignees: [],
               auditable: {
+                id: testGlobalId(),
                 enabled: true,
               },
               name: {
+                id: testGlobalId(),
                 value: {
+                  locale: "en",
                   value: "Test result item",
                 },
               },
               required: true,
               status: {
-                type: "ChecklistOpen",
-                repr: {
-                  id: "foo",
-                  openedAt: {
-                    epochMilliseconds: NOW.valueOf(),
+                open: {
+                  id: testGlobalId(),
+                  at: {
+                    instant: NOW.valueOf().toString(),
                   },
-                  openedBy: {
-                    id: "foobar",
-                  },
+                  by: WORKERS.Mark.id,
                 },
               },
               value: {
-                count: 42,
+                counter: 42,
               },
-            }),
+            },
           },
         ],
         schedule: {
-          type: "OnceSchedule",
-          repr: NOW.toISOString(),
+          once: {
+            instant: NOW.valueOf().toString(),
+          },
         },
-        sop: "https://tendrel.io",
+        sop: {
+          id: testGlobalId(),
+          link: "https://tendrel.io",
+        },
         status: {
-          type: "ChecklistOpen",
-          repr: JSON.stringify({
+          open: {
             id: testGlobalId(),
-            openedAt: {
-              epochMilliseconds: NOW.valueOf().toString(),
+            at: {
+              instant: NOW.valueOf().toString(),
             },
-            openedBy: {
-              id: testGlobalId(),
-            },
-          }),
+            by: WORKERS.Mark.id,
+          },
         },
       },
     });

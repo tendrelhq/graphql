@@ -1,3 +1,5 @@
+directive @semanticNonNull(levels: [Int] = [0]) on FIELD_DEFINITION
+
 input AcceptInvitationInput {
   authenticationIdentityId: ID!
   workerId: ID!
@@ -16,6 +18,15 @@ type ActivationStatus {
   activatedAt: String
   active: Boolean!
   deactivatedAt: String
+}
+
+"""
+TODO
+"""
+input ActiveInput {
+  active: Boolean!
+  id: Entity!
+  updatedAt: TemporalInput!
 }
 
 interface Assignable implements Component {
@@ -46,7 +57,7 @@ type AssigneeEdge implements Edge {
 TODO
 """
 input AssigneeInput {
-  assignAt: String!
+  assignAt: TemporalInput!
   assignTo: Entity!
   id: Entity!
 }
@@ -74,6 +85,14 @@ type AttachmentEdge implements Edge {
 TODO
 """
 type Auditable implements Component {
+  enabled: Boolean!
+  id: Entity!
+}
+
+"""
+TODO
+"""
+input AuditableInput {
   enabled: Boolean!
   id: Entity!
 }
@@ -153,6 +172,13 @@ type ChecklistClosed implements Component {
   id: Entity!
 }
 
+input ChecklistClosedInput {
+  at: TemporalInput!
+  because: ChecklistClosedReasonInput!
+  by: Entity!
+  id: Entity!
+}
+
 type ChecklistClosedReason {
   code: ChecklistClosedReasonCode!
   note: DynamicString
@@ -161,6 +187,11 @@ type ChecklistClosedReason {
 enum ChecklistClosedReasonCode {
   error
   success
+}
+
+input ChecklistClosedReasonInput {
+  code: ChecklistClosedReasonCode!
+  note: DynamicStringInput
 }
 
 type ChecklistConnection implements Connection {
@@ -180,17 +211,24 @@ type ChecklistInProgress implements Component {
   inProgressBy: Identity!
 }
 
+input ChecklistInProgressInput {
+  at: TemporalInput!
+  by: Entity!
+  id: Entity!
+}
+
 input ChecklistInput {
-  active: Boolean!
+  active: ActiveInput!
   assignees: [AssigneeInput!]
-  auditable: Boolean!
+  auditable: AuditableInput!
   customerId: ID!
-  description: String
+  description: DescriptionInput
   id: Entity!
   items: [ChecklistItemInput!]
-  name: String!
+  name: DisplayNameInput!
+  required: Boolean
   schedule: ScheduleInput
-  sop: URL
+  sop: SopInput
   status: ChecklistStatusInput
 }
 
@@ -207,13 +245,9 @@ type ChecklistItemEdge implements Edge {
   node: ChecklistItem!
 }
 
-input ChecklistItemInput {
-  repr: String!
-  type: ChecklistItemInputType!
-}
-
-enum ChecklistItemInputType {
-  ChecklistResult
+input ChecklistItemInput @oneOf {
+  checklist: ChecklistInput
+  result: ChecklistResultInput
 }
 
 type ChecklistOpen implements Component {
@@ -222,6 +256,15 @@ type ChecklistOpen implements Component {
   openedBy: Identity!
 }
 
+input ChecklistOpenInput {
+  at: TemporalInput!
+  by: Entity!
+  id: Entity!
+}
+
+"""
+TODO
+"""
 type ChecklistResult implements Component {
   assignees(
     after: String
@@ -243,7 +286,26 @@ type ChecklistResult implements Component {
   value: ChecklistResultValue
 }
 
+"""
+TODO
+"""
+input ChecklistResultInput {
+  assignees: [AssigneeInput!]!
+  auditable: AuditableInput!
+  id: Entity!
+  name: DisplayNameInput!
+  required: Boolean
+  status: ChecklistStatusInput
+  value: ChecklistResultValueInput
+}
+
 union ChecklistResultValue = Counter | Flag | Register
+
+input ChecklistResultValueInput @oneOf {
+  counter: Int
+  flag: Boolean
+  register: String
+}
 
 input ChecklistSearchOptions {
   active: Boolean
@@ -256,15 +318,10 @@ input ChecklistSearchOrderOptions {
 
 union ChecklistStatus = ChecklistClosed | ChecklistInProgress | ChecklistOpen
 
-input ChecklistStatusInput {
-  repr: String!
-  type: ChecklistStatusInputType!
-}
-
-enum ChecklistStatusInputType {
-  ChecklistClosed
-  ChecklistInProgress
-  ChecklistOpen
+input ChecklistStatusInput @oneOf {
+  closed: ChecklistClosedInput
+  inProgress: ChecklistInProgressInput
+  open: ChecklistOpenInput
 }
 
 """
@@ -355,9 +412,25 @@ type Description implements Component {
 """
 TODO
 """
+input DescriptionInput {
+  id: Entity!
+  value: DynamicStringInput!
+}
+
+"""
+TODO
+"""
 type DisplayName implements Component {
   id: Entity!
   value: DynamicString!
+}
+
+"""
+TODO
+"""
+input DisplayNameInput {
+  id: Entity!
+  value: DynamicStringInput!
 }
 
 scalar Duration
@@ -366,6 +439,14 @@ scalar Duration
 TODO
 """
 type DynamicString {
+  locale: Locale!
+  value: String!
+}
+
+"""
+TODO
+"""
+input DynamicStringInput {
   locale: Locale!
   value: String!
 }
@@ -446,12 +527,12 @@ type Instant implements Temporal {
   """
   Convert an Instant to an ISO 8601 string
   """
-  toString(options: InstantToStringOptions): String!
+  toString(options: InstantToStringOptions): String
 
   """
   Convert an Instant to a ZonedDateTime
   """
-  toZonedDateTime(timeZone: TimeZone!): ZonedDateTime!
+  toZonedDateTime(timeZone: TimeZone!): ZonedDateTime
 }
 
 input InstantToStringOptions {
@@ -702,9 +783,9 @@ union Schedule = CronSchedule | OnceSchedule
 """
 TODO
 """
-input ScheduleInput {
-  repr: String!
-  type: ScheduleType!
+input ScheduleInput @oneOf {
+  cron: String
+  once: TemporalInput
 }
 
 """
@@ -739,6 +820,14 @@ type Sop implements Component {
 }
 
 """
+TODO
+"""
+input SopInput {
+  id: Entity!
+  link: URL!
+}
+
+"""
 Defines the sort order for queries that support edge ordering.
 Ordering depends on the scalar type:
   - Boolean scalars are sorted false < true
@@ -764,6 +853,11 @@ interface Temporal {
   Milliseconds since the UNIX epoch of 1/1/1970 00:00+00
   """
   epochMilliseconds: String!
+}
+
+input TemporalInput @oneOf {
+  instant: String
+  zdt: ZonedDateTimeInput
 }
 
 scalar TimeZone
@@ -914,6 +1008,11 @@ type ZonedDateTime implements Temporal {
   """
   toString(options: ZonedDateTimeToStringOptions): String!
   year: Int!
+}
+
+input ZonedDateTimeInput {
+  epochMilliseconds: String!
+  timeZone: TimeZone!
 }
 
 input ZonedDateTimeToStringOptions {

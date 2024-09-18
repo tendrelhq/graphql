@@ -30,6 +30,11 @@ interface Temporal {
   epochMilliseconds: String!
 }
 
+input TemporalInput @oneOf {
+  instant: String
+  zdt: ZonedDateTimeInput
+}
+
 """
 Fixed point in time (i.e. "exact time") without regard to calendar or location
 """
@@ -42,12 +47,12 @@ type Instant implements Temporal {
   """
   Convert an Instant to an ISO 8601 string
   """
-  toString(options: InstantToStringOptions): String!
+  toString(options: InstantToStringOptions): String @semanticNonNull
 
   """
   Convert an Instant to a ZonedDateTime
   """
-  toZonedDateTime(timeZone: TimeZone!): ZonedDateTime!
+  toZonedDateTime(timeZone: TimeZone!): ZonedDateTime @semanticNonNull
 }
 
 input InstantToStringOptions {
@@ -95,6 +100,11 @@ type ZonedDateTime implements Temporal {
   Convert a ZonedDateTime to an ISO 8601 string
   """
   toString(options: ZonedDateTimeToStringOptions): String!
+}
+
+input ZonedDateTimeInput {
+  epochMilliseconds: String!
+  timeZone: TimeZone!
 }
 
 input ZonedDateTimeToStringOptions {

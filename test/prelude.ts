@@ -43,8 +43,10 @@ async function createTestContext(): Promise<Context> {
   };
 }
 
+let id = 0;
+
 export function testGlobalId() {
-  return encodeGlobalId({ type: "__test__", id: "1" });
+  return encodeGlobalId({ type: "__test__", id: (++id).toString() });
 }
 
 export const NOW = new Date(1725823905364);
