@@ -4,6 +4,10 @@ import type { ActivationStatus, WorkerResolvers } from "@/schema";
 import { decodeGlobalId } from "@/schema/system";
 
 export const Worker: WorkerResolvers = {
+  async _hack_numeric_id(parent, _, ctx) {
+    const hack = await ctx.orm.worker.load(decodeGlobalId(parent.id).id);
+    return hack._hack_numeric_id;
+  },
   async active(parent) {
     const { id } = decodeGlobalId(parent.id);
     const [row] = await sql<[ActivationStatus]>`
@@ -45,16 +49,35 @@ export const Worker: WorkerResolvers = {
       throw e;
     }
   },
-  language(parent, _, ctx) {
-    return ctx.orm.language.byId.load(parent.languageId as string);
+  async displayName(parent, _, ctx) {
+    const hack = await ctx.orm.worker.load(decodeGlobalId(parent.id).id);
+    return hack.displayName;
   },
-  role(parent, _, ctx) {
-    return ctx.orm.tag.load(parent.roleId as string);
+  async firstName(parent, _, ctx) {
+    const hack = await ctx.orm.worker.load(decodeGlobalId(parent.id).id);
+    return hack.firstName;
+  },
+  async lastName(parent, _, ctx) {
+    const hack = await ctx.orm.worker.load(decodeGlobalId(parent.id).id);
+    return hack.lastName;
+  },
+  async language(parent, _, ctx) {
+    const hack = await ctx.orm.worker.load(decodeGlobalId(parent.id).id);
+    return ctx.orm.language.byId.load(hack.languageId as string);
+  },
+  async role(parent, _, ctx) {
+    const hack = await ctx.orm.worker.load(decodeGlobalId(parent.id).id);
+    return ctx.orm.tag.load(hack.roleId as string);
+  },
+  async scanCode(parent, _, ctx) {
+    const hack = await ctx.orm.worker.load(decodeGlobalId(parent.id).id);
+    return hack.scanCode;
   },
   tags() {
     return [];
   },
-  user(parent, _, ctx) {
-    return ctx.orm.user.byId.load(decodeGlobalId(parent.userId).id);
+  async user(parent, _, ctx) {
+    const hack = await ctx.orm.worker.load(decodeGlobalId(parent.id).id);
+    return ctx.orm.user.byId.load(decodeGlobalId(hack.userId).id);
   },
 };

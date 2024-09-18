@@ -7,7 +7,7 @@ TODO
 type Activatable implements Component {
   id: Entity!
   active: Boolean!
-  updatedAt: Temporal!
+  updatedAt: Temporal @semanticNonNull
 }
 
 """
@@ -17,25 +17,6 @@ input ActiveInput {
   id: Entity!
   active: Boolean!
   updatedAt: TemporalInput!
-}
-
-"""
-TODO
-"""
-type Attachment implements Component {
-  id: Entity!
-  attachment: String!
-}
-
-type AttachmentConnection implements Connection {
-  edges: [AttachmentEdge!]!
-  pageInfo: PageInfo!
-  totalCount: Int!
-}
-
-type AttachmentEdge implements Edge {
-  cursor: String!
-  node: Attachment!
 }
 
 interface Assignable implements Component {
@@ -74,9 +55,29 @@ type AssigneeEdge implements Edge {
 """
 TODO
 """
+type Attachment implements Component {
+  id: Entity!
+  attachment: String!
+}
+
+type AttachmentConnection implements Connection {
+  edges: [AttachmentEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+type AttachmentEdge implements Edge {
+  cursor: String!
+  node: Attachment!
+}
+
+"""
+TODO
+"""
 type Auditable implements Component {
   id: Entity!
-  enabled: Boolean!
+  auditable: Boolean!
+  enabled: Boolean! @deprecated
 }
 
 """
@@ -92,7 +93,8 @@ TODO
 """
 type Description implements Component {
   id: Entity!
-  value: DynamicString!
+  description: DynamicString!
+  value: DynamicString! @deprecated
 }
 
 """
@@ -108,7 +110,8 @@ TODO
 """
 type DisplayName implements Component {
   id: Entity!
-  value: DynamicString!
+  name: DynamicString!
+  value: DynamicString! @deprecated
 }
 
 """
@@ -128,12 +131,18 @@ type Metadata {
   updatedBy: Identity
 }
 
+type Requirement implements Component {
+  id: Entity!
+  requires: Entity!
+}
+
 """
 TODO
 """
 type Sop implements Component {
   id: Entity!
-  link: URL!
+  link: URL! @deprecated
+  sop: URL!
 }
 
 """

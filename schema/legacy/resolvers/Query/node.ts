@@ -15,11 +15,6 @@ export const node: NonNullable<QueryResolvers["node"]> = async (
 ) => {
   const { type, id } = decodeGlobalId(args.id);
   switch (type) {
-    case "location":
-      return {
-        __typename: "Location",
-        ...(await ctx.orm.location.load(id)),
-      };
     case "name":
       return {
         __typename: "Name",

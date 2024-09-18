@@ -111,8 +111,8 @@ type Organization implements Node {
   ): WorkerConnection!
 }
 
-type Location implements Node {
-  id: ID!
+type Location implements Component & Referenceable {
+  id: Entity!
   active: ActivationStatus!
   children(options: LocationsQueryOptions): [Location!]!
   name: Name!
@@ -185,7 +185,7 @@ type PageInfo {
   endCursor: String
 }
 
-type Worker implements Component & Assignable & Identity {
+type Worker implements Component & Assignable & Identity & Referenceable {
   id: Entity!
   _hack_numeric_id: Int!
   active: ActivationStatus!

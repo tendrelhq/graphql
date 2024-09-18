@@ -8,13 +8,23 @@ type Query {
   ): ChecklistConnection!
 }
 
+extend type Organization {
+  checklists(
+    first: Int
+    last: Int
+    before: String
+    after: String
+    search: ChecklistSearchOptions
+  ): ChecklistConnection!
+}
+
 type Mutation {
   saveChecklist(input: ChecklistInput!): ChecklistEdge!
 }
 
 type Checklist implements Component {
   id: Entity!
-  active: Activatable!
+  active: Activatable
   assignees(
     first: Int
     last: Int
@@ -27,7 +37,7 @@ type Checklist implements Component {
     before: String
     after: String
   ): AttachmentConnection!
-  auditable: Auditable!
+  auditable: Auditable
   description: Description
   items(
     first: Int
@@ -54,9 +64,9 @@ type Checklist implements Component {
 
 input ChecklistInput {
   id: Entity!
-  active: ActiveInput!
+  active: ActiveInput
   assignees: [AssigneeInput!]
-  auditable: AuditableInput!
+  auditable: AuditableInput
   customerId: ID!
   description: DescriptionInput
   items: [ChecklistItemInput!]
@@ -70,6 +80,11 @@ input ChecklistInput {
 input ChecklistSearchOptions {
   active: Boolean
   order: ChecklistSearchOrderOptions
+}
+
+enum ChecklistType {
+  instance
+  template
 }
 
 input ChecklistSearchOrderOptions {
@@ -117,7 +132,7 @@ type ChecklistResult implements Component {
     before: String
     after: String
   ): AssigneeConnection!
-  auditable: Auditable!
+  auditable: Auditable
   attachments(
     first: Int
     last: Int
@@ -127,7 +142,7 @@ type ChecklistResult implements Component {
   name: DisplayName!
   required: Boolean
   status: ChecklistStatus
-  value: ChecklistResultValue
+  value: ChecklistResultValue!
 }
 
 """
@@ -143,7 +158,7 @@ input ChecklistResultInput {
   value: ChecklistResultValueInput
 }
 
-union ChecklistResultValue = Counter | Flag | Register
+union ChecklistResultValue = Counter | Flag | Reference | Register
 
 input ChecklistResultValueInput @oneOf {
   counter: Int
@@ -162,40 +177,40 @@ input ChecklistStatusInput @oneOf {
 
 type ChecklistOpen implements Component {
   id: Entity!
-  openedBy: Identity!
+  openedBy: Identity
   openedAt: Temporal!
 }
 
 input ChecklistOpenInput {
   id: Entity!
-  by: Entity!
+  by: Entity
   at: TemporalInput!
 }
 
 type ChecklistInProgress implements Component {
   id: Entity!
-  inProgressBy: Identity!
+  inProgressBy: Identity
   inProgressAt: Temporal!
 }
 
 input ChecklistInProgressInput {
   id: Entity!
-  by: Entity!
+  by: Entity
   at: TemporalInput!
 }
 
 type ChecklistClosed implements Component {
   id: Entity!
-  closedBy: Identity!
+  closedBy: Identity
   closedAt: Temporal!
-  closedBecause: ChecklistClosedReason!
+  closedBecause: ChecklistClosedReason
 }
 
 input ChecklistClosedInput {
   id: Entity!
-  by: Entity!
+  by: Entity
   at: TemporalInput!
-  because: ChecklistClosedReasonInput!
+  because: ChecklistClosedReasonInput
 }
 
 type ChecklistClosedReason {

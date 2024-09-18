@@ -44,10 +44,10 @@ type Instant implements Temporal {
   """
   epochMilliseconds: String!
 
-  """
-  Convert an Instant to an ISO 8601 string
-  """
-  toString(options: InstantToStringOptions): String @semanticNonNull
+  # """
+  # Convert an Instant to an ISO 8601 string
+  # """
+  # toString(options: InstantToStringOptions): String @semanticNonNull
 
   """
   Convert an Instant to a ZonedDateTime
@@ -96,10 +96,10 @@ type ZonedDateTime implements Temporal {
   """
   epochMilliseconds: String!
 
-  """
-  Convert a ZonedDateTime to an ISO 8601 string
-  """
-  toString(options: ZonedDateTimeToStringOptions): String!
+  # """
+  # Convert a ZonedDateTime to an ISO 8601 string
+  # """
+  # toString(options: ZonedDateTimeToStringOptions): String
 }
 
 input ZonedDateTimeInput {

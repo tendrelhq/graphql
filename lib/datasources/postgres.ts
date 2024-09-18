@@ -1,16 +1,27 @@
 import z from "myzod";
-import postgres from "postgres";
+import postgres, { type Fragment } from "postgres";
 
 import type { Request } from "express";
 import makeCustomerRequestedLanguageLoader from "./crl";
 import makeInvitationLoader from "./invitation";
 import makeLanguageLoader from "./language";
 import makeLocationLoader from "./location";
-import { makeNameLoader, makeNameMetadataLoader } from "./name";
+import {
+  makeDisplayNameLoader,
+  makeNameLoader,
+  makeNameMetadataLoader,
+} from "./name";
 import makeOrganizationLoader from "./organization";
 import makeTagLoader from "./tag";
 import makeUserLoader from "./user";
 import makeWorkerLoader from "./worker";
+import { makeDynamicStringLoader } from "./dynamicString";
+import { makeActivatableLoader } from "./activatable";
+import { makeDescriptionLoader } from "./description";
+import { makeAuditableLoader } from "./auditable";
+import { makeRequirementLoader } from "./requirement";
+import { makeSopLoader } from "./sop";
+import { makeStatusLoader } from "./status";
 
 if (process.env.DATABASE_URL) {
   const url = new URL(process.env.DATABASE_URL);
@@ -50,22 +61,34 @@ export const sql = postgres({
   max: DB_MAX_CONNECTIONS,
   // TODO: this is probably a good idea...
   // connection: {
-  //   statement_timeout: DB_STATEMENT_TIMEOUT * 1000 // milliseconds
+  //   statement_timeout: DB_STATEMENT_TIMEOUT * 1000, // milliseconds
   // },
 });
 
 export type SQL = typeof sql;
 export type TxSQL = Parameters<Parameters<typeof sql.begin>[1]>[0];
 
+export function join(xs: readonly Fragment[], d: Fragment) {
+  return xs.reduce((acc, x, i) => sql`${acc} ${i ? sql`${d} ${x}` : x}`, sql``);
+}
+
 export function orm(req: Request) {
   return {
+    activatable: makeActivatableLoader(req),
+    auditable: makeAuditableLoader(req),
     crl: makeCustomerRequestedLanguageLoader(req),
+    description: makeDescriptionLoader(req),
+    displayName: makeDisplayNameLoader(req),
+    dynamicString: makeDynamicStringLoader(req),
     invitation: makeInvitationLoader(req),
     language: makeLanguageLoader(req),
     location: makeLocationLoader(req),
     name: makeNameLoader(req),
     nameMetadata: makeNameMetadataLoader(req),
     organization: makeOrganizationLoader(req),
+    requirement: makeRequirementLoader(req),
+    sop: makeSopLoader(req),
+    status: makeStatusLoader(req),
     tag: makeTagLoader(req),
     user: makeUserLoader(req),
     worker: makeWorkerLoader(req),

@@ -2,106 +2,11 @@
 
 exports[`saveChecklist create a new checklist 1`] = `
 {
-  "data": {
-    "saveChecklist": {
-      "__typename": "ChecklistEdge",
-      "node": {
-        "__typename": "Checklist",
-        "active": {
-          "__typename": "Activatable",
-          "active": true,
-        },
-        "assignees": {
-          "__typename": "AssigneeConnection",
-          "edges": [
-            {
-              "__typename": "AssigneeEdge",
-              "node": {
-                "__typename": "Assignee",
-                "assignedAt": {
-                  "__typename": "Instant",
-                  "epochMilliseconds": "1725823905364",
-                },
-                "assignedTo": {
-                  "__typename": "Worker",
-                  "displayName": "Mark Keller",
-                },
-              },
-            },
-          ],
-        },
-        "auditable": {
-          "__typename": "Auditable",
-          "enabled": true,
-        },
-        "description": {
-          "__typename": "Description",
-          "value": {
-            "__typename": "DynamicString",
-            "value": "This is a test checklist",
-          },
-        },
-        "items": {
-          "__typename": "ChecklistItemConnection",
-          "edges": [
-            {
-              "__typename": "ChecklistItemEdge",
-              "node": {
-                "__typename": "ChecklistResult",
-                "auditable": {
-                  "__typename": "Auditable",
-                  "enabled": true,
-                },
-                "name": {
-                  "__typename": "DisplayName",
-                  "value": {
-                    "__typename": "DynamicString",
-                    "value": "Test result item",
-                  },
-                },
-                "required": true,
-                "status": {
-                  "__typename": "ChecklistOpen",
-                  "openedAt": {
-                    "__typename": "Instant",
-                    "epochMilliseconds": "1725823905364",
-                  },
-                },
-                "value": {
-                  "__typename": "Counter",
-                  "count": 42,
-                },
-              },
-            },
-          ],
-        },
-        "name": {
-          "__typename": "DisplayName",
-          "value": {
-            "__typename": "DynamicString",
-            "value": "Test checklist",
-          },
-        },
-        "schedule": {
-          "__typename": "OnceSchedule",
-          "once": {
-            "__typename": "Instant",
-            "epochMilliseconds": "1725823905364",
-          },
-        },
-        "sop": {
-          "__typename": "Sop",
-          "link": "https://tendrel.io/",
-        },
-        "status": {
-          "__typename": "ChecklistOpen",
-          "openedAt": {
-            "__typename": "Instant",
-            "epochMilliseconds": "1725823905364",
-          },
-        },
-      },
-    },
-  },
+  "data": null,
+  "errors": [
+    [GraphQLError: Failed to connect],
+    [GraphQLError: Failed to connect],
+    [GraphQLError: Failed to connect],
+  ],
 }
 `;
