@@ -41,18 +41,29 @@ export const Location: LocationResolvers = {
     const children = await ctx.orm.location.loadMany(childIds.map(c => c.id));
     return children.filter(isValue);
   },
-  name(parent, _, ctx) {
-    return ctx.orm.name.load(decodeGlobalId(parent.nameId).id);
+  async name(parent, _, ctx) {
+    const hack = await ctx.orm.location.load(decodeGlobalId(parent.id).id);
+    return ctx.orm.name.load(decodeGlobalId(hack.nameId).id);
   },
-  parent(parent, _, ctx) {
+  async parent(parent, _, ctx) {
     if (parent.parentId) {
-      return ctx.orm.location.load(decodeGlobalId(parent.parentId).id);
+      const hack = await ctx.orm.location.load(decodeGlobalId(parent.id).id);
+      return ctx.orm.location.load(decodeGlobalId(hack.parentId).id);
     }
   },
-  site(parent, _, ctx) {
-    return ctx.orm.location.load(decodeGlobalId(parent.siteId).id);
+  async scanCode(parent, _, ctx) {
+    const hack = await ctx.orm.location.load(decodeGlobalId(parent.id).id);
+    return hack.scanCode;
+  },
+  async site(parent, _, ctx) {
+    const hack = await ctx.orm.location.load(decodeGlobalId(parent.id).id);
+    return ctx.orm.location.load(decodeGlobalId(hack.siteId).id);
   },
   tags(parent, _, ctx) {
     return [];
+  },
+  async timeZone(parent, _, ctx) {
+    const hack = await ctx.orm.location.load(decodeGlobalId(parent.id).id);
+    return hack.timeZone;
   },
 };

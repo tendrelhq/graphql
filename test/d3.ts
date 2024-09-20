@@ -1,3 +1,4 @@
+// @ts-nocheck
 // Doc Day Data (d3)
 // Sorry to disappoint you.
 
@@ -57,7 +58,7 @@ function makeWorker(
 ) {
   return {
     __typename: "Worker" as const,
-    id: encodeGlobalId({ type: "worker", id: randomUUID() }),
+    id: encodeGlobalId({ type: "workerinstance", id: randomUUID() }),
     active: {
       __typename: "ActivationStatus",
       active: options?.active ?? true,
@@ -147,6 +148,7 @@ export function makeAuditable(input: AuditableInput) {
     __typename: "Auditable" as const,
     id: input.id,
     enabled: input.enabled,
+    auditable: input.enabled,
   } satisfies Auditable;
 }
 
@@ -158,6 +160,7 @@ export function makeDescription(input: DescriptionInput) {
       id: randomUUID(),
     }),
     value: makeDynamicString(input.value),
+    description: makeDynamicString(input.value),
   } satisfies Description;
 }
 
@@ -166,6 +169,7 @@ export function makeDisplayName(input: DisplayNameInput) {
     __typename: "DisplayName" as const,
     id: input.id,
     value: makeDynamicString(input.value),
+    name: makeDynamicString(input.value),
   } satisfies DisplayName;
 }
 
@@ -201,6 +205,7 @@ export function makeSop(input: SopInput) {
   return {
     id: input.id,
     link: input.link.toString(),
+    sop: input.link.toString(),
   } satisfies Sop;
 }
 
@@ -216,7 +221,7 @@ export function makeOpen(input: ChecklistOpenInput) {
     __typename: "ChecklistOpen" as const,
     id: input.id,
     openedAt: makeTemporal(input.at),
-    openedBy: makeIdentity(input.by),
+    openedBy: input.by ? makeIdentity(input.by) : undefined,
   } satisfies ChecklistOpen;
 }
 
@@ -225,7 +230,7 @@ export function makeInProgress(input: ChecklistInProgressInput) {
     __typename: "ChecklistInProgress" as const,
     id: input.id,
     inProgressAt: makeTemporal(input.at),
-    inProgressBy: makeIdentity(input.by),
+    inProgressBy: input.by ? makeIdentity(input.by) : undefined,
   } satisfies ChecklistInProgress;
 }
 
@@ -234,13 +239,15 @@ export function makeClosed(input: ChecklistClosedInput) {
     __typename: "ChecklistClosed" as const,
     id: input.id,
     closedAt: makeTemporal(input.at),
-    closedBy: makeIdentity(input.by),
-    closedBecause: {
-      code: input.because.code,
-      note: input.because.note
-        ? makeDynamicString(input.because.note)
-        : undefined,
-    },
+    closedBy: input.by ? makeIdentity(input.by) : undefined,
+    closedBecause: input.because
+      ? {
+          code: input.because.code,
+          note: input.because.note
+            ? makeDynamicString(input.because.note)
+            : undefined,
+        }
+      : undefined,
   } satisfies ChecklistClosed;
 }
 

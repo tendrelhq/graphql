@@ -1,0 +1,335 @@
+// Bun Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`ChecklistResult 1`] = `
+{
+  "data": {
+    "user": {
+      "__typename": "User",
+      "organizations": {
+        "__typename": "OrganizationConnection",
+        "edges": [
+          {
+            "__typename": "OrganizationEdge",
+            "node": {
+              "__typename": "Organization",
+              "checklists": {
+                "__typename": "ChecklistConnection",
+                "edges": [
+                  {
+                    "__typename": "ChecklistEdge",
+                    "node": {
+                      "__typename": "Checklist",
+                      "items": {
+                        "__typename": "ChecklistItemConnection",
+                        "edges": [
+                          {
+                            "__typename": "ChecklistItemEdge",
+                            "node": {
+                              "__typename": "ChecklistResult",
+                              "assignees": {
+                                "__typename": "AssigneeConnection",
+                                "totalCount": 0,
+                              },
+                              "attachments": {
+                                "__typename": "AttachmentConnection",
+                                "totalCount": 0,
+                              },
+                              "name": {
+                                "__typename": "DisplayName",
+                                "name": {
+                                  "__typename": "DynamicString",
+                                  "value": "Location",
+                                },
+                              },
+                              "required": null,
+                              "status": null,
+                              "value": {
+                                "__typename": "Reference",
+                                "ref": null,
+                              },
+                            },
+                          },
+                          {
+                            "__typename": "ChecklistItemEdge",
+                            "node": {
+                              "__typename": "ChecklistResult",
+                              "assignees": {
+                                "__typename": "AssigneeConnection",
+                                "totalCount": 0,
+                              },
+                              "attachments": {
+                                "__typename": "AttachmentConnection",
+                                "totalCount": 0,
+                              },
+                              "name": {
+                                "__typename": "DisplayName",
+                                "name": {
+                                  "__typename": "DynamicString",
+                                  "value": "Worker",
+                                },
+                              },
+                              "required": null,
+                              "status": null,
+                              "value": {
+                                "__typename": "Reference",
+                                "ref": null,
+                              },
+                            },
+                          },
+                          {
+                            "__typename": "ChecklistItemEdge",
+                            "node": {
+                              "__typename": "ChecklistResult",
+                              "assignees": {
+                                "__typename": "AssigneeConnection",
+                                "totalCount": 0,
+                              },
+                              "attachments": {
+                                "__typename": "AttachmentConnection",
+                                "totalCount": 0,
+                              },
+                              "name": {
+                                "__typename": "DisplayName",
+                                "name": {
+                                  "__typename": "DynamicString",
+                                  "value": "Checklist - Number",
+                                },
+                              },
+                              "required": null,
+                              "status": null,
+                              "value": {
+                                "__typename": "Counter",
+                                "count": 42,
+                              },
+                            },
+                          },
+                          {
+                            "__typename": "ChecklistItemEdge",
+                            "node": {
+                              "__typename": "ChecklistResult",
+                              "assignees": {
+                                "__typename": "AssigneeConnection",
+                                "totalCount": 0,
+                              },
+                              "attachments": {
+                                "__typename": "AttachmentConnection",
+                                "totalCount": 0,
+                              },
+                              "name": {
+                                "__typename": "DisplayName",
+                                "name": {
+                                  "__typename": "DynamicString",
+                                  "value": "Checklist - Clicker",
+                                },
+                              },
+                              "required": null,
+                              "status": null,
+                              "value": {
+                                "__typename": "Counter",
+                                "count": 42,
+                              },
+                            },
+                          },
+                          {
+                            "__typename": "ChecklistItemEdge",
+                            "node": {
+                              "__typename": "ChecklistResult",
+                              "assignees": {
+                                "__typename": "AssigneeConnection",
+                                "totalCount": 0,
+                              },
+                              "attachments": {
+                                "__typename": "AttachmentConnection",
+                                "totalCount": 0,
+                              },
+                              "name": {
+                                "__typename": "DisplayName",
+                                "name": {
+                                  "__typename": "DynamicString",
+                                  "value": "Checklist - Boolean",
+                                },
+                              },
+                              "required": null,
+                              "status": null,
+                              "value": {
+                                "__typename": "Flag",
+                                "enabled": null,
+                              },
+                            },
+                          },
+                          {
+                            "__typename": "ChecklistItemEdge",
+                            "node": {
+                              "__typename": "ChecklistResult",
+                              "assignees": {
+                                "__typename": "AssigneeConnection",
+                                "totalCount": 0,
+                              },
+                              "attachments": {
+                                "__typename": "AttachmentConnection",
+                                "totalCount": 0,
+                              },
+                              "name": {
+                                "__typename": "DisplayName",
+                                "name": {
+                                  "__typename": "DynamicString",
+                                  "value": "Time At Task",
+                                },
+                              },
+                              "required": null,
+                              "status": null,
+                              "value": {
+                                "__typename": "Counter",
+                                "count": null,
+                              },
+                            },
+                          },
+                          {
+                            "__typename": "ChecklistItemEdge",
+                            "node": {
+                              "__typename": "ChecklistResult",
+                              "assignees": {
+                                "__typename": "AssigneeConnection",
+                                "totalCount": 0,
+                              },
+                              "attachments": {
+                                "__typename": "AttachmentConnection",
+                                "totalCount": 0,
+                              },
+                              "name": {
+                                "__typename": "DisplayName",
+                                "name": {
+                                  "__typename": "DynamicString",
+                                  "value": "Checklist - Text",
+                                },
+                              },
+                              "required": null,
+                              "status": null,
+                              "value": {
+                                "__typename": "Register",
+                                "binary": null,
+                              },
+                            },
+                          },
+                          {
+                            "__typename": "ChecklistItemEdge",
+                            "node": {
+                              "__typename": "ChecklistResult",
+                              "assignees": {
+                                "__typename": "AssigneeConnection",
+                                "totalCount": 0,
+                              },
+                              "attachments": {
+                                "__typename": "AttachmentConnection",
+                                "totalCount": 0,
+                              },
+                              "name": {
+                                "__typename": "DisplayName",
+                                "name": {
+                                  "__typename": "DynamicString",
+                                  "value": "Checklist - Sentiment",
+                                },
+                              },
+                              "required": null,
+                              "status": null,
+                              "value": {
+                                "__typename": "Counter",
+                                "count": 42,
+                              },
+                            },
+                          },
+                          {
+                            "__typename": "ChecklistItemEdge",
+                            "node": {
+                              "__typename": "ChecklistResult",
+                              "assignees": {
+                                "__typename": "AssigneeConnection",
+                                "totalCount": 0,
+                              },
+                              "attachments": {
+                                "__typename": "AttachmentConnection",
+                                "totalCount": 0,
+                              },
+                              "name": {
+                                "__typename": "DisplayName",
+                                "name": {
+                                  "__typename": "DynamicString",
+                                  "value": "Checklist - String",
+                                },
+                              },
+                              "required": null,
+                              "status": null,
+                              "value": {
+                                "__typename": "Register",
+                                "binary": null,
+                              },
+                            },
+                          },
+                          {
+                            "__typename": "ChecklistItemEdge",
+                            "node": {
+                              "__typename": "ChecklistResult",
+                              "assignees": {
+                                "__typename": "AssigneeConnection",
+                                "totalCount": 0,
+                              },
+                              "attachments": {
+                                "__typename": "AttachmentConnection",
+                                "totalCount": 0,
+                              },
+                              "name": {
+                                "__typename": "DisplayName",
+                                "name": {
+                                  "__typename": "DynamicString",
+                                  "value": "Checklist - Date",
+                                },
+                              },
+                              "required": null,
+                              "status": null,
+                              "value": {
+                                "__typename": "Register",
+                                "binary": null,
+                              },
+                            },
+                          },
+                          {
+                            "__typename": "ChecklistItemEdge",
+                            "node": {
+                              "__typename": "ChecklistResult",
+                              "assignees": {
+                                "__typename": "AssigneeConnection",
+                                "totalCount": 0,
+                              },
+                              "attachments": {
+                                "__typename": "AttachmentConnection",
+                                "totalCount": 0,
+                              },
+                              "name": {
+                                "__typename": "DisplayName",
+                                "name": {
+                                  "__typename": "DynamicString",
+                                  "value": "Checklist - Geolocation",
+                                },
+                              },
+                              "required": null,
+                              "status": null,
+                              "value": {
+                                "__typename": "Register",
+                                "binary": null,
+                              },
+                            },
+                          },
+                        ],
+                      },
+                    },
+                  },
+                ],
+              },
+            },
+          },
+        ],
+      },
+    },
+  },
+}
+`;

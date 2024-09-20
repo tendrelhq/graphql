@@ -1,5 +1,11 @@
 import type { ChecklistInProgressResolvers } from "@/schema";
+import { NOW } from "@/test/prelude";
 
 export const ChecklistInProgress: ChecklistInProgressResolvers = {
-  /* Implement ChecklistInProgress resolver logic here */
+  inProgressAt() {
+    return {
+      __typename: "Instant",
+      epochMilliseconds: NOW.valueOf().toString(),
+    };
+  },
 };

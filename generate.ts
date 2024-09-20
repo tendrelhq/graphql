@@ -10,6 +10,15 @@ const config: CodegenConfig = {
   documents: "./schema/**/*.test.graphql",
   generates: {
     "./schema/__generated__": defineConfig({
+      resolverGeneration: {
+        interface: "", // disabled
+        mutation: "*",
+        object: ["!*.*Edge"], // all Edge implementations
+        query: "*",
+        scalar: "*",
+        subscription: "*",
+        union: "", // disabled
+      },
       scalarsModule: "@/schema/system/scalars",
       typesPluginsConfig: {
         contextType: "@/schema#Context",

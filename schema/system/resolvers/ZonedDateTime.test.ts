@@ -10,9 +10,9 @@ const ZDT = {
 };
 
 const testQuery = `#graphql
-  type Query {
-    test: ZonedDateTime!
-  }
+type Query {
+  test: ZonedDateTime!
+}
 `;
 const testResolver = {
   Query: {
@@ -26,32 +26,24 @@ const schema = makeExecutableSchema({
 
 test("ZonedDateTime", () => {
   const source = `#graphql
-      query TestInstant($options: ZonedDateTimeToStringOptions) {
-        test {
-          __typename
-          epochMilliseconds
-          toString(options: $options)
-        }
-      }
-    `;
+query TestInstant {
+  test {
+    __typename
+    epochMilliseconds
+  }
+}
+  `;
 
   expect(
     graphqlSync({
       schema,
       source,
-      variableValues: {
-        options: {
-          smallestUnit: "second",
-          timeZoneName: "auto",
-        },
-      },
     }),
   ).toEqual({
     data: {
       test: {
         __typename: "ZonedDateTime",
         epochMilliseconds: ZDT.epochMilliseconds,
-        toString: "2024-08-05T14:20:41-07:00[America/Los_Angeles]",
       },
     },
   });

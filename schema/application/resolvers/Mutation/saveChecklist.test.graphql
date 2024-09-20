@@ -2,7 +2,7 @@ mutation TestSaveChecklist($input: ChecklistInput!) {
   saveChecklist(input: $input) {
     node {
       name {
-        value {
+        name {
           value
         }
       }
@@ -24,10 +24,10 @@ mutation TestSaveChecklist($input: ChecklistInput!) {
         }
       }
       auditable {
-        enabled
+        auditable
       }
       description {
-        value {
+        description {
           value
         }
       }
@@ -36,10 +36,10 @@ mutation TestSaveChecklist($input: ChecklistInput!) {
           node {
             ... on ChecklistResult {
               auditable {
-                enabled
+                auditable
               }
               name {
-                value {
+                name {
                   value
                 }
               }
@@ -87,7 +87,7 @@ mutation TestSaveChecklist($input: ChecklistInput!) {
         }
       }
       sop {
-        link
+        sop
       }
       status {
         ... on ChecklistOpen {

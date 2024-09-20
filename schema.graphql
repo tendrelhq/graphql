@@ -11,7 +11,7 @@ TODO
 type Activatable implements Component {
   active: Boolean!
   id: Entity!
-  updatedAt: Temporal!
+  updatedAt: Temporal
 }
 
 type ActivationStatus {
@@ -85,7 +85,8 @@ type AttachmentEdge implements Edge {
 TODO
 """
 type Auditable implements Component {
-  enabled: Boolean!
+  auditable: Boolean!
+  enabled: Boolean! @deprecated
   id: Entity!
 }
 
@@ -128,7 +129,7 @@ enum CalendarNameOptions {
 }
 
 type Checklist implements Component {
-  active: Activatable!
+  active: Activatable
   assignees(
     after: String
     before: String
@@ -141,7 +142,7 @@ type Checklist implements Component {
     first: Int
     last: Int
   ): AttachmentConnection!
-  auditable: Auditable!
+  auditable: Auditable
   children(
     after: String
     before: String
@@ -167,15 +168,15 @@ type Checklist implements Component {
 
 type ChecklistClosed implements Component {
   closedAt: Temporal!
-  closedBecause: ChecklistClosedReason!
-  closedBy: Identity!
+  closedBecause: ChecklistClosedReason
+  closedBy: Identity
   id: Entity!
 }
 
 input ChecklistClosedInput {
   at: TemporalInput!
-  because: ChecklistClosedReasonInput!
-  by: Entity!
+  because: ChecklistClosedReasonInput
+  by: Entity
   id: Entity!
 }
 
@@ -208,19 +209,19 @@ type ChecklistEdge implements Edge {
 type ChecklistInProgress implements Component {
   id: Entity!
   inProgressAt: Temporal!
-  inProgressBy: Identity!
+  inProgressBy: Identity
 }
 
 input ChecklistInProgressInput {
   at: TemporalInput!
-  by: Entity!
+  by: Entity
   id: Entity!
 }
 
 input ChecklistInput {
-  active: ActiveInput!
+  active: ActiveInput
   assignees: [AssigneeInput!]
-  auditable: AuditableInput!
+  auditable: AuditableInput
   customerId: ID!
   description: DescriptionInput
   id: Entity!
@@ -253,12 +254,12 @@ input ChecklistItemInput @oneOf {
 type ChecklistOpen implements Component {
   id: Entity!
   openedAt: Temporal!
-  openedBy: Identity!
+  openedBy: Identity
 }
 
 input ChecklistOpenInput {
   at: TemporalInput!
-  by: Entity!
+  by: Entity
   id: Entity!
 }
 
@@ -278,12 +279,12 @@ type ChecklistResult implements Component {
     first: Int
     last: Int
   ): AttachmentConnection!
-  auditable: Auditable!
+  auditable: Auditable
   id: Entity!
   name: DisplayName!
   required: Boolean
   status: ChecklistStatus
-  value: ChecklistResultValue
+  value: ChecklistResultValue!
 }
 
 """
@@ -299,7 +300,7 @@ input ChecklistResultInput {
   value: ChecklistResultValueInput
 }
 
-union ChecklistResultValue = Counter | Flag | Register
+union ChecklistResultValue = Counter | Flag | Reference | Register
 
 input ChecklistResultValueInput @oneOf {
   counter: Int
@@ -324,12 +325,29 @@ input ChecklistStatusInput @oneOf {
   open: ChecklistOpenInput
 }
 
+enum ChecklistType {
+  instance
+  template
+}
+
 """
 Components characterize Entities as possessing a particular trait.
 They are just simple structs, holding all data necessary to model that trait.
 """
 interface Component {
   id: Entity!
+}
+
+type ComponentConnection implements Connection {
+  edges: [ComponentEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+type ComponentEdge implements Edge {
+  cursor: String!
+  debug: DebugInfo!
+  node: Component!
 }
 
 interface Connection {
@@ -342,7 +360,7 @@ Data type for tracking an incrementable/decrementable integer value.
 Counters have two operations: increment and decrement.
 """
 type Counter {
-  count: Int!
+  count: Int
 }
 
 input CreateInvitationInput {
@@ -401,12 +419,19 @@ type CronSchedule {
   cron: CronExpression!
 }
 
+type DebugInfo {
+  createdAt: String!
+  updatedAt: String!
+  updatedBy: Identity
+}
+
 """
 TODO
 """
 type Description implements Component {
+  description: DynamicString!
   id: Entity!
-  value: DynamicString!
+  value: DynamicString! @deprecated
 }
 
 """
@@ -422,7 +447,8 @@ TODO
 """
 type DisplayName implements Component {
   id: Entity!
-  value: DynamicString!
+  name: DynamicString!
+  value: DynamicString! @deprecated
 }
 
 """
@@ -481,24 +507,13 @@ input EnabledLanguageSearchOptions {
 
 scalar Entity
 
-type EntityComponentConnection implements Connection {
-  edges: [EntityComponentEdge!]!
-  pageInfo: PageInfo!
-  totalCount: Int!
-}
-
-type EntityComponentEdge implements Edge {
-  cursor: String!
-  node: Component!
-}
-
 type EntityConnection {
   components(
     after: String
     before: String
     first: Int
     last: Int
-  ): EntityComponentConnection!
+  ): ComponentConnection!
   entity: Entity!
 }
 
@@ -508,7 +523,7 @@ Data type for tracking Boolean-like values in the form of "enabled" or
 Flags only support two operations: enable and disable.
 """
 type Flag {
-  enabled: Boolean!
+  enabled: Boolean
 }
 
 interface Identity implements Component {
@@ -523,11 +538,6 @@ type Instant implements Temporal {
   Milliseconds since the UNIX epoch of 1/1/1970 00:00+00
   """
   epochMilliseconds: String!
-
-  """
-  Convert an Instant to an ISO 8601 string
-  """
-  toString(options: InstantToStringOptions): String
 
   """
   Convert an Instant to a ZonedDateTime
@@ -581,10 +591,10 @@ type Language {
 
 scalar Locale
 
-type Location implements Node {
+type Location implements Component & Referenceable {
   active: ActivationStatus!
   children(options: LocationsQueryOptions): [Location!]!
-  id: ID!
+  id: Entity!
   name: Name!
   nameId: ID!
   parent: Location
@@ -691,6 +701,13 @@ type Organization implements Node {
   activatedAt: String
   active: Boolean!
   billingId: String
+  checklists(
+    after: String
+    before: String
+    first: Int
+    last: Int
+    search: ChecklistSearchOptions
+  ): ChecklistConnection!
   deactivatedAt: String
   id: ID!
   languages(
@@ -752,12 +769,28 @@ type Query {
 }
 
 """
+Data type for tracking references to other object.
+"""
+type Reference {
+  ref: Referenceable
+}
+
+interface Referenceable implements Component {
+  id: Entity!
+}
+
+"""
 Data type for tracking named binaries (like strings). Any binary value can act
 as the value of a register. Registers can only have the binaries stored within
 them changed.
 """
 type Register {
-  binary: String!
+  binary: String
+}
+
+type Requirement implements Component {
+  id: Entity!
+  requires: Entity!
 }
 
 """
@@ -796,6 +829,12 @@ enum ScheduleType {
   OnceSchedule
 }
 
+enum Sentiment {
+  negative
+  neutral
+  positive
+}
+
 input SignUpInput {
   active: Boolean!
   displayName: String
@@ -816,7 +855,8 @@ TODO
 """
 type Sop implements Component {
   id: Entity!
-  link: URL!
+  link: URL! @deprecated
+  sop: URL!
 }
 
 """
@@ -945,7 +985,7 @@ input UserSearchOptions {
   displayName: String
 }
 
-type Worker implements Assignable & Component & Identity {
+type Worker implements Assignable & Component & Identity & Referenceable {
   _hack_numeric_id: Int!
   active: ActivationStatus!
   auth: AuthenticationStatus!
@@ -1002,11 +1042,6 @@ type ZonedDateTime implements Temporal {
   month: Int!
   second: Int!
   timeZone: TimeZone!
-
-  """
-  Convert a ZonedDateTime to an ISO 8601 string
-  """
-  toString(options: ZonedDateTimeToStringOptions): String!
   year: Int!
 }
 

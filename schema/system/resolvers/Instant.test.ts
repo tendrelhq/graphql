@@ -9,9 +9,9 @@ const I = {
 };
 
 const testQuery = `#graphql
-  type Query {
-    test: Instant!
-  }
+type Query {
+  test: Instant!
+}
 `;
 const testResolver = {
   Query: {
@@ -25,36 +25,28 @@ const schema = makeExecutableSchema({
 
 test("Instant", () => {
   const source = `#graphql
-      query TestInstant($options: InstantToStringOptions) {
-        test {
-          __typename
-          epochMilliseconds
-          toString(options: $options)
-          toZonedDateTime(timeZone: "America/Los_Angeles") {
-            epochMilliseconds
-            timeZone
-          }
-        }
-      }
+query TestInstant {
+  test {
+    __typename
+    epochMilliseconds
+    toZonedDateTime(timeZone: "America/Los_Angeles") {
+      epochMilliseconds
+      timeZone
+    }
+  }
+}
     `;
 
   expect(
     graphqlSync({
       schema,
       source,
-      variableValues: {
-        options: {
-          smallestUnit: "second",
-          timeZone: "America/New_York",
-        },
-      },
     }),
   ).toEqual({
     data: {
       test: {
         __typename: "Instant",
         epochMilliseconds: I.epochMilliseconds,
-        toString: "2024-08-05T17:20:41-04:00",
         toZonedDateTime: {
           epochMilliseconds: "1722892841208",
           timeZone: "America/Los_Angeles",

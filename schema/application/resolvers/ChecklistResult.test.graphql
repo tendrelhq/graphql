@@ -1,0 +1,62 @@
+query TestChecklistResult {
+  user {
+    organizations(last: 1) {
+      edges {
+        node {
+          checklists(first: 1) {
+            edges {
+              node {
+                items {
+                  edges {
+                    node {
+                      ... on ChecklistResult {
+                        assignees {
+                          totalCount
+                        }
+                        attachments {
+                          totalCount
+                        }
+                        name {
+                          name {
+                            value
+                          }
+                        }
+                        required
+                        status {
+                          __typename
+                        }
+                        value {
+                          ... on Counter {
+                            count
+                          }
+                          ... on Flag {
+                            enabled
+                          }
+                          ... on Reference {
+                            ref {
+                              ... on Location {
+                                name {
+                                  value
+                                }
+                              }
+                              ... on Worker {
+                                displayName
+                              }
+                            }
+                          }
+                          ... on Register {
+                            binary
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

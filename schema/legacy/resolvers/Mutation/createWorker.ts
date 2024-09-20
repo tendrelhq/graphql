@@ -72,7 +72,6 @@ export const createWorker: NonNullable<
 };
 
 async function execute(input: CreateWorkerInput, ctx: Context) {
-  console.log(input);
   // biome-ignore lint/complexity/noBannedTypes:
   const [row] = await sql<[WithKey<{}>?]>`
       WITH i(userid, customerid, customeruuid, languageid, languageuuid, startdate, enddate, roleid, roleuuid, scancode) AS (

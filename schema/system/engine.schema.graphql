@@ -19,6 +19,13 @@ interface Component {
   id: Entity!
 }
 
+type DebugInfo {
+  createdAt: String!
+  # createdBy: Identity
+  updatedAt: String!
+  updatedBy: Identity
+}
+
 type EntityConnection {
   entity: Entity!
   components(
@@ -26,18 +33,23 @@ type EntityConnection {
     last: Int
     before: String
     after: String
-  ): EntityComponentConnection!
+  ): ComponentConnection!
 }
 
-type EntityComponentConnection implements Connection {
-  edges: [EntityComponentEdge!]!
+type ComponentConnection implements Connection {
+  edges: [ComponentEdge!]!
   pageInfo: PageInfo!
   totalCount: Int!
 }
 
-type EntityComponentEdge implements Edge {
+type ComponentEdge implements Edge {
   cursor: String!
+  debug: DebugInfo!
   node: Component!
+}
+
+interface Referenceable implements Component {
+  id: Entity!
 }
 
 #

@@ -35,10 +35,10 @@ query Checklists {
           totalCount
         }
         auditable {
-          enabled
+          auditable
         }
         description {
-          value {
+          description {
             value
           }
         }
@@ -48,14 +48,14 @@ query Checklists {
               __typename
               ... on Checklist {
                 name {
-                  value {
+                  name {
                     value
                   }
                 }
               }
               ... on ChecklistResult {
                 name {
-                  value {
+                  name {
                     value
                   }
                 }
@@ -69,7 +69,7 @@ query Checklists {
           totalCount
         }
         name {
-          value {
+          name {
             value
           }
         }
@@ -78,7 +78,7 @@ query Checklists {
           __typename
         }
         sop {
-          link
+          sop
         }
         status {
           ... on ChecklistOpen {

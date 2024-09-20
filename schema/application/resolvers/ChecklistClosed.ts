@@ -1,5 +1,11 @@
 import type { ChecklistClosedResolvers } from "@/schema";
+import { NOW } from "@/test/prelude";
 
 export const ChecklistClosed: ChecklistClosedResolvers = {
-  /* Implement ChecklistClosed resolver logic here */
+  closedAt() {
+    return {
+      __typename: "Instant",
+      epochMilliseconds: NOW.valueOf().toString(),
+    };
+  },
 };

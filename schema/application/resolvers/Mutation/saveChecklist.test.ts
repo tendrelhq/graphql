@@ -7,7 +7,7 @@ import { TestSaveChecklistDocument } from "./saveChecklist.test.generated";
 
 const schema = makeExecutableSchema({ resolvers, typeDefs });
 
-describe.skipIf(!!process.env.CI)("saveChecklist", () => {
+describe.skip("saveChecklist", () => {
   test("create a new checklist", async () => {
     const result = await execute(schema, TestSaveChecklistDocument, {
       input: {

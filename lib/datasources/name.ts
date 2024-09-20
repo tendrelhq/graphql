@@ -1,10 +1,86 @@
 import { EntityNotFound } from "@/errors";
-import type { Name, NameMetadata, UpdateNameInput } from "@/schema";
+import type { Component, Name, NameMetadata, UpdateNameInput } from "@/schema";
 import { decodeGlobalId } from "@/schema/system";
 import type { WithKey } from "@/util";
 import Dataloader from "dataloader";
 import type { Request } from "express";
-import { type SQL, sql } from "./postgres";
+import { match } from "ts-pattern";
+import { type SQL, join, sql } from "./postgres";
+
+export function makeDisplayNameLoader(req: Request) {
+  return new Dataloader<string, Component>(async keys => {
+    const entities = keys.map(decodeGlobalId);
+    const byUnderlyingType = entities.reduce((acc, { type, id }) => {
+      if (!acc.has(type)) acc.set(type, []);
+      acc.get(type)?.push(id);
+      return acc;
+    }, new Map<string, string[]>());
+
+    const xs = await sql<[WithKey<Component>]>`${join(
+      [...byUnderlyingType.entries()].flatMap(([type, ids]) =>
+        match(type)
+          .with(
+            "workinstance",
+            () => sql`
+                SELECT
+                    wi.id AS _key,
+                    encode(('name:' || languagemasteruuid)::bytea, 'base64') AS id
+                FROM public.workinstance AS wi
+                INNER JOIN public.worktemplate AS wt
+                    ON wi.workinstanceworktemplateid = wt.worktemplateid
+                INNER JOIN public.languagemaster
+                    ON worktemplatenameid = languagemasterid
+                WHERE wi.id IN ${sql(ids)}
+            `,
+          )
+          .with(
+            "worktemplate",
+            () => sql`
+                SELECT
+                    id AS _key,
+                    encode(('name:' || languagemasteruuid)::bytea, 'base64') AS id
+                FROM public.worktemplate
+                INNER JOIN public.languagemaster
+                    ON worktemplatenameid = languagemasterid
+                WHERE id IN ${sql(ids)}
+            `,
+          )
+          .with(
+            "workresult",
+            () => sql`
+                SELECT
+                    id AS _key,
+                    encode(('name:' || languagemasteruuid)::bytea, 'base64') AS id
+                FROM public.workresult
+                INNER JOIN public.languagemaster
+                    ON workresultlanguagemasterid = languagemasterid
+                WHERE id IN ${sql(ids)}
+            `,
+          )
+          .with(
+            "workresultinstance",
+            () => sql`
+                SELECT
+                    wri.id AS _key,
+                    encode(('name:' || languagemasteruuid)::bytea, 'base64') AS id
+                FROM public.workresultinstance AS wri
+                INNER JOIN public.workresult AS wr
+                    ON wri.workresultinstanceworkresultid = wr.workresultid
+                INNER JOIN public.languagemaster AS lm
+                    ON wr.workresultlanguagemasterid = lm.languagemasterid
+                WHERE wri.id IN ${sql(ids)}
+            `,
+          )
+          .otherwise(() => []),
+      ),
+      sql`UNION ALL`,
+    )}`;
+
+    return entities.map(
+      e => xs.find(x => e.id === x._key) ?? new EntityNotFound("name"),
+    );
+  });
+}
 
 export function makeNameLoader(req: Request) {
   return new Dataloader<string, Name, string>(
