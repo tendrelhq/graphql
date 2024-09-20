@@ -86,7 +86,6 @@ TODO
 """
 type Auditable implements Component {
   auditable: Boolean!
-  enabled: Boolean! @deprecated
   id: Entity!
 }
 
@@ -126,6 +125,22 @@ enum CalendarNameOptions {
   TODO
   """
   never
+}
+
+"""
+TODO
+"""
+type CheckboxWidget implements Component {
+  checked: Boolean
+  id: Entity!
+}
+
+"""
+TODO
+"""
+input CheckboxWidgetInput {
+  checked: Boolean
+  id: Entity!
 }
 
 type Checklist implements Component {
@@ -284,28 +299,20 @@ type ChecklistResult implements Component {
   name: DisplayName!
   required: Boolean
   status: ChecklistStatus
-  value: ChecklistResultValue!
+  widget: Widget!
 }
 
 """
 TODO
 """
 input ChecklistResultInput {
-  assignees: [AssigneeInput!]!
-  auditable: AuditableInput!
+  assignees: [AssigneeInput!]
+  auditable: AuditableInput
   id: Entity!
   name: DisplayNameInput!
   required: Boolean
   status: ChecklistStatusInput
-  value: ChecklistResultValueInput
-}
-
-union ChecklistResultValue = Counter | Flag | Reference | Register
-
-input ChecklistResultValueInput @oneOf {
-  counter: Int
-  flag: Boolean
-  register: String
+  widget: WidgetInput!
 }
 
 input ChecklistSearchOptions {
@@ -328,6 +335,22 @@ input ChecklistStatusInput @oneOf {
 enum ChecklistType {
   instance
   template
+}
+
+"""
+TODO
+"""
+type ClickerWidget implements Component {
+  count: Int
+  id: Entity!
+}
+
+"""
+TODO
+"""
+input ClickerWidgetInput {
+  count: Int
+  id: Entity!
 }
 
 """
@@ -431,7 +454,6 @@ TODO
 type Description implements Component {
   description: DynamicString!
   id: Entity!
-  value: DynamicString! @deprecated
 }
 
 """
@@ -448,7 +470,6 @@ TODO
 type DisplayName implements Component {
   id: Entity!
   name: DynamicString!
-  value: DynamicString! @deprecated
 }
 
 """
@@ -460,6 +481,22 @@ input DisplayNameInput {
 }
 
 scalar Duration
+
+"""
+TODO
+"""
+type DurationWidget implements Component {
+  duration: Duration
+  id: Entity!
+}
+
+"""
+TODO
+"""
+input DurationWidgetInput {
+  duration: Duration
+  id: Entity!
+}
 
 """
 TODO
@@ -524,6 +561,10 @@ Flags only support two operations: enable and disable.
 """
 type Flag {
   enabled: Boolean
+}
+
+type Geography {
+  geog: String
 }
 
 interface Identity implements Component {
@@ -636,6 +677,22 @@ type Metadata {
   updatedBy: Identity
 }
 
+"""
+TODO
+"""
+type MultilineStringWidget implements Component {
+  id: Entity!
+  text: String
+}
+
+"""
+TODO
+"""
+input MultilineStringWidgetInput {
+  id: Entity!
+  text: String
+}
+
 type Mutation {
   acceptInvitation(input: AcceptInvitationInput!): Worker!
   activateWorker(id: ID!): Worker!
@@ -673,6 +730,22 @@ type NameMetadata {
 
 interface Node {
   id: ID!
+}
+
+"""
+TODO
+"""
+type NumberWidget implements Component {
+  id: Entity!
+  number: Int
+}
+
+"""
+TODO
+"""
+input NumberWidgetInput {
+  id: Entity!
+  number: Int
 }
 
 """
@@ -775,6 +848,24 @@ type Reference {
   ref: Referenceable
 }
 
+"""
+TODO
+"""
+type ReferenceWidget implements Component {
+  id: Entity!
+  possibleTypes: [String!]
+  ref: Referenceable
+}
+
+"""
+TODO
+"""
+input ReferenceWidgetInput {
+  id: Entity!
+  possibleTypes: [String!]
+  ref: Entity
+}
+
 interface Referenceable implements Component {
   id: Entity!
 }
@@ -835,6 +926,22 @@ enum Sentiment {
   positive
 }
 
+"""
+TODO
+"""
+type SentimentWidget implements Component {
+  id: Entity!
+  sentiment: Sentiment
+}
+
+"""
+TODO
+"""
+input SentimentWidgetInput {
+  id: Entity!
+  sentiment: Sentiment
+}
+
 input SignUpInput {
   active: Boolean!
   displayName: String
@@ -855,7 +962,6 @@ TODO
 """
 type Sop implements Component {
   id: Entity!
-  link: URL! @deprecated
   sop: URL!
 }
 
@@ -879,6 +985,22 @@ enum SortOrder {
   desc
 }
 
+"""
+TODO
+"""
+type StringWidget implements Component {
+  id: Entity!
+  string: String
+}
+
+"""
+TODO
+"""
+input StringWidgetInput {
+  id: Entity!
+  string: String
+}
+
 type Tag {
   id: ID!
   name: Name!
@@ -898,6 +1020,22 @@ interface Temporal {
 input TemporalInput @oneOf {
   instant: String
   zdt: ZonedDateTimeInput
+}
+
+"""
+TODO
+"""
+type TemporalWidget implements Component {
+  id: Entity!
+  temporal: Temporal
+}
+
+"""
+TODO
+"""
+input TemporalWidgetInput {
+  id: Entity!
+  temporal: TemporalInput
 }
 
 scalar TimeZone
@@ -985,6 +1123,35 @@ input UserSearchOptions {
   displayName: String
 }
 
+"""
+TODO
+"""
+union Widget =
+  | CheckboxWidget
+  | ClickerWidget
+  | DurationWidget
+  | MultilineStringWidget
+  | NumberWidget
+  | ReferenceWidget
+  | SentimentWidget
+  | StringWidget
+  | TemporalWidget
+
+"""
+TODO
+"""
+input WidgetInput @oneOf {
+  checkbox: CheckboxWidgetInput
+  clicker: ClickerWidgetInput
+  duration: DurationWidgetInput
+  multiline: MultilineStringWidgetInput
+  number: NumberWidgetInput
+  reference: ReferenceWidgetInput
+  sentiment: SentimentWidgetInput
+  string: StringWidgetInput
+  temporal: TemporalWidgetInput
+}
+
 type Worker implements Assignable & Component & Identity & Referenceable {
   _hack_numeric_id: Int!
   active: ActivationStatus!
@@ -1030,19 +1197,19 @@ Timezone-aware, calendar-aware date/time object representing an exact time
 from the perspective of a particular geographic region
 """
 type ZonedDateTime implements Temporal {
-  day: Int!
+  day: Int
 
   """
   Milliseconds since the UNIX epoch of 1/1/1970 00:00+00
   """
   epochMilliseconds: String!
-  hour: Int!
-  millisecond: Int!
-  minute: Int!
-  month: Int!
-  second: Int!
+  hour: Int
+  millisecond: Int
+  minute: Int
+  month: Int
+  second: Int
   timeZone: TimeZone!
-  year: Int!
+  year: Int
 }
 
 input ZonedDateTimeInput {

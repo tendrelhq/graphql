@@ -25,27 +25,38 @@ query TestChecklistResult {
                         status {
                           __typename
                         }
-                        value {
-                          ... on Counter {
+                        widget {
+                          ... on CheckboxWidget {
+                            checked
+                          }
+                          ... on ClickerWidget {
                             count
                           }
-                          ... on Flag {
-                            enabled
+                          ... on DurationWidget {
+                            duration
                           }
-                          ... on Reference {
+                          ... on MultilineStringWidget {
+                            text
+                          }
+                          ... on NumberWidget {
+                            number
+                          }
+                          ... on ReferenceWidget {
+                            possibleTypes
                             ref {
-                              ... on Location {
-                                name {
-                                  value
-                                }
-                              }
-                              ... on Worker {
-                                displayName
-                              }
+                              __typename
                             }
                           }
-                          ... on Register {
-                            binary
+                          ... on SentimentWidget {
+                            sentiment
+                          }
+                          ... on StringWidget {
+                            string
+                          }
+                          ... on TemporalWidget {
+                            temporal {
+                              __typename
+                            }
                           }
                         }
                       }

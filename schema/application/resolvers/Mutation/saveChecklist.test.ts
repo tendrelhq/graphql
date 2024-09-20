@@ -7,6 +7,8 @@ import { TestSaveChecklistDocument } from "./saveChecklist.test.generated";
 
 const schema = makeExecutableSchema({ resolvers, typeDefs });
 
+// FIXME: Need to look up real data, e.g. customerId, and create legit global
+// ids (at least for the top level?).
 describe.skip("saveChecklist", () => {
   test("create a new checklist", async () => {
     const result = await execute(schema, TestSaveChecklistDocument, {
@@ -73,8 +75,11 @@ describe.skip("saveChecklist", () => {
                   by: WORKERS.Mark.id,
                 },
               },
-              value: {
-                counter: 42,
+              widget: {
+                clicker: {
+                  id: testGlobalId(),
+                  count: 42,
+                },
               },
             },
           },

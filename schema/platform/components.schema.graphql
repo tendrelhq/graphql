@@ -19,6 +19,10 @@ input ActiveInput {
   updatedAt: TemporalInput!
 }
 
+# extend type Mutation {
+#   activate(input: ActiveInput): Activatable
+# }
+
 interface Assignable implements Component {
   id: Entity!
 }
@@ -40,6 +44,11 @@ input AssigneeInput {
   assignTo: Entity!
   assignAt: TemporalInput!
 }
+
+# TODO: This is the next wave...
+# extend type Mutation {
+#   assign(input: [AssigneeInput!]): AssigneeConnection!
+# }
 
 type AssigneeConnection implements Connection {
   edges: [AssigneeEdge!]!
@@ -71,13 +80,17 @@ type AttachmentEdge implements Edge {
   node: Attachment!
 }
 
+# extend type Mutation {
+#   attach(input: [AttachmentInput!]): AttachmentConnection!
+#   detach(input: ???): AttachmentConnection!
+# }
+
 """
 TODO
 """
 type Auditable implements Component {
   id: Entity!
   auditable: Boolean!
-  enabled: Boolean! @deprecated
 }
 
 """
@@ -94,7 +107,6 @@ TODO
 type Description implements Component {
   id: Entity!
   description: DynamicString!
-  value: DynamicString! @deprecated
 }
 
 """
@@ -111,7 +123,6 @@ TODO
 type DisplayName implements Component {
   id: Entity!
   name: DynamicString!
-  value: DynamicString! @deprecated
 }
 
 """
@@ -141,7 +152,6 @@ TODO
 """
 type Sop implements Component {
   id: Entity!
-  link: URL! @deprecated
   sop: URL!
 }
 
@@ -151,4 +161,189 @@ TODO
 input SopInput {
   id: Entity!
   link: URL!
+}
+
+"""
+TODO
+"""
+union Widget =
+  | CheckboxWidget
+  | ClickerWidget
+  | DurationWidget
+  | MultilineStringWidget
+  | NumberWidget
+  | ReferenceWidget
+  | SentimentWidget
+  | StringWidget
+  | TemporalWidget
+
+"""
+TODO
+"""
+input WidgetInput @oneOf {
+  checkbox: CheckboxWidgetInput
+  clicker: ClickerWidgetInput
+  duration: DurationWidgetInput
+  multiline: MultilineStringWidgetInput
+  number: NumberWidgetInput
+  reference: ReferenceWidgetInput
+  sentiment: SentimentWidgetInput
+  string: StringWidgetInput
+  temporal: TemporalWidgetInput
+}
+
+"""
+TODO
+"""
+type CheckboxWidget implements Component {
+  id: Entity!
+  checked: Boolean
+}
+
+"""
+TODO
+"""
+input CheckboxWidgetInput {
+  id: Entity!
+  checked: Boolean
+}
+
+"""
+TODO
+"""
+type ClickerWidget implements Component {
+  id: Entity!
+  count: Int
+}
+
+"""
+TODO
+"""
+input ClickerWidgetInput {
+  id: Entity!
+  count: Int
+}
+
+"""
+TODO
+"""
+type DurationWidget implements Component {
+  id: Entity!
+  duration: Duration
+}
+
+"""
+TODO
+"""
+input DurationWidgetInput {
+  id: Entity!
+  duration: Duration
+}
+
+# type GeographyWidget implements Component {
+#   id: Entity!
+#   geog: Geography
+# }
+#
+# input GeographyWidgetInput {
+#   id: Entity!
+#   geog: Geography
+# }
+
+"""
+TODO
+"""
+type MultilineStringWidget implements Component {
+  id: Entity!
+  text: String
+}
+
+"""
+TODO
+"""
+input MultilineStringWidgetInput {
+  id: Entity!
+  text: String
+}
+
+"""
+TODO
+"""
+type NumberWidget implements Component {
+  id: Entity!
+  number: Int
+}
+
+"""
+TODO
+"""
+input NumberWidgetInput {
+  id: Entity!
+  number: Int
+}
+
+"""
+TODO
+"""
+type ReferenceWidget implements Component {
+  id: Entity!
+  possibleTypes: [String!]
+  ref: Referenceable
+}
+
+"""
+TODO
+"""
+input ReferenceWidgetInput {
+  id: Entity!
+  possibleTypes: [String!]
+  ref: Entity
+}
+
+"""
+TODO
+"""
+type SentimentWidget implements Component {
+  id: Entity!
+  sentiment: Sentiment
+}
+
+"""
+TODO
+"""
+input SentimentWidgetInput {
+  id: Entity!
+  sentiment: Sentiment
+}
+
+"""
+TODO
+"""
+type StringWidget implements Component {
+  id: Entity!
+  string: String
+}
+
+"""
+TODO
+"""
+input StringWidgetInput {
+  id: Entity!
+  string: String
+}
+
+"""
+TODO
+"""
+type TemporalWidget implements Component {
+  id: Entity!
+  temporal: Temporal
+}
+
+"""
+TODO
+"""
+input TemporalWidgetInput {
+  id: Entity!
+  temporal: TemporalInput
 }

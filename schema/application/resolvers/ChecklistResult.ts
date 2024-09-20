@@ -31,37 +31,31 @@ export const ChecklistResult: ChecklistResultResolvers = {
     // biome-ignore lint/suspicious/noExplicitAny:
     return (await ctx.orm.displayName.load(parent.id)) as any;
   },
-  // async required(parent, _, ctx) {
-  //   return await ctx.orm.requirement.load(parent.id);
-  // },
+  async required(parent, _, ctx) {
+    return await ctx.orm.requirement.load(parent.id);
+  },
   async status(parent, _, ctx) {
     // biome-ignore lint/suspicious/noExplicitAny:
     return (await ctx.orm.status.load(parent.id)) as any;
   },
-  async value(parent) {
+  async widget(parent) {
     const { type, id } = decodeGlobalId(parent.id);
     const [row] = await match(type)
       .with(
         "workresult",
-        // TODO:
-        // 1 │ Boolean
-        // 2 │ Date
-        // 3 │ Entity
-        // 4 │ Number
-        // 5 │ String
-        // 6 │ Time At Task
-        () => sql<[ResolversTypes["ChecklistResultValue"]]>`
+        () => sql<[ResolversTypes["Widget"]]>`
             WITH cte AS (
                 SELECT
-                    CASE WHEN t.systagtype = 'Boolean' THEN 'Flag'
-                         WHEN t.systagtype = 'Date' THEN 'Register'
-                         WHEN t.systagtype = 'Entity' THEN 'Reference'
-                         WHEN t.systagtype = 'Number' THEN 'Counter'
-                         WHEN t.systagtype = 'String' THEN 'Register'
-                         WHEN t.systagtype = 'Time At Task' THEN 'Counter'
+                    CASE WHEN t.systagtype = 'Boolean' THEN 'CheckboxWidget'
+                         WHEN t.systagtype = 'Date' THEN 'TemporalWidget'
+                         WHEN t.systagtype = 'Entity' THEN 'ReferenceWidget'
+                         WHEN t.systagtype = 'Number' THEN 'NumberWidget'
+                         WHEN t.systagtype = 'String' THEN 'StringWidget'
+                         WHEN t.systagtype = 'Time At Task' THEN 'DurationWidget'
                     END AS type,
                     e.systagtype AS reftype,
-                    nullif(wr.workresultdefaultvalue, '') AS value
+                    nullif(wr.workresultdefaultvalue, '') AS value,
+                    encode(('workresult:' || wr.id || ':' || coalesce(e.systagtype, t.systagtype))::bytea, 'base64') AS id
                 FROM public.workresult AS wr
                 INNER JOIN public.systag AS t
                     ON wr.workresulttypeid = t.systagid
@@ -71,37 +65,98 @@ export const ChecklistResult: ChecklistResultResolvers = {
             )
 
             SELECT
-                'Counter' AS "__typename",
-                value::bigint AS count,
-                null::boolean AS enabled,
-                null::text AS binary,
-                null::json AS ref
+                type AS "__typename",
+                id,
+                value::boolean AS checked,
+                null::int AS count,
+                null::int AS duration,
+                null::text AS text,
+                null::int AS number,
+                null::text[] AS "possibleTypes",
+                null::json AS ref,
+                null::int AS sentiment,
+                null::text AS string,
+                null::json AS temporal
             FROM cte
-            WHERE type = 'Counter'
+            WHERE type = 'CheckboxWidget'
             UNION ALL
             SELECT
-                'Flag' AS "__typename",
-                null AS count,
-                value::boolean AS enabled,
-                null AS binary,
-                null AS ref
+                type AS "__typename",
+                id,
+                null::boolean AS checked,
+                value::int AS count,
+                null::int AS duration,
+                null::text AS text,
+                null::int AS number,
+                null::text[] AS "possibleTypes",
+                null::json AS ref,
+                null::int AS sentiment,
+                null::text AS string,
+                null::json AS temporal
             FROM cte
-            WHERE type = 'Flag'
+            WHERE type = 'ClickerWidget'
             UNION ALL
             SELECT
-                'Register' AS "__typename",
-                null AS count,
-                null AS enabled,
-                value::text AS binary,
-                null AS ref
+                type AS "__typename",
+                id,
+                null::boolean AS checked,
+                null::int AS count,
+                value::int AS duration,
+                null::text AS text,
+                null::int AS number,
+                null::text[] AS "possibleTypes",
+                null::json AS ref,
+                null::int AS sentiment,
+                null::text AS string,
+                null::json AS temporal
             FROM cte
-            WHERE type = 'Register'
+            WHERE type = 'DurationWidget'
             UNION ALL
             SELECT
-                'Reference' AS "__typename",
-                null AS count,
-                null AS enabled,
-                null AS binary,
+                type AS "__typename",
+                id,
+                null::boolean AS checked,
+                null::int AS count,
+                null::int AS duration,
+                value::text AS text,
+                null::int AS number,
+                null::text[] AS "possibleTypes",
+                null::json AS ref,
+                null::int AS sentiment,
+                null::text AS string,
+                null::json AS temporal
+            FROM cte
+            WHERE type = 'MultilineStringWidget'
+            UNION ALL
+            SELECT
+                type AS "__typename",
+                id,
+                null::boolean AS checked,
+                null::int AS count,
+                null::int AS duration,
+                null::text AS text,
+                value::int AS number,
+                null::text[] AS "possibleTypes",
+                null::json AS ref,
+                null::int AS sentiment,
+                null::text AS string,
+                null::json AS temporal
+            FROM cte
+            WHERE type = 'NumberWidget'
+            UNION ALL
+            SELECT
+                type AS "__typename",
+                id,
+                null::boolean AS checked,
+                null::int AS count,
+                null::int AS duration,
+                null::text AS text,
+                null::int AS number,
+                (
+                    SELECT CASE WHEN reftype = 'Location' THEN array['Location']
+                                WHEN reftype = 'Worker' THEN array['Worker']
+                           END
+                ) AS "possibleTypes",
                 (
                     SELECT row_to_json(ref)
                     FROM (
@@ -121,25 +176,86 @@ export const ChecklistResult: ChecklistResultResolvers = {
                             cte.reftype = 'Worker'
                             AND cte.value::bigint = w.workerinstanceid
                     ) ref
-                ) AS ref
+                ) AS ref,
+                null::int AS sentiment,
+                null::text AS string,
+                null::json AS temporal
             FROM cte
-            WHERE type = 'Reference'
+            WHERE type = 'ReferenceWidget'
+            UNION ALL
+            SELECT
+                type AS "__typename",
+                id,
+                null::boolean AS checked,
+                null::int AS count,
+                null::int AS duration,
+                null::text AS text,
+                null::int AS number,
+                null::text[] AS "possibleTypes",
+                null::json AS ref,
+                value::int AS sentiment,
+                null::text AS string,
+                null::json AS temporal
+            FROM cte
+            WHERE type = 'SentimentWidget'
+            UNION ALL
+            SELECT
+                type AS "__typename",
+                id,
+                null::boolean AS checked,
+                null::int AS count,
+                null::int AS duration,
+                null::text AS text,
+                null::int AS number,
+                null::text[] AS "possibleTypes",
+                null::json AS ref,
+                null::int AS sentiment,
+                value::text AS string,
+                null::json AS temporal
+            FROM cte
+            WHERE type = 'StringWidget'
+            UNION ALL
+            SELECT
+                type AS "__typename",
+                id,
+                null::boolean AS checked,
+                null::int AS count,
+                null::int AS duration,
+                null::text AS text,
+                null::int AS number,
+                null::text[] AS "possibleTypes",
+                null::json AS ref,
+                null::int AS sentiment,
+                null::text AS string,
+                (
+                    SELECT row_to_json(t)
+                    FROM (
+                       VALUES (
+                          'Instant',
+                          value::text
+                       )
+                    ) t ("__typename", "epochMilliseconds")
+                    WHERE value IS NOT null
+                ) AS temporal
+            FROM cte
+            WHERE type = 'TemporalWidget'
         `,
       )
       .with(
         "workresultinstance",
-        () => sql<[ResolversTypes["ChecklistResultValue"]]>`
+        () => sql<[ResolversTypes["Widget"]]>`
             WITH cte AS (
                 SELECT
-                    CASE WHEN t.systagtype = 'Boolean' THEN 'Flag'
-                         WHEN t.systagtype = 'Date' THEN 'Register'
-                         WHEN t.systagtype = 'Entity' THEN 'Reference'
-                         WHEN t.systagtype = 'Number' THEN 'Counter'
-                         WHEN t.systagtype = 'String' THEN 'Register'
-                         WHEN t.systagtype = 'Time At Task' THEN 'Counter'
+                    CASE WHEN t.systagtype = 'Boolean' THEN 'CheckboxWidget'
+                         WHEN t.systagtype = 'Date' THEN 'TemporalWidget'
+                         WHEN t.systagtype = 'Entity' THEN 'ReferenceWidget'
+                         WHEN t.systagtype = 'Number' THEN 'NumberWidget'
+                         WHEN t.systagtype = 'String' THEN 'StringWidget'
+                         WHEN t.systagtype = 'Time At Task' THEN 'DurationWidget'
                     END AS type,
                     e.systagtype AS reftype,
-                    nullif(wri.workresultinstancevalue, '') AS value
+                    nullif(wri.workresultinstancevalue, '') AS value,
+                    encode(('workresultinstance:' || wri.id || ':' || coalesce(e.systagtype, t.systagtype))::bytea, 'base64') AS id
                 FROM public.workresultinstance AS wri
                 INNER JOIN public.workresult AS wr
                     ON wri.workresultinstanceworkresultid = wr.workresultid
@@ -151,37 +267,98 @@ export const ChecklistResult: ChecklistResultResolvers = {
             )
 
             SELECT
-                'Counter' AS "__typename",
-                value::bigint AS count,
-                null::boolean AS enabled,
-                null::text AS binary,
-                null::json AS ref
+                type AS "__typename",
+                id,
+                value::boolean AS checked,
+                null::int AS count,
+                null::int AS duration,
+                null::text AS text,
+                null::int AS number,
+                null::text[] AS "possibleTypes",
+                null::json AS ref,
+                null::int AS sentiment,
+                null::text AS string,
+                null::json AS temporal
             FROM cte
-            WHERE type = 'Counter'
+            WHERE type = 'CheckboxWidget'
             UNION ALL
             SELECT
-                'Flag' AS "__typename",
-                null AS count,
-                value::boolean AS enabled,
-                null AS binary,
-                null AS ref
+                type AS "__typename",
+                id,
+                null::boolean AS checked,
+                value::int AS count,
+                null::int AS duration,
+                null::text AS text,
+                null::int AS number,
+                null::text[] AS "possibleTypes",
+                null::json AS ref,
+                null::int AS sentiment,
+                null::text AS string,
+                null::json AS temporal
             FROM cte
-            WHERE type = 'Flag'
+            WHERE type = 'ClickerWidget'
             UNION ALL
             SELECT
-                'Register' AS "__typename",
-                null AS count,
-                null AS enabled,
-                value::text AS binary,
-                null AS ref
+                type AS "__typename",
+                id,
+                null::boolean AS checked,
+                null::int AS count,
+                value::int AS duration,
+                null::text AS text,
+                null::int AS number,
+                null::text[] AS "possibleTypes",
+                null::json AS ref,
+                null::int AS sentiment,
+                null::text AS string,
+                null::json AS temporal
             FROM cte
-            WHERE type = 'Register'
+            WHERE type = 'DurationWidget'
             UNION ALL
             SELECT
-                'Reference' AS "__typename",
-                null AS count,
-                null AS enabled,
-                null AS binary,
+                type AS "__typename",
+                id,
+                null::boolean AS checked,
+                null::int AS count,
+                null::int AS duration,
+                value::text AS text,
+                null::int AS number,
+                null::text[] AS "possibleTypes",
+                null::json AS ref,
+                null::int AS sentiment,
+                null::text AS string,
+                null::json AS temporal
+            FROM cte
+            WHERE type = 'MultilineStringWidget'
+            UNION ALL
+            SELECT
+                type AS "__typename",
+                id,
+                null::boolean AS checked,
+                null::int AS count,
+                null::int AS duration,
+                null::text AS text,
+                value::int AS number,
+                null::text[] AS "possibleTypes",
+                null::json AS ref,
+                null::int AS sentiment,
+                null::text AS string,
+                null::json AS temporal
+            FROM cte
+            WHERE type = 'NumberWidget'
+            UNION ALL
+            SELECT
+                type AS "__typename",
+                id,
+                null::boolean AS checked,
+                null::int AS count,
+                null::int AS duration,
+                null::text AS text,
+                null::int AS number,
+                (
+                    SELECT CASE WHEN reftype = 'Location' THEN array['Location']
+                                WHEN reftype = 'Worker' THEN array['Worker']
+                           END
+                ) AS "possibleTypes",
                 (
                     SELECT row_to_json(ref)
                     FROM (
@@ -201,9 +378,69 @@ export const ChecklistResult: ChecklistResultResolvers = {
                             cte.reftype = 'Worker'
                             AND cte.value::bigint = w.workerinstanceid
                     ) ref
-                ) AS ref
+                ) AS ref,
+                null::int AS sentiment,
+                null::text AS string,
+                null::json AS temporal
             FROM cte
-            WHERE type = 'Reference'
+            WHERE type = 'ReferenceWidget'
+            UNION ALL
+            SELECT
+                type AS "__typename",
+                id,
+                null::boolean AS checked,
+                null::int AS count,
+                null::int AS duration,
+                null::text AS text,
+                null::int AS number,
+                null::text[] AS "possibleTypes",
+                null::json AS ref,
+                value::int AS sentiment,
+                null::text AS string,
+                null::json AS temporal
+            FROM cte
+            WHERE type = 'SentimentWidget'
+            UNION ALL
+            SELECT
+                type AS "__typename",
+                id,
+                null::boolean AS checked,
+                null::int AS count,
+                null::int AS duration,
+                null::text AS text,
+                null::int AS number,
+                null::text[] AS "possibleTypes",
+                null::json AS ref,
+                null::int AS sentiment,
+                value::text AS string,
+                null::json AS temporal
+            FROM cte
+            WHERE type = 'StringWidget'
+            UNION ALL
+            SELECT
+                type AS "__typename",
+                id,
+                null::boolean AS checked,
+                null::int AS count,
+                null::int AS duration,
+                null::text AS text,
+                null::int AS number,
+                null::text[] AS "possibleTypes",
+                null::json AS ref,
+                null::int AS sentiment,
+                null::text AS string,
+                (
+                    SELECT row_to_json(t)
+                    FROM (
+                       VALUES (
+                          'Instant',
+                          value::text
+                       )
+                    ) t ("__typename", "epochMilliseconds")
+                    WHERE value IS NOT null
+                ) AS temporal
+            FROM cte
+            WHERE type = 'TemporalWidget'
         `,
       )
       .otherwise(() => Promise.reject("invariant violated"));
