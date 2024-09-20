@@ -24,8 +24,7 @@ export function makeSopLoader(_req: Request) {
                 SELECT
                     id AS _key,
                     encode(('workresult:' || id || ':sop')::bytea, 'base64') AS id,
-                    workresultsoplink AS sop,
-                    workresultsoplink AS link -- @deprecated
+                    workresultsoplink AS sop
                 FROM public.workresult
                 WHERE
                     id IN ${sql(ids)}
@@ -38,8 +37,7 @@ export function makeSopLoader(_req: Request) {
                 SELECT
                     id AS _key,
                     encode(('worktemplate:' || id || ':sop')::bytea, 'base64') AS id,
-                    worktemplatesoplink AS sop,
-                    worktemplatesoplink AS link -- @deprecated
+                    worktemplatesoplink AS sop
                 FROM public.worktemplate
                 WHERE
                     id IN ${sql(ids)}

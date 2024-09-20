@@ -15,6 +15,10 @@ type Flag {
   enabled: Boolean
 }
 
+type Geography {
+  geog: String
+}
+
 """
 Data type for tracking named binaries (like strings). Any binary value can act
 as the value of a register. Registers can only have the binaries stored within

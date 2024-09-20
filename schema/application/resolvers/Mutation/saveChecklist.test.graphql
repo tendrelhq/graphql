@@ -61,15 +61,38 @@ mutation TestSaveChecklist($input: ChecklistInput!) {
                   }
                 }
               }
-              value {
-                ... on Counter {
+              widget {
+                ... on CheckboxWidget {
+                  checked
+                }
+                ... on ClickerWidget {
                   count
                 }
-                ... on Flag {
-                  enabled
+                ... on DurationWidget {
+                  duration
                 }
-                ... on Register {
-                  binary
+                ... on MultilineStringWidget {
+                  text
+                }
+                ... on NumberWidget {
+                  number
+                }
+                ... on ReferenceWidget {
+                  possibleTypes
+                  ref {
+                    __typename
+                  }
+                }
+                ... on SentimentWidget {
+                  sentiment
+                }
+                ... on StringWidget {
+                  string
+                }
+                ... on TemporalWidget {
+                  temporal {
+                    __typename
+                  }
                 }
               }
             }

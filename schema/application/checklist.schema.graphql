@@ -142,7 +142,7 @@ type ChecklistResult implements Component {
   name: DisplayName!
   required: Boolean
   status: ChecklistStatus
-  value: ChecklistResultValue!
+  widget: Widget!
 }
 
 """
@@ -150,20 +150,12 @@ TODO
 """
 input ChecklistResultInput {
   id: Entity!
-  assignees: [AssigneeInput!]!
-  auditable: AuditableInput!
+  assignees: [AssigneeInput!]
+  auditable: AuditableInput
   name: DisplayNameInput!
   required: Boolean
   status: ChecklistStatusInput
-  value: ChecklistResultValueInput
-}
-
-union ChecklistResultValue = Counter | Flag | Reference | Register
-
-input ChecklistResultValueInput @oneOf {
-  counter: Int
-  flag: Boolean
-  register: String
+  widget: WidgetInput!
 }
 
 ## Our checklists go Open > In Progress > Closed

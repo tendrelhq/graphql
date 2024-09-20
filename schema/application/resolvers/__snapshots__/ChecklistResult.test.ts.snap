@@ -41,10 +41,13 @@ exports[`ChecklistResult 1`] = `
                                   "value": "Location",
                                 },
                               },
-                              "required": null,
+                              "required": false,
                               "status": null,
-                              "value": {
-                                "__typename": "Reference",
+                              "widget": {
+                                "__typename": "ReferenceWidget",
+                                "possibleTypes": [
+                                  "Location",
+                                ],
                                 "ref": null,
                               },
                             },
@@ -68,10 +71,13 @@ exports[`ChecklistResult 1`] = `
                                   "value": "Worker",
                                 },
                               },
-                              "required": null,
+                              "required": false,
                               "status": null,
-                              "value": {
-                                "__typename": "Reference",
+                              "widget": {
+                                "__typename": "ReferenceWidget",
+                                "possibleTypes": [
+                                  "Worker",
+                                ],
                                 "ref": null,
                               },
                             },
@@ -95,11 +101,11 @@ exports[`ChecklistResult 1`] = `
                                   "value": "Checklist - Number",
                                 },
                               },
-                              "required": null,
+                              "required": false,
                               "status": null,
-                              "value": {
-                                "__typename": "Counter",
-                                "count": 42,
+                              "widget": {
+                                "__typename": "NumberWidget",
+                                "number": 42,
                               },
                             },
                           },
@@ -122,11 +128,11 @@ exports[`ChecklistResult 1`] = `
                                   "value": "Checklist - Clicker",
                                 },
                               },
-                              "required": null,
+                              "required": false,
                               "status": null,
-                              "value": {
-                                "__typename": "Counter",
-                                "count": 42,
+                              "widget": {
+                                "__typename": "NumberWidget",
+                                "number": 42,
                               },
                             },
                           },
@@ -149,11 +155,11 @@ exports[`ChecklistResult 1`] = `
                                   "value": "Checklist - Boolean",
                                 },
                               },
-                              "required": null,
+                              "required": false,
                               "status": null,
-                              "value": {
-                                "__typename": "Flag",
-                                "enabled": null,
+                              "widget": {
+                                "__typename": "CheckboxWidget",
+                                "checked": null,
                               },
                             },
                           },
@@ -176,11 +182,11 @@ exports[`ChecklistResult 1`] = `
                                   "value": "Time At Task",
                                 },
                               },
-                              "required": null,
+                              "required": false,
                               "status": null,
-                              "value": {
-                                "__typename": "Counter",
-                                "count": null,
+                              "widget": {
+                                "__typename": "DurationWidget",
+                                "duration": null,
                               },
                             },
                           },
@@ -203,11 +209,11 @@ exports[`ChecklistResult 1`] = `
                                   "value": "Checklist - Text",
                                 },
                               },
-                              "required": null,
+                              "required": false,
                               "status": null,
-                              "value": {
-                                "__typename": "Register",
-                                "binary": null,
+                              "widget": {
+                                "__typename": "StringWidget",
+                                "string": null,
                               },
                             },
                           },
@@ -230,11 +236,11 @@ exports[`ChecklistResult 1`] = `
                                   "value": "Checklist - Sentiment",
                                 },
                               },
-                              "required": null,
+                              "required": false,
                               "status": null,
-                              "value": {
-                                "__typename": "Counter",
-                                "count": 42,
+                              "widget": {
+                                "__typename": "NumberWidget",
+                                "number": 42,
                               },
                             },
                           },
@@ -257,11 +263,11 @@ exports[`ChecklistResult 1`] = `
                                   "value": "Checklist - String",
                                 },
                               },
-                              "required": null,
+                              "required": false,
                               "status": null,
-                              "value": {
-                                "__typename": "Register",
-                                "binary": null,
+                              "widget": {
+                                "__typename": "StringWidget",
+                                "string": null,
                               },
                             },
                           },
@@ -284,11 +290,11 @@ exports[`ChecklistResult 1`] = `
                                   "value": "Checklist - Date",
                                 },
                               },
-                              "required": null,
+                              "required": false,
                               "status": null,
-                              "value": {
-                                "__typename": "Register",
-                                "binary": null,
+                              "widget": {
+                                "__typename": "TemporalWidget",
+                                "temporal": null,
                               },
                             },
                           },
@@ -311,11 +317,11 @@ exports[`ChecklistResult 1`] = `
                                   "value": "Checklist - Geolocation",
                                 },
                               },
-                              "required": null,
+                              "required": false,
                               "status": null,
-                              "value": {
-                                "__typename": "Register",
-                                "binary": null,
+                              "widget": {
+                                "__typename": "StringWidget",
+                                "string": null,
                               },
                             },
                           },

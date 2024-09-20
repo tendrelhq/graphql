@@ -7,19 +7,36 @@ export const Organization: Pick<OrganizationResolvers, "checklists"> = {
     const { first, last } = args;
     const { id: parentId } = decodeGlobalId(parent.id);
 
-    // TODO: Similar thing for workinstances, but right now all we care about
-    // are worktemplates.
     const rows = await sql<[{ id: string }]>`
-        SELECT encode(('worktemplate:' || id)::bytea, 'base64') AS id
-        FROM public.worktemplate
+        SELECT encode(('worktemplate:' || wt.id)::bytea, 'base64') AS id
+        FROM public.worktemplate AS wt
+        INNER JOIN public.worktemplatetype AS wtt
+            ON wtt.worktemplatetypeworktemplateuuid = wt.id
+        INNER JOIN public.systag AS type
+            ON wtt.worktemplatetypesystaguuid = type.systaguuid
         WHERE
-            worktemplatecustomerid = (
+            wt.worktemplatecustomerid = (
                 SELECT customerid
                 FROM public.customer
                 WHERE customeruuid = ${parentId}
             )
+            AND type.systagtype IN ('Checklist')
+        ORDER BY worktemplateid ${last ? sql`DESC` : sql`ASC`}
         LIMIT ${first ?? last ?? null}
     `;
+    // TODO: For workinstances:
+    // const rows = await sql<[{ id: string }]>`
+    //     SELECT encode(('workinstance:' || id)::bytea, 'base64') AS id
+    //     FROM public.workinstance
+    //     WHERE
+    //         workinstancecustomerid = (
+    //             SELECT customerid
+    //             FROM public.customer
+    //             WHERE customeruuid = ${parentId}
+    //         )
+    //     ORDER BY workinstanceid ${last ? sql`DESC` : sql`ASC`}
+    //     LIMIT ${first ?? last ?? null}
+    // `;
 
     return {
       edges: rows.map(row => ({

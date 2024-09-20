@@ -82,13 +82,13 @@ Timezone-aware, calendar-aware date/time object representing an exact time
 from the perspective of a particular geographic region
 """
 type ZonedDateTime implements Temporal {
-  year: Int!
-  month: Int!
-  day: Int!
-  hour: Int!
-  minute: Int!
-  second: Int!
-  millisecond: Int!
+  year: Int @semanticNonNull
+  month: Int @semanticNonNull
+  day: Int @semanticNonNull
+  hour: Int @semanticNonNull
+  minute: Int @semanticNonNull
+  second: Int @semanticNonNull
+  millisecond: Int @semanticNonNull
   timeZone: TimeZone!
 
   """
