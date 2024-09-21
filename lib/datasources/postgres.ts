@@ -72,6 +72,10 @@ export function join(xs: readonly Fragment[], d: Fragment) {
   return xs.reduce((acc, x, i) => sql`${acc} ${i ? sql`${d} ${x}` : x}`, sql``);
 }
 
+export function unionAll(xs: readonly Fragment[]) {
+  return join(xs, sql`UNION ALL`);
+}
+
 export function orm(req: Request) {
   return {
     activatable: makeActivatableLoader(req),

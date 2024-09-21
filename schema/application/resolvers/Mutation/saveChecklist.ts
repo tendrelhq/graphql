@@ -6,6 +6,7 @@ import type {
   MutationResolvers,
 } from "@/schema";
 import { decodeGlobalId } from "@/schema/system";
+import { match, P } from "ts-pattern";
 
 export const saveChecklist: NonNullable<
   MutationResolvers["saveChecklist"]
@@ -620,7 +621,7 @@ async function saveChecklistResults(
                   `,
                   i.result.widget
                     ? tx`
-                        WITH inputs (type, value) AS (
+                        WITH inputs (type, reftype, value) AS (
                             VALUES (
                                 ${(() => {
                                   switch (true) {
@@ -648,6 +649,18 @@ async function saveChecklistResults(
                                     }
                                   }
                                 })()}::text,
+                                ${
+                                  i.result.widget.reference?.ref
+                                    ? match(
+                                        decodeGlobalId(
+                                          i.result.widget.reference.ref,
+                                        ).type,
+                                      )
+                                        .with("location", () => "Location")
+                                        .with("worker", () => "Worker")
+                                        .otherwise(() => null)
+                                    : null
+                                }::text,
                                 ${(() => {
                                   switch (true) {
                                     case "checkbox" in i.result.widget:
@@ -672,10 +685,35 @@ async function saveChecklistResults(
                                       return (
                                         i.result.widget.number?.number ?? null
                                       );
-                                    case "reference" in i.result.widget:
-                                      return (
-                                        i.result.widget.reference?.ref ?? null
-                                      );
+                                    case "reference" in i.result.widget: {
+                                      return i.result.widget.reference?.ref
+                                        ? match(
+                                            decodeGlobalId(
+                                              i.result.widget.reference.ref,
+                                            ),
+                                          )
+                                            .with(
+                                              {
+                                                type: "location",
+                                                id: P.string,
+                                              },
+                                              ({ id }) => sql`(
+                                                  SELECT locationid
+                                                  FROM public.location
+                                                  WHERE locationuuid = ${id}
+                                              )`,
+                                            )
+                                            .with(
+                                              { type: "worker", id: P.string },
+                                              ({ id }) => sql`(
+                                                  SELECT workerinstanceid
+                                                  FROM public.workerinstance
+                                                  WHERE workerinstanceuuid = ${id}
+                                              )`,
+                                            )
+                                            .otherwise(() => null)
+                                        : null;
+                                    }
                                     case "sentiment" in i.result.widget:
                                       return (
                                         i.result.widget.sentiment?.sentiment ??
@@ -697,12 +735,20 @@ async function saveChecklistResults(
                         ),
 
                         type AS (
-                            SELECT systagid AS id
-                            FROM public.systag, inputs
-                            WHERE
-                                systagparentid = 699
-                                AND
-                                systagtype = inputs.type
+                            SELECT
+                                t.systagid AS type,
+                                r.systagid AS reftype
+                            FROM inputs
+                            INNER JOIN public.systag AS t
+                                ON
+                                    t.systagparentid = 699
+                                    AND
+                                    t.systagtype = inputs.type
+                            LEFT JOIN public.systag AS r
+                                ON
+                                    r.systagparentid = 849
+                                    AND
+                                    r.systagtype = inputs.reftype
                         )
 
                         UPDATE public.workresult AS wr
@@ -713,9 +759,22 @@ async function saveChecklistResults(
                         WHERE
                             wr.id = ${decodeGlobalId(i.result.id).id}
                             AND
-                            wr.workresulttypeid = type.id
+                            wr.workresulttypeid = type.type
+                            AND (
+                                (
+                                    wr.workresultentitytypeid IS null
+                                    AND
+                                    type.reftype IS null
+                                )
+                                OR
+                                (
+                                    wr.workresultentitytypeid IS NOT null
+                                    AND
+                                    type.reftype IS NOT null
+                                )
+                            )
                             AND
-                            wr.workresultdefaultvalue != nullif(inputs.value, '')
+                            coalesce(wr.workresultdefaultvalue, '')::text != coalesce(inputs.value, '')::text
                     `
                     : tx`
                         UPDATE public.workresult AS wr
@@ -735,7 +794,7 @@ async function saveChecklistResults(
               ? [
                   // create
                   tx`
-                    WITH inputs (id, type, value, name, locale, auditable, required, sop) AS (
+                    WITH inputs (id, type, reftype, value, name, locale, auditable, required, sop) AS (
                         VALUES (
                             (
                                 SELECT worktemplateid
@@ -768,6 +827,18 @@ async function saveChecklistResults(
                                 }
                               }
                             })()}::text,
+                            ${
+                              i.result.widget.reference?.ref
+                                ? match(
+                                    decodeGlobalId(
+                                      i.result.widget.reference.ref,
+                                    ).type,
+                                  )
+                                    .with("location", () => "Location")
+                                    .with("worker", () => "Worker")
+                                    .otherwise(() => null)
+                                : null
+                            }::text,
                             ${(() => {
                               switch (true) {
                                 case "checkbox" in i.result.widget:
@@ -786,8 +857,35 @@ async function saveChecklistResults(
                                   );
                                 case "number" in i.result.widget:
                                   return i.result.widget.number?.number ?? null;
-                                case "reference" in i.result.widget:
-                                  return i.result.widget.reference?.ref ?? null;
+                                case "reference" in i.result.widget: {
+                                  return i.result.widget.reference?.ref
+                                    ? match(
+                                        decodeGlobalId(
+                                          i.result.widget.reference.ref,
+                                        ),
+                                      )
+                                        .with(
+                                          {
+                                            type: "location",
+                                            id: P.string,
+                                          },
+                                          ({ id }) => sql`(
+                                              SELECT locationid
+                                              FROM public.location
+                                              WHERE locationuuid = ${id}
+                                          )`,
+                                        )
+                                        .with(
+                                          { type: "worker", id: P.string },
+                                          ({ id }) => sql`(
+                                              SELECT workerinstanceid
+                                              FROM public.workerinstance
+                                              WHERE workerinstanceuuid = ${id}
+                                          )`,
+                                        )
+                                        .otherwise(() => null)
+                                    : null;
+                                }
                                 case "sentiment" in i.result.widget:
                                   return (
                                     i.result.widget.sentiment?.sentiment ?? null
@@ -838,11 +936,20 @@ async function saveChecklistResults(
                     ),
 
                     type AS (
-                        SELECT systagid AS id
-                        FROM public.systag, inputs
-                        WHERE
-                            systagparentid = 699
-                            AND systagtype = inputs.type
+                        SELECT
+                            t.systagid AS type,
+                            r.systagid AS reftype
+                        FROM inputs
+                        INNER JOIN public.systag AS t
+                            ON
+                                t.systagparentid = 699
+                                AND
+                                t.systagtype = inputs.type
+                        LEFT JOIN public.systag AS r
+                            ON
+                                r.systagparentid = 849
+                                AND
+                                r.systagtype = inputs.reftype
                     )
 
                     INSERT INTO public.workresult (
@@ -862,7 +969,7 @@ async function saveChecklistResults(
                     SELECT
                         wt.worktemplatecustomerid,
                         inputs.value,
-                        null,
+                        type.reftype,
                         inputs.auditable,
                         true,
                         inputs.required,
@@ -870,7 +977,7 @@ async function saveChecklistResults(
                         0,
                         site.id,
                         inputs.sop,
-                        type.id,
+                        type.type,
                         wt.worktemplateid
                     FROM public.worktemplate AS wt, inputs, name, site, type
                     WHERE wt.worktemplateid = inputs.id

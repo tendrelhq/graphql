@@ -24,9 +24,9 @@ export const ChecklistResult: ChecklistResultResolvers = {
       totalCount: 0,
     };
   },
-  // async auditable(parent, _, ctx) {
-  //   return (await ctx.orm.auditable.load(parent.id)) as any;
-  // },
+  async auditable(parent, _, ctx) {
+    return await ctx.orm.auditable.load(parent.id);
+  },
   async name(parent, _, ctx) {
     // biome-ignore lint/suspicious/noExplicitAny:
     return (await ctx.orm.displayName.load(parent.id)) as any;
@@ -47,10 +47,15 @@ export const ChecklistResult: ChecklistResultResolvers = {
             WITH cte AS (
                 SELECT
                     CASE WHEN t.systagtype = 'Boolean' THEN 'CheckboxWidget'
+                         WHEN t.systagtype = 'Clicker' THEN 'ClickerWidget'
                          WHEN t.systagtype = 'Date' THEN 'TemporalWidget'
+                         WHEN t.systagtype = 'Duration' THEN 'DurationWidget'
                          WHEN t.systagtype = 'Entity' THEN 'ReferenceWidget'
+                         WHEN t.systagtype = 'Geolocation' THEN 'StringWidget'
                          WHEN t.systagtype = 'Number' THEN 'NumberWidget'
+                         WHEN t.systagtype = 'Sentiment' THEN 'SentimentWidget'
                          WHEN t.systagtype = 'String' THEN 'StringWidget'
+                         WHEN t.systagtype = 'Text' THEN 'MultilineStringWidget'
                          WHEN t.systagtype = 'Time At Task' THEN 'DurationWidget'
                     END AS type,
                     e.systagtype AS reftype,
@@ -246,11 +251,16 @@ export const ChecklistResult: ChecklistResultResolvers = {
         () => sql<[ResolversTypes["Widget"]]>`
             WITH cte AS (
                 SELECT
-                    CASE WHEN t.systagtype = 'Boolean' THEN 'CheckboxWidget'
+                    CASE WHEN t.systagtype = 'Boolean' THEN 'Boolean'
+                         WHEN t.systagtype = 'Clicker' THEN 'ClickerWidget'
                          WHEN t.systagtype = 'Date' THEN 'TemporalWidget'
+                         WHEN t.systagtype = 'Duration' THEN 'DurationWidget'
                          WHEN t.systagtype = 'Entity' THEN 'ReferenceWidget'
+                         WHEN t.systagtype = 'Geolocation' THEN 'StringWidget'
                          WHEN t.systagtype = 'Number' THEN 'NumberWidget'
+                         WHEN t.systagtype = 'Sentiment' THEN 'SentimentWidget'
                          WHEN t.systagtype = 'String' THEN 'StringWidget'
+                         WHEN t.systagtype = 'Text' THEN 'MultilineStringWidget'
                          WHEN t.systagtype = 'Time At Task' THEN 'DurationWidget'
                     END AS type,
                     e.systagtype AS reftype,
