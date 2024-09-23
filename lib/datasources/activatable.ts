@@ -4,7 +4,7 @@ import type { WithKey } from "@/util";
 import DataLoader from "dataloader";
 import type { Request } from "express";
 import { match } from "ts-pattern";
-import { join, sql } from "./postgres";
+import { sql, unionAll } from "./postgres";
 
 export function makeActivatableLoader(_req: Request) {
   return new DataLoader<string, Activatable | undefined>(async keys => {
@@ -15,14 +15,11 @@ export function makeActivatableLoader(_req: Request) {
       return acc;
     }, new Map<string, string[]>());
 
-    const xs = await sql<
-      [WithKey<Omit<Activatable, "updatedAt"> & { updatedAt: string }>]
-    >`${join(
-      [...byUnderlyingType.entries()].flatMap(([type, ids]) =>
-        match(type)
-          .with(
-            "workresult",
-            () => sql`
+    const qs = [...byUnderlyingType.entries()].flatMap(([type, ids]) =>
+      match(type)
+        .with(
+          "workresult",
+          () => sql`
               (
                 WITH cte AS (
                     SELECT
@@ -48,11 +45,11 @@ export function makeActivatableLoader(_req: Request) {
                 FROM cte
                 WHERE active = false
               )
-            `,
-          )
-          .with(
-            "worktemplate",
-            () => sql`
+          `,
+        )
+        .with(
+          "worktemplate",
+          () => sql`
               (
                 WITH cte AS (
                     SELECT
@@ -76,12 +73,16 @@ export function makeActivatableLoader(_req: Request) {
                 FROM cte
                 WHERE active = false
               )
-            `,
-          )
-          .otherwise(() => []),
-      ),
-      sql`UNION ALL`,
-    )}`;
+          `,
+        )
+        .otherwise(() => []),
+    );
+
+    if (!qs.length) return entities.map(() => undefined);
+
+    const xs = await sql<
+      [WithKey<Omit<Activatable, "updatedAt"> & { updatedAt: string }>]
+    >`${unionAll(qs)}`;
 
     return entities.map(e => {
       const c = xs.find(x => e.id === x._key);
@@ -94,7 +95,6 @@ export function makeActivatableLoader(_req: Request) {
           },
         };
       }
-
       return undefined;
     });
   });

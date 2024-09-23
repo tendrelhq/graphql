@@ -2,8 +2,8 @@ import { decodeGlobalId } from "@/schema/system";
 import type { WithKey } from "@/util";
 import DataLoader from "dataloader";
 import type { Request } from "express";
-import { join, sql } from "./postgres";
 import { match } from "ts-pattern";
+import { sql, unionAll } from "./postgres";
 
 type Required = { required: boolean };
 
@@ -65,7 +65,7 @@ export function makeRequirementLoader(_req: Request) {
 
     if (!qs.length) return entities.map(() => undefined);
 
-    const xs = await sql<WithKey<Required>[]>`${join(qs, sql`UNION ALL`)}`;
+    const xs = await sql<WithKey<Required>[]>`${unionAll(qs)}`;
     return entities.map(e => xs.find(x => e.id === x._key)?.required);
   });
 }

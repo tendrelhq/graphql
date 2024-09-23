@@ -5,7 +5,7 @@ import type { WithKey } from "@/util";
 import Dataloader from "dataloader";
 import type { Request } from "express";
 import { match } from "ts-pattern";
-import { type SQL, join, sql } from "./postgres";
+import { type SQL, sql, unionAll } from "./postgres";
 
 export function makeDisplayNameLoader(req: Request) {
   return new Dataloader<string, Component>(async keys => {
@@ -16,66 +16,66 @@ export function makeDisplayNameLoader(req: Request) {
       return acc;
     }, new Map<string, string[]>());
 
-    const xs = await sql<[WithKey<Component>]>`${join(
-      [...byUnderlyingType.entries()].flatMap(([type, ids]) =>
-        match(type)
-          .with(
-            "workinstance",
-            () => sql`
-                SELECT
-                    wi.id AS _key,
-                    encode(('name:' || languagemasteruuid)::bytea, 'base64') AS id
-                FROM public.workinstance AS wi
-                INNER JOIN public.worktemplate AS wt
-                    ON wi.workinstanceworktemplateid = wt.worktemplateid
-                INNER JOIN public.languagemaster
-                    ON worktemplatenameid = languagemasterid
-                WHERE wi.id IN ${sql(ids)}
-            `,
-          )
-          .with(
-            "worktemplate",
-            () => sql`
-                SELECT
-                    id AS _key,
-                    encode(('name:' || languagemasteruuid)::bytea, 'base64') AS id
-                FROM public.worktemplate
-                INNER JOIN public.languagemaster
-                    ON worktemplatenameid = languagemasterid
-                WHERE id IN ${sql(ids)}
-            `,
-          )
-          .with(
-            "workresult",
-            () => sql`
-                SELECT
-                    id AS _key,
-                    encode(('name:' || languagemasteruuid)::bytea, 'base64') AS id
-                FROM public.workresult
-                INNER JOIN public.languagemaster
-                    ON workresultlanguagemasterid = languagemasterid
-                WHERE id IN ${sql(ids)}
-            `,
-          )
-          .with(
-            "workresultinstance",
-            () => sql`
-                SELECT
-                    wri.id AS _key,
-                    encode(('name:' || languagemasteruuid)::bytea, 'base64') AS id
-                FROM public.workresultinstance AS wri
-                INNER JOIN public.workresult AS wr
-                    ON wri.workresultinstanceworkresultid = wr.workresultid
-                INNER JOIN public.languagemaster AS lm
-                    ON wr.workresultlanguagemasterid = lm.languagemasterid
-                WHERE wri.id IN ${sql(ids)}
-            `,
-          )
-          .otherwise(() => []),
-      ),
-      sql`UNION ALL`,
-    )}`;
+    const qs = [...byUnderlyingType.entries()].flatMap(([type, ids]) =>
+      match(type)
+        .with(
+          "workinstance",
+          () => sql`
+              SELECT
+                  wi.id AS _key,
+                  encode(('name:' || languagemasteruuid)::bytea, 'base64') AS id
+              FROM public.workinstance AS wi
+              INNER JOIN public.worktemplate AS wt
+                  ON wi.workinstanceworktemplateid = wt.worktemplateid
+              INNER JOIN public.languagemaster
+                  ON worktemplatenameid = languagemasterid
+              WHERE wi.id IN ${sql(ids)}
+          `,
+        )
+        .with(
+          "worktemplate",
+          () => sql`
+              SELECT
+                  id AS _key,
+                  encode(('name:' || languagemasteruuid)::bytea, 'base64') AS id
+              FROM public.worktemplate
+              INNER JOIN public.languagemaster
+                  ON worktemplatenameid = languagemasterid
+              WHERE id IN ${sql(ids)}
+          `,
+        )
+        .with(
+          "workresult",
+          () => sql`
+              SELECT
+                  id AS _key,
+                  encode(('name:' || languagemasteruuid)::bytea, 'base64') AS id
+              FROM public.workresult
+              INNER JOIN public.languagemaster
+                  ON workresultlanguagemasterid = languagemasterid
+              WHERE id IN ${sql(ids)}
+          `,
+        )
+        .with(
+          "workresultinstance",
+          () => sql`
+              SELECT
+                  wri.id AS _key,
+                  encode(('name:' || languagemasteruuid)::bytea, 'base64') AS id
+              FROM public.workresultinstance AS wri
+              INNER JOIN public.workresult AS wr
+                  ON wri.workresultinstanceworkresultid = wr.workresultid
+              INNER JOIN public.languagemaster AS lm
+                  ON wr.workresultlanguagemasterid = lm.languagemasterid
+              WHERE wri.id IN ${sql(ids)}
+          `,
+        )
+        .otherwise(() => []),
+    );
 
+    if (!qs.length) return entities.map(() => new EntityNotFound("name"));
+
+    const xs = await sql<[WithKey<Component>]>`${unionAll(qs)}`;
     return entities.map(
       e => xs.find(x => e.id === x._key) ?? new EntityNotFound("name"),
     );
