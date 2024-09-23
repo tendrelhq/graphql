@@ -6,7 +6,7 @@ import type {
   MutationResolvers,
 } from "@/schema";
 import { decodeGlobalId } from "@/schema/system";
-import { match, P } from "ts-pattern";
+import { P, match } from "ts-pattern";
 
 export const saveChecklist: NonNullable<
   MutationResolvers["saveChecklist"]

@@ -4,7 +4,7 @@ import type { WithKey } from "@/util";
 import DataLoader from "dataloader";
 import type { Request } from "express";
 import { match } from "ts-pattern";
-import { join, sql } from "./postgres";
+import { sql, unionAll } from "./postgres";
 
 export function makeDescriptionLoader(_req: Request) {
   return new DataLoader<string, Component | undefined>(async keys => {
@@ -15,12 +15,11 @@ export function makeDescriptionLoader(_req: Request) {
       return acc;
     }, new Map<string, string[]>());
 
-    const xs = await sql<[WithKey<Component>]>`${join(
-      [...byUnderlyingType.entries()].flatMap(([type, ids]) =>
-        match(type)
-          .with(
-            "workinstance",
-            () => sql`
+    const qs = [...byUnderlyingType.entries()].flatMap(([type, ids]) =>
+      match(type)
+        .with(
+          "workinstance",
+          () => sql`
                 SELECT
                     wi.id AS _key,
                     encode(('workinstance:' || wi.id || ':description')::bytea, 'base64') AS id
@@ -30,10 +29,10 @@ export function makeDescriptionLoader(_req: Request) {
                     AND wt.worktemplatedescriptionid IS NOT NULL
                 WHERE wi.id IN ${sql(ids)}
             `,
-          )
-          .with(
-            "worktemplate",
-            () => sql`
+        )
+        .with(
+          "worktemplate",
+          () => sql`
                 SELECT
                     id AS _key,
                     encode(('worktemplate:' || id || ':description')::bytea, 'base64') AS id
@@ -42,12 +41,13 @@ export function makeDescriptionLoader(_req: Request) {
                     id IN ${sql(ids)}
                     AND worktemplatedescriptionid IS NOT NULL
             `,
-          )
-          .otherwise(() => []),
-      ),
-      sql`UNION ALL`,
-    )}`;
+        )
+        .otherwise(() => []),
+    );
 
+    if (!qs.length) return entities.map(() => undefined);
+
+    const xs = await sql<[WithKey<Component>]>`${unionAll(qs)}`;
     return entities.map(e => xs.find(row => row._key === e.id));
   });
 }
