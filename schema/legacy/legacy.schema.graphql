@@ -112,7 +112,7 @@ type Organization implements Node {
 }
 
 type Location implements Component & Referenceable {
-  id: Entity!
+  id: ID!
   active: ActivationStatus!
   children(options: LocationsQueryOptions): [Location!]!
   name: Name!
@@ -186,7 +186,7 @@ type PageInfo {
 }
 
 type Worker implements Component & Assignable & Identity & Referenceable {
-  id: Entity!
+  id: ID!
   _hack_numeric_id: Int!
   active: ActivationStatus!
   auth: AuthenticationStatus!

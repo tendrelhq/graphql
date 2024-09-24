@@ -2,21 +2,19 @@ directive @semanticNonNull(levels: [Int] = [0]) on FIELD_DEFINITION
 
 # Entrypoints into the "engine"
 type Query {
-  entity(id: Entity!): EntityConnection!
+  entity(id: ID!): EntityConnection!
 }
 
 type Mutation {
-  createEntity(type: String!, id: String, suffix: [String!]): Entity!
+  createEntity(type: String!, id: String, suffix: [String!]): ID!
 }
-
-scalar Entity
 
 """
 Components characterize Entities as possessing a particular trait.
 They are just simple structs, holding all data necessary to model that trait.
 """
 interface Component {
-  id: Entity!
+  id: ID!
 }
 
 type DebugInfo {
@@ -27,7 +25,7 @@ type DebugInfo {
 }
 
 type EntityConnection {
-  entity: Entity!
+  entity: ID!
   components(
     first: Int
     last: Int
@@ -49,7 +47,7 @@ type ComponentEdge implements Edge {
 }
 
 interface Referenceable implements Component {
-  id: Entity!
+  id: ID!
 }
 
 #

@@ -1,5 +1,5 @@
 import { EntityNotFound } from "@/errors";
-import type { DynamicString } from "@/schema";
+import type { DynamicString, ID } from "@/schema";
 import { decodeGlobalId } from "@/schema/system";
 import type { WithKey } from "@/util";
 import DataLoader from "dataloader";
@@ -7,7 +7,7 @@ import type { Request } from "express";
 import { sql } from "./postgres";
 
 export function makeDynamicStringLoader(req: Request) {
-  return new DataLoader<string, DynamicString>(async keys => {
+  return new DataLoader<ID, DynamicString>(async keys => {
     const entities = keys.map(k => decodeGlobalId(k).id);
     const rows = await sql<[WithKey<DynamicString>]>`
         SELECT

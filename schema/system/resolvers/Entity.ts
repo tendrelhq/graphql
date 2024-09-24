@@ -37,9 +37,9 @@ export const Entity = new GraphQLScalarType<string, string>({
     return validate(ast.value, ast);
   },
   extensions: {
-    codegenScalarType: "string",
+    codegenScalarType: "number | string",
     jsonSchema: {
-      type: "string",
+      type: "number | string",
     },
   },
 });

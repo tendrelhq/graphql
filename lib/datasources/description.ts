@@ -1,4 +1,4 @@
-import type { Component } from "@/schema";
+import type { Component, ID } from "@/schema";
 import { decodeGlobalId } from "@/schema/system";
 import type { WithKey } from "@/util";
 import DataLoader from "dataloader";
@@ -7,7 +7,7 @@ import { match } from "ts-pattern";
 import { sql, unionAll } from "./postgres";
 
 export function makeDescriptionLoader(_req: Request) {
-  return new DataLoader<string, Component | undefined>(async keys => {
+  return new DataLoader<ID, Component | undefined>(async keys => {
     const entities = keys.map(decodeGlobalId);
     const byUnderlyingType = entities.reduce((acc, { type, id }) => {
       if (!acc.has(type)) acc.set(type, []);

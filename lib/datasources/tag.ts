@@ -1,11 +1,11 @@
 import { EntityNotFound } from "@/errors";
-import type { Tag } from "@/schema";
+import type { ID, Tag } from "@/schema";
 import Dataloader from "dataloader";
 import type { Request } from "express";
 import { sql } from "./postgres";
 
 export default (_: Request) =>
-  new Dataloader<string, Tag>(async keys => {
+  new Dataloader<ID, Tag>(async keys => {
     const rows = await sql<Tag[]>`
         SELECT
             s.systaguuid AS id,
@@ -21,8 +21,8 @@ export default (_: Request) =>
     `;
 
     const byKey = rows.reduce(
-      (acc, row) => acc.set(row.id as string, row),
-      new Map<string, Tag>(),
+      (acc, row) => acc.set(row.id, row),
+      new Map<ID, Tag>(),
     );
 
     return keys.map(key => byKey.get(key) ?? new EntityNotFound("tag"));

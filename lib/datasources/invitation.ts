@@ -1,5 +1,5 @@
 import { EntityNotFound } from "@/errors";
-import type { Invitation } from "@/schema";
+import type { ID, Invitation } from "@/schema";
 import {
   type Invitation as ClerkInvitation,
   clerkClient,
@@ -25,7 +25,7 @@ async function* listInvitations() {
 }
 
 export default (_: Request) => ({
-  byId: new Dataloader<string, Invitation>(async keys => {
+  byId: new Dataloader<ID, Invitation>(async keys => {
     // TODO: this is likely our first case where we want to restrict access at a
     // more granular level (i.e. using the user's role). Probably, we only want
     // invitations to be visible by Admins, and maybe Supervisors? This is,
@@ -37,7 +37,7 @@ export default (_: Request) => ({
     // ID" backend api (key word "organization") but no generic "get invitation
     // by id" api. So... we need to get on Clerk organizations a$ap rocky.
     // Or start storing these things in the database...
-    const invitations = new Map<string, ClerkInvitation>();
+    const invitations = new Map<ID, ClerkInvitation>();
     for await (const batch of listInvitations()) {
       for (const i of batch) {
         if (keys.includes(i.id)) {
@@ -62,12 +62,15 @@ export default (_: Request) => ({
       return new EntityNotFound("invitation");
     });
   }),
-  byWorkerId: new Dataloader<string, Invitation>(async keys => {
-    const invitations = new Map<string, ClerkInvitation>();
+  byWorkerId: new Dataloader<ID, Invitation>(async keys => {
+    const invitations = new Map<ID, ClerkInvitation>();
     for await (const batch of listInvitations()) {
       for (const i of batch) {
-        if (keys.includes(i.publicMetadata?.tendrel_id as string)) {
-          invitations.set(i.publicMetadata?.tendrel_id as string, i);
+        if (
+          i.publicMetadata?.tendrel_id &&
+          keys.includes(i.publicMetadata.tendrel_id as string)
+        ) {
+          invitations.set(i.publicMetadata.tendrel_id as string, i);
         }
       }
     }

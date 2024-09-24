@@ -1,5 +1,11 @@
 import { EntityNotFound } from "@/errors";
-import type { Component, Name, NameMetadata, UpdateNameInput } from "@/schema";
+import type {
+  Component,
+  ID,
+  Name,
+  NameMetadata,
+  UpdateNameInput,
+} from "@/schema";
 import { decodeGlobalId } from "@/schema/system";
 import type { WithKey } from "@/util";
 import Dataloader from "dataloader";
@@ -7,8 +13,8 @@ import type { Request } from "express";
 import { match } from "ts-pattern";
 import { type SQL, sql, unionAll } from "./postgres";
 
-export function makeDisplayNameLoader(req: Request) {
-  return new Dataloader<string, Component>(async keys => {
+export function makeDisplayNameLoader(_req: Request) {
+  return new Dataloader<ID, Component>(async keys => {
     const entities = keys.map(decodeGlobalId);
     const byUnderlyingType = entities.reduce((acc, { type, id }) => {
       if (!acc.has(type)) acc.set(type, []);

@@ -12,8 +12,8 @@ type Mutation {
   saveChecklist(input: ChecklistInput!): ChecklistEdge!
 }
 
-type Checklist implements Component {
-  id: Entity!
+type Checklist implements Component & Node {
+  id: ID!
   active: Activatable
   assignees(
     first: Int
@@ -53,7 +53,7 @@ type Checklist implements Component {
 }
 
 input ChecklistInput {
-  id: Entity!
+  id: ID!
   active: ActivatableInput
   assignees: [AssigneeInput!]
   auditable: AuditableInput
@@ -112,7 +112,7 @@ input ChecklistItemInput @oneOf {
 TODO
 """
 type ChecklistResult implements Component {
-  id: Entity!
+  id: ID!
   assignees(
     first: Int
     last: Int
@@ -136,7 +136,7 @@ type ChecklistResult implements Component {
 TODO
 """
 input ChecklistResultInput {
-  id: Entity!
+  id: ID!
   assignees: [AssigneeInput!]
   auditable: AuditableInput
   name: DisplayNameInput!
@@ -155,33 +155,33 @@ input ChecklistStatusInput @oneOf {
 }
 
 type ChecklistOpen implements Component {
-  id: Entity!
+  id: ID!
   dueAt: Temporal
   openedBy: Identity
   openedAt: Temporal!
 }
 
 input ChecklistOpenInput {
-  id: Entity!
-  by: Entity
+  id: ID!
+  by: ID
   at: TemporalInput!
 }
 
 type ChecklistInProgress implements Component {
-  id: Entity!
+  id: ID!
   dueAt: Temporal
   inProgressBy: Identity
   inProgressAt: Temporal!
 }
 
 input ChecklistInProgressInput {
-  id: Entity!
-  by: Entity
+  id: ID!
+  by: ID
   at: TemporalInput!
 }
 
 type ChecklistClosed implements Component {
-  id: Entity!
+  id: ID!
   closedBy: Identity
   closedAt: Temporal!
   closedBecause: ChecklistClosedReason
@@ -189,8 +189,8 @@ type ChecklistClosed implements Component {
 }
 
 input ChecklistClosedInput {
-  id: Entity!
-  by: Entity
+  id: ID!
+  by: ID
   at: TemporalInput!
   because: ChecklistClosedReasonInput
 }

@@ -5,7 +5,7 @@ import { isValue } from "@/util";
 
 export const Location: LocationResolvers = {
   async active(parent) {
-    const { id } = decodeGlobalId(parent.id as string);
+    const { id } = decodeGlobalId(parent.id);
     const [row] = await sql<[ActivationStatus]>`
       SELECT
           (
@@ -21,7 +21,7 @@ export const Location: LocationResolvers = {
     return row;
   },
   async children(parent, { options }, ctx) {
-    const parentId = decodeGlobalId(parent.id as string).id;
+    const parentId = decodeGlobalId(parent.id).id;
     const childIds = await sql<{ id: string }[]>`
       SELECT locationuuid AS id
       FROM public.location

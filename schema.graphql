@@ -10,7 +10,7 @@ TODO
 """
 type Activatable implements Component {
   active: Boolean!
-  id: Entity!
+  id: ID!
   updatedAt: Temporal
 }
 
@@ -19,7 +19,7 @@ TODO
 """
 input ActivatableInput {
   active: Boolean!
-  id: Entity!
+  id: ID!
   updatedAt: TemporalInput!
 }
 
@@ -30,7 +30,7 @@ type ActivationStatus {
 }
 
 interface Assignable implements Component {
-  id: Entity!
+  id: ID!
 }
 
 """
@@ -39,7 +39,7 @@ TODO
 type Assignee implements Component {
   assignedAt: Temporal!
   assignedTo: Assignable!
-  id: Entity!
+  id: ID!
 }
 
 type AssigneeConnection implements Connection {
@@ -58,8 +58,8 @@ TODO
 """
 input AssigneeInput {
   assignAt: TemporalInput!
-  assignTo: Entity!
-  id: Entity!
+  assignTo: ID!
+  id: ID!
 }
 
 """
@@ -67,7 +67,7 @@ TODO
 """
 type Attachment implements Component {
   attachment: String!
-  id: Entity!
+  id: ID!
 }
 
 type AttachmentConnection implements Connection {
@@ -86,7 +86,7 @@ TODO
 """
 type Auditable implements Component {
   auditable: Boolean!
-  id: Entity!
+  id: ID!
 }
 
 """
@@ -94,7 +94,7 @@ TODO
 """
 input AuditableInput {
   enabled: Boolean!
-  id: Entity!
+  id: ID!
 }
 
 type AuthenticationStatus {
@@ -132,7 +132,7 @@ TODO
 """
 type CheckboxWidget implements Component {
   checked: Boolean
-  id: Entity!
+  id: ID!
 }
 
 """
@@ -140,10 +140,10 @@ TODO
 """
 input CheckboxWidgetInput {
   checked: Boolean
-  id: Entity!
+  id: ID!
 }
 
-type Checklist implements Component {
+type Checklist implements Component & Node {
   active: Activatable
   assignees(
     after: String
@@ -166,7 +166,7 @@ type Checklist implements Component {
     search: ChecklistSearchOptions
   ): ChecklistConnection!
   description: Description
-  id: Entity!
+  id: ID!
   items(
     after: String
     before: String
@@ -186,14 +186,14 @@ type ChecklistClosed implements Component {
   closedBecause: ChecklistClosedReason
   closedBy: Identity
   dueAt: Temporal
-  id: Entity!
+  id: ID!
 }
 
 input ChecklistClosedInput {
   at: TemporalInput!
   because: ChecklistClosedReasonInput
-  by: Entity
-  id: Entity!
+  by: ID
+  id: ID!
 }
 
 type ChecklistClosedReason {
@@ -224,15 +224,15 @@ type ChecklistEdge implements Edge {
 
 type ChecklistInProgress implements Component {
   dueAt: Temporal
-  id: Entity!
+  id: ID!
   inProgressAt: Temporal!
   inProgressBy: Identity
 }
 
 input ChecklistInProgressInput {
   at: TemporalInput!
-  by: Entity
-  id: Entity!
+  by: ID
+  id: ID!
 }
 
 input ChecklistInput {
@@ -241,7 +241,7 @@ input ChecklistInput {
   auditable: AuditableInput
   customerId: ID!
   description: DescriptionInput
-  id: Entity!
+  id: ID!
   items: [ChecklistItemInput!]
   name: DisplayNameInput!
   required: Boolean
@@ -270,15 +270,15 @@ input ChecklistItemInput @oneOf {
 
 type ChecklistOpen implements Component {
   dueAt: Temporal
-  id: Entity!
+  id: ID!
   openedAt: Temporal!
   openedBy: Identity
 }
 
 input ChecklistOpenInput {
   at: TemporalInput!
-  by: Entity
-  id: Entity!
+  by: ID
+  id: ID!
 }
 
 """
@@ -298,7 +298,7 @@ type ChecklistResult implements Component {
     last: Int
   ): AttachmentConnection!
   auditable: Auditable
-  id: Entity!
+  id: ID!
   name: DisplayName!
   required: Boolean
   status: ChecklistStatus
@@ -311,7 +311,7 @@ TODO
 input ChecklistResultInput {
   assignees: [AssigneeInput!]
   auditable: AuditableInput
-  id: Entity!
+  id: ID!
   name: DisplayNameInput!
   required: Boolean
   status: ChecklistStatusInput
@@ -342,7 +342,7 @@ TODO
 """
 type ClickerWidget implements Component {
   count: Int
-  id: Entity!
+  id: ID!
 }
 
 """
@@ -350,7 +350,7 @@ TODO
 """
 input ClickerWidgetInput {
   count: Int
-  id: Entity!
+  id: ID!
 }
 
 """
@@ -358,7 +358,7 @@ Components characterize Entities as possessing a particular trait.
 They are just simple structs, holding all data necessary to model that trait.
 """
 interface Component {
-  id: Entity!
+  id: ID!
 }
 
 type ComponentConnection implements Connection {
@@ -453,14 +453,14 @@ TODO
 """
 type Description implements Component {
   description: DynamicString!
-  id: Entity!
+  id: ID!
 }
 
 """
 TODO
 """
 input DescriptionInput {
-  id: Entity!
+  id: ID!
   value: DynamicStringInput!
 }
 
@@ -468,7 +468,7 @@ input DescriptionInput {
 TODO
 """
 type DisplayName implements Component {
-  id: Entity!
+  id: ID!
   name: DynamicString!
 }
 
@@ -476,7 +476,7 @@ type DisplayName implements Component {
 TODO
 """
 input DisplayNameInput {
-  id: Entity!
+  id: ID!
   value: DynamicStringInput!
 }
 
@@ -487,7 +487,7 @@ TODO
 """
 type DurationWidget implements Component {
   duration: Duration
-  id: Entity!
+  id: ID!
 }
 
 """
@@ -495,7 +495,7 @@ TODO
 """
 input DurationWidgetInput {
   duration: Duration
-  id: Entity!
+  id: ID!
 }
 
 """
@@ -542,8 +542,6 @@ input EnabledLanguageSearchOptions {
   primary: Boolean
 }
 
-scalar Entity
-
 type EntityConnection {
   components(
     after: String
@@ -551,7 +549,7 @@ type EntityConnection {
     first: Int
     last: Int
   ): ComponentConnection!
-  entity: Entity!
+  entity: ID!
 }
 
 """
@@ -568,7 +566,7 @@ type Geography {
 }
 
 interface Identity implements Component {
-  id: Entity!
+  id: ID!
 }
 
 """
@@ -635,7 +633,7 @@ scalar Locale
 type Location implements Component & Referenceable {
   active: ActivationStatus!
   children(options: LocationsQueryOptions): [Location!]!
-  id: Entity!
+  id: ID!
   name: Name!
   nameId: ID!
   parent: Location
@@ -681,7 +679,7 @@ type Metadata {
 TODO
 """
 type MultilineStringWidget implements Component {
-  id: Entity!
+  id: ID!
   text: String
 }
 
@@ -689,20 +687,20 @@ type MultilineStringWidget implements Component {
 TODO
 """
 input MultilineStringWidgetInput {
-  id: Entity!
+  id: ID!
   text: String
 }
 
 type Mutation {
   acceptInvitation(input: AcceptInvitationInput!): Worker!
-  activate(entity: Entity!): Activatable
+  activate(entity: ID!): Activatable
   activateWorker(id: ID!): Worker!
-  createEntity(id: String, suffix: [String!], type: String!): Entity!
+  createEntity(id: String, suffix: [String!], type: String!): ID!
   createInvitation(input: CreateInvitationInput!): Worker!
   createLocation(input: CreateLocationInput!): Location!
   createUser(input: CreateUserInput!): User!
   createWorker(input: CreateWorkerInput!): WorkerEdge!
-  deactivate(entity: Entity!): Activatable
+  deactivate(entity: ID!): Activatable
   deactivateWorker(id: ID!): Worker!
   disableLanguage(languageId: ID!, orgId: ID!): EnabledLanguageEdge!
   enableLanguage(languageId: ID!, orgId: ID!): EnabledLanguageEdge!
@@ -738,7 +736,7 @@ interface Node {
 TODO
 """
 type NumberWidget implements Component {
-  id: Entity!
+  id: ID!
   number: Int
 }
 
@@ -746,7 +744,7 @@ type NumberWidget implements Component {
 TODO
 """
 input NumberWidgetInput {
-  id: Entity!
+  id: ID!
   number: Int
 }
 
@@ -829,7 +827,7 @@ type PageInfo {
 }
 
 type Query {
-  entity(id: Entity!): EntityConnection!
+  entity(id: ID!): EntityConnection!
   languages: [Language!]!
   node(id: ID!): Node!
   roles: [Tag!]!
@@ -847,7 +845,7 @@ type Reference {
 TODO
 """
 type ReferenceWidget implements Component {
-  id: Entity!
+  id: ID!
   possibleTypes: [String!]
   ref: Referenceable
 }
@@ -856,13 +854,13 @@ type ReferenceWidget implements Component {
 TODO
 """
 input ReferenceWidgetInput {
-  id: Entity!
+  id: ID!
   possibleTypes: [String!]
-  ref: Entity
+  ref: ID
 }
 
 interface Referenceable implements Component {
-  id: Entity!
+  id: ID!
 }
 
 """
@@ -875,8 +873,8 @@ type Register {
 }
 
 type Requirement implements Component {
-  id: Entity!
-  requires: Entity!
+  id: ID!
+  requires: ID!
 }
 
 """
@@ -925,7 +923,7 @@ enum Sentiment {
 TODO
 """
 type SentimentWidget implements Component {
-  id: Entity!
+  id: ID!
   sentiment: Sentiment
 }
 
@@ -933,7 +931,7 @@ type SentimentWidget implements Component {
 TODO
 """
 input SentimentWidgetInput {
-  id: Entity!
+  id: ID!
   sentiment: Sentiment
 }
 
@@ -956,7 +954,7 @@ enum SmallestTimeUnit {
 TODO
 """
 type Sop implements Component {
-  id: Entity!
+  id: ID!
   sop: URL!
 }
 
@@ -964,7 +962,7 @@ type Sop implements Component {
 TODO
 """
 input SopInput {
-  id: Entity!
+  id: ID!
   link: URL!
 }
 
@@ -984,7 +982,7 @@ enum SortOrder {
 TODO
 """
 type StringWidget implements Component {
-  id: Entity!
+  id: ID!
   string: String
 }
 
@@ -992,7 +990,7 @@ type StringWidget implements Component {
 TODO
 """
 input StringWidgetInput {
-  id: Entity!
+  id: ID!
   string: String
 }
 
@@ -1021,7 +1019,7 @@ input TemporalInput @oneOf {
 TODO
 """
 type TemporalWidget implements Component {
-  id: Entity!
+  id: ID!
   temporal: Temporal
 }
 
@@ -1029,7 +1027,7 @@ type TemporalWidget implements Component {
 TODO
 """
 input TemporalWidgetInput {
-  id: Entity!
+  id: ID!
   temporal: TemporalInput
 }
 
@@ -1153,7 +1151,7 @@ type Worker implements Assignable & Component & Identity & Referenceable {
   auth: AuthenticationStatus!
   displayName: String!
   firstName: String!
-  id: Entity!
+  id: ID!
   language: Language!
   languageId: ID!
   lastName: String!

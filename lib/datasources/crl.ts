@@ -1,12 +1,12 @@
 import { EntityNotFound } from "@/errors";
-import type { EnabledLanguage } from "@/schema";
+import type { EnabledLanguage, ID } from "@/schema";
 import type { WithKey } from "@/util";
 import Dataloader from "dataloader";
 import type { Request } from "express";
 import { sql } from "./postgres";
 
 export default (_: Request) =>
-  new Dataloader<string, EnabledLanguage>(async keys => {
+  new Dataloader<ID, EnabledLanguage>(async keys => {
     const rows = await sql<WithKey<EnabledLanguage>[]>`
         SELECT
             customerrequestedlanguageuuid AS _key,
@@ -22,8 +22,8 @@ export default (_: Request) =>
     `;
 
     const byKey = rows.reduce(
-      (acc, row) => acc.set(row._key as string, row),
-      new Map<string, EnabledLanguage>(),
+      (acc, row) => acc.set(row._key, row),
+      new Map<ID, EnabledLanguage>(),
     );
 
     return keys.map(

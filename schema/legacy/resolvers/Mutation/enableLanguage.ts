@@ -1,5 +1,5 @@
 import { sql } from "@/datasources/postgres";
-import type { EnabledLanguage, MutationResolvers } from "@/schema";
+import type { MutationResolvers } from "@/schema";
 import { decodeGlobalId } from "@/schema/system";
 import type { WithKey } from "@/util";
 
@@ -66,7 +66,7 @@ export const enableLanguage: NonNullable<
   const row = await ctx.orm.crl.load(key._key);
 
   return {
-    cursor: row.id as string,
+    cursor: row.id.toString(),
     node: row,
   };
 };

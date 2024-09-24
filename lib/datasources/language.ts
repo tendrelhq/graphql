@@ -1,5 +1,5 @@
 import { EntityNotFound } from "@/errors";
-import type { Language } from "@/schema";
+import type { ID, Language } from "@/schema";
 import Dataloader from "dataloader";
 import type { Request } from "express";
 import { sql } from "./postgres";
@@ -27,7 +27,7 @@ export default (_: Request) => {
 
       return keys.map(key => byId.get(key) ?? new EntityNotFound("language"));
     }),
-    byId: new Dataloader<string, Language>(async keys => {
+    byId: new Dataloader<ID, Language>(async keys => {
       const rows = await sql<Language[]>`
         SELECT 
             s.systaguuid AS id,
@@ -40,8 +40,8 @@ export default (_: Request) => {
       `;
 
       const byId = rows.reduce(
-        (acc, row) => acc.set(row.id as string, row),
-        new Map<string, Language>(),
+        (acc, row) => acc.set(row.id, row),
+        new Map<ID, Language>(),
       );
 
       return keys.map(key => byId.get(key) ?? new EntityNotFound("language"));

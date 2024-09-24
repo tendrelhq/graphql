@@ -33,7 +33,7 @@ export default (_: Request) =>
     `;
 
     const byKey = rows.reduce(
-      (acc, row) => acc.set(row._key as string, row),
+      (acc, row) => acc.set(row._key, row),
       new Map<string, Worker>(),
     );
 
