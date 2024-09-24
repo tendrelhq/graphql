@@ -6,7 +6,7 @@ import { graphqlSync } from "graphql";
 
 const ZDT = {
   epochMilliseconds: "1722892841208",
-  timeZone: "America/Los_Angeles",
+  timeZone: "America/Denver",
 };
 
 const testQuery = `#graphql
@@ -26,10 +26,18 @@ const schema = makeExecutableSchema({
 
 test("ZonedDateTime", () => {
   const source = `#graphql
-query TestInstant {
+query TestInstant($toStringOptions: ZonedDateTimeToStringOptions!) {
   test {
     __typename
-    epochMilliseconds
+    year
+    month
+    day
+    hour
+    minute
+    second
+    millisecond
+    timeZone
+    toString(options: $toStringOptions)
   }
 }
   `;
@@ -38,12 +46,28 @@ query TestInstant {
     graphqlSync({
       schema,
       source,
+      variableValues: {
+        toStringOptions: {
+          calendarName: "never",
+          offset: "never",
+          smallestUnit: "minute",
+          timeZoneName: "never",
+        },
+      },
     }),
   ).toEqual({
     data: {
       test: {
         __typename: "ZonedDateTime",
-        epochMilliseconds: ZDT.epochMilliseconds,
+        year: 2024,
+        month: 8,
+        day: 5,
+        hour: 15,
+        minute: 20,
+        second: 41,
+        millisecond: 208,
+        timeZone: "America/Denver",
+        toString: "2024-08-05T15:20",
       },
     },
   });

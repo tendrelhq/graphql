@@ -30,8 +30,8 @@ query TestInstant {
     __typename
     epochMilliseconds
     toZonedDateTime(timeZone: "America/Los_Angeles") {
-      epochMilliseconds
       timeZone
+      toString
     }
   }
 }
@@ -48,8 +48,8 @@ query TestInstant {
         __typename: "Instant",
         epochMilliseconds: I.epochMilliseconds,
         toZonedDateTime: {
-          epochMilliseconds: "1722892841208",
           timeZone: "America/Los_Angeles",
+          toString: "2024-08-05T14:20:41.208-07:00[America/Los_Angeles]",
         },
       },
     },
