@@ -105,7 +105,7 @@ exports[`ChecklistResult 1`] = `
                               "status": null,
                               "widget": {
                                 "__typename": "NumberWidget",
-                                "number": 42,
+                                "number": null,
                               },
                             },
                           },
@@ -132,7 +132,7 @@ exports[`ChecklistResult 1`] = `
                               "status": null,
                               "widget": {
                                 "__typename": "NumberWidget",
-                                "number": 42,
+                                "number": null,
                               },
                             },
                           },
@@ -240,7 +240,7 @@ exports[`ChecklistResult 1`] = `
                               "status": null,
                               "widget": {
                                 "__typename": "NumberWidget",
-                                "number": 42,
+                                "number": null,
                               },
                             },
                           },

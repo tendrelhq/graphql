@@ -317,11 +317,7 @@ input ChecklistResultInput {
 
 input ChecklistSearchOptions {
   active: Boolean
-  order: ChecklistSearchOrderOptions
-}
-
-input ChecklistSearchOrderOptions {
-  completedAt: SortOrder
+  status: [ChecklistStatusSearchOptions!]
 }
 
 union ChecklistStatus = ChecklistClosed | ChecklistInProgress | ChecklistOpen
@@ -332,9 +328,10 @@ input ChecklistStatusInput @oneOf {
   open: ChecklistOpenInput
 }
 
-enum ChecklistType {
-  instance
-  template
+enum ChecklistStatusSearchOptions {
+  closed
+  inProgress
+  open
 }
 
 """
@@ -827,13 +824,6 @@ type PageInfo {
 }
 
 type Query {
-  checklists(
-    after: String
-    before: String
-    first: Int
-    last: Int
-    search: ChecklistSearchOptions
-  ): ChecklistConnection!
   entity(id: Entity!): EntityConnection!
   languages: [Language!]!
   node(id: ID!): Node!

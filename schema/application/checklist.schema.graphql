@@ -1,13 +1,3 @@
-type Query {
-  checklists(
-    first: Int
-    last: Int
-    before: String
-    after: String
-    search: ChecklistSearchOptions
-  ): ChecklistConnection!
-}
-
 extend type Organization {
   checklists(
     first: Int
@@ -79,16 +69,13 @@ input ChecklistInput {
 
 input ChecklistSearchOptions {
   active: Boolean
-  order: ChecklistSearchOrderOptions
+  status: [ChecklistStatusSearchOptions!]
 }
 
-enum ChecklistType {
-  instance
-  template
-}
-
-input ChecklistSearchOrderOptions {
-  completedAt: SortOrder
+enum ChecklistStatusSearchOptions {
+  open
+  inProgress
+  closed
 }
 
 type ChecklistItemConnection implements Connection {
