@@ -1,46 +1,5 @@
 // Bun Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`ChecklistResult 1`] = `
-{
-  "data": {
-    "node": {
-      "__typename": "Organization",
-      "checklists": {
-        "__typename": "ChecklistConnection",
-        "edges": [
-          {
-            "__typename": "ChecklistEdge",
-            "node": {
-              "__typename": "Checklist",
-              "assignees": {
-                "__typename": "AssigneeConnection",
-                "edges": [],
-                "totalCount": 0,
-              },
-              "name": {
-                "__typename": "DisplayName",
-                "name": {
-                  "__typename": "DynamicString",
-                  "value": "Checklist",
-                },
-              },
-              "status": {
-                "__typename": "ChecklistOpen",
-                "openedAt": {
-                  "__typename": "Instant",
-                  "epochMilliseconds": "2024-09-21 02:43:22.008+00",
-                },
-              },
-            },
-          },
-        ],
-        "totalCount": 1,
-      },
-    },
-  },
-}
-`;
-
 exports[`Organization checklists 1`] = `
 {
   "data": {
@@ -68,8 +27,8 @@ exports[`Organization checklists 1`] = `
               "status": {
                 "__typename": "ChecklistOpen",
                 "openedAt": {
-                  "__typename": "Instant",
-                  "epochMilliseconds": "2024-09-21 02:43:22.008+00",
+                  "__typename": "ZonedDateTime",
+                  "epochMilliseconds": "1726886602008.000000",
                 },
               },
             },

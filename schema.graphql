@@ -185,6 +185,7 @@ type ChecklistClosed implements Component {
   closedAt: Temporal!
   closedBecause: ChecklistClosedReason
   closedBy: Identity
+  dueAt: Temporal
   id: Entity!
 }
 
@@ -222,6 +223,7 @@ type ChecklistEdge implements Edge {
 }
 
 type ChecklistInProgress implements Component {
+  dueAt: Temporal
   id: Entity!
   inProgressAt: Temporal!
   inProgressBy: Identity
@@ -267,6 +269,7 @@ input ChecklistItemInput @oneOf {
 }
 
 type ChecklistOpen implements Component {
+  dueAt: Temporal
   id: Entity!
   openedAt: Temporal!
   openedBy: Identity
@@ -1199,6 +1202,11 @@ type ZonedDateTime implements Temporal {
   month: Int
   second: Int
   timeZone: TimeZone!
+
+  """
+  Convert a ZonedDateTime to an ISO 8601 string
+  """
+  toString(options: ZonedDateTimeToStringOptions): String
   year: Int
 }
 

@@ -13,7 +13,12 @@ const config: CodegenConfig = {
       resolverGeneration: {
         interface: "", // disabled
         mutation: "*",
-        object: ["!*.*Edge"], // all Edge implementations
+        object: [
+          "!*.*Edge", // all Edge implementations
+          "!*.ChecklistOpen",
+          "!*.ChecklistInProgress",
+          "!*.ChecklistClosed*",
+        ],
         query: "*",
         scalar: "*",
         subscription: "*",

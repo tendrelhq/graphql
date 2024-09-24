@@ -156,6 +156,7 @@ input ChecklistStatusInput @oneOf {
 
 type ChecklistOpen implements Component {
   id: Entity!
+  dueAt: Temporal
   openedBy: Identity
   openedAt: Temporal!
 }
@@ -168,6 +169,7 @@ input ChecklistOpenInput {
 
 type ChecklistInProgress implements Component {
   id: Entity!
+  dueAt: Temporal
   inProgressBy: Identity
   inProgressAt: Temporal!
 }
@@ -183,6 +185,7 @@ type ChecklistClosed implements Component {
   closedBy: Identity
   closedAt: Temporal!
   closedBecause: ChecklistClosedReason
+  dueAt: Temporal
 }
 
 input ChecklistClosedInput {

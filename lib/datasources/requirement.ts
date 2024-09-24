@@ -46,7 +46,7 @@ export function makeRequirementLoader(_req: Request) {
                     wr.workresultisrequired AS required
                 FROM public.workresultinstance AS wri
                 INNER JOIN public.workresult AS wr
-                    ON wri.workresultinstanceworkresult = wr.workresultid
+                    ON wri.workresultinstanceworkresultid = wr.workresultid
                 WHERE wri.id IN ${sql(ids)}
             `,
         )
