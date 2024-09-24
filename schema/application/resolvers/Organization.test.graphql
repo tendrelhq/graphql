@@ -1,0 +1,62 @@
+query TestChecklistsForOrganization(
+  $nodeId: ID!
+  $searchOptions: ChecklistSearchOptions!
+) {
+  node(id: $nodeId) {
+    ... on Organization {
+      checklists(search: $searchOptions) {
+        totalCount
+        edges {
+          node {
+            assignees {
+              edges {
+                node {
+                  assignedTo {
+                    __typename
+                    ... on Worker {
+                      displayName
+                      firstName
+                      lastName
+                    }
+                  }
+                }
+              }
+              totalCount
+            }
+
+            name {
+              name {
+                value
+              }
+            }
+            status {
+              __typename
+              ... on ChecklistOpen {
+                openedAt {
+                  __typename
+                  ... on Instant {
+                    epochMilliseconds
+                  }
+                  ... on ZonedDateTime {
+                    epochMilliseconds
+                  }
+                }
+              }
+              ... on ChecklistClosed {
+                closedAt {
+                  __typename
+                  ... on Instant {
+                    epochMilliseconds
+                  }
+                  ... on ZonedDateTime {
+                    epochMilliseconds
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
