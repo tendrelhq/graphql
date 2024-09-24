@@ -14,19 +14,19 @@ type Activatable implements Component {
   updatedAt: Temporal
 }
 
+"""
+TODO
+"""
+input ActivatableInput {
+  active: Boolean!
+  id: Entity!
+  updatedAt: TemporalInput!
+}
+
 type ActivationStatus {
   activatedAt: String
   active: Boolean!
   deactivatedAt: String
-}
-
-"""
-TODO
-"""
-input ActiveInput {
-  active: Boolean!
-  id: Entity!
-  updatedAt: TemporalInput!
 }
 
 interface Assignable implements Component {
@@ -236,7 +236,7 @@ input ChecklistInProgressInput {
 }
 
 input ChecklistInput {
-  active: ActiveInput
+  active: ActivatableInput
   assignees: [AssigneeInput!]
   auditable: AuditableInput
   customerId: ID!
@@ -695,12 +695,14 @@ input MultilineStringWidgetInput {
 
 type Mutation {
   acceptInvitation(input: AcceptInvitationInput!): Worker!
+  activate(entity: Entity!): Activatable
   activateWorker(id: ID!): Worker!
   createEntity(id: String, suffix: [String!], type: String!): Entity!
   createInvitation(input: CreateInvitationInput!): Worker!
   createLocation(input: CreateLocationInput!): Location!
   createUser(input: CreateUserInput!): User!
   createWorker(input: CreateWorkerInput!): WorkerEdge!
+  deactivate(entity: Entity!): Activatable
   deactivateWorker(id: ID!): Worker!
   disableLanguage(languageId: ID!, orgId: ID!): EnabledLanguageEdge!
   enableLanguage(languageId: ID!, orgId: ID!): EnabledLanguageEdge!

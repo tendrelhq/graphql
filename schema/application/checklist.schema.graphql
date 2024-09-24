@@ -54,7 +54,7 @@ type Checklist implements Component {
 
 input ChecklistInput {
   id: Entity!
-  active: ActiveInput
+  active: ActivatableInput
   assignees: [AssigneeInput!]
   auditable: AuditableInput
   customerId: ID!

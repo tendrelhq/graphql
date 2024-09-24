@@ -24,19 +24,19 @@ export const ChecklistResult: ChecklistResultResolvers = {
       totalCount: 0,
     };
   },
-  async auditable(parent, _, ctx) {
-    return await ctx.orm.auditable.load(parent.id);
+  auditable(parent, _, ctx) {
+    return ctx.orm.auditable.load(parent.id);
   },
   async name(parent, _, ctx) {
-    // biome-ignore lint/suspicious/noExplicitAny:
-    return (await ctx.orm.displayName.load(parent.id)) as any;
+    return (await ctx.orm.displayName.load(
+      parent.id,
+    )) as ResolversTypes["DisplayName"];
   },
-  async required(parent, _, ctx) {
-    return await ctx.orm.requirement.load(parent.id);
+  required(parent, _, ctx) {
+    return ctx.orm.requirement.load(parent.id);
   },
-  async status(parent, _, ctx) {
-    // biome-ignore lint/suspicious/noExplicitAny:
-    return (await ctx.orm.status.load(parent.id)) as any;
+  status(parent, _, ctx) {
+    return ctx.orm.status.load(parent.id);
   },
   async widget(parent) {
     const { type, id } = decodeGlobalId(parent.id);

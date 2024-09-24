@@ -13,15 +13,16 @@ type Activatable implements Component {
 """
 TODO
 """
-input ActiveInput {
+input ActivatableInput {
   id: Entity!
   active: Boolean!
   updatedAt: TemporalInput!
 }
 
-# extend type Mutation {
-#   activate(input: ActiveInput): Activatable
-# }
+extend type Mutation {
+  activate(entity: Entity!): Activatable @semanticNonNull
+  deactivate(entity: Entity!): Activatable @semanticNonNull
+}
 
 interface Assignable implements Component {
   id: Entity!

@@ -1,20 +1,17 @@
 import { sql } from "@/datasources/postgres";
 import type {
   Assignee,
-  Auditable,
   ChecklistItem,
   ChecklistResolvers,
   Description,
-  DisplayName,
   ResolversTypes,
 } from "@/schema";
 import { decodeGlobalId } from "@/schema/system";
 import { match } from "ts-pattern";
 
 export const Checklist: ChecklistResolvers = {
-  async active(parent, _, ctx) {
-    // biome-ignore lint/suspicious/noExplicitAny:
-    return (await ctx.orm.activatable.load(parent.id)) as any;
+  active(parent, _, ctx) {
+    return ctx.orm.activatable.load(parent.id);
   },
   async assignees(parent, args) {
     const { first, last } = args;
@@ -108,8 +105,8 @@ export const Checklist: ChecklistResolvers = {
       totalCount: 0,
     };
   },
-  async auditable(parent, _, ctx) {
-    return (await ctx.orm.auditable.load(parent.id)) as Auditable;
+  auditable(parent, _, ctx) {
+    return ctx.orm.auditable.load(parent.id);
   },
   children() {
     return {
@@ -269,19 +266,20 @@ export const Checklist: ChecklistResolvers = {
     return { updatedAt: row };
   },
   async name(parent, _, ctx) {
-    return (await ctx.orm.displayName.load(parent.id)) as DisplayName;
+    return (await ctx.orm.displayName.load(
+      parent.id,
+    )) as ResolversTypes["DisplayName"];
   },
-  async required(parent, _, ctx) {
-    return await ctx.orm.requirement.load(parent.id);
+  required(parent, _, ctx) {
+    return ctx.orm.requirement.load(parent.id);
   },
   schedule() {
     return undefined;
   },
-  async sop(parent, _, ctx) {
-    return await ctx.orm.sop.load(parent.id);
+  sop(parent, _, ctx) {
+    return ctx.orm.sop.load(parent.id);
   },
-  async status(parent, _, ctx) {
-    // biome-ignore lint/suspicious/noExplicitAny:
-    return (await ctx.orm.status.load(parent.id)) as any;
+  status(parent, _, ctx) {
+    return ctx.orm.status.load(parent.id);
   },
 };
