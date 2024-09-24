@@ -80,7 +80,7 @@ export const disableLanguage: NonNullable<
   `;
 
   return {
-    cursor: e.id as string,
+    cursor: e.id.toString(),
     node: e,
   };
 };

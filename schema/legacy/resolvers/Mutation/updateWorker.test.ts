@@ -27,7 +27,7 @@ describe.skipIf(!!process.env.CI)("updateWorker", () => {
 
     const result = await execute(schema, TestUpdateWorkerDocument, {
       input: {
-        id: data.createWorker.node.id,
+        id: data.createWorker.node.id.toString(),
         languageId: "c3f18dd6-bfc5-4ba5-b3c1-bb09e2a749a9",
         roleId: "a804d5b8-23ef-4592-9486-14857efb1a0a",
         firstName: "1337",
@@ -74,7 +74,7 @@ describe.skipIf(!!process.env.CI)("updateWorker", () => {
 
     const result = await execute(schema, TestUpdateWorkerDocument, {
       input: {
-        id: data.createWorker.node.id,
+        id: data.createWorker.node.id.toString(),
         scanCode: "rugg", // taken by yours truly :D
       },
     });

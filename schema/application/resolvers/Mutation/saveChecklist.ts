@@ -3,6 +3,7 @@ import type {
   Checklist,
   ChecklistInput,
   ChecklistItemInput,
+  ID,
   MutationResolvers,
 } from "@/schema";
 import { decodeGlobalId } from "@/schema/system";
@@ -509,7 +510,7 @@ export const saveChecklist: NonNullable<
   }
 
   return {
-    cursor: input.id,
+    cursor: input.id.toString(),
     node: { id: input.id } as Checklist,
   };
 };
@@ -518,7 +519,7 @@ async function saveChecklistResults(
   parent: string,
   input: NonNullable<ChecklistInput["items"]>,
 ) {
-  const current = await sql<{ id: string }[]>`
+  const current = await sql<{ id: ID }[]>`
     SELECT encode(('workresult:' || id)::bytea, 'base64') AS id
     FROM public.workresult
     WHERE

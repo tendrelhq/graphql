@@ -22,6 +22,6 @@ export const EnabledLanguage: EnabledLanguageResolvers = {
     return row;
   },
   async language(parent, _, ctx) {
-    return ctx.orm.language.byId.load(parent.languageId as string);
+    return ctx.orm.language.byId.load(parent.languageId);
   },
 };

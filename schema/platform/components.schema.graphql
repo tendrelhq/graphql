@@ -5,7 +5,7 @@ scalar URL
 TODO
 """
 type Activatable implements Component {
-  id: Entity!
+  id: ID!
   active: Boolean!
   updatedAt: Temporal @semanticNonNull
 }
@@ -14,25 +14,25 @@ type Activatable implements Component {
 TODO
 """
 input ActivatableInput {
-  id: Entity!
+  id: ID!
   active: Boolean!
   updatedAt: TemporalInput!
 }
 
 extend type Mutation {
-  activate(entity: Entity!): Activatable @semanticNonNull
-  deactivate(entity: Entity!): Activatable @semanticNonNull
+  activate(entity: ID!): Activatable @semanticNonNull
+  deactivate(entity: ID!): Activatable @semanticNonNull
 }
 
 interface Assignable implements Component {
-  id: Entity!
+  id: ID!
 }
 
 """
 TODO
 """
 type Assignee implements Component {
-  id: Entity!
+  id: ID!
   assignedTo: Assignable!
   assignedAt: Temporal!
 }
@@ -41,8 +41,8 @@ type Assignee implements Component {
 TODO
 """
 input AssigneeInput {
-  id: Entity!
-  assignTo: Entity!
+  id: ID!
+  assignTo: ID!
   assignAt: TemporalInput!
 }
 
@@ -66,7 +66,7 @@ type AssigneeEdge implements Edge {
 TODO
 """
 type Attachment implements Component {
-  id: Entity!
+  id: ID!
   attachment: String!
 }
 
@@ -90,7 +90,7 @@ type AttachmentEdge implements Edge {
 TODO
 """
 type Auditable implements Component {
-  id: Entity!
+  id: ID!
   auditable: Boolean!
 }
 
@@ -98,7 +98,7 @@ type Auditable implements Component {
 TODO
 """
 input AuditableInput {
-  id: Entity!
+  id: ID!
   enabled: Boolean!
 }
 
@@ -106,7 +106,7 @@ input AuditableInput {
 TODO
 """
 type Description implements Component {
-  id: Entity!
+  id: ID!
   description: DynamicString!
 }
 
@@ -114,7 +114,7 @@ type Description implements Component {
 TODO
 """
 input DescriptionInput {
-  id: Entity!
+  id: ID!
   value: DynamicStringInput!
 }
 
@@ -122,7 +122,7 @@ input DescriptionInput {
 TODO
 """
 type DisplayName implements Component {
-  id: Entity!
+  id: ID!
   name: DynamicString!
 }
 
@@ -130,7 +130,7 @@ type DisplayName implements Component {
 TODO
 """
 input DisplayNameInput {
-  id: Entity!
+  id: ID!
   value: DynamicStringInput!
 }
 
@@ -144,15 +144,15 @@ type Metadata {
 }
 
 type Requirement implements Component {
-  id: Entity!
-  requires: Entity!
+  id: ID!
+  requires: ID!
 }
 
 """
 TODO
 """
 type Sop implements Component {
-  id: Entity!
+  id: ID!
   sop: URL!
 }
 
@@ -160,7 +160,7 @@ type Sop implements Component {
 TODO
 """
 input SopInput {
-  id: Entity!
+  id: ID!
   link: URL!
 }
 
@@ -197,7 +197,7 @@ input WidgetInput @oneOf {
 TODO
 """
 type CheckboxWidget implements Component {
-  id: Entity!
+  id: ID!
   checked: Boolean
 }
 
@@ -205,7 +205,7 @@ type CheckboxWidget implements Component {
 TODO
 """
 input CheckboxWidgetInput {
-  id: Entity!
+  id: ID!
   checked: Boolean
 }
 
@@ -213,7 +213,7 @@ input CheckboxWidgetInput {
 TODO
 """
 type ClickerWidget implements Component {
-  id: Entity!
+  id: ID!
   count: Int
 }
 
@@ -221,7 +221,7 @@ type ClickerWidget implements Component {
 TODO
 """
 input ClickerWidgetInput {
-  id: Entity!
+  id: ID!
   count: Int
 }
 
@@ -229,7 +229,7 @@ input ClickerWidgetInput {
 TODO
 """
 type DurationWidget implements Component {
-  id: Entity!
+  id: ID!
   duration: Duration
 }
 
@@ -237,17 +237,17 @@ type DurationWidget implements Component {
 TODO
 """
 input DurationWidgetInput {
-  id: Entity!
+  id: ID!
   duration: Duration
 }
 
 # type GeographyWidget implements Component {
-#   id: Entity!
+#   id: ID!
 #   geog: Geography
 # }
 #
 # input GeographyWidgetInput {
-#   id: Entity!
+#   id: ID!
 #   geog: Geography
 # }
 
@@ -255,7 +255,7 @@ input DurationWidgetInput {
 TODO
 """
 type MultilineStringWidget implements Component {
-  id: Entity!
+  id: ID!
   text: String
 }
 
@@ -263,7 +263,7 @@ type MultilineStringWidget implements Component {
 TODO
 """
 input MultilineStringWidgetInput {
-  id: Entity!
+  id: ID!
   text: String
 }
 
@@ -271,7 +271,7 @@ input MultilineStringWidgetInput {
 TODO
 """
 type NumberWidget implements Component {
-  id: Entity!
+  id: ID!
   number: Int
 }
 
@@ -279,7 +279,7 @@ type NumberWidget implements Component {
 TODO
 """
 input NumberWidgetInput {
-  id: Entity!
+  id: ID!
   number: Int
 }
 
@@ -287,7 +287,7 @@ input NumberWidgetInput {
 TODO
 """
 type ReferenceWidget implements Component {
-  id: Entity!
+  id: ID!
   possibleTypes: [String!]
   ref: Referenceable
 }
@@ -296,16 +296,16 @@ type ReferenceWidget implements Component {
 TODO
 """
 input ReferenceWidgetInput {
-  id: Entity!
+  id: ID!
   possibleTypes: [String!]
-  ref: Entity
+  ref: ID
 }
 
 """
 TODO
 """
 type SentimentWidget implements Component {
-  id: Entity!
+  id: ID!
   sentiment: Sentiment
 }
 
@@ -313,7 +313,7 @@ type SentimentWidget implements Component {
 TODO
 """
 input SentimentWidgetInput {
-  id: Entity!
+  id: ID!
   sentiment: Sentiment
 }
 
@@ -321,7 +321,7 @@ input SentimentWidgetInput {
 TODO
 """
 type StringWidget implements Component {
-  id: Entity!
+  id: ID!
   string: String
 }
 
@@ -329,7 +329,7 @@ type StringWidget implements Component {
 TODO
 """
 input StringWidgetInput {
-  id: Entity!
+  id: ID!
   string: String
 }
 
@@ -337,7 +337,7 @@ input StringWidgetInput {
 TODO
 """
 type TemporalWidget implements Component {
-  id: Entity!
+  id: ID!
   temporal: Temporal
 }
 
@@ -345,6 +345,6 @@ type TemporalWidget implements Component {
 TODO
 """
 input TemporalWidgetInput {
-  id: Entity!
+  id: ID!
   temporal: TemporalInput
 }

@@ -1,3 +1,4 @@
+import type { ID } from "@/schema";
 import { decodeGlobalId } from "@/schema/system";
 import type { WithKey } from "@/util";
 import DataLoader from "dataloader";
@@ -8,7 +9,7 @@ import { sql, unionAll } from "./postgres";
 type Required = { required: boolean };
 
 export function makeRequirementLoader(_req: Request) {
-  return new DataLoader<string, boolean | undefined>(async keys => {
+  return new DataLoader<ID, boolean | undefined>(async keys => {
     const entities = keys.map(decodeGlobalId);
     const byUnderlyingType = entities.reduce((acc, { type, id }) => {
       if (!acc.has(type)) acc.set(type, []);

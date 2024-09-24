@@ -30,6 +30,16 @@ export const node: NonNullable<QueryResolvers["node"]> = async (
         __typename: "User",
         ...(await ctx.orm.user.byId.load(id)),
       };
+    // HACK: Checklists are the only thing that map to these underlying types.
+    // In the future we will want to look up the *template types* to determine
+    // what their concrete types should be.
+    case "workinstance":
+    case "worktemplate":
+      return {
+        __typename: "Checklist",
+        id: args.id,
+        // biome-ignore lint/suspicious/noExplicitAny:
+      } as any;
     default:
       throw new GraphQLError("Unknown node type", {
         extensions: {

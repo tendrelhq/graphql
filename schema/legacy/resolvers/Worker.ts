@@ -27,9 +27,7 @@ export const Worker: WorkerResolvers = {
   async auth(parent, _, ctx) {
     const user = await ctx.orm.user.byId.load(decodeGlobalId(parent.userId).id);
     try {
-      const invitation = await ctx.orm.invitation.byWorkerId.load(
-        parent.id as string,
-      );
+      const invitation = await ctx.orm.invitation.byWorkerId.load(parent.id);
       return {
         // There is an invitaton, but it has been accepted and properly
         // propagated to workeridentityid.
@@ -63,11 +61,11 @@ export const Worker: WorkerResolvers = {
   },
   async language(parent, _, ctx) {
     const hack = await ctx.orm.worker.load(decodeGlobalId(parent.id).id);
-    return ctx.orm.language.byId.load(hack.languageId as string);
+    return ctx.orm.language.byId.load(hack.languageId);
   },
   async role(parent, _, ctx) {
     const hack = await ctx.orm.worker.load(decodeGlobalId(parent.id).id);
-    return ctx.orm.tag.load(hack.roleId as string);
+    return ctx.orm.tag.load(hack.roleId);
   },
   async scanCode(parent, _, ctx) {
     const hack = await ctx.orm.worker.load(decodeGlobalId(parent.id).id);

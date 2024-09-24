@@ -1,4 +1,4 @@
-import type { Sop } from "@/schema";
+import type { ID, Sop } from "@/schema";
 import { decodeGlobalId } from "@/schema/system";
 import type { WithKey } from "@/util";
 import DataLoader from "dataloader";
@@ -7,7 +7,7 @@ import { match } from "ts-pattern";
 import { sql, unionAll } from "./postgres";
 
 export function makeSopLoader(_req: Request) {
-  return new DataLoader<string, Sop | undefined>(async keys => {
+  return new DataLoader<ID, Sop | undefined>(async keys => {
     const entities = keys.map(decodeGlobalId);
     const byUnderlyingType = entities.reduce((acc, { type, id }) => {
       if (!acc.has(type)) acc.set(type, []);

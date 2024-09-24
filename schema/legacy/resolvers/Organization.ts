@@ -41,7 +41,7 @@ export const Organization: Pick<
   },
   async languages(root, args, ctx) {
     const { first, last } = args;
-    const parentId = decodeGlobalId(root.id as string).id;
+    const parentId = decodeGlobalId(root.id).id;
     const after = args.after ? decodeGlobalId(args.after).id : null;
     const before = args.before ? decodeGlobalId(args.before).id : null;
 
@@ -223,13 +223,13 @@ export const Organization: Pick<
         }
 
         return {
-          cursor: row.id as string,
+          cursor: row.id.toString(),
           node: row,
         };
       }),
       pageInfo: {
-        startCursor: startCursor?.id as string,
-        endCursor: endCursor?.id as string,
+        startCursor: startCursor?.id.toString(),
+        endCursor: endCursor?.id.toString(),
         hasNextPage,
         hasPreviousPage,
       },
@@ -247,7 +247,7 @@ export const Organization: Pick<
   },
   async locations(root, args, ctx) {
     const { first, last } = args;
-    const parentId = decodeGlobalId(root.id as string).id;
+    const parentId = decodeGlobalId(root.id).id;
     const after = args.after ? decodeGlobalId(args.after).id : null;
     const before = args.before ? decodeGlobalId(args.before).id : null;
 
@@ -396,13 +396,13 @@ export const Organization: Pick<
         }
 
         return {
-          cursor: row.id as string,
+          cursor: row.id.toString(),
           node: row,
         };
       }),
       pageInfo: {
-        startCursor: startCursor?.id as string,
-        endCursor: endCursor?.id as string,
+        startCursor: startCursor?.id.toString(),
+        endCursor: endCursor?.id.toString(),
         hasNextPage,
         hasPreviousPage,
       },
@@ -438,7 +438,7 @@ export const Organization: Pick<
   },
   async workers(root, args, ctx) {
     const { first, last } = args;
-    const parentId = decodeGlobalId(root.id as string).id;
+    const parentId = decodeGlobalId(root.id).id;
     const after = args.after ? decodeGlobalId(args.after).id : null;
     const before = args.before ? decodeGlobalId(args.before).id : null;
 
@@ -597,13 +597,13 @@ export const Organization: Pick<
         }
 
         return {
-          cursor: row.id as string,
+          cursor: row.id.toString(),
           node: row,
         };
       }),
       pageInfo: {
-        startCursor: startCursor?.id as string,
-        endCursor: endCursor?.id as string,
+        startCursor: startCursor?.id.toString(),
+        endCursor: endCursor?.id.toString(),
         hasNextPage,
         hasPreviousPage,
       },

@@ -36,7 +36,7 @@ export default (_: Request) => {
     byId: new Dataloader<string, User>(async keys => {
       const rows = await selectUsers("workeruuid", keys);
       const byKey = rows.reduce(
-        (acc, row) => acc.set(row._key as string, row),
+        (acc, row) => acc.set(row._key, row),
         new Map(),
       );
 
@@ -45,7 +45,7 @@ export default (_: Request) => {
     byIdentityId: new Dataloader<string, User>(async keys => {
       const rows = await selectUsers("workeridentityid", keys);
       const byKey = rows.reduce(
-        (acc, row) => acc.set(row._key as string, row),
+        (acc, row) => acc.set(row._key, row),
         new Map(),
       );
 

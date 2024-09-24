@@ -46,7 +46,7 @@ export const updateWorker: NonNullable<
       ctx,
     );
     return {
-      cursor: node.id as string,
+      cursor: node.id.toString(),
       node,
     };
   } catch (e) {

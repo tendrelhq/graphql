@@ -27,7 +27,7 @@ export default (_: Request) =>
     `;
 
     const byId = rows.reduce(
-      (acc, row) => acc.set(row._key as string, row),
+      (acc, row) => acc.set(row._key, row),
       new Map<string, Location>(),
     );
 

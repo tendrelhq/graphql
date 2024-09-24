@@ -48,7 +48,7 @@ export const createWorker: NonNullable<
     );
 
     return {
-      cursor: node.id as string,
+      cursor: node.id.toString(),
       node,
     };
   } catch (e) {

@@ -6,15 +6,15 @@ import type { WithKey } from "@/util";
 export const User: UserResolvers = {
   async authenticationProvider(parent, _, ctx) {
     if (parent.authenticationProviderId) {
-      return ctx.orm.tag.load(parent.authenticationProviderId as string);
+      return ctx.orm.tag.load(parent.authenticationProviderId);
     }
   },
   language(parent, _, ctx) {
-    return ctx.orm.language.byId.load(parent.languageId as string);
+    return ctx.orm.language.byId.load(parent.languageId);
   },
   async organizations(parent, args, ctx) {
     const { first, last } = args;
-    const parentId = decodeGlobalId(parent.id as string).id;
+    const parentId = decodeGlobalId(parent.id).id;
     const after = args.after ? decodeGlobalId(args.after).id : null;
     const before = args.before ? decodeGlobalId(args.before).id : null;
 
@@ -116,13 +116,13 @@ export const User: UserResolvers = {
         }
 
         return {
-          cursor: row.id as string,
+          cursor: row.id,
           node: row,
         };
       }),
       pageInfo: {
-        startCursor: startCursor?.id as string,
-        endCursor: endCursor?.id as string,
+        startCursor: startCursor?.id.toString(),
+        endCursor: endCursor?.id.toString(),
         hasNextPage,
         hasPreviousPage,
       },
