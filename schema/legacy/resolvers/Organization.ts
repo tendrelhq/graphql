@@ -457,9 +457,13 @@ export const Organization: Pick<
             ${
               after
                 ? sql`
-            AND workerinstanceid > (
-                SELECT workerinstanceid
+            AND (workerfullname, workerinstanceid) > (
+                SELECT
+                    workerfullname,
+                    workerinstanceid
                 FROM public.workerinstance
+                INNER JOIN public.worker
+                    ON workerinstanceworkerid = workerid
                 WHERE workerinstanceuuid = ${after}
             )
                 `
@@ -468,9 +472,13 @@ export const Organization: Pick<
             ${
               before
                 ? sql`
-            AND workerinstanceid < (
-                SELECT workerinstanceid
+            AND (workerfullname, workerinstanceid) < (
+                SELECT
+                    workerfullname,
+                    workerinstanceid
                 FROM public.workerinstance
+                INNER JOIN public.worker
+                    ON workerinstanceworkerid = workerid
                 WHERE workerinstanceuuid = ${before}
             )
                 `
@@ -493,7 +501,9 @@ export const Organization: Pick<
                 ? sql`workerfullname ILIKE '%' || ${args.search.user.displayName}::text || '%'`
                 : sql`TRUE`
             }
-        ORDER BY workerinstanceid ${last ? sql`DESC` : sql`ASC`}
+        ORDER BY
+            workerfullname ${last ? sql`DESC` : sql`ASC`},
+            workerinstanceid ${last ? sql`DESC` : sql`ASC`}
         LIMIT ${first ?? last ?? null};
     `;
 
@@ -513,9 +523,13 @@ export const Organization: Pick<
                           FROM public.customer
                           WHERE customeruuid = ${parentId}
                       )
-                      AND workerinstanceid > (
-                          SELECT workerinstanceid
+                      AND (workerfullname, workerinstanceid) > (
+                          SELECT
+                              workerfullname,
+                              workerinstanceid
                           FROM public.workerinstance
+                          INNER JOIN public.worker
+                              ON workerinstanceworkerid = workerid
                           WHERE workerinstanceuuid = ${keys.at(-1)?._key ?? null}
                       )
                       AND ${match(args.search?.active)
@@ -535,8 +549,9 @@ export const Organization: Pick<
                           ? sql`workerfullname ILIKE '%' || ${args.search.user.displayName}::text || '%'`
                           : sql`TRUE`
                       }
-                  ORDER BY workerinstanceid ${last ? sql`DESC` : sql`ASC`}
-
+                  ORDER BY
+                      workerfullname ${last ? sql`DESC` : sql`ASC`},
+                      workerinstanceid ${last ? sql`DESC` : sql`ASC`}
               )
           ) AS "hasNextPage",
           (
@@ -551,9 +566,13 @@ export const Organization: Pick<
                           FROM public.customer
                           WHERE customeruuid = ${parentId}
                       )
-                      AND workerinstanceid < (
-                          SELECT workerinstanceid
+                      AND (workerfullname, workerinstanceid) < (
+                          SELECT
+                              workerfullname,
+                              workerinstanceid
                           FROM public.workerinstance
+                          INNER JOIN public.worker
+                              ON workerinstanceworkerid = workerid
                           WHERE workerinstanceuuid = ${keys.at(0)?._key ?? null}
                       )
                       AND ${match(args.search?.active)
@@ -573,8 +592,9 @@ export const Organization: Pick<
                           ? sql`workerfullname ILIKE '%' || ${args.search.user.displayName}::text || '%'`
                           : sql`TRUE`
                       }
-                  ORDER BY workerinstanceid ${last ? sql`DESC` : sql`ASC`}
-
+                  ORDER BY
+                      workerfullname ${last ? sql`DESC` : sql`ASC`},
+                      workerinstanceid ${last ? sql`DESC` : sql`ASC`}
               )
           ) AS "hasPreviousPage"
     `;
