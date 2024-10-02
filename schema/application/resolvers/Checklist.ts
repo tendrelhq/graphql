@@ -11,7 +11,7 @@ import { match } from "ts-pattern";
 
 export const Checklist: ChecklistResolvers = {
   active(parent, _, ctx) {
-    return ctx.orm.activatable.load(parent.id);
+    return ctx.orm.active.load(parent.id);
   },
   async assignees(parent, args) {
     const { first, last } = args;
@@ -27,7 +27,7 @@ export const Checklist: ChecklistResolvers = {
       .with(
         "workinstance",
         () => sql<{ id: string }[]>`
-            SELECT encode(('workresultinstance:' || wri.id)::bytea, 'base64') AS id
+            SELECT encode(('workresultinstance:' || wri.workresultinstanceuuid)::bytea, 'base64') AS id
             FROM public.workresultinstance AS wri
             INNER JOIN public.workresult AS wr
                 ON wri.workresultinstanceworkresultid = wr.workresultid
@@ -137,31 +137,22 @@ export const Checklist: ChecklistResolvers = {
         () => sql<{ __typename: "ChecklistResult"; id: string }[]>`
             SELECT
                 'ChecklistResult' AS "__typename",
-                encode(('workresultinstance:' || wri.id)::bytea, 'base64') AS id
-            FROM public.workresultinstance AS wri
-            INNER JOIN public.workinstance AS wi
-                ON wri.workresultinstanceworkinstanceid = wi.workinstanceid
+                coalesce(
+                    encode(('workresultinstance:' || wri.workresultinstanceuuid)::bytea, 'base64'),
+                    encode(('workresult:' || wr.id)::bytea, 'base64')
+                ) AS id
+            FROM public.workresult AS wr
+            LEFT JOIN public.workresultinstance AS wri
+                ON wr.workresultid = wri.workresultinstanceworkresultid
             WHERE
-                wi.id = ${id}
-                AND ${
-                  afterId
-                    ? sql`wi.workinstanceid > (
-                        SELECT workinstanceid
-                        FROM public.workinstance
-                        WHERE id = ${afterId}
-                    )`
-                    : sql`true`
-                }
-                AND ${
-                  beforeId
-                    ? sql`wi.workinstanceid < (
-                        SELECT workinstanceid
-                        FROM public.workinstance
-                        WHERE id = ${beforeId}
-                    )`
-                    : sql`true`
-                }
-            ORDER BY wi.workinstanceid ${last ? sql`DESC` : sql`ASC`}
+                wr.workresultworktemplateid IN (
+                    SELECT workinstanceworktemplateid
+                    FROM public.workinstance
+                    WHERE id = ${id}
+                )
+                AND
+                workresultisprimary = false
+            ORDER BY wr.workresultorder ${last ? sql`DESC` : sql`ASC`}
             LIMIT ${first ?? last ?? null};
         `,
       )
@@ -176,25 +167,9 @@ export const Checklist: ChecklistResolvers = {
                 ON wr.workresultworktemplateid = wt.worktemplateid
             WHERE
                 wt.id = ${id}
-                AND ${
-                  afterId
-                    ? sql`wt.worktemplateid > (
-                        SELECT worktemplateid
-                        FROM public.worktemplate
-                        WHERE id = ${afterId}
-                    )`
-                    : sql`true`
-                }
-                AND ${
-                  beforeId
-                    ? sql`wt.worktemplateid < (
-                        SELECT worktemplateid
-                        FROM public.worktemplate
-                        WHERE id = ${beforeId}
-                    )`
-                    : sql`true`
-                }
-            ORDER BY wt.worktemplateid ${last ? sql`DESC` : sql`ASC`}
+                AND
+                workresultisprimary = false
+            ORDER BY wr.workresultorder ${last ? sql`DESC` : sql`ASC`}
             LIMIT ${first ?? last ?? null};
         `,
       )
@@ -211,13 +186,15 @@ export const Checklist: ChecklistResolvers = {
           "workinstance",
           () => sql<[{ count: number }]>`
               SELECT count(*)
-              FROM public.workresultinstance
+              FROM public.workresult
               WHERE
-                  workresultinstanceworkinstanceid = (
-                      SELECT workinstanceid
+                  workresultworktemplateid IN (
+                      SELECT workinstanceworktemplateid
                       FROM public.workinstance
                       WHERE id = ${id}
                   )
+                  AND
+                  workresultisprimary = false
           `,
         )
         .with(
@@ -231,6 +208,8 @@ export const Checklist: ChecklistResolvers = {
                       FROM public.worktemplate
                       WHERE id = ${id}
                   )
+                  AND
+                  workresultisprimary = false
           `,
         )
         .otherwise(() => Promise.reject("invariant violated"))

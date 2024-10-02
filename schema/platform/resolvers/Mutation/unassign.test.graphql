@@ -1,0 +1,24 @@
+mutation TestUnassign($entity: ID!, $from: ID!) {
+  unassign(entity: $entity, from: $from) {
+    entity {
+      ... on Checklist {
+        assignees {
+          edges {
+            node {
+              assignedTo {
+                ... on Worker {
+                  displayName
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+    unassignedFrom {
+      ... on Worker {
+        displayName
+      }
+    }
+  }
+}

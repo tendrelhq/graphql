@@ -12,9 +12,9 @@ type Mutation {
   saveChecklist(input: ChecklistInput!): ChecklistEdge!
 }
 
-type Checklist implements Component & Node {
+type Checklist implements Component & Activatable & Assignable & Node {
   id: ID!
-  active: Activatable
+  active: Active
   assignees(
     first: Int
     last: Int
@@ -54,7 +54,7 @@ type Checklist implements Component & Node {
 
 input ChecklistInput {
   id: ID!
-  active: ActivatableInput
+  active: ActiveInput
   assignees: [AssigneeInput!]
   auditable: AuditableInput
   customerId: ID!
@@ -69,6 +69,7 @@ input ChecklistInput {
 
 input ChecklistSearchOptions {
   active: Boolean
+  displayName: String
   status: [ChecklistStatusSearchOptions!]
 }
 
@@ -148,6 +149,10 @@ input ChecklistResultInput {
 ## Our checklists go Open > In Progress > Closed
 union ChecklistStatus = ChecklistOpen | ChecklistInProgress | ChecklistClosed
 
+extend type Mutation {
+  setStatus(id: ID!, input: ChecklistStatusInput!): Checklist!
+}
+
 input ChecklistStatusInput @oneOf {
   open: ChecklistOpenInput
   inProgress: ChecklistInProgressInput
@@ -162,7 +167,6 @@ type ChecklistOpen implements Component {
 }
 
 input ChecklistOpenInput {
-  id: ID!
   by: ID
   at: TemporalInput!
 }
@@ -175,7 +179,6 @@ type ChecklistInProgress implements Component {
 }
 
 input ChecklistInProgressInput {
-  id: ID!
   by: ID
   at: TemporalInput!
 }
@@ -189,7 +192,6 @@ type ChecklistClosed implements Component {
 }
 
 input ChecklistClosedInput {
-  id: ID!
   by: ID
   at: TemporalInput!
   because: ChecklistClosedReasonInput
