@@ -344,11 +344,36 @@ export const saveChecklist: NonNullable<
         WHERE wt.id = ${id}
       `;
 
+      // Create the necessary next template rule for the On Demand frequency
+      // type.
+      const r3 = await tx`
+        INSERT INTO public.worktemplatenexttemplate (
+            worktemplatenexttemplateprevioustemplateid,
+            worktemplatenexttemplatenexttemplateid,
+            worktemplatenexttemplatecustomerid,
+            worktemplatenexttemplateviastatuschange,
+            worktemplatenexttemplateviastatuschangeid,
+            worktemplatenexttemplatesiteid,
+            worktemplatenexttemplatetypeid
+        )
+
+        SELECT
+            worktemplateid,
+            worktemplateid,
+            worktemplatecustomerid,
+            true,
+            707,
+            worktemplatesiteid,
+            811
+        FROM public.worktemplate
+        WHERE id = ${id}
+      `;
+
       // Assign the correct template type: Checklist.
       // These things are kinda like "marker components". They don't really mean
       // a whole lot to the rest of the system, but are crucial on the frontend
       // and in the datawarehouse at the moment.
-      const r3 = await tx`
+      const r4 = await tx`
           INSERT INTO public.worktemplatetype (
               worktemplatetypecustomerid,
               worktemplatetypecustomeruuid,
@@ -377,7 +402,7 @@ export const saveChecklist: NonNullable<
 
       // Create the primary location result. This essentially maps to an
       // Assignee component.
-      const r4 = await tx`
+      const r5 = await tx`
         WITH inputs AS (
             SELECT
                 worktemplateid,
@@ -446,7 +471,7 @@ export const saveChecklist: NonNullable<
 
       // Create the primary worker result. This essentially maps to an
       // Assignee component.
-      const r5 = await tx`
+      const r6 = await tx`
         WITH inputs AS (
             SELECT
                 worktemplateid,
@@ -516,7 +541,7 @@ export const saveChecklist: NonNullable<
       // Assign the correct worktemplatelocationtypeid and create a template
       // constraint for location. This is necessary for the rules engine to
       // correctly (re)spawn instances.
-      const r6 = await tx`
+      const r7 = await tx`
         INSERT INTO public.worktemplateconstraint (
             worktemplateconstraintcustomerid,
             worktemplateconstraintcustomeruuid,
@@ -549,7 +574,7 @@ export const saveChecklist: NonNullable<
             )
       `;
 
-      return [r0, r2, r3, r4, r5, r6];
+      return [r0, r2, r3, r4, r5, r6, r7];
     });
 
     const delta = result.reduce((acc, res) => acc + res.count, 0);
