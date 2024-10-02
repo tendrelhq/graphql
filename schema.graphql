@@ -6,23 +6,9 @@ input AcceptInvitationInput {
 }
 
 """
-Identifies an entity as being either "active" or "inactive".
-Activatable entities have two operations: activate and deactivate.
-"""
-interface Activatable implements Component {
-  id: ID!
-}
-
-type ActivationStatus {
-  activatedAt: String
-  active: Boolean!
-  deactivatedAt: String
-}
-
-"""
 TODO
 """
-type Active implements Component {
+type Activatable implements Component {
   active: Boolean!
   id: ID!
   updatedAt: Temporal
@@ -31,16 +17,18 @@ type Active implements Component {
 """
 TODO
 """
-input ActiveInput {
+input ActivatableInput {
   active: Boolean!
   id: ID!
-  updatedAt: TemporalInput
+  updatedAt: TemporalInput!
 }
 
-"""
-Identifies an entity being assignable to another entity.
-Assignable entities have two operations: assign and unassign.
-"""
+type ActivationStatus {
+  activatedAt: String
+  active: Boolean!
+  deactivatedAt: String
+}
+
 interface Assignable implements Component {
   id: ID!
 }
@@ -72,11 +60,6 @@ input AssigneeInput {
   assignAt: TemporalInput!
   assignTo: ID!
   id: ID!
-}
-
-type AssignmentPayload {
-  assignedTo: Assignable!
-  entity: Assignable!
 }
 
 """
@@ -160,8 +143,8 @@ input CheckboxWidgetInput {
   id: ID!
 }
 
-type Checklist implements Activatable & Assignable & Component & Node {
-  active: Active
+type Checklist implements Component & Node {
+  active: Activatable
   assignees(
     after: String
     before: String
@@ -210,6 +193,7 @@ input ChecklistClosedInput {
   at: TemporalInput!
   because: ChecklistClosedReasonInput
   by: ID
+  id: ID!
 }
 
 type ChecklistClosedReason {
@@ -248,10 +232,11 @@ type ChecklistInProgress implements Component {
 input ChecklistInProgressInput {
   at: TemporalInput!
   by: ID
+  id: ID!
 }
 
 input ChecklistInput {
-  active: ActiveInput
+  active: ActivatableInput
   assignees: [AssigneeInput!]
   auditable: AuditableInput
   customerId: ID!
@@ -293,6 +278,7 @@ type ChecklistOpen implements Component {
 input ChecklistOpenInput {
   at: TemporalInput!
   by: ID
+  id: ID!
 }
 
 """
@@ -334,7 +320,6 @@ input ChecklistResultInput {
 
 input ChecklistSearchOptions {
   active: Boolean
-  displayName: String
   status: [ChecklistStatusSearchOptions!]
 }
 
@@ -708,52 +693,19 @@ input MultilineStringWidgetInput {
 
 type Mutation {
   acceptInvitation(input: AcceptInvitationInput!): Worker!
-
-  """
-  Activate an entity with the Activatable component. If the entity is already
-  active, this operation is a no-op. Throws an error with code E_NOT_ACTIVATABLE
-  if the entity being activated is not, in fact, Activatable.
-  """
-  activate(entity: ID!): Activatable!
+  activate(entity: ID!): Activatable
   activateWorker(id: ID!): Worker!
-
-  """
-  Assign an entity to another entity. If the entity is already assigned to the
-  same entity, this operation is a no-op.
-
-  Errors:
-  - E_NOT_ASSIGNABLE, if either entity is not assignable
-  - E_ASSIGN_CONFLICT, if the entity is assigned to a different entity
-  """
-  assign(entity: ID!, to: ID!): AssignmentPayload!
   createEntity(id: String, suffix: [String!], type: String!): ID!
   createInvitation(input: CreateInvitationInput!): Worker!
   createLocation(input: CreateLocationInput!): Location!
   createUser(input: CreateUserInput!): User!
   createWorker(input: CreateWorkerInput!): WorkerEdge!
-
-  """
-  Deactivate an entity with the Activatable component. If the entity is already
-  inactive, this operation is a no-op. Throws an error with code
-  E_NOT_ACTIVATABLE if the entity being deactivated is not, in fact, Activatable.
-  """
-  deactivate(entity: ID!): Activatable!
+  deactivate(entity: ID!): Activatable
   deactivateWorker(id: ID!): Worker!
   disableLanguage(languageId: ID!, orgId: ID!): EnabledLanguageEdge!
   enableLanguage(languageId: ID!, orgId: ID!): EnabledLanguageEdge!
   saveChecklist(input: ChecklistInput!): ChecklistEdge!
-  setStatus(id: ID!, input: ChecklistStatusInput!): Checklist!
   signUp(input: SignUpInput!): User!
-
-  """
-  Unssign an entity from another entity. If the entity is already unassigned,
-  this operation is a no-op.
-
-  Errors:
-  - E_NOT_ASSIGNABLE, if either entity is not (un)assignable
-  - E_ASSIGN_CONFLICT, if the entity is assigned to a different entity
-  """
-  unassign(entity: ID!, from: ID!): UnassignmentPayload!
   updateLocation(input: UpdateLocationInput!): Location!
   updateName(input: UpdateNameInput!): Name!
   updateUser(input: UpdateUserInput!): User!
@@ -1103,11 +1055,6 @@ enum TimeZoneNameOptions {
 
 scalar URL
 
-type UnassignmentPayload {
-  entity: Assignable!
-  unassignedFrom: Assignable!
-}
-
 input UpdateLocationInput {
   activatedAt: String
   deactivatedAt: String
@@ -1230,8 +1177,7 @@ type WorkerEdge {
 
 input WorkerSearchOptions {
   active: Boolean
-  displayName: String
-  user: UserSearchOptions @deprecated(reason: "use displayName instead")
+  user: UserSearchOptions
 }
 
 input WorkersQueryOptions {

@@ -130,8 +130,8 @@ export function makeStatusLoader(_req: Request) {
             () => sql`
                 WITH cte AS (
                     SELECT
-                        wri.workresultinstanceuuid AS _key,
-                        encode(('workresultinstance:' || wri.workresultinstanceuuid || ':status')::bytea, 'base64') AS id,
+                        wri.id AS _key,
+                        encode(('workresultinstance:' || wri.id || ':status')::bytea, 'base64') AS id,
                         CASE WHEN s.systagtype = 'Open' THEN 'ChecklistOpen'
                              WHEN s.systagtype = 'In Progress' THEN 'ChecklistInProgress'
                              ELSE 'ChecklistClosed'
@@ -146,7 +146,7 @@ export function makeStatusLoader(_req: Request) {
                         ON wri.workresultinstanceworkinstanceid = wi.workinstanceid
                     INNER JOIN public.systag AS s
                         ON wri.workresultinstancestatusid = s.systagid
-                    WHERE wri.workresultinstanceuuid IN ${sql(ids)}
+                    WHERE wri.id IN ${sql(ids)}
                 )
 
                 SELECT

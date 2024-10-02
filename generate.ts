@@ -15,9 +15,7 @@ const config: CodegenConfig = {
         mutation: "*",
         object: [
           "!*.*Edge", // all Edge implementations
-          "!*.Active",
-          "!*.AssignmentPayload",
-          "!*.UnassignmentPayload",
+          "!*.Activatable",
           "!*.ChecklistOpen",
           "!*.ChecklistInProgress",
           "!*.ChecklistClosed*",

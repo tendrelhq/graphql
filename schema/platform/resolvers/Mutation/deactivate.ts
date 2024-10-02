@@ -7,6 +7,7 @@ import { match } from "ts-pattern";
 export const deactivate: NonNullable<MutationResolvers["deactivate"]> = async (
   _,
   args,
+  ctx,
 ) => {
   const { type, id } = decodeGlobalId(args.entity);
 
@@ -59,9 +60,5 @@ export const deactivate: NonNullable<MutationResolvers["deactivate"]> = async (
     `Applied ${result.length} update(s) to Entity ${args.entity} (${type}:${id})`,
   );
 
-  return {
-    __typename: "Checklist", // it's the only one right now
-    id: args.entity,
-    // biome-ignore lint/suspicious/noExplicitAny:
-  } as any;
+  return ctx.orm.activatable.load(args.entity);
 };

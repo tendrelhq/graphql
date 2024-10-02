@@ -1,12 +1,19 @@
 import { describe, expect, test } from "bun:test";
 import { encodeGlobalId } from "@/schema/system";
-import { makeActiveLoader } from "./activatable";
+import { makeActivatableLoader } from "./activatable";
 
 // biome-ignore lint/suspicious/noExplicitAny:
-const makeLoader = () => makeActiveLoader({} as any);
+const makeLoader = () => makeActivatableLoader({} as any);
 
-describe.skipIf(!!process.env.CI)("active loader", () => {
-  test("load", async () => {
+describe.skipIf(!!process.env.CI)("activatable loader", () => {
+  test("activate", async () => {
+    const data = await makeLoader().load(
+      "d29ya3RlbXBsYXRlOjgyN2RlNDE5LTQ0YmMtNGExMi1iOWFmLWI2NDFmYjU3NjQyOQ==",
+    );
+    expect(data).toMatchSnapshot();
+  });
+
+  test("deactivate", async () => {
     const data = await makeLoader().load(
       "d29ya3RlbXBsYXRlOjgyN2RlNDE5LTQ0YmMtNGExMi1iOWFmLWI2NDFmYjU3NjQyOQ==",
     );

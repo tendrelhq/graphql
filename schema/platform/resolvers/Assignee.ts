@@ -33,7 +33,7 @@ export const Assignee: AssigneeResolvers = {
             FROM public.workresultinstance AS wri
             INNER JOIN public.workerinstance AS w
                 ON wri.workresultinstancevalue::bigint = w.workerinstanceid
-            WHERE wri.workresultinstanceuuid = ${id}
+            WHERE wri.id = ${id}
         `,
       )
       .otherwise(() => Promise.reject("invariant violated"));

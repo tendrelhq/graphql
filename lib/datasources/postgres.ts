@@ -16,7 +16,7 @@ import makeTagLoader from "./tag";
 import makeUserLoader from "./user";
 import makeWorkerLoader from "./worker";
 import { makeDynamicStringLoader } from "./dynamicString";
-import { makeActiveLoader } from "./activatable";
+import { makeActivatableLoader } from "./activatable";
 import { makeDescriptionLoader } from "./description";
 import { makeAuditableLoader } from "./auditable";
 import { makeRequirementLoader } from "./requirement";
@@ -78,7 +78,7 @@ export function unionAll(xs: readonly Fragment[]) {
 
 export function orm(req: Request) {
   return {
-    active: makeActiveLoader(req),
+    activatable: makeActivatableLoader(req),
     auditable: makeAuditableLoader(req),
     crl: makeCustomerRequestedLanguageLoader(req),
     description: makeDescriptionLoader(req),

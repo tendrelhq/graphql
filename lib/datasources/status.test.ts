@@ -15,7 +15,7 @@ describe.skipIf(!!process.env.CI)("status loader", () => {
 
   test("item - open", async () => {
     const data = await makeLoader().load(
-      "d29ya3Jlc3VsdGluc3RhbmNlOndyaV84MGNhZWU3Mi1jZjk4LTRhYjAtOGViMS0wODg0YmM4ODA3MDE=",
+      "d29ya3Jlc3VsdGluc3RhbmNlOjE0ZGVjYWE5LWNmZjItNDYxNi05Yjc1LTc5Mzg3OTRkMjk0MA==",
     );
     expect(data).toMatchSnapshot();
   });

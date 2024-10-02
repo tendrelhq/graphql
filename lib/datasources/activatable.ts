@@ -6,8 +6,8 @@ import type { Request } from "express";
 import { match } from "ts-pattern";
 import { sql, unionAll } from "./postgres";
 
-export function makeActiveLoader(_req: Request) {
-  return new DataLoader<ID, ResolversTypes["Active"] | undefined>(
+export function makeActivatableLoader(_req: Request) {
+  return new DataLoader<ID, ResolversTypes["Activatable"] | undefined>(
     async keys => {
       const entities = keys.map(decodeGlobalId);
       const byUnderlyingType = entities.reduce((acc, { type, id }) => {
@@ -121,7 +121,7 @@ export function makeActiveLoader(_req: Request) {
 
       if (!qs.length) return entities.map(() => undefined);
 
-      type X = WithKey<ResolversTypes["Active"]>;
+      type X = WithKey<ResolversTypes["Activatable"]>;
       const xs = await sql<X[]>`${unionAll(qs)}`;
       return entities.map(e => xs.find(x => e.id === x._key));
     },
