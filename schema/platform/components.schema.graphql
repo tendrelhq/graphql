@@ -2,9 +2,32 @@
 scalar URL
 
 """
+Identifies an entity as being either "active" or "inactive".
+Activatable entities have two operations: activate and deactivate.
+"""
+interface Activatable implements Component {
+  id: ID!
+}
+
+extend type Mutation {
+  """
+  Activate an entity with the Activatable component. If the entity is already
+  active, this operation is a no-op. Throws an error with code E_NOT_ACTIVATABLE
+  if the entity being activated is not, in fact, Activatable.
+  """
+  activate(entity: ID!): Activatable!
+  """
+  Deactivate an entity with the Activatable component. If the entity is already
+  inactive, this operation is a no-op. Throws an error with code
+  E_NOT_ACTIVATABLE if the entity being deactivated is not, in fact, Activatable.
+  """
+  deactivate(entity: ID!): Activatable!
+}
+
+"""
 TODO
 """
-type Activatable implements Component {
+type Active implements Component {
   id: ID!
   active: Boolean!
   updatedAt: Temporal @semanticNonNull
@@ -13,19 +36,49 @@ type Activatable implements Component {
 """
 TODO
 """
-input ActivatableInput {
+input ActiveInput {
   id: ID!
   active: Boolean!
-  updatedAt: TemporalInput!
+  updatedAt: TemporalInput
+}
+
+"""
+Identifies an entity being assignable to another entity.
+Assignable entities have two operations: assign and unassign.
+"""
+interface Assignable implements Component {
+  id: ID!
+}
+
+type AssignmentPayload {
+  entity: Assignable!
+  assignedTo: Assignable!
+}
+
+type UnassignmentPayload {
+  entity: Assignable!
+  unassignedFrom: Assignable!
 }
 
 extend type Mutation {
-  activate(entity: ID!): Activatable @semanticNonNull
-  deactivate(entity: ID!): Activatable @semanticNonNull
-}
+  """
+  Assign an entity to another entity. If the entity is already assigned to the
+  same entity, this operation is a no-op.
 
-interface Assignable implements Component {
-  id: ID!
+  Errors:
+  - E_NOT_ASSIGNABLE, if either entity is not assignable
+  - E_ASSIGN_CONFLICT, if the entity is assigned to a different entity
+  """
+  assign(entity: ID!, to: ID!): AssignmentPayload!
+  """
+  Unssign an entity from another entity. If the entity is already unassigned,
+  this operation is a no-op.
+
+  Errors:
+  - E_NOT_ASSIGNABLE, if either entity is not (un)assignable
+  - E_ASSIGN_CONFLICT, if the entity is assigned to a different entity
+  """
+  unassign(entity: ID!, from: ID!): UnassignmentPayload!
 }
 
 """

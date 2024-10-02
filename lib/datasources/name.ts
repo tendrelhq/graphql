@@ -66,14 +66,14 @@ export function makeDisplayNameLoader(_req: Request) {
           "workresultinstance",
           () => sql`
               SELECT
-                  wri.id AS _key,
+                  wri.workresultinstanceuuid AS _key,
                   encode(('name:' || languagemasteruuid)::bytea, 'base64') AS id
               FROM public.workresultinstance AS wri
               INNER JOIN public.workresult AS wr
                   ON wri.workresultinstanceworkresultid = wr.workresultid
               INNER JOIN public.languagemaster AS lm
                   ON wr.workresultlanguagemasterid = lm.languagemasterid
-              WHERE wri.id IN ${sql(ids)}
+              WHERE wri.workresultinstanceuuid IN ${sql(ids)}
           `,
         )
         .otherwise(() => []),

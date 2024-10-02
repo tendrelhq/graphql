@@ -277,7 +277,9 @@ export const saveChecklist: NonNullable<
         ),
 
         site AS (
-            SELECT locationid AS id
+            SELECT
+                locationid AS id,
+                locationcategoryid AS type
             FROM public.location
             INNER JOIN inputs
                 ON locationcustomerid = inputs.customer
@@ -292,6 +294,7 @@ export const saveChecklist: NonNullable<
             worktemplatecustomerid,
             worktemplatedescriptionid,
             worktemplateisauditable,
+            worktemplatelocationtypeid,
             worktemplatenameid,
             worktemplatesiteid,
             worktemplatesoplink,
@@ -303,6 +306,7 @@ export const saveChecklist: NonNullable<
             inputs.customer,
             description.id,
             inputs.auditable,
+            site.type,
             name.id,
             site.id,
             inputs.sop,
@@ -311,7 +315,65 @@ export const saveChecklist: NonNullable<
         LEFT JOIN description ON true
       `;
 
+      // Fix the hardcoded worktemplateworkfrequencyid we set in the last
+      // INSERT. Note that this is necessary because there is a circular
+      // dependency between worktemplate and workfrequency.
       const r2 = await tx`
+        WITH frequency AS (
+            INSERT INTO public.workfrequency (
+                workfrequencycustomerid,
+                workfrequencytypeid,
+                workfrequencyvalue,
+                workfrequencyworktemplateid
+            )
+            SELECT
+                wt.worktemplatecustomerid,
+                740,
+                1,
+                wt.worktemplateid
+            FROM public.worktemplate AS wt
+            WHERE wt.id = ${id}
+            RETURNING workfrequencyid AS id
+        )
+
+        UPDATE public.worktemplate AS wt
+        SET
+            worktemplateworkfrequencyid = frequency.id,
+            worktemplatemodifieddate = now()
+        FROM frequency
+        WHERE wt.id = ${id}
+      `;
+
+      // Create the necessary next template rule for the On Demand frequency
+      // type.
+      const r3 = await tx`
+        INSERT INTO public.worktemplatenexttemplate (
+            worktemplatenexttemplateprevioustemplateid,
+            worktemplatenexttemplatenexttemplateid,
+            worktemplatenexttemplatecustomerid,
+            worktemplatenexttemplateviastatuschange,
+            worktemplatenexttemplateviastatuschangeid,
+            worktemplatenexttemplatesiteid,
+            worktemplatenexttemplatetypeid
+        )
+
+        SELECT
+            worktemplateid,
+            worktemplateid,
+            worktemplatecustomerid,
+            true,
+            707,
+            worktemplatesiteid,
+            811
+        FROM public.worktemplate
+        WHERE id = ${id}
+      `;
+
+      // Assign the correct template type: Checklist.
+      // These things are kinda like "marker components". They don't really mean
+      // a whole lot to the rest of the system, but are crucial on the frontend
+      // and in the datawarehouse at the moment.
+      const r4 = await tx`
           INSERT INTO public.worktemplatetype (
               worktemplatetypecustomerid,
               worktemplatetypecustomeruuid,
@@ -338,33 +400,9 @@ export const saveChecklist: NonNullable<
           WHERE wt.id = ${id}
       `;
 
-      const r3 = await tx`
-        WITH frequency AS (
-            INSERT INTO public.workfrequency (
-                workfrequencycustomerid,
-                workfrequencytypeid,
-                workfrequencyvalue,
-                workfrequencyworktemplateid
-            )
-            SELECT
-                wt.worktemplatecustomerid,
-                740,
-                1,
-                wt.worktemplateid
-            FROM public.worktemplate AS wt
-            WHERE wt.id = ${id}
-            RETURNING workfrequencyid AS id
-        )
-
-        UPDATE public.worktemplate AS wt
-        SET
-            worktemplateworkfrequencyid = frequency.id,
-            worktemplatemodifieddate = now()
-        FROM frequency
-        WHERE wt.id = ${id}
-      `;
-
-      const r4 = await tx`
+      // Create the primary location result. This essentially maps to an
+      // Assignee component.
+      const r5 = await tx`
         WITH inputs AS (
             SELECT
                 worktemplateid,
@@ -431,7 +469,9 @@ export const saveChecklist: NonNullable<
         FROM inputs, type, name
       `;
 
-      const r5 = await tx`
+      // Create the primary worker result. This essentially maps to an
+      // Assignee component.
+      const r6 = await tx`
         WITH inputs AS (
             SELECT
                 worktemplateid,
@@ -498,7 +538,43 @@ export const saveChecklist: NonNullable<
         FROM inputs, type, name
       `;
 
-      return [r0, r2, r3, r4, r5];
+      // Assign the correct worktemplatelocationtypeid and create a template
+      // constraint for location. This is necessary for the rules engine to
+      // correctly (re)spawn instances.
+      const r7 = await tx`
+        INSERT INTO public.worktemplateconstraint (
+            worktemplateconstraintcustomerid,
+            worktemplateconstraintcustomeruuid,
+            worktemplateconstrainttemplateid,
+            worktemplateconstraintconstraintid,
+            worktemplateconstraintconstrainedtypeid
+        )
+
+        SELECT
+            wt.worktemplatecustomerid,
+            c.customeruuid,
+            wt.id,
+            ct.custaguuid,
+            cd.systaguuid
+        FROM
+            public.worktemplate AS wt,
+            public.customer AS c,
+            public.custag AS ct,
+            public.systag AS cd
+        WHERE
+            wt.id = ${id}
+            AND
+            wt.worktemplatecustomerid = c.customerid
+            AND
+            wt.worktemplatelocationtypeid = ct.custagid
+            AND (
+                cd.systagparentid = 849
+                AND
+                cd.systagtype = 'Location'
+            )
+      `;
+
+      return [r0, r2, r3, r4, r5, r6, r7];
     });
 
     const delta = result.reduce((acc, res) => acc + res.count, 0);

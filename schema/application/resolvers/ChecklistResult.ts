@@ -265,7 +265,7 @@ export const ChecklistResult: ChecklistResultResolvers = {
                     END AS type,
                     e.systagtype AS reftype,
                     nullif(wri.workresultinstancevalue, '') AS value,
-                    encode(('workresultinstance:' || wri.id || ':' || coalesce(e.systagtype, t.systagtype))::bytea, 'base64') AS id
+                    encode(('workresultinstance:' || wri.workresultinstanceuuid || ':' || coalesce(e.systagtype, t.systagtype))::bytea, 'base64') AS id
                 FROM public.workresultinstance AS wri
                 INNER JOIN public.workresult AS wr
                     ON wri.workresultinstanceworkresultid = wr.workresultid
@@ -273,7 +273,7 @@ export const ChecklistResult: ChecklistResultResolvers = {
                     ON wr.workresulttypeid = t.systagid
                 LEFT JOIN public.systag AS e
                     ON wr.workresultentitytypeid = e.systagid
-                WHERE wri.id = ${id}
+                WHERE wri.workresultinstanceuuid = ${id}
             )
 
             SELECT
