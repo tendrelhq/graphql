@@ -111,8 +111,23 @@ describe("checklists", () => {
     });
   });
 
-  describe("pagination", () => {
-    test("invalid cursor", async () => {
+  describe.skipIf(LOCAL_ONLY)("pagination", () => {
+    test("invalid (ast) cursor", async () => {
+      const result = await execute(schema, TestDocument, {
+        parent: PARENT,
+        cursor: testGlobalId(),
+        limit: LIMIT,
+      });
+      expect(result.errors?.at(0)).toMatchObject({
+        message:
+          "Type '__test__' is an invalid cursor type for type 'Checklist'",
+        extensions: {
+          code: "TYPE_ERROR",
+        },
+      });
+    });
+
+    test("invalid (ecs) cursor", async () => {
       const result = await execute(schema, TestDocument, {
         parent: PARENT,
         cursor: testGlobalId(),

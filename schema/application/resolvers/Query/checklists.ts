@@ -226,6 +226,17 @@ function buildAstPaginationFragments({ p, s }: Args, parent: Parent) {
     return [];
   }
 
+  if (p.cursor.type !== "worktemplate") {
+    throw new GraphQLError(
+      `Type '${p.cursor.type}' is an invalid cursor type for type 'Checklist'`,
+      {
+        extensions: {
+          code: "TYPE_ERROR",
+        },
+      },
+    );
+  }
+
   const cmp = match(p.direction)
     .with("forward", () => sql`>`)
     .with("backward", () => sql`<`)
@@ -442,6 +453,7 @@ function buildFilterFragments({ f }: Args, _: Parent) {
 }
 
 function buildPaginationFragment({ f, p, s }: Args, _: Parent) {
+  console.log("cursor?", p.cursor);
   if (!p.cursor) {
     return null; // not paginated
   }
