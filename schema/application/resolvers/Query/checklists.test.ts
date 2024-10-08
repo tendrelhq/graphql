@@ -7,14 +7,14 @@ import { TestDocument } from "./checklists.test.generated";
 const schema = makeExecutableSchema({ resolvers, typeDefs });
 
 const LIMIT = 10;
-const LOCAL_ONLY = !process.env.DATABASE_URL;
+const SKIP_IN_CI = !!process.env.CI;
 
 // RCL
 const PARENT =
   "b3JnYW5pemF0aW9uOmN1c3RvbWVyXzFiMmQ2YzYwLTg2NzgtNDVhZC1iMzBkLWExMDMyM2MyYzQ0MQ==";
 
 describe("checklists", () => {
-  test.skipIf(LOCAL_ONLY)("default only lists worktemplates", async () => {
+  test.skipIf(SKIP_IN_CI)("default only lists worktemplates", async () => {
     const result = await execute(schema, TestDocument, {
       parent: PARENT,
       limit: LIMIT,
@@ -24,7 +24,7 @@ describe("checklists", () => {
     expect(result.errors).toBeFalsy();
   });
 
-  describe.skipIf(LOCAL_ONLY)("filters", () => {
+  describe.skipIf(SKIP_IN_CI)("filters", () => {
     test("withName", async () => {
       const result = await execute(schema, TestDocument, {
         parent: PARENT,
@@ -57,7 +57,7 @@ describe("checklists", () => {
     });
   });
 
-  describe.skipIf(LOCAL_ONLY)("pagination", () => {
+  describe.skipIf(SKIP_IN_CI)("pagination", () => {
     test("forward", async () => {
       const r0 = await execute(schema, TestDocument, {
         parent: PARENT,
@@ -111,7 +111,7 @@ describe("checklists", () => {
     });
   });
 
-  describe.skipIf(LOCAL_ONLY)("pagination", () => {
+  describe.skipIf(SKIP_IN_CI)("pagination", () => {
     test("invalid (ast) cursor", async () => {
       const result = await execute(schema, TestDocument, {
         parent: PARENT,
