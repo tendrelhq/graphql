@@ -10,6 +10,18 @@ export const setStatus: NonNullable<MutationResolvers["setStatus"]> = async (
 ) => {
   const { type, id } = decodeGlobalId(entity);
 
+  if (
+    type !== "workinstance" &&
+    type !== "workresult" &&
+    type !== "workresultinstance"
+  ) {
+    throw new GraphQLError("Entity cannot have its status changed", {
+      extensions: {
+        code: "E_INVALID_STATE_CHANGE",
+      },
+    });
+  }
+
   const targetStatus = (() => {
     switch (true) {
       case "open" in input:
@@ -169,50 +181,46 @@ export const setStatus: NonNullable<MutationResolvers["setStatus"]> = async (
         return [r0];
       });
     })
-    .otherwise(() => {
-      console.debug("Entity:", entity, type, id);
-      throw new GraphQLError("Entity cannot have its status changed", {
-        extensions: {
-          code: "E_INVALID_STATE_CHANGE",
-        },
-      });
-    });
+    .exhaustive();
 
   const delta = result.reduce((acc, row) => acc + row.count, 0);
   console.log(`Applied ${delta} update(s) to Entity ${entity} (${type}:${id})`);
 
-  if (type === "workinstance") {
-    return {
-      __typename: "SetChecklistStatusPayload",
-      delta,
-      edge: {
-        cursor: entity,
-        node: {
+  switch (true) {
+    case type === "workinstance":
+      return {
+        __typename: "SetChecklistStatusPayload",
+        delta,
+        edge: {
+          cursor: entity,
+          node: {
+            __typename: "Checklist",
+            id: entity,
+            // biome-ignore lint/suspicious/noExplicitAny:
+          } as any,
+        },
+      };
+    case type === "workresult" || type === "workresultinstance":
+      return {
+        __typename: "SetChecklistItemStatusPayload",
+        delta,
+        edge: {
+          cursor: entity,
+          node: {
+            __typename: "ChecklistResult",
+            id: entity,
+            // biome-ignore lint/suspicious/noExplicitAny:
+          } as any,
+        },
+        parent: {
           __typename: "Checklist",
-          id: entity,
+          id: parent,
           // biome-ignore lint/suspicious/noExplicitAny:
         } as any,
-      },
-    };
-  }
-
-  if (type === "workresult" || type === "workresultinstance") {
-    return {
-      __typename: "SetChecklistItemStatusPayload",
-      delta,
-      edge: {
-        cursor: entity,
-        node: {
-          __typename: "ChecklistResult",
-          id: entity,
-          // biome-ignore lint/suspicious/noExplicitAny:
-        } as any,
-      },
-      parent: {
-        __typename: "Checklist",
-        id: parent,
-        // biome-ignore lint/suspicious/noExplicitAny:
-      } as any,
-    };
+      };
+    default: {
+      const _: never = type;
+      throw "invariant violated";
+    }
   }
 };
