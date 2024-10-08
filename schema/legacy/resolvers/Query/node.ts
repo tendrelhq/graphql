@@ -40,6 +40,13 @@ export const node: NonNullable<QueryResolvers["node"]> = async (
         id: args.id,
         // biome-ignore lint/suspicious/noExplicitAny:
       } as any;
+    case "workresult":
+    case "workresultinstance":
+      return {
+        __typename: "ChecklistResult",
+        id: args.id,
+        // biome-ignore lint/suspicious/noExplicitAny:
+      } as any;
     default:
       throw new GraphQLError("Unknown node type", {
         extensions: {

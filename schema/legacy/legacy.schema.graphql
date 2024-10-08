@@ -160,6 +160,7 @@ type User implements Node {
     last: Int
     after: String
     before: String
+    withApp: [ApplicationType!]
   ): OrganizationConnection!
   tags: [Tag!]!
 }
@@ -211,10 +212,11 @@ type AuthenticationStatus {
 
 input WorkerSearchOptions {
   active: Boolean
+  displayName: String
   # invitation: InvitationStatus
   # language: LanguageSearchOptions
   # role: RoleSearchOptions
-  user: UserSearchOptions
+  user: UserSearchOptions @deprecated(reason: "use displayName instead")
 }
 
 type WorkerConnection {

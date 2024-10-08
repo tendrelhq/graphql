@@ -17,6 +17,14 @@ interface Component {
   id: ID!
 }
 
+"""
+State characterizes something, most commonly an entity, as existing in a
+particular state. For example, an entity could be in a "pending" state.
+"""
+interface State {
+  tag: String
+}
+
 type DebugInfo {
   createdAt: String!
   # createdBy: Identity

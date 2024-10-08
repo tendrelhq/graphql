@@ -21,10 +21,10 @@ export function makeStatusLoader(_req: Request) {
           .with(
             "workinstance",
             () => sql`
+              (
                 WITH cte AS (
                     SELECT
                         wi.id AS _key,
-                        encode(('workinstance:' || wi.id || ':status')::bytea, 'base64') AS id,
                         CASE WHEN s.systagtype = 'Open' THEN 'ChecklistOpen'
                              WHEN s.systagtype = 'In Progress' THEN 'ChecklistInProgress'
                              ELSE 'ChecklistClosed'
@@ -43,7 +43,6 @@ export function makeStatusLoader(_req: Request) {
                 SELECT
                     _key,
                     type AS "__typename",
-                    id,
                     (
                         SELECT row_to_json(t)
                         FROM (
@@ -61,6 +60,7 @@ export function makeStatusLoader(_req: Request) {
                                 'ZonedDateTime' AS "__typename",
                                 (extract(epoch from opendate) * 1000)::text AS "epochMilliseconds",
                                 tz AS "timeZone"
+                            WHERE opendate IS NOT null
                         ) t
                     ) AS "openedAt",
                     null::json AS "inProgressAt",
@@ -71,7 +71,6 @@ export function makeStatusLoader(_req: Request) {
                 SELECT
                     _key,
                     type AS "__typename",
-                    id,
                     (
                         SELECT row_to_json(t)
                         FROM (
@@ -90,6 +89,7 @@ export function makeStatusLoader(_req: Request) {
                                 'ZonedDateTime' AS "__typename",
                                 (extract(epoch from startdate) * 1000)::text AS "epochMilliseconds",
                                 tz AS "timeZone"
+                            WHERE startdate IS NOT null
                         ) t
                     ) AS "inProgressAt",
                     null::json AS "closedAt"
@@ -99,7 +99,6 @@ export function makeStatusLoader(_req: Request) {
                 SELECT
                     _key,
                     type AS "__typename",
-                    id,
                     (
                         SELECT row_to_json(t)
                         FROM (
@@ -119,19 +118,21 @@ export function makeStatusLoader(_req: Request) {
                                 'ZonedDateTime' AS "__typename",
                                 (extract(epoch from closeddate) * 1000)::text AS "epochMilliseconds",
                                 tz AS "timeZone"
+                            WHERE closeddate IS NOT null
                         ) t
                     ) AS "closedAt"
                 FROM cte
                 WHERE type = 'ChecklistClosed'
+              )
             `,
           )
           .with(
             "workresultinstance",
             () => sql`
+              (
                 WITH cte AS (
                     SELECT
-                        wri.id AS _key,
-                        encode(('workresultinstance:' || wri.id || ':status')::bytea, 'base64') AS id,
+                        wri.workresultinstanceuuid AS _key,
                         CASE WHEN s.systagtype = 'Open' THEN 'ChecklistOpen'
                              WHEN s.systagtype = 'In Progress' THEN 'ChecklistInProgress'
                              ELSE 'ChecklistClosed'
@@ -146,13 +147,12 @@ export function makeStatusLoader(_req: Request) {
                         ON wri.workresultinstanceworkinstanceid = wi.workinstanceid
                     INNER JOIN public.systag AS s
                         ON wri.workresultinstancestatusid = s.systagid
-                    WHERE wri.id IN ${sql(ids)}
+                    WHERE wri.workresultinstanceuuid IN ${sql(ids)}
                 )
 
                 SELECT
                     _key,
                     type AS "__typename",
-                    id,
                     null::json AS "dueAt",
                     (
                         SELECT row_to_json(t)
@@ -161,6 +161,7 @@ export function makeStatusLoader(_req: Request) {
                                 'ZonedDateTime' AS "__typename",
                                 (extract(epoch from opendate) * 1000)::text AS "epochMilliseconds",
                                 tz AS "timeZone"
+                            WHERE opendate IS NOT null
                         ) t
                     ) AS "openedAt",
                     null::json AS "inProgressAt",
@@ -171,7 +172,6 @@ export function makeStatusLoader(_req: Request) {
                 SELECT
                     _key,
                     type AS "__typename",
-                    id,
                     null::json AS "dueAt",
                     null::json AS "openedAt",
                     (
@@ -181,6 +181,7 @@ export function makeStatusLoader(_req: Request) {
                                 'ZonedDateTime' AS "__typename",
                                 (extract(epoch from startdate) * 1000)::text AS "epochMilliseconds",
                                 tz AS "timeZone"
+                            WHERE startdate IS NOT null
                         ) t
                     ) AS "inProgressAt",
                     null::json AS "closedAt"
@@ -190,7 +191,6 @@ export function makeStatusLoader(_req: Request) {
                 SELECT
                     _key,
                     type AS "__typename",
-                    id,
                     null::json AS "dueAt",
                     null::json AS "openedAt",
                     null::json AS "inProgressAt",
@@ -201,10 +201,12 @@ export function makeStatusLoader(_req: Request) {
                                 'ZonedDateTime' AS "__typename",
                                 (extract(epoch from closeddate) * 1000)::text AS "epochMilliseconds",
                                 tz AS "timeZone"
+                            WHERE closeddate IS NOT null
                         ) t
                     ) AS "closedAt"
                 FROM cte
                 WHERE type = 'ChecklistClosed'
+              )
             `,
           )
           .otherwise(() => []),

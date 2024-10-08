@@ -6,21 +6,11 @@ input AcceptInvitationInput {
 }
 
 """
-TODO
+Identifies an entity as being either "active" or "inactive".
+Activatable entities have two operations: activate and deactivate.
 """
-type Activatable implements Component {
-  active: Boolean!
+interface Activatable implements Component {
   id: ID!
-  updatedAt: Temporal
-}
-
-"""
-TODO
-"""
-input ActivatableInput {
-  active: Boolean!
-  id: ID!
-  updatedAt: TemporalInput!
 }
 
 type ActivationStatus {
@@ -29,8 +19,45 @@ type ActivationStatus {
   deactivatedAt: String
 }
 
+"""
+TODO
+"""
+type Active implements Component {
+  active: Boolean!
+  id: ID!
+  updatedAt: Temporal
+}
+
+"""
+TODO
+"""
+input ActiveInput {
+  active: Boolean!
+  id: ID!
+  updatedAt: TemporalInput
+}
+
+enum ApplicationType {
+  Checklist
+}
+
+"""
+Identifies an entity being assignable to another entity.
+Assignable entities have two operations: assign and unassign.
+"""
 interface Assignable implements Component {
   id: ID!
+}
+
+type AssignableConnection implements Connection {
+  edges: [AssignableEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+type AssignableEdge implements Edge {
+  cursor: String!
+  node: Assignable!
 }
 
 """
@@ -60,6 +87,11 @@ input AssigneeInput {
   assignAt: TemporalInput!
   assignTo: ID!
   id: ID!
+}
+
+type AssignmentPayload {
+  assignedTo: Assignable!
+  entity: Assignable!
 }
 
 """
@@ -139,12 +171,11 @@ type CheckboxWidget implements Component {
 TODO
 """
 input CheckboxWidgetInput {
-  checked: Boolean
-  id: ID!
+  value: Boolean
 }
 
-type Checklist implements Component & Node {
-  active: Activatable
+type Checklist implements Activatable & Assignable & Component & Node {
+  active: Active
   assignees(
     after: String
     before: String
@@ -175,25 +206,25 @@ type Checklist implements Component & Node {
   ): ChecklistItemConnection!
   metadata: Metadata!
   name: DisplayName!
+  parent: Checklist
   required: Boolean
   schedule: Schedule
   sop: Sop
   status: ChecklistStatus
 }
 
-type ChecklistClosed implements Component {
+type ChecklistClosed implements State {
   closedAt: Temporal!
   closedBecause: ChecklistClosedReason
   closedBy: Identity
   dueAt: Temporal
-  id: ID!
+  tag: String
 }
 
 input ChecklistClosedInput {
   at: TemporalInput!
   because: ChecklistClosedReasonInput
   by: ID
-  id: ID!
 }
 
 type ChecklistClosedReason {
@@ -222,21 +253,20 @@ type ChecklistEdge implements Edge {
   node: Checklist!
 }
 
-type ChecklistInProgress implements Component {
+type ChecklistInProgress implements State {
   dueAt: Temporal
-  id: ID!
   inProgressAt: Temporal!
   inProgressBy: Identity
+  tag: String
 }
 
 input ChecklistInProgressInput {
   at: TemporalInput!
   by: ID
-  id: ID!
 }
 
 input ChecklistInput {
-  active: ActivatableInput
+  active: ActiveInput
   assignees: [AssigneeInput!]
   auditable: AuditableInput
   customerId: ID!
@@ -268,23 +298,22 @@ input ChecklistItemInput @oneOf {
   result: ChecklistResultInput
 }
 
-type ChecklistOpen implements Component {
+type ChecklistOpen implements State {
   dueAt: Temporal
-  id: ID!
   openedAt: Temporal!
   openedBy: Identity
+  tag: String
 }
 
 input ChecklistOpenInput {
   at: TemporalInput!
   by: ID
-  id: ID!
 }
 
 """
 TODO
 """
-type ChecklistResult implements Component {
+type ChecklistResult implements Component & Node {
   assignees(
     after: String
     before: String
@@ -320,7 +349,13 @@ input ChecklistResultInput {
 
 input ChecklistSearchOptions {
   active: Boolean
-  status: [ChecklistStatusSearchOptions!]
+  displayName: String
+  status: [ChecklistStatusStates!]
+}
+
+input ChecklistSortOrder @oneOf {
+  name: SortOrder
+  status: SortOrder
 }
 
 union ChecklistStatus = ChecklistClosed | ChecklistInProgress | ChecklistOpen
@@ -331,7 +366,7 @@ input ChecklistStatusInput @oneOf {
   open: ChecklistOpenInput
 }
 
-enum ChecklistStatusSearchOptions {
+enum ChecklistStatusStates {
   closed
   inProgress
   open
@@ -341,16 +376,15 @@ enum ChecklistStatusSearchOptions {
 TODO
 """
 type ClickerWidget implements Component {
-  count: Int
   id: ID!
+  number: Int
 }
 
 """
 TODO
 """
 input ClickerWidgetInput {
-  count: Int
-  id: ID!
+  value: Int
 }
 
 """
@@ -494,8 +528,7 @@ type DurationWidget implements Component {
 TODO
 """
 input DurationWidgetInput {
-  duration: Duration
-  id: ID!
+  value: Duration
 }
 
 """
@@ -680,32 +713,69 @@ TODO
 """
 type MultilineStringWidget implements Component {
   id: ID!
-  text: String
+  string: String
 }
 
 """
 TODO
 """
 input MultilineStringWidgetInput {
-  id: ID!
-  text: String
+  value: String
 }
 
 type Mutation {
   acceptInvitation(input: AcceptInvitationInput!): Worker!
-  activate(entity: ID!): Activatable
+
+  """
+  Activate an entity with the Activatable component. If the entity is already
+  active, this operation is a no-op. Throws an error with code E_NOT_ACTIVATABLE
+  if the entity being activated is not, in fact, Activatable.
+  """
+  activate(entity: ID!): Activatable!
   activateWorker(id: ID!): Worker!
+
+  """
+  Assign an entity to another entity. If the entity is already assigned to the
+  same entity, this operation is a no-op.
+
+  Errors:
+  - E_NOT_ASSIGNABLE, if either entity is not assignable
+  - E_ASSIGN_CONFLICT, if the entity is assigned to a different entity
+  """
+  assign(entity: ID!, to: ID!): AssignmentPayload!
   createEntity(id: String, suffix: [String!], type: String!): ID!
   createInvitation(input: CreateInvitationInput!): Worker!
   createLocation(input: CreateLocationInput!): Location!
   createUser(input: CreateUserInput!): User!
   createWorker(input: CreateWorkerInput!): WorkerEdge!
-  deactivate(entity: ID!): Activatable
+
+  """
+  Deactivate an entity with the Activatable component. If the entity is already
+  inactive, this operation is a no-op. Throws an error with code
+  E_NOT_ACTIVATABLE if the entity being deactivated is not, in fact, Activatable.
+  """
+  deactivate(entity: ID!): Activatable!
   deactivateWorker(id: ID!): Worker!
   disableLanguage(languageId: ID!, orgId: ID!): EnabledLanguageEdge!
   enableLanguage(languageId: ID!, orgId: ID!): EnabledLanguageEdge!
   saveChecklist(input: ChecklistInput!): ChecklistEdge!
+  setStatus(
+    entity: ID!
+    input: ChecklistStatusInput!
+    parent: ID
+  ): SetStatusPayload!
+  setValue(entity: ID!, input: WidgetInput!, parent: ID!): SetValuePayload!
   signUp(input: SignUpInput!): User!
+
+  """
+  Unssign an entity from another entity. If the entity is already unassigned,
+  this operation is a no-op.
+
+  Errors:
+  - E_NOT_ASSIGNABLE, if either entity is not (un)assignable
+  - E_ASSIGN_CONFLICT, if the entity is assigned to a different entity
+  """
+  unassign(entity: ID!, from: ID!): UnassignmentPayload!
   updateLocation(input: UpdateLocationInput!): Location!
   updateName(input: UpdateNameInput!): Name!
   updateUser(input: UpdateUserInput!): User!
@@ -744,8 +814,7 @@ type NumberWidget implements Component {
 TODO
 """
 input NumberWidgetInput {
-  id: ID!
-  number: Int
+  value: Int
 }
 
 """
@@ -774,13 +843,6 @@ type Organization implements Node {
   activatedAt: String
   active: Boolean!
   billingId: String
-  checklists(
-    after: String
-    before: String
-    first: Int
-    last: Int
-    search: ChecklistSearchOptions
-  ): ChecklistConnection!
   deactivatedAt: String
   id: ID!
   languages(
@@ -827,6 +889,25 @@ type PageInfo {
 }
 
 type Query {
+  """
+  For the given Assignable `entity`, returns a connection representing the set
+  of Assignable entities to which the given `entity` can be assigned.
+
+  Errors:
+  - E_NOT_ASSIGNABLE, if `entity` is not assignable
+  """
+  assignable(entity: ID!): AssignableConnection!
+  checklists(
+    after: String
+    before: String
+    first: Int
+    last: Int
+    parent: ID!
+    sortBy: [ChecklistSortOrder!]
+    withActive: Boolean
+    withName: String
+    withStatus: [ChecklistStatusStates!]
+  ): ChecklistConnection!
   entity(id: ID!): EntityConnection!
   languages: [Language!]!
   node(id: ID!): Node!
@@ -854,9 +935,7 @@ type ReferenceWidget implements Component {
 TODO
 """
 input ReferenceWidgetInput {
-  id: ID!
-  possibleTypes: [String!]
-  ref: ID
+  value: ID
 }
 
 interface Referenceable implements Component {
@@ -924,15 +1003,35 @@ TODO
 """
 type SentimentWidget implements Component {
   id: ID!
-  sentiment: Sentiment
+  number: Int
 }
 
 """
 TODO
 """
 input SentimentWidgetInput {
-  id: ID!
-  sentiment: Sentiment
+  value: Int
+}
+
+type SetChecklistItemStatusPayload implements SetStatusPayload {
+  delta: Int!
+  edge: ChecklistItemEdge!
+  parent: Checklist!
+}
+
+type SetChecklistStatusPayload implements SetStatusPayload {
+  delta: Int!
+  edge: ChecklistEdge!
+}
+
+interface SetStatusPayload {
+  delta: Int!
+}
+
+type SetValuePayload {
+  delta: Int!
+  node: ChecklistResult!
+  parent: Checklist!
 }
 
 input SignUpInput {
@@ -979,6 +1078,14 @@ enum SortOrder {
 }
 
 """
+State characterizes something, most commonly an entity, as existing in a
+particular state. For example, an entity could be in a "pending" state.
+"""
+interface State {
+  tag: String
+}
+
+"""
 TODO
 """
 type StringWidget implements Component {
@@ -990,8 +1097,7 @@ type StringWidget implements Component {
 TODO
 """
 input StringWidgetInput {
-  id: ID!
-  string: String
+  value: String
 }
 
 type Tag {
@@ -1027,8 +1133,7 @@ type TemporalWidget implements Component {
 TODO
 """
 input TemporalWidgetInput {
-  id: ID!
-  temporal: TemporalInput
+  value: TemporalInput
 }
 
 scalar TimeZone
@@ -1054,6 +1159,11 @@ enum TimeZoneNameOptions {
 }
 
 scalar URL
+
+type UnassignmentPayload {
+  entity: Assignable!
+  unassignedFrom: Assignable!
+}
 
 input UpdateLocationInput {
   activatedAt: String
@@ -1108,6 +1218,7 @@ type User implements Node {
     before: String
     first: Int
     last: Int
+    withApp: [ApplicationType!]
   ): OrganizationConnection!
   tags: [Tag!]!
 }
@@ -1177,7 +1288,8 @@ type WorkerEdge {
 
 input WorkerSearchOptions {
   active: Boolean
-  user: UserSearchOptions
+  displayName: String
+  user: UserSearchOptions @deprecated(reason: "use displayName instead")
 }
 
 input WorkersQueryOptions {

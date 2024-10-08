@@ -727,10 +727,10 @@ async function saveChecklistResults(
                                   }
                                 })()}::text,
                                 ${
-                                  i.result.widget.reference?.ref
+                                  i.result.widget.reference?.value
                                     ? match(
                                         decodeGlobalId(
-                                          i.result.widget.reference.ref,
+                                          i.result.widget.reference.value,
                                         ).type,
                                       )
                                         .with("location", () => "Location")
@@ -742,31 +742,29 @@ async function saveChecklistResults(
                                   switch (true) {
                                     case "checkbox" in i.result.widget:
                                       return (
-                                        i.result.widget.checkbox?.checked ??
-                                        null
+                                        i.result.widget.checkbox?.value ?? null
                                       );
                                     case "clicker" in i.result.widget:
                                       return (
-                                        i.result.widget.clicker?.count ?? null
+                                        i.result.widget.clicker?.value ?? null
                                       );
                                     case "duration" in i.result.widget:
                                       return (
-                                        i.result.widget.duration?.duration ??
-                                        null
+                                        i.result.widget.duration?.value ?? null
                                       );
                                     case "multiline" in i.result.widget:
                                       return (
-                                        i.result.widget.multiline?.text ?? null
+                                        i.result.widget.multiline?.value ?? null
                                       );
                                     case "number" in i.result.widget:
                                       return (
-                                        i.result.widget.number?.number ?? null
+                                        i.result.widget.number?.value ?? null
                                       );
                                     case "reference" in i.result.widget: {
-                                      return i.result.widget.reference?.ref
+                                      return i.result.widget.reference?.value
                                         ? match(
                                             decodeGlobalId(
-                                              i.result.widget.reference.ref,
+                                              i.result.widget.reference.value,
                                             ),
                                           )
                                             .with(
@@ -793,12 +791,11 @@ async function saveChecklistResults(
                                     }
                                     case "sentiment" in i.result.widget:
                                       return (
-                                        i.result.widget.sentiment?.sentiment ??
-                                        null
+                                        i.result.widget.sentiment?.value ?? null
                                       );
                                     case "string" in i.result.widget:
                                       return (
-                                        i.result.widget.string?.string ?? null
+                                        i.result.widget.string?.value ?? null
                                       );
                                     case "temporal" in i.result.widget:
                                       return null;
@@ -905,10 +902,10 @@ async function saveChecklistResults(
                               }
                             })()}::text,
                             ${
-                              i.result.widget.reference?.ref
+                              i.result.widget.reference?.value
                                 ? match(
                                     decodeGlobalId(
-                                      i.result.widget.reference.ref,
+                                      i.result.widget.reference.value,
                                     ).type,
                                   )
                                     .with("location", () => "Location")
@@ -920,25 +917,25 @@ async function saveChecklistResults(
                               switch (true) {
                                 case "checkbox" in i.result.widget:
                                   return (
-                                    i.result.widget.checkbox?.checked ?? null
+                                    i.result.widget.checkbox?.value ?? null
                                   );
                                 case "clicker" in i.result.widget:
-                                  return i.result.widget.clicker?.count ?? null;
+                                  return i.result.widget.clicker?.value ?? null;
                                 case "duration" in i.result.widget:
                                   return (
-                                    i.result.widget.duration?.duration ?? null
+                                    i.result.widget.duration?.value ?? null
                                   );
                                 case "multiline" in i.result.widget:
                                   return (
-                                    i.result.widget.multiline?.text ?? null
+                                    i.result.widget.multiline?.value ?? null
                                   );
                                 case "number" in i.result.widget:
-                                  return i.result.widget.number?.number ?? null;
+                                  return i.result.widget.number?.value ?? null;
                                 case "reference" in i.result.widget: {
-                                  return i.result.widget.reference?.ref
+                                  return i.result.widget.reference?.value
                                     ? match(
                                         decodeGlobalId(
-                                          i.result.widget.reference.ref,
+                                          i.result.widget.reference.value,
                                         ),
                                       )
                                         .with(
@@ -965,10 +962,10 @@ async function saveChecklistResults(
                                 }
                                 case "sentiment" in i.result.widget:
                                   return (
-                                    i.result.widget.sentiment?.sentiment ?? null
+                                    i.result.widget.sentiment?.value ?? null
                                   );
                                 case "string" in i.result.widget:
-                                  return i.result.widget.string?.string ?? null;
+                                  return i.result.widget.string?.value ?? null;
                                 case "temporal" in i.result.widget:
                                   return null;
                                 default: {

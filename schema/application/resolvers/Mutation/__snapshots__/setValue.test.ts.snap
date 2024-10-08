@@ -1,0 +1,37 @@
+// Bun Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`setValue lazy instantiation 1`] = `
+{
+  "data": {
+    "setValue": {
+      "__typename": "SetValuePayload",
+      "delta": 1,
+      "node": {
+        "__typename": "ChecklistResult",
+        "status": {
+          "__typename": "ChecklistOpen",
+        },
+        "widget": {
+          "__typename": "StringWidget",
+          "string": "hello world",
+        },
+      },
+      "parent": {
+        "__typename": "Checklist",
+        "status": {
+          "__typename": "ChecklistOpen",
+        },
+      },
+    },
+  },
+}
+`;
+
+exports[`setValue invalid type 1`] = `
+{
+  "data": null,
+  "errors": [
+    [GraphQLError: Invalid input to ECS operation: AST node],
+  ],
+}
+`;

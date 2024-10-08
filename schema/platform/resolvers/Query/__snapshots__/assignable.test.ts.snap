@@ -1,0 +1,29 @@
+// Bun Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`assignable not assignable entity 1`] = `
+{
+  "data": null,
+  "errors": [
+    [GraphQLError: Entity cannot be assigned],
+  ],
+}
+`;
+
+exports[`assignable workers 1`] = `
+{
+  "data": {
+    "assignable": {
+      "__typename": "AssignableConnection",
+      "edges": [
+        {
+          "__typename": "AssignableEdge",
+          "node": {
+            "__typename": "Worker",
+            "displayName": "Will Ruggiano",
+          },
+        },
+      ],
+    },
+  },
+}
+`;

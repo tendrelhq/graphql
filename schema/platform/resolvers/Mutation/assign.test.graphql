@@ -1,0 +1,24 @@
+mutation TestAssign($entity: ID!, $to: ID!) {
+  assign(entity: $entity, to: $to) {
+    entity {
+      ... on Checklist {
+        assignees {
+          edges {
+            node {
+              assignedTo {
+                ... on Worker {
+                  displayName
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+    assignedTo {
+      ... on Worker {
+        displayName
+      }
+    }
+  }
+}

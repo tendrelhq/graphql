@@ -1,0 +1,18 @@
+mutation TestSetStatus($entity: ID!, $input: ChecklistStatusInput!) {
+  setStatus(entity: $entity, input: $input) {
+    ... on SetChecklistStatusPayload {
+      delta
+      edge {
+        node {
+          status {
+            ... on ChecklistOpen {
+              openedAt {
+                epochMilliseconds
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

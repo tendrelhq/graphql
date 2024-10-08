@@ -1,4 +1,4 @@
-import { join, sql } from "@/datasources/postgres";
+import { sql } from "@/datasources/postgres";
 import type {
   Checklist,
   ChecklistSearchOptions,
@@ -14,6 +14,7 @@ export const Organization: Pick<OrganizationResolvers, "checklists"> = {
     const underlyingType = args.search?.status?.length
       ? "workinstance"
       : "worktemplate";
+
     return {
       edges: rows.map(row => ({
         cursor: row.id,
@@ -58,7 +59,7 @@ export const Organization: Pick<OrganizationResolvers, "checklists"> = {
                           match(e)
                             .with("open", () => "Open")
                             .with("inProgress", () => "In Progress")
-                            .with("closed", () => "Completed")
+                            .with("closed", () => "Complete")
                             .exhaustive(),
                         ),
                       )}`
@@ -116,6 +117,8 @@ function execute(
             ON wtt.worktemplatetypesystaguuid = tt.systaguuid
         INNER JOIN public.systag AS wst
             ON wi.workinstancestatusid = wst.systagid
+        INNER JOIN public.languagemaster AS dn
+            ON wt.worktemplatenameid = dn.languagemasterid
         WHERE
             wi.workinstancecustomerid = (
                 SELECT customerid
@@ -132,12 +135,19 @@ function execute(
                 )`
                 : sql`TRUE`
             }
+            AND ${
+              search?.displayName?.length
+                ? sql`
+                    dn.languagemastersource ILIKE '%' || ${search.displayName}::text || '%'
+                `
+                : sql`TRUE`
+            }
             AND wst.systagtype IN ${sql(
               search.status.map(e =>
                 match(e)
                   .with("open", () => "Open")
                   .with("inProgress", () => "In Progress")
-                  .with("closed", () => "Completed")
+                  .with("closed", () => "Complete")
                   .exhaustive(),
               ),
             )}
@@ -153,6 +163,8 @@ function execute(
           ON wtt.worktemplatetypeworktemplateuuid = wt.id
       INNER JOIN public.systag AS type
           ON wtt.worktemplatetypesystaguuid = type.systaguuid
+      INNER JOIN public.languagemaster AS dn
+          ON wt.worktemplatenameid = dn.languagemasterid
       WHERE
           wt.worktemplatecustomerid = (
               SELECT customerid
@@ -167,6 +179,11 @@ function execute(
                   OR
                   wt.worktemplateenddate > now()
               )`
+              : sql`TRUE`
+          }
+          AND ${
+            search?.displayName?.length
+              ? sql`dn.languagemastersource ILIKE '%' || ${search.displayName}::text || '%'`
               : sql`TRUE`
           }
       ORDER BY wt.worktemplateid ${last ? sql`DESC` : sql`ASC`}

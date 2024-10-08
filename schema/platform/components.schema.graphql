@@ -2,9 +2,32 @@
 scalar URL
 
 """
+Identifies an entity as being either "active" or "inactive".
+Activatable entities have two operations: activate and deactivate.
+"""
+interface Activatable implements Component {
+  id: ID!
+}
+
+extend type Mutation {
+  """
+  Activate an entity with the Activatable component. If the entity is already
+  active, this operation is a no-op. Throws an error with code E_NOT_ACTIVATABLE
+  if the entity being activated is not, in fact, Activatable.
+  """
+  activate(entity: ID!): Activatable!
+  """
+  Deactivate an entity with the Activatable component. If the entity is already
+  inactive, this operation is a no-op. Throws an error with code
+  E_NOT_ACTIVATABLE if the entity being deactivated is not, in fact, Activatable.
+  """
+  deactivate(entity: ID!): Activatable!
+}
+
+"""
 TODO
 """
-type Activatable implements Component {
+type Active implements Component {
   id: ID!
   active: Boolean!
   updatedAt: Temporal @semanticNonNull
@@ -13,19 +36,71 @@ type Activatable implements Component {
 """
 TODO
 """
-input ActivatableInput {
+input ActiveInput {
   id: ID!
   active: Boolean!
-  updatedAt: TemporalInput!
+  updatedAt: TemporalInput
+}
+
+"""
+Identifies an entity being assignable to another entity.
+Assignable entities have two operations: assign and unassign.
+"""
+interface Assignable implements Component {
+  id: ID!
+}
+
+type AssignableConnection implements Connection {
+  edges: [AssignableEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+type AssignableEdge implements Edge {
+  cursor: String!
+  node: Assignable!
+}
+
+type AssignmentPayload {
+  entity: Assignable!
+  assignedTo: Assignable!
+}
+
+type UnassignmentPayload {
+  entity: Assignable!
+  unassignedFrom: Assignable!
+}
+
+extend type Query {
+  """
+  For the given Assignable `entity`, returns a connection representing the set
+  of Assignable entities to which the given `entity` can be assigned.
+
+  Errors:
+  - E_NOT_ASSIGNABLE, if `entity` is not assignable
+  """
+  assignable(entity: ID!): AssignableConnection!
 }
 
 extend type Mutation {
-  activate(entity: ID!): Activatable @semanticNonNull
-  deactivate(entity: ID!): Activatable @semanticNonNull
-}
+  """
+  Assign an entity to another entity. If the entity is already assigned to the
+  same entity, this operation is a no-op.
 
-interface Assignable implements Component {
-  id: ID!
+  Errors:
+  - E_NOT_ASSIGNABLE, if either entity is not assignable
+  - E_ASSIGN_CONFLICT, if the entity is assigned to a different entity
+  """
+  assign(entity: ID!, to: ID!): AssignmentPayload!
+  """
+  Unssign an entity from another entity. If the entity is already unassigned,
+  this operation is a no-op.
+
+  Errors:
+  - E_NOT_ASSIGNABLE, if either entity is not (un)assignable
+  - E_ASSIGN_CONFLICT, if the entity is assigned to a different entity
+  """
+  unassign(entity: ID!, from: ID!): UnassignmentPayload!
 }
 
 """
@@ -45,11 +120,6 @@ input AssigneeInput {
   assignTo: ID!
   assignAt: TemporalInput!
 }
-
-# TODO: This is the next wave...
-# extend type Mutation {
-#   assign(input: [AssigneeInput!]): AssigneeConnection!
-# }
 
 type AssigneeConnection implements Connection {
   edges: [AssigneeEdge!]!
@@ -205,8 +275,7 @@ type CheckboxWidget implements Component {
 TODO
 """
 input CheckboxWidgetInput {
-  id: ID!
-  checked: Boolean
+  value: Boolean
 }
 
 """
@@ -214,15 +283,14 @@ TODO
 """
 type ClickerWidget implements Component {
   id: ID!
-  count: Int
+  number: Int
 }
 
 """
 TODO
 """
 input ClickerWidgetInput {
-  id: ID!
-  count: Int
+  value: Int
 }
 
 """
@@ -237,8 +305,7 @@ type DurationWidget implements Component {
 TODO
 """
 input DurationWidgetInput {
-  id: ID!
-  duration: Duration
+  value: Duration
 }
 
 # type GeographyWidget implements Component {
@@ -247,8 +314,7 @@ input DurationWidgetInput {
 # }
 #
 # input GeographyWidgetInput {
-#   id: ID!
-#   geog: Geography
+#   value: Geography
 # }
 
 """
@@ -256,15 +322,14 @@ TODO
 """
 type MultilineStringWidget implements Component {
   id: ID!
-  text: String
+  string: String
 }
 
 """
 TODO
 """
 input MultilineStringWidgetInput {
-  id: ID!
-  text: String
+  value: String
 }
 
 """
@@ -279,8 +344,7 @@ type NumberWidget implements Component {
 TODO
 """
 input NumberWidgetInput {
-  id: ID!
-  number: Int
+  value: Int
 }
 
 """
@@ -296,9 +360,7 @@ type ReferenceWidget implements Component {
 TODO
 """
 input ReferenceWidgetInput {
-  id: ID!
-  possibleTypes: [String!]
-  ref: ID
+  value: ID
 }
 
 """
@@ -306,15 +368,14 @@ TODO
 """
 type SentimentWidget implements Component {
   id: ID!
-  sentiment: Sentiment
+  number: Int
 }
 
 """
 TODO
 """
 input SentimentWidgetInput {
-  id: ID!
-  sentiment: Sentiment
+  value: Int
 }
 
 """
@@ -329,8 +390,7 @@ type StringWidget implements Component {
 TODO
 """
 input StringWidgetInput {
-  id: ID!
-  string: String
+  value: String
 }
 
 """
@@ -345,6 +405,5 @@ type TemporalWidget implements Component {
 TODO
 """
 input TemporalWidgetInput {
-  id: ID!
-  temporal: TemporalInput
+  value: TemporalInput
 }

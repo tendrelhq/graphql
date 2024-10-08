@@ -4,20 +4,7 @@ import { decodeGlobalId } from "@/schema/system";
 import type { WithKey } from "@/util";
 import { match } from "ts-pattern";
 
-export const Organization: Pick<
-  OrganizationResolvers,
-  | "activatedAt"
-  | "active"
-  | "billingId"
-  | "deactivatedAt"
-  | "id"
-  | "languages"
-  | "locations"
-  | "me"
-  | "name"
-  | "nameId"
-  | "workers"
-> = {
+export const Organization: OrganizationResolvers = {
   async me(parent, _, ctx) {
     const [row] = await sql<[{ id: string }]>`
       SELECT workerinstanceuuid AS id

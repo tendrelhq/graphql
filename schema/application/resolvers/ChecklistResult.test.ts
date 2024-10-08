@@ -6,9 +6,12 @@ import { TestChecklistResultDocument } from "./ChecklistResult.test.generated";
 
 const schema = makeExecutableSchema({ resolvers, typeDefs });
 
-process.env.X_TENDREL_USER = "user_2iADtxE5UonU4KO5lphsG59bkR9";
-
 test.skipIf(!!process.env.CI)("ChecklistResult", async () => {
   const result = await execute(schema, TestChecklistResultDocument);
+  if (result.errors?.length) {
+    for (const e of result.errors) {
+      console.error(e);
+    }
+  }
   expect(result).toMatchSnapshot();
 });

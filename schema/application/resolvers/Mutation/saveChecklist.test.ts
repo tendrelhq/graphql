@@ -68,7 +68,6 @@ describe.skip("saveChecklist", () => {
               required: true,
               status: {
                 open: {
-                  id: testGlobalId(),
                   at: {
                     instant: NOW.valueOf().toString(),
                   },
@@ -77,8 +76,7 @@ describe.skip("saveChecklist", () => {
               },
               widget: {
                 clicker: {
-                  id: testGlobalId(),
-                  count: 42,
+                  value: 42,
                 },
               },
             },
@@ -95,7 +93,6 @@ describe.skip("saveChecklist", () => {
         },
         status: {
           open: {
-            id: testGlobalId(),
             at: {
               instant: NOW.valueOf().toString(),
             },

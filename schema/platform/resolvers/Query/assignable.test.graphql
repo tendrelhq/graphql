@@ -1,0 +1,11 @@
+query TestAssignable($entity: ID!) {
+  assignable(entity: $entity) {
+    edges {
+      node {
+        ... on Worker {
+          displayName
+        }
+      }
+    }
+  }
+}
