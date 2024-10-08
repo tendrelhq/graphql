@@ -1,0 +1,290 @@
+// Bun Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`checklists filters withName 1`] = `
+{
+  "data": {
+    "checklists": {
+      "__typename": "ChecklistConnection",
+      "edges": [],
+      "pageInfo": {
+        "__typename": "PageInfo",
+        "endCursor": null,
+        "hasNextPage": false,
+        "hasPreviousPage": false,
+        "startCursor": null,
+      },
+      "totalCount": 0,
+    },
+  },
+}
+`;
+
+exports[`checklists filters withStatus 1`] = `
+{
+  "data": {
+    "checklists": {
+      "__typename": "ChecklistConnection",
+      "edges": [
+        {
+          "__typename": "ChecklistEdge",
+          "node": {
+            "__typename": "Checklist",
+            "id": 
+"d29ya2luc3RhbmNlOndvcmstaW5zdGFuY2VfMDA4NWE3Y2YtMmI5ZC00MDU2LTlhYzUtYTBiNTgx
+YTliNmZh"
+,
+            "name": {
+              "__typename": "DisplayName",
+              "name": {
+                "__typename": "DynamicString",
+                "value": "Checklist",
+              },
+            },
+            "status": {
+              "__typename": "ChecklistOpen",
+              "openedAt": {
+                "__typename": "ZonedDateTime",
+                "toString": "2024-09-20T20:43:22.008-06:00[America/Denver]",
+              },
+            },
+          },
+        },
+      ],
+      "pageInfo": {
+        "__typename": "PageInfo",
+        "endCursor": 
+"d29ya2luc3RhbmNlOndvcmstaW5zdGFuY2VfMDA4NWE3Y2YtMmI5ZC00MDU2LTlhYzUtYTBiNTgx
+YTliNmZh"
+,
+        "hasNextPage": false,
+        "hasPreviousPage": false,
+        "startCursor": 
+"d29ya2luc3RhbmNlOndvcmstaW5zdGFuY2VfMDA4NWE3Y2YtMmI5ZC00MDU2LTlhYzUtYTBiNTgx
+YTliNmZh"
+,
+      },
+      "totalCount": 1,
+    },
+  },
+}
+`;
+
+exports[`checklists filters withName & withStatus 1`] = `
+{
+  "data": {
+    "checklists": {
+      "__typename": "ChecklistConnection",
+      "edges": [
+        {
+          "__typename": "ChecklistEdge",
+          "node": {
+            "__typename": "Checklist",
+            "id": 
+"d29ya2luc3RhbmNlOndvcmstaW5zdGFuY2VfMDA4NWE3Y2YtMmI5ZC00MDU2LTlhYzUtYTBiNTgx
+YTliNmZh"
+,
+            "name": {
+              "__typename": "DisplayName",
+              "name": {
+                "__typename": "DynamicString",
+                "value": "Checklist",
+              },
+            },
+            "status": {
+              "__typename": "ChecklistOpen",
+              "openedAt": {
+                "__typename": "ZonedDateTime",
+                "toString": "2024-09-20T20:43:22.008-06:00[America/Denver]",
+              },
+            },
+          },
+        },
+      ],
+      "pageInfo": {
+        "__typename": "PageInfo",
+        "endCursor": 
+"d29ya2luc3RhbmNlOndvcmstaW5zdGFuY2VfMDA4NWE3Y2YtMmI5ZC00MDU2LTlhYzUtYTBiNTgx
+YTliNmZh"
+,
+        "hasNextPage": false,
+        "hasPreviousPage": false,
+        "startCursor": 
+"d29ya2luc3RhbmNlOndvcmstaW5zdGFuY2VfMDA4NWE3Y2YtMmI5ZC00MDU2LTlhYzUtYTBiNTgx
+YTliNmZh"
+,
+      },
+      "totalCount": 1,
+    },
+  },
+}
+`;
+
+exports[`checklists default only lists worktemplates 1`] = `
+{
+  "data": {
+    "checklists": {
+      "__typename": "ChecklistConnection",
+      "edges": [
+        {
+          "__typename": "ChecklistEdge",
+          "node": {
+            "__typename": "Checklist",
+            "id": "d29ya3RlbXBsYXRlOjdjYjNiNTg0LWYyZTktNGU2Zi1iMDRkLWMxMTAzZjUwYTYzMg==",
+            "name": {
+              "__typename": "DisplayName",
+              "name": {
+                "__typename": "DynamicString",
+                "value": "Ok last test :)",
+              },
+            },
+            "status": null,
+          },
+        },
+        {
+          "__typename": "ChecklistEdge",
+          "node": {
+            "__typename": "Checklist",
+            "id": "d29ya3RlbXBsYXRlOjdjMTcwNDk0LTA5NmItNGE1My1iNDEyLWEyMGI3YjgyZjY5ZQ==",
+            "name": {
+              "__typename": "DisplayName",
+              "name": {
+                "__typename": "DynamicString",
+                "value": "Did we break anything? Surely not :P",
+              },
+            },
+            "status": null,
+          },
+        },
+        {
+          "__typename": "ChecklistEdge",
+          "node": {
+            "__typename": "Checklist",
+            "id": "d29ya3RlbXBsYXRlOjEzNTdlNmNjLTg1MzQtNDUyZS1hZDcwLWJkZDJkZDViZWJiYg==",
+            "name": {
+              "__typename": "DisplayName",
+              "name": {
+                "__typename": "DynamicString",
+                "value": "asdfasdfasdf",
+              },
+            },
+            "status": null,
+          },
+        },
+        {
+          "__typename": "ChecklistEdge",
+          "node": {
+            "__typename": "Checklist",
+            "id": "d29ya3RlbXBsYXRlOjBlM2FmNzNjLTIyNTMtNDlmNS04Y2NmLWQzNTE5ZDQ1YjU3Yg==",
+            "name": {
+              "__typename": "DisplayName",
+              "name": {
+                "__typename": "DynamicString",
+                "value": "Next template rules test",
+              },
+            },
+            "status": null,
+          },
+        },
+        {
+          "__typename": "ChecklistEdge",
+          "node": {
+            "__typename": "Checklist",
+            "id": "d29ya3RlbXBsYXRlOjQzMmRiYjg2LWI1MzQtNDliNy1hMTA3LWI1MDg4Yzc4MDMyOA==",
+            "name": {
+              "__typename": "DisplayName",
+              "name": {
+                "__typename": "DynamicString",
+                "value": "Another constraint test",
+              },
+            },
+            "status": null,
+          },
+        },
+        {
+          "__typename": "ChecklistEdge",
+          "node": {
+            "__typename": "Checklist",
+            "id": "d29ya3RlbXBsYXRlOjk1NGExYzdiLTE1OWItNDBlMC05YTFiLTI0NGNkZTJjMTk0ZA==",
+            "name": {
+              "__typename": "DisplayName",
+              "name": {
+                "__typename": "DynamicString",
+                "value": "Another test template constraints",
+              },
+            },
+            "status": null,
+          },
+        },
+        {
+          "__typename": "ChecklistEdge",
+          "node": {
+            "__typename": "Checklist",
+            "id": "d29ya3RlbXBsYXRlOjczMmZmMDRmLWYwMDQtNDZmYy05MDQxLWY4Nzc0Zjc2ZmQ3OA==",
+            "name": {
+              "__typename": "DisplayName",
+              "name": {
+                "__typename": "DynamicString",
+                "value": "Test template constraints",
+              },
+            },
+            "status": null,
+          },
+        },
+        {
+          "__typename": "ChecklistEdge",
+          "node": {
+            "__typename": "Checklist",
+            "id": "d29ya3RlbXBsYXRlOjExNzgwMGI4LTlhZTktNGVlYS04MDc4LWQ4NzBkZDQyZDY2Ng==",
+            "name": {
+              "__typename": "DisplayName",
+              "name": {
+                "__typename": "DynamicString",
+                "value": "New guy",
+              },
+            },
+            "status": null,
+          },
+        },
+        {
+          "__typename": "ChecklistEdge",
+          "node": {
+            "__typename": "Checklist",
+            "id": "d29ya3RlbXBsYXRlOjgyN2RlNDE5LTQ0YmMtNGExMi1iOWFmLWI2NDFmYjU3NjQyOQ==",
+            "name": {
+              "__typename": "DisplayName",
+              "name": {
+                "__typename": "DynamicString",
+                "value": "Test Checklist with ALL the results",
+              },
+            },
+            "status": null,
+          },
+        },
+        {
+          "__typename": "ChecklistEdge",
+          "node": {
+            "__typename": "Checklist",
+            "id": "d29ya3RlbXBsYXRlOjE0NjJhNGI1LTBjYzktNDI0Zi05ODU2LTdiODQ1ZDg2MDgwYw==",
+            "name": {
+              "__typename": "DisplayName",
+              "name": {
+                "__typename": "DynamicString",
+                "value": "Another Checklist",
+              },
+            },
+            "status": null,
+          },
+        },
+      ],
+      "pageInfo": {
+        "__typename": "PageInfo",
+        "endCursor": "d29ya3RlbXBsYXRlOjE0NjJhNGI1LTBjYzktNDI0Zi05ODU2LTdiODQ1ZDg2MDgwYw==",
+        "hasNextPage": true,
+        "hasPreviousPage": false,
+        "startCursor": "d29ya3RlbXBsYXRlOjdjYjNiNTg0LWYyZTktNGU2Zi1iMDRkLWMxMTAzZjUwYTYzMg==",
+      },
+      "totalCount": 12,
+    },
+  },
+}
+`;

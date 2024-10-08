@@ -1,66 +1,58 @@
 query TestChecklistResult {
-  user {
-    organizations(last: 1) {
-      edges {
-        node {
-          checklists(first: 1) {
-            edges {
-              node {
-                items {
-                  edges {
-                    node {
-                      ... on ChecklistResult {
-                        assignees {
-                          totalCount
-                        }
-                        attachments {
-                          totalCount
-                        }
-                        name {
-                          name {
-                            value
-                          }
-                        }
-                        required
-                        status {
-                          __typename
-                        }
-                        widget {
-                          ... on CheckboxWidget {
-                            checked
-                          }
-                          ... on ClickerWidget {
-                            count
-                          }
-                          ... on DurationWidget {
-                            duration
-                          }
-                          ... on MultilineStringWidget {
-                            text
-                          }
-                          ... on NumberWidget {
-                            number
-                          }
-                          ... on ReferenceWidget {
-                            possibleTypes
-                            ref {
-                              __typename
-                            }
-                          }
-                          ... on SentimentWidget {
-                            sentiment
-                          }
-                          ... on StringWidget {
-                            string
-                          }
-                          ... on TemporalWidget {
-                            temporal {
-                              __typename
-                            }
-                          }
-                        }
-                      }
-                    }
+  node(
+    id: "d29ya2luc3RhbmNlOndvcmstaW5zdGFuY2VfMDA4NWE3Y2YtMmI5ZC00MDU2LTlhYzUtYTBiNTgxYTliNmZh"
+  ) {
+    ... on Checklist {
+      items {
+        edges {
+          node {
+            ... on ChecklistResult {
+              assignees {
+                totalCount
+              }
+              attachments {
+                totalCount
+              }
+              name {
+                name {
+                  value
+                }
+              }
+              required
+              status {
+                __typename
+              }
+              widget {
+                ... on CheckboxWidget {
+                  checked
+                }
+                ... on ClickerWidget {
+                  number
+                }
+                ... on DurationWidget {
+                  duration
+                }
+                ... on MultilineStringWidget {
+                  string
+                }
+                ... on NumberWidget {
+                  number
+                }
+                ... on ReferenceWidget {
+                  possibleTypes
+                  ref {
+                    __typename
+                  }
+                }
+                ... on SentimentWidget {
+                  number
+                }
+                ... on StringWidget {
+                  string
+                }
+                ... on TemporalWidget {
+                  temporal {
+                    __typename
                   }
                 }
               }

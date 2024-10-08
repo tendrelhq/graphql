@@ -1,0 +1,20 @@
+mutation TestSetValue($entity: ID!, $parent: ID!, $input: WidgetInput!) {
+  setValue(entity: $entity, parent: $parent, input: $input) {
+    delta
+    node {
+      status {
+        __typename
+      }
+      widget {
+        ... on StringWidget {
+          string
+        }
+      }
+    }
+    parent {
+      status {
+        __typename
+      }
+    }
+  }
+}

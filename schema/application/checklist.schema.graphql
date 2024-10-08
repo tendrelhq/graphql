@@ -1,10 +1,29 @@
-extend type Organization {
+# extend type Organization {
+#   checklists(
+#     first: Int
+#     last: Int
+#     before: String
+#     after: String
+#     search: ChecklistSearchOptions
+#   ): ChecklistConnection! @deprecated(reason: "use Query.checklists instead")
+# }
+
+input ChecklistSortOrder @oneOf {
+  name: SortOrder
+  status: SortOrder
+}
+
+type Query {
   checklists(
+    parent: ID!
     first: Int
     last: Int
-    before: String
     after: String
-    search: ChecklistSearchOptions
+    before: String
+    sortBy: [ChecklistSortOrder!]
+    withActive: Boolean
+    withName: String
+    withStatus: [ChecklistStatusStates!]
   ): ChecklistConnection!
 }
 
@@ -12,9 +31,9 @@ type Mutation {
   saveChecklist(input: ChecklistInput!): ChecklistEdge!
 }
 
-type Checklist implements Component & Node {
+type Checklist implements Component & Activatable & Assignable & Node {
   id: ID!
-  active: Activatable
+  active: Active
   assignees(
     first: Int
     last: Int
@@ -42,6 +61,7 @@ type Checklist implements Component & Node {
   status: ChecklistStatus
 
   # experimental - subject to change
+  parent: Checklist
   children(
     first: Int
     last: Int
@@ -54,7 +74,7 @@ type Checklist implements Component & Node {
 
 input ChecklistInput {
   id: ID!
-  active: ActivatableInput
+  active: ActiveInput
   assignees: [AssigneeInput!]
   auditable: AuditableInput
   customerId: ID!
@@ -69,10 +89,11 @@ input ChecklistInput {
 
 input ChecklistSearchOptions {
   active: Boolean
-  status: [ChecklistStatusSearchOptions!]
+  displayName: String
+  status: [ChecklistStatusStates!]
 }
 
-enum ChecklistStatusSearchOptions {
+enum ChecklistStatusStates {
   open
   inProgress
   closed
@@ -111,7 +132,7 @@ input ChecklistItemInput @oneOf {
 """
 TODO
 """
-type ChecklistResult implements Component {
+type ChecklistResult implements Component & Node {
   id: ID!
   assignees(
     first: Int
@@ -145,8 +166,39 @@ input ChecklistResultInput {
   widget: WidgetInput!
 }
 
+type SetValuePayload {
+  delta: Int!
+  node: ChecklistResult!
+  parent: Checklist!
+}
+
+extend type Mutation {
+  setValue(entity: ID!, parent: ID!, input: WidgetInput!): SetValuePayload!
+}
+
 ## Our checklists go Open > In Progress > Closed
 union ChecklistStatus = ChecklistOpen | ChecklistInProgress | ChecklistClosed
+
+interface SetStatusPayload {
+  delta: Int!
+}
+type SetChecklistStatusPayload implements SetStatusPayload {
+  delta: Int!
+  edge: ChecklistEdge!
+}
+type SetChecklistItemStatusPayload implements SetStatusPayload {
+  delta: Int!
+  edge: ChecklistItemEdge!
+  parent: Checklist!
+}
+
+extend type Mutation {
+  setStatus(
+    entity: ID!
+    parent: ID
+    input: ChecklistStatusInput!
+  ): SetStatusPayload!
+}
 
 input ChecklistStatusInput @oneOf {
   open: ChecklistOpenInput
@@ -154,34 +206,32 @@ input ChecklistStatusInput @oneOf {
   closed: ChecklistClosedInput
 }
 
-type ChecklistOpen implements Component {
-  id: ID!
+type ChecklistOpen implements State {
+  tag: String
   dueAt: Temporal
   openedBy: Identity
   openedAt: Temporal!
 }
 
 input ChecklistOpenInput {
-  id: ID!
   by: ID
   at: TemporalInput!
 }
 
-type ChecklistInProgress implements Component {
-  id: ID!
+type ChecklistInProgress implements State {
+  tag: String
   dueAt: Temporal
   inProgressBy: Identity
   inProgressAt: Temporal!
 }
 
 input ChecklistInProgressInput {
-  id: ID!
   by: ID
   at: TemporalInput!
 }
 
-type ChecklistClosed implements Component {
-  id: ID!
+type ChecklistClosed implements State {
+  tag: String
   closedBy: Identity
   closedAt: Temporal!
   closedBecause: ChecklistClosedReason
@@ -189,7 +239,6 @@ type ChecklistClosed implements Component {
 }
 
 input ChecklistClosedInput {
-  id: ID!
   by: ID
   at: TemporalInput!
   because: ChecklistClosedReasonInput

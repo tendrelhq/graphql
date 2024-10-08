@@ -66,13 +66,13 @@ mutation TestSaveChecklist($input: ChecklistInput!) {
                   checked
                 }
                 ... on ClickerWidget {
-                  count
+                  number
                 }
                 ... on DurationWidget {
                   duration
                 }
                 ... on MultilineStringWidget {
-                  text
+                  string
                 }
                 ... on NumberWidget {
                   number
@@ -84,7 +84,7 @@ mutation TestSaveChecklist($input: ChecklistInput!) {
                   }
                 }
                 ... on SentimentWidget {
-                  sentiment
+                  number
                 }
                 ... on StringWidget {
                   string

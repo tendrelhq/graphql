@@ -29,11 +29,11 @@ export const Assignee: AssigneeResolvers = {
         () => sql<[ResolversTypes["Assignable"]]>`
             SELECT
                 'Worker' AS "__typename",
-                encode(('workerinstance:' || w.workerinstanceuuid)::bytea, 'base64') AS id
+                encode(('worker:' || w.workerinstanceuuid)::bytea, 'base64') AS id
             FROM public.workresultinstance AS wri
             INNER JOIN public.workerinstance AS w
                 ON wri.workresultinstancevalue::bigint = w.workerinstanceid
-            WHERE wri.id = ${id}
+            WHERE wri.workresultinstanceuuid = ${id}
         `,
       )
       .otherwise(() => Promise.reject("invariant violated"));

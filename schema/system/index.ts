@@ -18,7 +18,7 @@ const GlobalId = z.string().map(id => {
  * object's underlying type (e.g. workinstance) and its uuid (i.e. primary
  * key).
  */
-type GlobalId = {
+export type GlobalId = {
   type: string;
   id: string;
   suffix?: string | string[];

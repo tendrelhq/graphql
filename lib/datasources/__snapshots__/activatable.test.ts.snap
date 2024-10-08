@@ -1,42 +1,6 @@
 // Bun Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`status loader activate 1`] = `
-{
-  "_key": "827de419-44bc-4a12-b9af-b641fb576429",
-  "active": true,
-  "id": "d29ya3RlbXBsYXRlOjgyN2RlNDE5LTQ0YmMtNGExMi1iOWFmLWI2NDFmYjU3NjQyOTphY3RpdmU=",
-  "updatedAt": {
-    "__typename": "Instant",
-    "epochMilliseconds": "1727121569246.000000",
-  },
-}
-`;
-
-exports[`status loader deactivate 1`] = `
-{
-  "_key": "827de419-44bc-4a12-b9af-b641fb576429",
-  "active": true,
-  "id": "d29ya3RlbXBsYXRlOjgyN2RlNDE5LTQ0YmMtNGExMi1iOWFmLWI2NDFmYjU3NjQyOTphY3RpdmU=",
-  "updatedAt": {
-    "__typename": "Instant",
-    "epochMilliseconds": "1727121569246.000000",
-  },
-}
-`;
-
-exports[`activatable loader activate 1`] = `
-{
-  "_key": "827de419-44bc-4a12-b9af-b641fb576429",
-  "active": true,
-  "id": "d29ya3RlbXBsYXRlOjgyN2RlNDE5LTQ0YmMtNGExMi1iOWFmLWI2NDFmYjU3NjQyOTphY3RpdmU=",
-  "updatedAt": {
-    "__typename": "Instant",
-    "epochMilliseconds": "1727121569246.000000",
-  },
-}
-`;
-
-exports[`activatable loader deactivate 1`] = `
+exports[`active loader load 1`] = `
 {
   "_key": "827de419-44bc-4a12-b9af-b641fb576429",
   "active": true,

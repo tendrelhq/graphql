@@ -15,10 +15,13 @@ const config: CodegenConfig = {
         mutation: "*",
         object: [
           "!*.*Edge", // all Edge implementations
-          "!*.Activatable",
+          "!*.Active",
+          "!*.AssignmentPayload",
+          "!*.UnassignmentPayload",
           "!*.ChecklistOpen",
           "!*.ChecklistInProgress",
           "!*.ChecklistClosed*",
+          "!*Payload",
         ],
         query: "*",
         scalar: "*",

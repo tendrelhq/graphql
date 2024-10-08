@@ -13,7 +13,8 @@ export const User: UserResolvers = {
     return ctx.orm.language.byId.load(parent.languageId);
   },
   async organizations(parent, args, ctx) {
-    const { first, last } = args;
+    const { first, last, withApp } = args;
+
     const parentId = decodeGlobalId(parent.id).id;
     const after = args.after ? decodeGlobalId(args.after).id : null;
     const before = args.before ? decodeGlobalId(args.before).id : null;
@@ -31,15 +32,29 @@ export const User: UserResolvers = {
               WHERE workeruuid = ${parentId}
           )
           ${
+            withApp
+              ? sql`
+          AND EXISTS (
+              SELECT 1
+              FROM public.customerconfig
+              INNER JOIN public.systag
+                  ON customerconfigtypeuuid = systaguuid
+              WHERE
+                  customerconfigcustomeruuid = customeruuid
+                  AND
+                  systagtype IN ${sql(withApp)}
+          )`
+              : sql``
+          }
+          ${
             after
               ? sql`
           AND workerinstancecustomerid > (
               SELECT customerid
               FROM public.customer
               WHERE customeruuid = ${after}
-          )
-              `
-              : sql``
+          )`
+              : sql`AND true`
           }
           ${
             before
@@ -48,9 +63,8 @@ export const User: UserResolvers = {
               SELECT customerid
               FROM public.customer
               WHERE customeruuid = ${before}
-          )
-              `
-              : sql``
+          )`
+              : sql`AND true`
           }
       ORDER BY workerinstancecustomerid ${last ? sql`DESC` : sql`ASC`}
       LIMIT ${first ?? last ?? null};

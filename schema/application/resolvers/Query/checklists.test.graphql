@@ -1,0 +1,50 @@
+query Test(
+  $parent: ID!
+  $cursor: String
+  $limit: Int!
+  $sortBy: [ChecklistSortOrder!]
+  $withName: String
+  $withStatus: [ChecklistStatusStates!]
+) {
+  checklists(
+    parent: $parent
+    first: $limit
+    after: $cursor
+    sortBy: $sortBy
+    withName: $withName
+    withStatus: $withStatus
+  ) {
+    totalCount
+    pageInfo {
+      startCursor
+      endCursor
+      hasNextPage
+      hasPreviousPage
+    }
+    edges {
+      node {
+        id
+        name {
+          name {
+            value
+          }
+        }
+        status {
+          ... on ChecklistOpen {
+            openedAt {
+              __typename
+              ... on Instant {
+                toZonedDateTime(timeZone: "America/Denver") {
+                  toString
+                }
+              }
+              ... on ZonedDateTime {
+                toString
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

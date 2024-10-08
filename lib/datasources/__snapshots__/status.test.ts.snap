@@ -10,10 +10,6 @@ exports[`status loader open 1`] = `
     "epochMilliseconds": "1726886602034.000000",
     "timeZone": "America/Denver",
   },
-  "id": 
-"d29ya2luc3RhbmNlOndvcmstaW5zdGFuY2VfMDA4NWE3Y2YtMmI5ZC00MDU2LTlhYzUtYTBiNTgx
-YTliNmZhOnN0YXR1cw=="
-,
   "inProgressAt": null,
   "openedAt": {
     "__typename": "ZonedDateTime",
@@ -26,13 +22,9 @@ YTliNmZhOnN0YXR1cw=="
 exports[`status loader item - open 1`] = `
 {
   "__typename": "ChecklistOpen",
-  "_key": "14decaa9-cff2-4616-9b75-7938794d2940",
+  "_key": "wri_80caee72-cf98-4ab0-8eb1-0884bc880701",
   "closedAt": null,
   "dueAt": null,
-  "id": 
-"d29ya3Jlc3VsdGluc3RhbmNlOjE0ZGVjYWE5LWNmZjItNDYxNi05Yjc1LTc5Mzg3OTRkMjk0MDpz
-dGF0dXM="
-,
   "inProgressAt": null,
   "openedAt": {
     "__typename": "ZonedDateTime",
