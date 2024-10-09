@@ -412,6 +412,15 @@ interface Connection {
   totalCount: Int!
 }
 
+input CopyFromOptions {
+  withAssignee: [ID!]
+  withStatus: ChecklistStatusStates
+}
+
+type CopyFromPayload {
+  edge: ChecklistEdge!
+}
+
 """
 Data type for tracking an incrementable/decrementable integer value.
 Counters have two operations: increment and decrement.
@@ -743,6 +752,7 @@ type Mutation {
   - E_ASSIGN_CONFLICT, if the entity is assigned to a different entity
   """
   assign(entity: ID!, to: ID!): AssignmentPayload!
+  copyFrom(entity: ID!, options: CopyFromOptions!): CopyFromPayload!
   createEntity(id: String, suffix: [String!], type: String!): ID!
   createInvitation(input: CreateInvitationInput!): Worker!
   createLocation(input: CreateLocationInput!): Location!

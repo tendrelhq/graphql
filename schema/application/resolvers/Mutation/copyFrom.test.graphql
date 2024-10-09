@@ -1,0 +1,16 @@
+mutation TestCopyFrom($entity: ID!, $options: CopyFromOptions!) {
+  copyFrom(entity: $entity, options: $options) {
+    edge {
+      node {
+        name {
+          name {
+            value
+          }
+        }
+        status {
+          __typename
+        }
+      }
+    }
+  }
+}

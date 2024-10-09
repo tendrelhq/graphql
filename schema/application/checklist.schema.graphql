@@ -28,7 +28,17 @@ type Query {
 }
 
 type Mutation {
+  copyFrom(entity: ID!, options: CopyFromOptions!): CopyFromPayload!
   saveChecklist(input: ChecklistInput!): ChecklistEdge!
+}
+
+type CopyFromPayload {
+  edge: ChecklistEdge!
+}
+
+input CopyFromOptions {
+  withAssignee: [ID!]
+  withStatus: ChecklistStatusStates
 }
 
 type Checklist implements Component & Activatable & Assignable & Node {

@@ -177,6 +177,16 @@ function buildAstFilterFragments(args: Args, parent: Parent) {
         FROM public.customer
         WHERE customeruuid = ${parent.id}
     )`,
+    sql`EXISTS (
+        SELECT 1
+        FROM public.worktemplatetype
+        INNER JOIN public.systag
+            ON worktemplatetypesystaguuid = systaguuid
+        WHERE
+            worktemplatetypeworktemplateuuid = node.id
+            AND
+            systagtype = 'Checklist'
+    )`,
   ];
 
   if (nullish(args.f.withActive) === false) {
