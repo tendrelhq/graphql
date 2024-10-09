@@ -37,7 +37,7 @@ async function copyFromWorkTemplate(
   options: CopyFromOptions,
 ): Promise<CopyFromPayload> {
   const [edge] = await sql.begin(async tx => {
-    const [row] = await tx<[{ _key: bigint; id: string }]>`
+    const [row] = await tx<[{ _key: number; id: string }]>`
         INSERT INTO public.workinstance (
             workinstancecustomerid,
             workinstancesiteid,
@@ -105,7 +105,7 @@ async function copyFromWorkTemplate(
             workinstancestartdate,
             (
                 SELECT location.locationid::text AS value
-                WHERE entity_type = 'Location' AND workresultisprimary
+                WHERE entity_type.systagtype = 'Location' AND workresultisprimary
                 UNION ALL
                 SELECT ${
                   map(options.withAssignee?.at(0), a => {
@@ -125,7 +125,7 @@ async function copyFromWorkTemplate(
                         WHERE workerinstanceuuid = ${id}`;
                   }) ?? null
                 }::text AS value
-                WHERE entity_type = 'Worker' AND workresultisprimary
+                WHERE entity_type.systagtype = 'Worker' AND workresultisprimary
                 UNION ALL
                 SELECT null::text AS value
                 WHERE
@@ -135,13 +135,13 @@ async function copyFromWorkTemplate(
                         AND workresultisprimary = false
                     )
             ) AS workresultinstancevalue,
-            ${row.id}::bigint AS workresultinstanceworkinstanceid,
+            ${row._key}::bigint AS workresultinstanceworkinstanceid,
             workresultid,
             (
                 SELECT systagid
                 FROM public.systag
                 WHERE
-                    systagparentid = 966
+                    systagparentid = 965
                     AND systagtype = ${match(options.withStatus)
                       .with("open", () => "Open")
                       .with("inProgress", () => "Open")
@@ -156,11 +156,11 @@ async function copyFromWorkTemplate(
         INNER JOIN public.location
             ON worktemplatesiteid = locationid
         INNER JOIN public.workinstance
-            ON workinstance.id = ${row.id}
+            ON workinstance.workinstanceid = ${row._key}
         LEFT JOIN public.systag AS entity_type
             ON workresultentitytypeid = systagid
         WHERE
-            workresultworktemplateid = ${id}
+            worktemplate.id = ${id}
     `;
 
     console.debug(`Created ${result.count} items.`);
