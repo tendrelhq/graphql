@@ -143,7 +143,13 @@ export const Checklist: ChecklistResolvers = {
                 ) AS id
             FROM public.workresult AS wr
             LEFT JOIN public.workresultinstance AS wri
-                ON wr.workresultid = wri.workresultinstanceworkresultid
+                ON
+                    wr.workresultid = wri.workresultinstanceworkresultid
+                    AND wri.workresultinstanceworkinstanceid IN (
+                        SELECT workinstanceid
+                        FROM public.workinstance
+                        WHERE id = ${id}
+                    )
             WHERE
                 wr.workresultworktemplateid IN (
                     SELECT workinstanceworktemplateid
@@ -165,11 +171,10 @@ export const Checklist: ChecklistResolvers = {
                 encode(('workresult:' || wr.id)::bytea, 'base64') AS id
             FROM public.workresult AS wr
             INNER JOIN public.worktemplate AS wt
-                ON wr.workresultworktemplateid = wt.worktemplateid
-            WHERE
-                wt.id = ${id}
-                AND
-                workresultisprimary = false
+                ON
+                    wr.workresultworktemplateid = wt.worktemplateid
+                    AND wt.id = ${id}
+            WHERE workresultisprimary = false
             ORDER BY wr.workresultorder ${last ? sql`DESC` : sql`ASC`},
                      wr.workresultid ${last ? sql`DESC` : sql`ASC`}
             LIMIT ${first ?? last ?? null};

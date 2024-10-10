@@ -5,18 +5,12 @@ exports[`setStatus set open 1`] = `
   "data": {
     "setStatus": {
       "__typename": "SetChecklistStatusPayload",
-      "delta": 1,
+      "delta": 0,
       "edge": {
         "__typename": "ChecklistEdge",
         "node": {
           "__typename": "Checklist",
-          "status": {
-            "__typename": "ChecklistOpen",
-            "openedAt": {
-              "__typename": "ZonedDateTime",
-              "epochMilliseconds": "1726886602008.000000",
-            },
-          },
+          "status": null,
         },
       },
     },

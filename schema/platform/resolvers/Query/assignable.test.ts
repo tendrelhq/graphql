@@ -9,7 +9,7 @@ const schema = makeExecutableSchema({ resolvers, typeDefs });
 process.env.X_TENDREL_USER = "user_2iADtxE5UonU4KO5lphsG59bkR9";
 
 const CHECKLIST =
-  "d29ya2luc3RhbmNlOndvcmstaW5zdGFuY2VfMDA4NWE3Y2YtMmI5ZC00MDU2LTlhYzUtYTBiNTgxYTliNmZh";
+  "d29ya2luc3RhbmNlOndvcmstaW5zdGFuY2VfODkzMGFkMTItNDcxZi00MDZhLWE0YjYtMGYwZjI3ZTgwMzk2";
 const RUGG =
   "d29ya2VyOndvcmtlci1pbnN0YW5jZV9jYmNiNTYwNy0zNzNhLTQ1ZGYtYWFlMC0wMWJkZGRjNzQ0ZTQ=";
 const NOT_ASSIGNABLE =

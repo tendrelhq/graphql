@@ -10,12 +10,12 @@ describe.skipIf(!!process.env.CI)("setValue", () => {
   test("lazy instantiation", async () => {
     const result = await execute(schema, TestSetValueDocument, {
       parent:
-        "d29ya2luc3RhbmNlOndvcmstaW5zdGFuY2VfMDA4NWE3Y2YtMmI5ZC00MDU2LTlhYzUtYTBiNTgxYTliNmZh",
+        "d29ya2luc3RhbmNlOndvcmstaW5zdGFuY2VfZDZjNTljM2EtOWQ1MS00MDc0LTllNjItZTkzZTgxOWIxZWFh",
       entity:
-        "d29ya3Jlc3VsdDp3b3JrLXJlc3VsdF9hYjE3N2IwMS0yNjA4LTQxOTgtYmI4Zi0yZjMzYTRhM2QzNTg=",
+        "d29ya3Jlc3VsdDp3b3JrLXJlc3VsdF9mODc1OWM3Ny01OGMwLTRlY2YtYjNjMC02Y2Y3NmM0ZTIyYjQ=",
       input: {
-        string: {
-          value: "hello world",
+        number: {
+          value: 42,
         },
       },
     });
