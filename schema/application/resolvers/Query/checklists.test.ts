@@ -9,19 +9,19 @@ const schema = makeExecutableSchema({ resolvers, typeDefs });
 const LIMIT = 10;
 const SKIP_IN_CI = !!process.env.CI;
 
-// RCL
+// Customer 0
 const PARENT =
-  "b3JnYW5pemF0aW9uOmN1c3RvbWVyXzFiMmQ2YzYwLTg2NzgtNDVhZC1iMzBkLWExMDMyM2MyYzQ0MQ==";
+  "b3JnYW5pemF0aW9uOmN1c3RvbWVyXzQyY2I5NGVlLWVjMDctNGQzMy04OGVkLTlkNDk2NTllNjhiZQ==";
 
 describe("checklists", () => {
-  test.skipIf(SKIP_IN_CI)("default only lists worktemplates", async () => {
+  test.skipIf(SKIP_IN_CI)("AST entrypoint by default", async () => {
     const result = await execute(schema, TestDocument, {
       parent: PARENT,
       limit: LIMIT,
     });
-    expect(result).toMatchSnapshot();
-    expect(result.data?.checklists.edges.length).toBe(LIMIT);
     expect(result.errors).toBeFalsy();
+    expect(result.data?.checklists.edges.length).toBe(2);
+    expect(result).toMatchSnapshot();
   });
 
   describe.skipIf(SKIP_IN_CI)("filters", () => {
@@ -29,10 +29,11 @@ describe("checklists", () => {
       const result = await execute(schema, TestDocument, {
         parent: PARENT,
         limit: LIMIT,
-        withName: "shallow",
+        withName: "please",
       });
-      expect(result).toMatchSnapshot();
       expect(result.errors).toBeFalsy();
+      expect(result.data?.checklists.edges.length).toBe(1);
+      expect(result).toMatchSnapshot();
     });
 
     test("withStatus", async () => {
@@ -41,19 +42,21 @@ describe("checklists", () => {
         limit: LIMIT,
         withStatus: ["open"],
       });
-      expect(result).toMatchSnapshot();
       expect(result.errors).toBeFalsy();
+      expect(result.data?.checklists.edges.length).toBe(2);
+      expect(result).toMatchSnapshot();
     });
 
     test("withName & withStatus", async () => {
       const result = await execute(schema, TestDocument, {
         parent: PARENT,
         limit: LIMIT,
-        withName: "eck",
+        withName: "please",
         withStatus: ["open"],
       });
-      expect(result).toMatchSnapshot();
       expect(result.errors).toBeFalsy();
+      expect(result.data?.checklists.edges.length).toBe(1);
+      expect(result).toMatchSnapshot();
     });
   });
 
@@ -61,23 +64,21 @@ describe("checklists", () => {
     test("forward", async () => {
       const r0 = await execute(schema, TestDocument, {
         parent: PARENT,
-        limit: LIMIT,
+        limit: 1,
       });
       expect(r0.errors).toBeFalsy();
       expect(r0.data?.checklists).toMatchObject({
         pageInfo: {
-          // startCursor: expect.any(String),
-          // endCursor: expect.any(String),
           hasNextPage: true,
           hasPreviousPage: false,
         },
       });
-      expect(r0.data?.checklists.edges.length).toBe(LIMIT);
+      expect(r0.data?.checklists.edges.length).toBe(1);
 
       const r1 = await execute(schema, TestDocument, {
         parent: PARENT,
         cursor: r0.data?.checklists.pageInfo.endCursor ?? undefined,
-        limit: LIMIT,
+        limit: 5,
       });
       expect(r1.errors).toBeFalsy();
       expect(r1.data?.checklists).toMatchObject({
@@ -87,8 +88,7 @@ describe("checklists", () => {
           hasPreviousPage: false,
         },
       });
-      // FIXME: all of these tests are hardcoded right now :P
-      expect(r1.data?.checklists.edges.length).toBe(2);
+      expect(r1.data?.checklists.edges.length).toBe(1);
 
       const s0 = new Set(r0.data?.checklists.edges.map(e => e.node.id) ?? []);
       const s1 = new Set(r1.data?.checklists.edges.map(e => e.node.id) ?? []);
@@ -98,16 +98,35 @@ describe("checklists", () => {
     });
   });
 
-  test("invalid parent", async () => {
-    const result = await execute(schema, TestDocument, {
-      parent: testGlobalId(),
-      limit: LIMIT,
+  describe("invalid parent", async () => {
+    test("ast (i.e. worktemplate)", async () => {
+      const result = await execute(schema, TestDocument, {
+        parent: testGlobalId(),
+        limit: LIMIT,
+        // <-- no filters mean we'll start in the AST
+      });
+      expect(result.errors?.at(0)).toMatchObject({
+        message:
+          "Type '__test__' is an invalid parent type for type 'Checklist'",
+        extensions: {
+          code: "TYPE_ERROR",
+        },
+      });
     });
-    expect(result.errors?.at(0)).toMatchObject({
-      message: "Type '__test__' is an invalid parent type for type 'Checklist'",
-      extensions: {
-        code: "TYPE_ERROR",
-      },
+
+    test("ecs (i.e. workinstance)", async () => {
+      const result = await execute(schema, TestDocument, {
+        parent: testGlobalId(),
+        limit: LIMIT,
+        withStatus: ["open"], // <-- this means we'll start in the ECS
+      });
+      expect(result.errors?.at(0)).toMatchObject({
+        message:
+          "Type '__test__' is an invalid parent type for type 'Checklist'",
+        extensions: {
+          code: "TYPE_ERROR",
+        },
+      });
     });
   });
 

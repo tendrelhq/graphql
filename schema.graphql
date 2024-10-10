@@ -937,7 +937,7 @@ TODO
 """
 type ReferenceWidget implements Component {
   id: ID!
-  possibleTypes: [String!]
+  possibleTypes: [String!]!
   ref: Referenceable
 }
 
@@ -945,6 +945,7 @@ type ReferenceWidget implements Component {
 TODO
 """
 input ReferenceWidgetInput {
+  possibleTypes: [String!]!
   value: ID
 }
 

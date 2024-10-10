@@ -12,8 +12,7 @@ exports[`setValue lazy instantiation 1`] = `
           "__typename": "ChecklistOpen",
         },
         "widget": {
-          "__typename": "StringWidget",
-          "string": "hello world",
+          "__typename": "NumberWidget",
         },
       },
       "parent": {

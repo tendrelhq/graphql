@@ -1,24 +1,6 @@
 // Bun Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`assign not assignable entity 1`] = `
-{
-  "data": null,
-  "errors": [
-    [GraphQLError: Entity cannot be assigned],
-  ],
-}
-`;
-
-exports[`assign not assignable to 1`] = `
-{
-  "data": null,
-  "errors": [
-    [GraphQLError: Entity cannot be assigned],
-  ],
-}
-`;
-
-exports[`assign assign checklist to worker 1`] = `
+exports[`assign, assign again, unassign assign 1`] = `
 {
   "data": {
     "assign": {
@@ -50,41 +32,21 @@ exports[`assign assign checklist to worker 1`] = `
 }
 `;
 
-exports[`assign already assigned 1`] = `
-{
-  "data": null,
-  "errors": [
-    [GraphQLError: Entity already assigned],
-  ],
-}
-`;
-
-exports[`assign idempotent 1`] = `
+exports[`assign, assign again, unassign unassign 1`] = `
 {
   "data": {
-    "assign": {
-      "__typename": "AssignmentPayload",
-      "assignedTo": {
-        "__typename": "Worker",
-        "displayName": "Will Ruggiano",
-      },
+    "unassign": {
+      "__typename": "UnassignmentPayload",
       "entity": {
         "__typename": "Checklist",
         "assignees": {
           "__typename": "AssigneeConnection",
-          "edges": [
-            {
-              "__typename": "AssigneeEdge",
-              "node": {
-                "__typename": "Assignee",
-                "assignedTo": {
-                  "__typename": "Worker",
-                  "displayName": "Will Ruggiano",
-                },
-              },
-            },
-          ],
+          "edges": [],
         },
+      },
+      "unassignedFrom": {
+        "__typename": "Worker",
+        "displayName": "Will Ruggiano",
       },
     },
   },

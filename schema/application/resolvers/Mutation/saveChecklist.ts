@@ -277,14 +277,11 @@ export const saveChecklist: NonNullable<
         ),
 
         site AS (
-            SELECT
-                locationid AS id,
-                locationcategoryid AS type
+            SELECT locationid AS id
             FROM public.location
             INNER JOIN inputs
                 ON locationcustomerid = inputs.customer
-            WHERE
-                locationistop = true
+            WHERE locationistop = true
             LIMIT 1
         )
 
@@ -294,7 +291,6 @@ export const saveChecklist: NonNullable<
             worktemplatecustomerid,
             worktemplatedescriptionid,
             worktemplateisauditable,
-            worktemplatelocationtypeid,
             worktemplatenameid,
             worktemplatesiteid,
             worktemplatesoplink,
@@ -306,7 +302,6 @@ export const saveChecklist: NonNullable<
             inputs.customer,
             description.id,
             inputs.auditable,
-            site.type,
             name.id,
             site.id,
             inputs.sop,
@@ -435,6 +430,35 @@ export const saveChecklist: NonNullable<
                 (t.systagparentid, t.systagtype) = (699, 'Entity')
                 AND
                 (e.systagparentid, e.systagtype) = (849, 'Location')
+        ),
+
+        widget AS (
+            SELECT custagid AS type
+            FROM public.custag, inputs
+            WHERE
+                custagcustomerid = inputs.worktemplatecustomerid
+                AND custagsystagid = (
+                    SELECT systagid
+                    FROM public.systag
+                    WHERE
+                        systagparentid = 1
+                        AND systagtype = 'Widget Type'
+                )
+                AND custagtype = 'Location'
+            UNION
+            SELECT custagid AS type
+            FROM public.custag
+            WHERE
+                custagcustomerid = 0
+                AND custagsystagid = (
+                    SELECT systagid
+                    FROM public.systag
+                    WHERE
+                        systagparentid = 1
+                        AND systagtype = 'Widget Type'
+                )
+                AND custagtype = 'Location'
+            LIMIT 1
         )
 
         INSERT INTO public.workresult (
@@ -450,6 +474,7 @@ export const saveChecklist: NonNullable<
             workresultsiteid,
             workresultsoplink,
             workresulttypeid,
+            workresultwidgetid,
             workresultworktemplateid
         )
         SELECT
@@ -465,8 +490,9 @@ export const saveChecklist: NonNullable<
             inputs.worktemplatesiteid,
             null,
             type.type,
+            widget.type,
             inputs.worktemplateid
-        FROM inputs, type, name
+        FROM inputs, name, type, widget
       `;
 
       // Create the primary worker result. This essentially maps to an
@@ -504,6 +530,35 @@ export const saveChecklist: NonNullable<
                 (t.systagparentid, t.systagtype) = (699, 'Entity')
                 AND
                 (e.systagparentid, e.systagtype) = (849, 'Worker')
+        ),
+
+        widget AS (
+            SELECT custagid AS type
+            FROM public.custag, inputs
+            WHERE
+                custagcustomerid = inputs.worktemplatecustomerid
+                AND custagsystagid = (
+                    SELECT systagid
+                    FROM public.systag
+                    WHERE
+                        systagparentid = 1
+                        AND systagtype = 'Widget Type'
+                )
+                AND custagtype = 'Location'
+            UNION
+            SELECT custagid AS type
+            FROM public.custag
+            WHERE
+                custagcustomerid = 0
+                AND custagsystagid = (
+                    SELECT systagid
+                    FROM public.systag
+                    WHERE
+                        systagparentid = 1
+                        AND systagtype = 'Widget Type'
+                )
+                AND custagtype = 'Location'
+            LIMIT 1
         )
 
         INSERT INTO public.workresult (
@@ -519,6 +574,7 @@ export const saveChecklist: NonNullable<
             workresultsiteid,
             workresultsoplink,
             workresulttypeid,
+            workresultwidgetid,
             workresultworktemplateid
         )
         SELECT
@@ -534,13 +590,13 @@ export const saveChecklist: NonNullable<
             inputs.worktemplatesiteid,
             null,
             type.type,
+            widget.type,
             inputs.worktemplateid
-        FROM inputs, type, name
+        FROM inputs, name, type, widget
       `;
 
-      // Assign the correct worktemplatelocationtypeid and create a template
-      // constraint for location. This is necessary for the rules engine to
-      // correctly (re)spawn instances.
+      // Create a template constraint for (primary) location.
+      // This is necessary for the rules engine to correctly (re)spawn instances.
       const r7 = await tx`
         INSERT INTO public.worktemplateconstraint (
             worktemplateconstraintcustomerid,
@@ -559,6 +615,7 @@ export const saveChecklist: NonNullable<
         FROM
             public.worktemplate AS wt,
             public.customer AS c,
+            public.location AS l,
             public.custag AS ct,
             public.systag AS cd
         WHERE
@@ -566,7 +623,9 @@ export const saveChecklist: NonNullable<
             AND
             wt.worktemplatecustomerid = c.customerid
             AND
-            wt.worktemplatelocationtypeid = ct.custagid
+            wt.worktemplatesiteid = l.locationid
+            AND
+            l.locationcategoryid = ct.custagid
             AND (
                 cd.systagparentid = 849
                 AND
@@ -698,8 +757,34 @@ async function saveChecklistResults(
                   `,
                   i.result.widget
                     ? tx`
-                        WITH inputs (type, reftype, value) AS (
+                        WITH inputs (type, widget, reftype, value) AS (
                             VALUES (
+                                ${(() => {
+                                  switch (true) {
+                                    case "checkbox" in i.result.widget:
+                                      return "Boolean";
+                                    case "clicker" in i.result.widget:
+                                      return "Number";
+                                    case "duration" in i.result.widget:
+                                      return "Duration";
+                                    case "multiline" in i.result.widget:
+                                      return "String";
+                                    case "number" in i.result.widget:
+                                      return "Number";
+                                    case "reference" in i.result.widget:
+                                      return "Entity";
+                                    case "sentiment" in i.result.widget:
+                                      return "Number";
+                                    case "string" in i.result.widget:
+                                      return "String";
+                                    case "temporal" in i.result.widget:
+                                      return "Date";
+                                    default: {
+                                      const _: never = i.result.widget;
+                                      throw "invariant violated";
+                                    }
+                                  }
+                                })()}::text,
                                 ${(() => {
                                   switch (true) {
                                     case "checkbox" in i.result.widget:
@@ -713,9 +798,11 @@ async function saveChecklistResults(
                                     case "number" in i.result.widget:
                                       return "Number";
                                     case "reference" in i.result.widget:
-                                      return "Entity";
+                                      // biome-ignore lint/style/noNonNullAssertion:
+                                      return i.result.widget.reference!
+                                        .possibleTypes[0];
                                     case "sentiment" in i.result.widget:
-                                      return "Sentiment";
+                                      return "Number";
                                     case "string" in i.result.widget:
                                       return "String";
                                     case "temporal" in i.result.widget:
@@ -868,14 +955,76 @@ async function saveChecklistResults(
               ? [
                   // create
                   tx`
-                    WITH inputs (id, type, reftype, value, name, locale, auditable, required, sop) AS (
-                        VALUES (
-                            (
-                                SELECT worktemplateid
-                                FROM public.worktemplate
-                                WHERE id = ${parent}
-                            ),
-                            ${(() => {
+                    WITH p AS (
+                        SELECT
+                            worktemplateid AS id,
+                            worktemplatecustomerid AS customer,
+                            worktemplatesiteid AS location
+                        FROM public.worktemplate
+                        WHERE id = ${parent}
+                    ),
+
+                    t AS (
+                        SELECT
+                            t.systagid AS type,
+                            r.systagid AS entity
+                        FROM public.systag AS t
+                        LEFT JOIN public.systag AS r
+                            ON
+                                r.systagparentid = 849
+                                AND
+                                r.systagtype = ${match(
+                                  i.result.widget.reference?.possibleTypes.at(
+                                    0,
+                                  ),
+                                )
+                                  .with("Location", () => "Location")
+                                  .with("Worker", () => "Worker")
+                                  .otherwise(() => null)}::text
+                        WHERE
+                            t.systagparentid = 699
+                            AND
+                            t.systagtype = ${(() => {
+                              switch (true) {
+                                case "checkbox" in i.result.widget:
+                                  return "Boolean";
+                                case "clicker" in i.result.widget:
+                                  return "Number";
+                                case "duration" in i.result.widget:
+                                  return "Duration";
+                                case "multiline" in i.result.widget:
+                                  return "String";
+                                case "number" in i.result.widget:
+                                  return "Number";
+                                case "reference" in i.result.widget:
+                                  return "Entity";
+                                case "sentiment" in i.result.widget:
+                                  return "Number";
+                                case "string" in i.result.widget:
+                                  return "String";
+                                case "temporal" in i.result.widget:
+                                  return "Date";
+                                default: {
+                                  const _: never = i.result.widget;
+                                  throw "invariant violated";
+                                }
+                              }
+                            })()}
+                    ),
+
+                    w AS (
+                        SELECT custagid AS type
+                        FROM public.custag, p
+                        WHERE
+                            custagcustomerid = p.customer
+                            AND custagsystagid = (
+                                SELECT systagid
+                                FROM public.systag
+                                WHERE
+                                    systagparentid = 1
+                                    AND systagtype = 'Widget Type'
+                            )
+                            AND custagtype = ${(() => {
                               switch (true) {
                                 case "checkbox" in i.result.widget:
                                   return "Boolean";
@@ -888,7 +1037,9 @@ async function saveChecklistResults(
                                 case "number" in i.result.widget:
                                   return "Number";
                                 case "reference" in i.result.widget:
-                                  return "Entity";
+                                  // biome-ignore lint/style/noNonNullAssertion:
+                                  return i.result.widget.reference!
+                                    .possibleTypes[0];
                                 case "sentiment" in i.result.widget:
                                   return "Sentiment";
                                 case "string" in i.result.widget:
@@ -900,19 +1051,52 @@ async function saveChecklistResults(
                                   throw "invariant violated";
                                 }
                               }
-                            })()}::text,
-                            ${
-                              i.result.widget.reference?.value
-                                ? match(
-                                    decodeGlobalId(
-                                      i.result.widget.reference.value,
-                                    ).type,
-                                  )
-                                    .with("location", () => "Location")
-                                    .with("worker", () => "Worker")
-                                    .otherwise(() => null)
-                                : null
-                            }::text,
+                            })()}
+                        UNION
+                        SELECT custagid AS type
+                        FROM public.custag
+                        WHERE
+                            custagcustomerid = 0
+                            AND custagsystagid = (
+                                SELECT systagid
+                                FROM public.systag
+                                WHERE
+                                    systagparentid = 1
+                                    AND systagtype = 'Widget Type'
+                            )
+                            AND custagtype = ${(() => {
+                              switch (true) {
+                                case "checkbox" in i.result.widget:
+                                  return "Boolean";
+                                case "clicker" in i.result.widget:
+                                  return "Clicker";
+                                case "duration" in i.result.widget:
+                                  return "Duration";
+                                case "multiline" in i.result.widget:
+                                  return "Text";
+                                case "number" in i.result.widget:
+                                  return "Number";
+                                case "reference" in i.result.widget:
+                                  // biome-ignore lint/style/noNonNullAssertion:
+                                  return i.result.widget.reference!
+                                    .possibleTypes[0];
+                                case "sentiment" in i.result.widget:
+                                  return "Sentiment";
+                                case "string" in i.result.widget:
+                                  return "String";
+                                case "temporal" in i.result.widget:
+                                  return "Date";
+                                default: {
+                                  const _: never = i.result.widget;
+                                  throw "invariant violated";
+                                }
+                              }
+                            })()}
+                        LIMIT 1
+                    ),
+
+                    v (value) AS (
+                        VALUES (
                             ${(() => {
                               switch (true) {
                                 case "checkbox" in i.result.widget:
@@ -944,7 +1128,7 @@ async function saveChecklistResults(
                                             id: P.string,
                                           },
                                           ({ id }) => sql`(
-                                              SELECT locationid
+                                              SELECT locationid::text
                                               FROM public.location
                                               WHERE locationuuid = ${id}
                                           )`,
@@ -952,7 +1136,7 @@ async function saveChecklistResults(
                                         .with(
                                           { type: "worker", id: P.string },
                                           ({ id }) => sql`(
-                                              SELECT workerinstanceid
+                                              SELECT workerinstanceid::text
                                               FROM public.workerinstance
                                               WHERE workerinstanceuuid = ${id}
                                           )`,
@@ -973,57 +1157,38 @@ async function saveChecklistResults(
                                   throw "invariant violated";
                                 }
                               }
-                            })()}::text,
-                            ${i.result.name.value.value}::text,
-                            (
-                                SELECT systagid
-                                FROM public.systag
-                                WHERE
-                                    systagparentid = 2
-                                    AND systagtype = ${i.result.name.value.locale}
-                            ),
-                            ${i.result.auditable?.enabled ?? false}::boolean,
-                            ${i.result.required ?? false}::boolean,
-                            null::text
+                            })()}::text
                         )
                     ),
 
-                    name AS (
+                    n AS (
                         INSERT INTO public.languagemaster (
                             languagemastercustomerid,
                             languagemastersource,
                             languagemastersourcelanguagetypeid
                         )
                         SELECT
-                            wt.worktemplatecustomerid,
-                            inputs.name,
-                            inputs.locale
-                        FROM inputs, public.worktemplate AS wt
-                        WHERE inputs.id = wt.worktemplateid
+                            p.customer,
+                            ${i.result.name.value.value}::text,
+                            locale.systagid
+                        FROM p, public.systag AS locale
+                        WHERE
+                            locale.systagparentid = 2
+                            AND locale.systagtype = ${i.result.name.value.locale}
                         RETURNING languagemasterid AS id
                     ),
 
-                    site AS (
-                        SELECT worktemplatesiteid AS id
-                        FROM public.worktemplate, inputs
-                        WHERE worktemplateid = inputs.id
+                    a (sop) AS (
+                        VALUES (
+                          null::text
+                        )
                     ),
 
-                    type AS (
-                        SELECT
-                            t.systagid AS type,
-                            r.systagid AS reftype
-                        FROM inputs
-                        INNER JOIN public.systag AS t
-                            ON
-                                t.systagparentid = 699
-                                AND
-                                t.systagtype = inputs.type
-                        LEFT JOIN public.systag AS r
-                            ON
-                                r.systagparentid = 849
-                                AND
-                                r.systagtype = inputs.reftype
+                    c (auditable, required) AS (
+                        VALUES (
+                            ${i.result.auditable?.enabled ?? false}::boolean,
+                            ${i.result.required ?? false}::boolean
+                        )
                     )
 
                     INSERT INTO public.workresult (
@@ -1038,23 +1203,24 @@ async function saveChecklistResults(
                         workresultsiteid,
                         workresultsoplink,
                         workresulttypeid,
+                        workresultwidgetid,
                         workresultworktemplateid
                     )
                     SELECT
-                        wt.worktemplatecustomerid,
-                        inputs.value,
-                        type.reftype,
-                        inputs.auditable,
+                        p.customer,
+                        v.value,
+                        t.entity,
+                        c.auditable,
                         true,
-                        inputs.required,
-                        name.id,
+                        c.required,
+                        n.id,
                         0,
-                        site.id,
-                        inputs.sop,
-                        type.type,
-                        wt.worktemplateid
-                    FROM public.worktemplate AS wt, inputs, name, site, type
-                    WHERE wt.worktemplateid = inputs.id
+                        p.location,
+                        a.sop,
+                        t.type,
+                        w.type,
+                        p.id
+                    FROM p, a, c, n, t, v, w
                   `,
                 ]
               : [],
