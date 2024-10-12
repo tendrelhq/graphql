@@ -113,8 +113,6 @@ async function assignWorkInstance(entity: string, to: ID, _ctx: Context) {
               SET
                   workresultinstancevalue = excluded.workresultinstancevalue,
                   workresultinstancemodifieddate = now()
-              WHERE
-                  nullif(wri.workresultinstancevalue, '') IS null
           RETURNING 1
       )
 
