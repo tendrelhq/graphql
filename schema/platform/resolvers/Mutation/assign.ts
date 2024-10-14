@@ -116,7 +116,7 @@ async function assignWorkInstance(entity: string, to: ID, _ctx: Context) {
 
               WHERE
                   nullif(wri.workresultinstancevalue, '') IS null
-                  OR wri.workresultinstancevalue != exclude.workresultinstancevalue
+                  OR wri.workresultinstancevalue != excluded.workresultinstancevalue
           RETURNING 1
       )
 
