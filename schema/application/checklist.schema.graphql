@@ -30,6 +30,12 @@ type Query {
 type Mutation {
   copyFrom(entity: ID!, options: CopyFromOptions!): CopyFromPayload!
   saveChecklist(input: ChecklistInput!): ChecklistEdge!
+  discardChecklist(entity: ID!): DiscardChecklistPayload!
+}
+
+type DiscardChecklistPayload {
+  discardedChecklistIds: [ID!]!
+  edge: ChecklistEdge!
 }
 
 type CopyFromPayload {
