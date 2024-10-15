@@ -1,6 +1,6 @@
 // Bun Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`assign, assign again, unassign assign 1`] = `
+exports[`assign, reassign, unassign assign 1`] = `
 {
   "data": {
     "assign": {
@@ -32,7 +32,39 @@ exports[`assign, assign again, unassign assign 1`] = `
 }
 `;
 
-exports[`assign, assign again, unassign unassign 1`] = `
+exports[`assign, reassign, unassign reassign 1`] = `
+{
+  "data": {
+    "assign": {
+      "__typename": "AssignmentPayload",
+      "assignedTo": {
+        "__typename": "Worker",
+        "displayName": "Mike Heavner",
+      },
+      "entity": {
+        "__typename": "Checklist",
+        "assignees": {
+          "__typename": "AssigneeConnection",
+          "edges": [
+            {
+              "__typename": "AssigneeEdge",
+              "node": {
+                "__typename": "Assignee",
+                "assignedTo": {
+                  "__typename": "Worker",
+                  "displayName": "Mike Heavner",
+                },
+              },
+            },
+          ],
+        },
+      },
+    },
+  },
+}
+`;
+
+exports[`assign, reassign, unassign unassign 1`] = `
 {
   "data": {
     "unassign": {
@@ -46,7 +78,7 @@ exports[`assign, assign again, unassign unassign 1`] = `
       },
       "unassignedFrom": {
         "__typename": "Worker",
-        "displayName": "Will Ruggiano",
+        "displayName": "Mike Heavner",
       },
     },
   },

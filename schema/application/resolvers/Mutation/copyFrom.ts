@@ -37,7 +37,7 @@ export async function copyFromWorkTemplate(
   options: CopyFromOptions,
 ): Promise<CopyFromPayload> {
   const [edge] = await sql.begin(async tx => {
-    const [row] = await tx<[{ _key: number; id: string }]>`
+    const [row] = await tx<[{ _key: number; id: string }?]>`
         INSERT INTO public.workinstance (
             workinstancecustomerid,
             workinstancesiteid,
@@ -87,6 +87,11 @@ export async function copyFromWorkTemplate(
             workinstanceid AS "_key",
             encode(('workinstance:' || workinstance.id)::bytea, 'base64') AS id
     `;
+
+    if (!row) {
+      console.debug(`No worktemplate exists for the given id '${id}'`);
+      throw "invariant violated";
+    }
 
     const result = await tx`
         INSERT INTO public.workresultinstance (

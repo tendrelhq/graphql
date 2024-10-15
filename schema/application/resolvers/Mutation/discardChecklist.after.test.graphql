@@ -1,0 +1,5 @@
+mutation TestAfterDiscardChecklist($id: ID!, $at: TemporalInput!) {
+  setStatus(entity: $id, input: { inProgress: { at: $at } }) {
+    delta
+  }
+}
