@@ -10,38 +10,35 @@ const schema = makeExecutableSchema({ resolvers, typeDefs });
 process.env.X_TENDREL_USER = "user_2iADtxE5UonU4KO5lphsG59bkR9";
 
 const CHECKLIST =
-  "d29ya2luc3RhbmNlOndvcmstaW5zdGFuY2VfNWYxNmFkYzQtM2IyZS00Y2ZkLThlOTEtZDU2OGRjYmJmZjE4";
+  "d29ya2luc3RhbmNlOndvcmstaW5zdGFuY2VfMTFiZGIyNDEtODU0Ny00NjRhLWI5NGItMjhlYjgwNGY0Mjgy";
 const RUGG =
   "d29ya2VyOndvcmtlci1pbnN0YW5jZV9jYmNiNTYwNy0zNzNhLTQ1ZGYtYWFlMC0wMWJkZGRjNzQ0ZTQ=";
 const MIKE =
   "d29ya2VyOndvcmtlci1pbnN0YW5jZV83NWJmMjgwOC1hNDk2LTQxOGItOTg1Zi03OTIzZmJjMjVkMzE=";
 
-describe.skipIf(!!process.env.CI)("assign, assign again, unassign", () => {
+describe.skipIf(!!process.env.CI)("assign, reassign, unassign", () => {
   test("assign", async () => {
     const result = await execute(schema, TestAssignDocument, {
       entity: CHECKLIST,
       to: RUGG,
     });
+    expect(result.errors).toBeFalsy();
     expect(result).toMatchSnapshot();
   });
 
-  test("assign again", async () => {
+  test("reassign", async () => {
     const result = await execute(schema, TestAssignDocument, {
       entity: CHECKLIST,
       to: MIKE,
     });
-    expect(result.errors?.at(0)).toMatchObject({
-      message: "Entity already assigned",
-      extensions: {
-        code: "E_ASSIGN_CONFLICT",
-      },
-    });
+    expect(result.errors).toBeFalsy();
+    expect(result).toMatchSnapshot();
   });
 
   test("unassign", async () => {
     const result = await execute(schema, TestUnassignDocument, {
       entity: CHECKLIST,
-      from: RUGG,
+      from: MIKE,
     });
     expect(result).toMatchSnapshot();
   });
@@ -49,7 +46,7 @@ describe.skipIf(!!process.env.CI)("assign, assign again, unassign", () => {
   afterAll(async () => {
     await execute(schema, TestUnassignDocument, {
       entity: CHECKLIST,
-      from: RUGG,
+      from: MIKE,
     });
   });
 });
