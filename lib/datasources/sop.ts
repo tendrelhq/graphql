@@ -43,6 +43,20 @@ export function makeSopLoader(_req: Request) {
                     AND worktemplatesoplink IS NOT NULL
             `,
         )
+        .with(
+          "workinstance",
+          () => sql`
+                SELECT
+                    id AS _key,
+                    encode(('workinstance:' || id || ':sop')::bytea, 'base64') AS id,
+                    workinstancesoplink AS sop
+                FROM public.workinstance
+                WHERE
+                    id IN ${sql(ids)}
+                    AND workinstancesoplink IS NOT NULL
+            `,
+        )
+
         .otherwise(() => []),
     );
 
