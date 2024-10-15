@@ -14,8 +14,8 @@ export const unassign: NonNullable<MutationResolvers["unassign"]> = async (
   switch (type) {
     case "workinstance":
       return unassignWorkInstance(id, from, ctx);
-    case "worktemplate":
-      return unassignWorkTemplate(id, from, ctx);
+    // case "worktemplate":
+    //   return unassignWorkTemplate(id, from, ctx);
   }
 
   throw new GraphQLError("Entity cannot be (un)assigned", {
@@ -36,7 +36,7 @@ async function unassignWorkInstance(entity: string, from: ID, _ctx: Context) {
     });
   }
 
-  const result = await sql`
+  const rows = await sql<{ id: string }[]>`
       WITH entity AS (
           SELECT
               wi.workinstanceid,
@@ -77,7 +77,7 @@ async function unassignWorkInstance(entity: string, from: ID, _ctx: Context) {
               wr.workresultisprimary = true
       ),
 
-      other AS (
+      assignee AS (
           SELECT w.workerinstanceid
           FROM public.workerinstance AS w
           WHERE w.workerinstanceuuid = ${id}
@@ -88,45 +88,41 @@ async function unassignWorkInstance(entity: string, from: ID, _ctx: Context) {
           SET
               workresultinstancevalue = null,
               workresultinstancemodifieddate = now()
-          FROM entity, ast, other
+          FROM entity, ast
           WHERE
               workresultinstanceworkinstanceid IN (
                   SELECT workinstanceid
                   FROM entity
               )
-              AND
-              workresultinstanceworkresultid IN (
+              AND workresultinstanceworkresultid IN (
                   SELECT workresultid
                   FROM ast
               )
-              AND
-              wri.workresultinstancevalue IN (
+              AND wri.workresultinstancevalue IN (
                   SELECT workerinstanceid::text
-                  FROM other
+                  FROM assignee
               )
-          RETURNING 1
+          RETURNING encode(('workresultinstance:' || wri.workresultinstanceuuid)::bytea, 'base64') AS id
       )
 
-      SELECT 1
+      SELECT id
       FROM delta
       UNION ALL
-      SELECT 1
+      SELECT encode(('workresultinstance:' || wri.workresultinstanceuuid)::bytea, 'base64') AS id
       FROM public.workresultinstance AS wri
       WHERE
           wri.workresultinstanceworkinstanceid IN (
               SELECT workinstanceid
               FROM entity
           )
-          AND
-          wri.workresultinstanceworkresultid IN (
+          AND wri.workresultinstanceworkresultid IN (
               SELECT workresultid
               FROM ast
           )
-          AND
-          wri.workresultinstancevalue IS null
+          AND wri.workresultinstancevalue IS null
   `;
 
-  if (!result.length) {
+  if (!rows.length) {
     throw new GraphQLError("Entity already (un)assigned", {
       extensions: {
         code: "E_ASSIGN_CONFLICT",
@@ -134,7 +130,7 @@ async function unassignWorkInstance(entity: string, from: ID, _ctx: Context) {
     });
   }
 
-  if (result.length === 2) {
+  if (rows.length === 2) {
     throw "invariant violated";
   }
 
@@ -147,6 +143,7 @@ async function unassignWorkInstance(entity: string, from: ID, _ctx: Context) {
       __typename: "Worker",
       id: from,
     },
+    unassignedAssignees: rows.map(r => r.id),
   } as ResolversTypes["UnassignmentPayload"];
 }
 

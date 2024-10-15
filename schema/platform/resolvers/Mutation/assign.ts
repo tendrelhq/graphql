@@ -33,7 +33,6 @@ async function assignWorkInstance(entity: string, to: ID, _ctx: Context) {
   // First though we must check that we actually did get a Worker as part of the
   // operation.
   const { type, id } = decodeGlobalId(to);
-  console.log("to", { type, id });
   if (type !== "worker") {
     throw new GraphQLError("Entity cannot be assigned", {
       extensions: {
@@ -45,7 +44,7 @@ async function assignWorkInstance(entity: string, to: ID, _ctx: Context) {
   // Now we upsert the workresultinstance. On conflict (i.e. the workinstance is
   // already assigned) we do nothing and subsequently return an error indicating
   // that the entity has already been assigned.
-  const result = await sql`
+  const rows = await sql<{ id: string }[]>`
       WITH entity AS (
           SELECT
               wi.workinstanceid,
@@ -88,7 +87,7 @@ async function assignWorkInstance(entity: string, to: ID, _ctx: Context) {
               wr.workresultisprimary = true
       ),
 
-      other AS (
+      assignee AS (
           SELECT w.workerinstanceid
           FROM public.workerinstance AS w
           WHERE w.workerinstanceuuid = ${id}
@@ -105,40 +104,37 @@ async function assignWorkInstance(entity: string, to: ID, _ctx: Context) {
               entity.workinstancecustomerid,
               entity.workinstanceid,
               ast.workresultid,
-              other.workerinstanceid::text
-          FROM entity, ast, other
+              assignee.workerinstanceid::text
+          FROM entity, ast, assignee
           ON CONFLICT
               (workresultinstanceworkinstanceid, workresultinstanceworkresultid)
           DO UPDATE
               SET
                   workresultinstancevalue = excluded.workresultinstancevalue,
                   workresultinstancemodifieddate = now()
-
               WHERE
                   nullif(wri.workresultinstancevalue, '') IS null
                   OR wri.workresultinstancevalue != excluded.workresultinstancevalue
-          RETURNING 1
+          RETURNING encode(('workresultinstance:' || wri.workresultinstanceuuid)::bytea, 'base64') AS id
       )
 
-      SELECT 1
+      SELECT id
       FROM delta
       UNION ALL
-      SELECT 1
+      SELECT encode(('workresultinstace:' || wri.workresultinstanceuuid)::bytea, 'base64') AS id
       FROM public.workresultinstance AS wri
       WHERE
           wri.workresultinstanceworkinstanceid IN (
               SELECT workinstanceid
               FROM entity
           )
-          AND
-          wri.workresultinstanceworkresultid IN (
+          AND wri.workresultinstanceworkresultid IN (
               SELECT workresultid
               FROM ast
           )
-          AND
-          wri.workresultinstancevalue IN (
+          AND wri.workresultinstancevalue IN (
               SELECT workerinstanceid::text
-              FROM other
+              FROM assignee
           )
   `;
 
@@ -158,7 +154,7 @@ async function assignWorkInstance(entity: string, to: ID, _ctx: Context) {
    * case, which is an existing Assignee (workresultinstance) for the given Worker.
    */
 
-  if (!result.length) {
+  if (!rows.length) {
     throw new GraphQLError("Entity already assigned", {
       extensions: {
         code: "E_ASSIGN_CONFLICT",
@@ -166,7 +162,7 @@ async function assignWorkInstance(entity: string, to: ID, _ctx: Context) {
     });
   }
 
-  if (result.length === 2) {
+  if (rows.length === 2) {
     throw "invariant violated";
   }
 
@@ -178,6 +174,12 @@ async function assignWorkInstance(entity: string, to: ID, _ctx: Context) {
     assignedTo: {
       __typename: "Worker",
       id: to,
+    },
+    assignee: {
+      cursor: rows[0].id,
+      node: {
+        id: rows[0].id,
+      },
     },
   } as ResolversTypes["AssignmentPayload"];
 }

@@ -17,7 +17,6 @@ import type { Fragment } from "postgres";
 import { match } from "ts-pattern";
 
 type ParentType = "organization" | "workinstance";
-type Row = { __typename: "Checklist"; id: string };
 
 export const checklists: NonNullable<QueryResolvers["checklists"]> = async (
   _,

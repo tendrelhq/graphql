@@ -63,12 +63,14 @@ type AssignableEdge implements Edge {
 
 type AssignmentPayload {
   entity: Assignable!
-  assignedTo: Assignable!
+  assignedTo: Assignable! @deprecated
+  assignee: AssigneeEdge!
 }
 
 type UnassignmentPayload {
   entity: Assignable!
-  unassignedFrom: Assignable!
+  unassignedFrom: Assignable! @deprecated
+  unassignedAssignees: [ID!]!
 }
 
 extend type Query {

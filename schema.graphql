@@ -90,7 +90,8 @@ input AssigneeInput {
 }
 
 type AssignmentPayload {
-  assignedTo: Assignable!
+  assignedTo: Assignable! @deprecated
+  assignee: AssigneeEdge!
   entity: Assignable!
 }
 
@@ -1179,7 +1180,8 @@ scalar URL
 
 type UnassignmentPayload {
   entity: Assignable!
-  unassignedFrom: Assignable!
+  unassignedAssignees: [ID!]!
+  unassignedFrom: Assignable! @deprecated
 }
 
 input UpdateLocationInput {
