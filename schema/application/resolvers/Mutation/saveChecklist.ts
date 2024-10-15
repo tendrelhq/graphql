@@ -8,6 +8,7 @@ import type {
 } from "@/schema";
 import { decodeGlobalId } from "@/schema/system";
 import { P, match } from "ts-pattern";
+import { copyFromWorkTemplate } from "./copyFrom";
 
 export const saveChecklist: NonNullable<
   MutationResolvers["saveChecklist"]
@@ -24,8 +25,6 @@ export const saveChecklist: NonNullable<
   if (type !== "worktemplate") {
     throw new Error("Can only modify templates right now");
   }
-
-  console.log("INPUT", JSON.stringify(input, null, 2));
 
   const { count: exists } =
     await sql`SELECT 1 FROM public.worktemplate WHERE id = ${id}`;
@@ -643,6 +642,9 @@ export const saveChecklist: NonNullable<
   if (input.items?.length) {
     await saveChecklistResults(id, input.items);
   }
+
+  // Create an Open instance of the newly created Checklist template.
+  await copyFromWorkTemplate(id, {});
 
   return {
     cursor: input.id.toString(),
