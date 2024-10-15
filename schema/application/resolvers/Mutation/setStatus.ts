@@ -3,6 +3,7 @@ import type { MutationResolvers } from "@/schema";
 import { decodeGlobalId } from "@/schema/system";
 import { GraphQLError } from "graphql";
 import { match } from "ts-pattern";
+import { copyFromWorkInstance } from "./copyFrom";
 
 export const setStatus: NonNullable<MutationResolvers["setStatus"]> = async (
   _,
@@ -41,63 +42,72 @@ export const setStatus: NonNullable<MutationResolvers["setStatus"]> = async (
     .with("workinstance", () =>
       sql.begin(async tx => {
         const r0 = await tx`
-          WITH inputs AS (
-              SELECT systagid AS status
-              FROM public.systag
-              WHERE
-                  systagparentid = 705
-                  AND
-                  systagtype = ${targetStatus}
-          )
-
-          UPDATE public.workinstance
-          SET
-              workinstancestatusid = inputs.status,
-              workinstancemodifieddate = now()
-          FROM inputs
-          WHERE
-              id = ${id}
-              AND
-              workinstancestatusid != inputs.status
+           WITH inputs AS (
+               SELECT systagid AS status
+               FROM public.systag
+               WHERE
+                   systagparentid = 705
+                   AND
+                   systagtype = ${targetStatus}
+           )
+      
+           UPDATE public.workinstance
+           SET
+               workinstancestatusid = inputs.status,
+               workinstancemodifieddate = now()
+           FROM inputs
+           WHERE
+               id = ${id}
+               AND
+               workinstancestatusid != inputs.status
         `;
 
-        const r1 = await (() => {
-          switch (targetStatus) {
-            case "Open":
-              return tx`
+        const r1 = await match(targetStatus)
+          .with(
+            "Open",
+            () => tx`
                 UPDATE public.workinstance
                 SET
-                    workinstancestartdate = null,
-                    workinstancecompleteddate = null,
-                    workinstancemodifieddate = now()
+                   workinstancestartdate = null,
+                   workinstancecompleteddate = null,
+                   workinstancemodifieddate = now()
                 WHERE id = ${id}
-              `;
-            case "In Progress":
-              return tx`
+            `,
+          )
+          .with(
+            "In Progress",
+            () => tx`
                 UPDATE public.workinstance
                 SET
                     workinstancestartdate = now(),
                     workinstancecompleteddate = null,
                     workinstancemodifieddate = now()
                 WHERE id = ${id}
-              `;
-            case "Complete":
-              return tx`
+            `,
+          )
+          .with(
+            "Complete",
+            () => tx`
                 UPDATE public.workinstance
                 SET
                     workinstancecompleteddate = now(),
                     workinstancemodifieddate = now()
                 WHERE id = ${id}
-              `;
-          }
-        })();
+            `,
+          )
+          .exhaustive();
+
+        if (targetStatus === "In Progress") {
+          // HACK: this is "running the rules engine" for now lmao.
+          await copyFromWorkInstance(tx, id, {});
+        }
 
         return [r0, r1];
       }),
     )
     .with("workresultinstance", () =>
-      sql.begin(async tx => {
-        const r0 = await tx`
+      sql.begin(tx => [
+        tx`
           WITH inputs AS (
               SELECT systagid AS status
               FROM public.systag
@@ -116,12 +126,10 @@ export const setStatus: NonNullable<MutationResolvers["setStatus"]> = async (
               workresultinstanceuuid = ${id}
               AND
               workresultinstancestatusid != inputs.status
-        `;
-
-        return [r0];
-      }),
+        `,
+      ]),
     )
-    .with("workresult", async () => {
+    .with("workresult", () => {
       if (!parent) {
         throw new GraphQLError(
           "Cannot lazily evaluate AST node without ECS reference",
@@ -146,8 +154,8 @@ export const setStatus: NonNullable<MutationResolvers["setStatus"]> = async (
         );
       }
 
-      return sql.begin(async tx => {
-        const r0 = await tx`
+      return sql.begin(tx => [
+        tx`
           WITH inputs AS (
               SELECT systagid AS status
               FROM public.systag
@@ -164,22 +172,18 @@ export const setStatus: NonNullable<MutationResolvers["setStatus"]> = async (
           FROM inputs
           WHERE
               workresultinstancestatusid != inputs.status
-              AND
-              workresultinstanceworkresultid IN (
+              AND workresultinstanceworkresultid IN (
                   SELECT workresultid
                   FROM public.workresult
                   WHERE id = ${id}
               )
-              AND
-              workresultinstanceworkinstanceid IN (
+              AND workresultinstanceworkinstanceid IN (
                   SELECT workinstanceid
                   FROM public.workinstance
                   WHERE id = ${parentId}
               )
-        `;
-
-        return [r0];
-      });
+        `,
+      ]);
     })
     .exhaustive();
 
