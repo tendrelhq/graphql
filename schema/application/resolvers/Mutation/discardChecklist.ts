@@ -50,7 +50,7 @@ export const discardChecklist: NonNullable<
         RETURNING wt.id
     `;
 
-    return copyFromWorkTemplate(data[0].id, {});
+    return copyFromWorkTemplate(tx, data[0].id, {});
   });
 
   return { edge: result.edge, discardedChecklistIds: [entity] };

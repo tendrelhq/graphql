@@ -220,6 +220,10 @@ export const saveChecklist: NonNullable<
     console.log(
       `Applied ${delta} update(s) to Entity ${input.id} (${type}:${id})`,
     );
+
+    if (input.items?.length) {
+      await saveChecklistResults(id, input.items);
+    }
   } else {
     // else: create
     const result = await sql.begin(async tx => {
@@ -637,14 +641,14 @@ export const saveChecklist: NonNullable<
 
     const delta = result.reduce((acc, res) => acc + res.count, 0);
     console.log(`Created Entity ${input.id} by way of ${delta} operation(s)`);
-  }
 
-  if (input.items?.length) {
-    await saveChecklistResults(id, input.items);
-  }
+    if (input.items?.length) {
+      await saveChecklistResults(id, input.items);
+    }
 
-  // Create an Open instance of the newly created Checklist template.
-  await copyFromWorkTemplate(id, {});
+    // Create an Open instance of the newly created Checklist template.
+    await sql.begin(sql => copyFromWorkTemplate(sql, id, {}));
+  }
 
   return {
     cursor: input.id.toString(),
