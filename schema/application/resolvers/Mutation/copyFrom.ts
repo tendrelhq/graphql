@@ -32,7 +32,7 @@ export const copyFrom: NonNullable<MutationResolvers["copyFrom"]> = async (
   }
 };
 
-async function copyFromWorkTemplate(
+export async function copyFromWorkTemplate(
   id: string,
   options: CopyFromOptions,
 ): Promise<CopyFromPayload> {
