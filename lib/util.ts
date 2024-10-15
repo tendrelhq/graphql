@@ -88,3 +88,8 @@ export function validatePaginationArgs(args: RawPaginationArgs) {
 export function map<T, R>(t: T | null | undefined, fn: (t: T) => R) {
   return nullish(t) ? t : fn(t);
 }
+
+export function inspect<T>(t: T) {
+  console.debug("t =:", t);
+  return t;
+}
