@@ -6,7 +6,7 @@ import { copyFromWorkTemplate } from "./copyFrom";
 
 export const discardChecklist: NonNullable<
   MutationResolvers["discardChecklist"]
-> = async (_, { entity }) => {
+> = async (_, { entity }, ctx) => {
   const { type, id } = decodeGlobalId(entity);
 
   if (type !== "workinstance") {
@@ -19,30 +19,30 @@ export const discardChecklist: NonNullable<
 
   const result = await sql.begin(async tx => {
     const data = await tx`
-        WITH inputs AS (
-            SELECT systagid AS status
-            FROM public.systag
-            WHERE
-                systagparentid = 705
-                AND
-                systagtype = 'Cancelled'
-        ),
-        updated_instance AS (
-            UPDATE public.workinstance
-            SET
-                workinstancestatusid = inputs.status,
-                workinstancemodifieddate = now()
-            FROM inputs
-            WHERE
-                id = ${id}
-                AND
-                workinstancestatusid != inputs.status
-            RETURNING workinstanceworktemplateid AS templateId
-        )
-        SELECT 
-            wt.id
-        FROM updated_instance wi
-        JOIN public.worktemplate wt ON wt.worktemplateid = wi.templateId
+WITH inputs AS (SELECT systagid AS status
+                FROM public.systag
+                WHERE systagparentid = 705
+                  AND systagtype = 'Cancelled'),
+     updated_instance AS (
+         UPDATE public.workinstance wi
+             SET
+                 workinstancestatusid = inputs.status,
+                 workinstancemodifieddate = now(),
+                 workinstancemodifiedby = (select workerinstanceid
+                                           from public.workerinstance w
+                                           where workerinstancecustomerid = wi.workinstancecustomerid
+                                             AND workerinstanceworkerid = (SELECT workerid
+                                                                           FROM public.worker
+                                                                           WHERE workeridentityid = ${ctx.auth.userId}))
+             FROM inputs
+             WHERE
+                 id = ${id}
+                     AND
+                 workinstancestatusid != inputs.status
+             RETURNING workinstanceworktemplateid AS templateId)
+SELECT wt.id
+FROM updated_instance wi
+         JOIN public.worktemplate wt ON wt.worktemplateid = wi.templateId;
     `;
 
     const newInstance = await copyFromWorkTemplate(data[0].id, {});
