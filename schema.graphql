@@ -508,6 +508,7 @@ input DescriptionInput {
 }
 
 type DiscardChecklistPayload {
+  discardedChecklistIds: [ID!]!
   edge: ChecklistEdge!
 }
 

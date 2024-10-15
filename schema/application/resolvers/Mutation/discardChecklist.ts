@@ -50,5 +50,5 @@ export const discardChecklist: NonNullable<
     return newInstance;
   });
 
-  return { edge: result.edge };
+  return { edge: result.edge, discardedChecklistIds: [entity] };
 };
