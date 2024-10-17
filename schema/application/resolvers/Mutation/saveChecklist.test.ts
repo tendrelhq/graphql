@@ -65,6 +65,7 @@ describe.skip("saveChecklist", () => {
                   value: "Test result item",
                 },
               },
+              order: 0,
               required: true,
               status: {
                 open: {
