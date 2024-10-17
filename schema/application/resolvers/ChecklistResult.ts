@@ -35,7 +35,7 @@ export const ChecklistResult: ChecklistResultResolvers = {
           workresultoder: number;
         },
       ]
-    >`SELECT workresultorder FROM workresult WHERE workresultid=${id}`;
+    >`SELECT workresultorder AS workresultoder FROM workresult WHERE id=${id}`;
 
     if (!row) {
       console.warn(id);
