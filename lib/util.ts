@@ -1,7 +1,7 @@
 import type { SortOrder } from "@/schema";
-import { sql } from "./datasources/postgres";
+import { type GlobalId, decodeGlobalId } from "@/schema/system";
 import { GraphQLError } from "graphql";
-import { decodeGlobalId, type GlobalId } from "@/schema/system";
+import { sql } from "./datasources/postgres";
 
 export function isError<T>(e: T | Error): e is Error {
   return e instanceof Error;
@@ -92,4 +92,29 @@ export function map<T, R>(t: T | null | undefined, fn: (t: T) => R) {
 export function inspect<T>(t: T) {
   console.debug("t =:", t);
   return t;
+}
+
+type ParentType = "organization" | "workinstance";
+
+export function validateParent(
+  parent: string,
+  expectedParentType?: ParentType,
+) {
+  const { id: parentId, type: parentType } = decodeGlobalId(parent);
+
+  if (
+    (parentType !== "organization" && parentType !== "workinstance") ||
+    (expectedParentType && parentType !== expectedParentType)
+  ) {
+    throw new GraphQLError(
+      `Type '${parentType}' is an invalid parent type for type 'Checklist'`,
+      {
+        extensions: {
+          code: "TYPE_ERROR",
+        },
+      },
+    );
+  }
+
+  return { id: parentId, type: parentType as ParentType };
 }
