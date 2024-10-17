@@ -27,6 +27,22 @@ export const ChecklistResult: ChecklistResultResolvers = {
   auditable(parent, _, ctx) {
     return ctx.orm.auditable.load(parent.id);
   },
+  async order(parent) {
+    const { id } = decodeGlobalId(parent.id);
+    const [row] = await sql<
+      [
+        {
+          workresultoder: number;
+        },
+      ]
+    >`SELECT workresultorder FROM workresult WHERE workresultid=${id}`;
+
+    if (!row) {
+      console.warn(id);
+    }
+
+    return row.workresultoder;
+  },
   async name(parent, _, ctx) {
     return (await ctx.orm.displayName.load(
       parent.id,

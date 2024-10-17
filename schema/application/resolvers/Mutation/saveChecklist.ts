@@ -754,6 +754,8 @@ async function saveChecklistResults(
                       FROM inputs
                       WHERE
                           id = ${decodeGlobalId(i.result.id).id}
+                          AND 
+                          workresultorder IS NOT null
                           AND
                           workresultisrequired != inputs.required
                   `,
@@ -761,7 +763,7 @@ async function saveChecklistResults(
                     ? tx`
                       WITH inputs (order) AS (
                             VALUES (
-                            ${i.result.order ?? null}::integer
+                            ${i.result.order}::integer
                             )
                       )
                       UPDATE public.workresult
@@ -771,16 +773,20 @@ async function saveChecklistResults(
                       FROM inputs
                       WHERE
                           id = ${decodeGlobalId(i.result.id).id}
-                          AND
-                          workresultorder != inputs.order
-`
+                          AND (
+                              workresultorder IS null
+                              OR workresultorder != inputs.order
+                            )
+                    `
                     : tx`
                       UPDATE public.workresult
                       SET 
                           workresultorder = null,
                           workresultmodifieddate = now() 
                       WHERE
-                          id = ${decodeGlobalId(i.result.id).id}`,
+                          id = ${decodeGlobalId(i.result.id).id}
+                          AND
+                          workresultorder IS NOT null`,
                   i.result.widget
                     ? tx`
                         WITH inputs (type, widget, reftype, value) AS (
