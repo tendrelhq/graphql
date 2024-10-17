@@ -1,6 +1,7 @@
 import { sql } from "@/datasources/postgres";
 import type { ChecklistResultResolvers, ResolversTypes } from "@/schema";
 import { decodeGlobalId } from "@/schema/system";
+import { GraphQLError } from "graphql";
 import { match } from "ts-pattern";
 
 export const ChecklistResult: ChecklistResultResolvers = {
@@ -28,20 +29,43 @@ export const ChecklistResult: ChecklistResultResolvers = {
     return ctx.orm.auditable.load(parent.id);
   },
   async order(parent) {
-    const { id } = decodeGlobalId(parent.id);
-    const [row] = await sql<
-      [
-        {
-          workresultoder: number;
-        },
-      ]
-    >`SELECT workresultorder AS workresultoder FROM workresult WHERE id=${id}`;
+    const { id, type } = decodeGlobalId(parent.id);
 
-    if (!row) {
-      console.warn(id);
+    switch (type) {
+      case "workresult": {
+        const [row] = await sql<
+          [
+            {
+              workresultoder: number;
+            },
+          ]
+        >`SELECT workresultorder AS workresultoder FROM workresult WHERE id=${id}`;
+
+        if (!row) {
+          console.warn(id);
+        }
+
+        return row.workresultoder;
+      }
+      case "workresultinstance": {
+        const [row] = await sql<
+          [
+            {
+              workresultoder: number;
+            },
+          ]
+        >`SELECT workresultorder AS workresultoder FROM workresultinstance
+          INNER JOIN workresult ON workresultinstanceworkresultid=workresultid WHERE workresultinstanceuuid=${id}`;
+
+        if (!row) {
+          console.warn(id);
+        }
+
+        return row.workresultoder;
+      }
     }
 
-    return row.workresultoder;
+    throw new GraphQLError("Invalid type for workresult order.");
   },
   async name(parent, _, ctx) {
     return (await ctx.orm.displayName.load(
