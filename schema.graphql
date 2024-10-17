@@ -361,6 +361,10 @@ input ChecklistSortOrder @oneOf {
   status: SortOrder
 }
 
+type ChecklistStats {
+  count: Int!
+}
+
 union ChecklistStatus = ChecklistClosed | ChecklistInProgress | ChecklistOpen
 
 input ChecklistStatusInput @oneOf {
@@ -916,6 +920,11 @@ type Query {
   - E_NOT_ASSIGNABLE, if `entity` is not assignable
   """
   assignable(entity: ID!): AssignableConnection!
+  checklistAgg(
+    parent: ID!
+    withActive: Boolean
+    withStatus: [ChecklistStatusStates!]
+  ): ChecklistStats!
   checklists(
     after: String
     before: String
@@ -924,6 +933,8 @@ type Query {
     parent: ID!
     sortBy: [ChecklistSortOrder!]
     withActive: Boolean
+    withAssignee: String
+    withDueDate: RangeInput
     withName: String
     withStatus: [ChecklistStatusStates!]
   ): ChecklistConnection!
@@ -932,6 +943,11 @@ type Query {
   node(id: ID!): Node!
   roles: [Tag!]!
   user: User!
+}
+
+input RangeInput {
+  after: TemporalInput
+  before: TemporalInput
 }
 
 """
