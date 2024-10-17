@@ -13,7 +13,6 @@ export const checklistAgg: NonNullable<QueryResolvers["checklistAgg"]> = async (
   const conditions: Fragment[] = [];
 
   if (nullish(arg.withActive) === false) {
-    // Fixed the syntax issue by correctly grouping conditions using parentheses
     conditions.push(sql`
     (${arg.withActive} = TRUE AND (wt.worktemplateenddate IS NULL OR wt.worktemplateenddate > NOW()))
     OR (${arg.withActive} = FALSE AND wt.worktemplateenddate < NOW())
