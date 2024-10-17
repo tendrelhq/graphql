@@ -11,6 +11,7 @@ import {
   buildPaginationArgs,
   nullish,
   sortOrder,
+  validateParent,
 } from "@/util";
 import { GraphQLError } from "graphql";
 import type { Fragment } from "postgres";
@@ -22,21 +23,7 @@ export const checklists: NonNullable<QueryResolvers["checklists"]> = async (
   _,
   args,
 ) => {
-  const { id: parentId, type: parentType } = decodeGlobalId(args.parent);
-
-  if (parentType !== "organization" && parentType !== "workinstance") {
-    throw new GraphQLError(
-      `Type '${parentType}' is an invalid parent type for type 'Checklist'`,
-      {
-        extensions: {
-          code: "TYPE_ERROR",
-        },
-      },
-    );
-  }
-
-  // Reconstruct the object but with a type assertion on `type`.
-  const parent = { id: parentId, type: parentType as ParentType };
+  const parent = validateParent(args.parent);
   const paginationArgs = buildPaginationArgs(args, {
     defaultLimit: Number(process.env.DEFAULT_PAGINATION_LIMIT ?? 20),
     maxLimit: Number(process.env.MAX_PAGINATION_LIMIT ?? 20),
