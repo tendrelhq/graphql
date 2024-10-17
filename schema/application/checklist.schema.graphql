@@ -167,6 +167,7 @@ type ChecklistResult implements Component & Node {
   required: Boolean
   status: ChecklistStatus
   widget: Widget!
+  order: Int!
 }
 
 """
@@ -180,6 +181,7 @@ input ChecklistResultInput {
   required: Boolean
   status: ChecklistStatusInput
   widget: WidgetInput!
+  order: Int!
 }
 
 type SetValuePayload {

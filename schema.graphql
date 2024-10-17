@@ -330,6 +330,7 @@ type ChecklistResult implements Component & Node {
   auditable: Auditable
   id: ID!
   name: DisplayName!
+  order: Int!
   required: Boolean
   status: ChecklistStatus
   widget: Widget!
@@ -343,6 +344,7 @@ input ChecklistResultInput {
   auditable: AuditableInput
   id: ID!
   name: DisplayNameInput!
+  order: Int!
   required: Boolean
   status: ChecklistStatusInput
   widget: WidgetInput!
