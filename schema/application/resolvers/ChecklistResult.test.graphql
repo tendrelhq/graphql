@@ -18,6 +18,7 @@ query TestChecklistResult {
                   value
                 }
               }
+              order
               required
               status {
                 __typename

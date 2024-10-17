@@ -1,6 +1,7 @@
 import { sql } from "@/datasources/postgres";
 import type { ChecklistResultResolvers, ResolversTypes } from "@/schema";
 import { decodeGlobalId } from "@/schema/system";
+import { GraphQLError } from "graphql";
 import { match } from "ts-pattern";
 
 export const ChecklistResult: ChecklistResultResolvers = {
@@ -28,20 +29,30 @@ export const ChecklistResult: ChecklistResultResolvers = {
     return ctx.orm.auditable.load(parent.id);
   },
   async order(parent) {
-    const { id } = decodeGlobalId(parent.id);
-    const [row] = await sql<
-      [
-        {
-          workresultoder: number;
-        },
-      ]
-    >`SELECT workresultorder AS workresultoder FROM workresult WHERE id=${id}`;
+    const { id, type } = decodeGlobalId(parent.id);
 
-    if (!row) {
-      console.warn(id);
+    switch (type) {
+      case "workresult": {
+        const [row] = await sql<[{ order: number }]>`
+            SELECT workresultorder AS order
+            FROM public.workresult
+            WHERE id = ${id}
+        `;
+        return row.order;
+      }
+      case "workresultinstance": {
+        const [row] = await sql<[{ order: number }]>`
+            SELECT workresultorder AS order
+            FROM public.workresultinstance
+            INNER JOIN public.workresult
+                ON workresultinstanceworkresultid = workresultid
+            WHERE workresultinstanceuuid = ${id}
+        `;
+        return row.order;
+      }
     }
 
-    return row.workresultoder;
+    throw "invariant violated";
   },
   async name(parent, _, ctx) {
     return (await ctx.orm.displayName.load(

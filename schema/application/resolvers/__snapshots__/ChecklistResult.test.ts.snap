@@ -27,6 +27,7 @@ exports[`ChecklistResult 1`] = `
                   "value": "Checkbox with default",
                 },
               },
+              "order": 0,
               "required": false,
               "status": null,
               "widget": {
@@ -54,6 +55,7 @@ exports[`ChecklistResult 1`] = `
                   "value": "Clicker with default",
                 },
               },
+              "order": 0,
               "required": false,
               "status": null,
               "widget": {
@@ -81,6 +83,7 @@ exports[`ChecklistResult 1`] = `
                   "value": "Number with default",
                 },
               },
+              "order": 0,
               "required": false,
               "status": null,
               "widget": {
@@ -108,6 +111,7 @@ exports[`ChecklistResult 1`] = `
                   "value": "Text with default",
                 },
               },
+              "order": 0,
               "required": false,
               "status": null,
               "widget": {
@@ -135,6 +139,7 @@ exports[`ChecklistResult 1`] = `
                   "value": "String with default",
                 },
               },
+              "order": 0,
               "required": false,
               "status": null,
               "widget": {
@@ -162,6 +167,7 @@ exports[`ChecklistResult 1`] = `
                   "value": "Checkbox without default",
                 },
               },
+              "order": 0,
               "required": false,
               "status": null,
               "widget": {
@@ -189,6 +195,7 @@ exports[`ChecklistResult 1`] = `
                   "value": "Clicker without default",
                 },
               },
+              "order": 0,
               "required": false,
               "status": null,
               "widget": {
@@ -216,6 +223,7 @@ exports[`ChecklistResult 1`] = `
                   "value": "Number without default",
                 },
               },
+              "order": 0,
               "required": false,
               "status": null,
               "widget": {
@@ -243,6 +251,7 @@ exports[`ChecklistResult 1`] = `
                   "value": "Text without default",
                 },
               },
+              "order": 0,
               "required": false,
               "status": null,
               "widget": {
@@ -270,6 +279,7 @@ exports[`ChecklistResult 1`] = `
                   "value": "String without default",
                 },
               },
+              "order": 0,
               "required": false,
               "status": null,
               "widget": {
