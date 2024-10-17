@@ -33,39 +33,26 @@ export const ChecklistResult: ChecklistResultResolvers = {
 
     switch (type) {
       case "workresult": {
-        const [row] = await sql<
-          [
-            {
-              workresultoder: number;
-            },
-          ]
-        >`SELECT workresultorder AS workresultoder FROM workresult WHERE id=${id}`;
-
-        if (!row) {
-          console.warn(id);
-        }
-
-        return row.workresultoder;
+        const [row] = await sql<[{ order: number }]>`
+            SELECT workresultorder AS order
+            FROM public.workresult
+            WHERE id = ${id}
+        `;
+        return row.order;
       }
       case "workresultinstance": {
-        const [row] = await sql<
-          [
-            {
-              workresultoder: number;
-            },
-          ]
-        >`SELECT workresultorder AS workresultoder FROM workresultinstance
-          INNER JOIN workresult ON workresultinstanceworkresultid=workresultid WHERE workresultinstanceuuid=${id}`;
-
-        if (!row) {
-          console.warn(id);
-        }
-
-        return row.workresultoder;
+        const [row] = await sql<[{ order: number }]>`
+            SELECT workresultorder AS order
+            FROM public.workresultinstance
+            INNER JOIN public.workresult
+                ON workresultinstanceworkresultid = workresultid
+            WHERE workresultinstanceuuid = ${id}
+        `;
+        return row.order;
       }
     }
 
-    throw new GraphQLError("Invalid type for workresult order.");
+    throw "invariant violated";
   },
   async name(parent, _, ctx) {
     return (await ctx.orm.displayName.load(
