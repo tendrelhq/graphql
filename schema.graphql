@@ -214,6 +214,11 @@ type Checklist implements Activatable & Assignable & Component & Node {
   status: ChecklistStatus
 }
 
+type ChecklistAggregate {
+  assignedTo(assignees: [ID!]!, parent: ID!): Int
+  dueOn(input: TemporalRangeInput!, parent: ID!): Int
+}
+
 type ChecklistClosed implements State {
   closedAt: Temporal!
   closedBecause: ChecklistClosedReason
@@ -359,10 +364,6 @@ input ChecklistSearchOptions {
 input ChecklistSortOrder @oneOf {
   name: SortOrder
   status: SortOrder
-}
-
-type ChecklistStats {
-  count: Int!
 }
 
 union ChecklistStatus = ChecklistClosed | ChecklistInProgress | ChecklistOpen
@@ -920,11 +921,7 @@ type Query {
   - E_NOT_ASSIGNABLE, if `entity` is not assignable
   """
   assignable(entity: ID!): AssignableConnection!
-  checklistAgg(
-    parent: ID!
-    withActive: Boolean
-    withStatus: [ChecklistStatusStates!]
-  ): ChecklistStats!
+  checklistAgg: ChecklistAggregate!
   checklists(
     after: String
     before: String
@@ -933,8 +930,8 @@ type Query {
     parent: ID!
     sortBy: [ChecklistSortOrder!]
     withActive: Boolean
-    withAssignee: String
-    withDueDate: RangeInput
+    withAssignee: [ID!]
+    withDueDate: TemporalRangeInput
     withName: String
     withStatus: [ChecklistStatusStates!]
   ): ChecklistConnection!
@@ -943,11 +940,6 @@ type Query {
   node(id: ID!): Node!
   roles: [Tag!]!
   user: User!
-}
-
-input RangeInput {
-  after: TemporalInput
-  before: TemporalInput
 }
 
 """
@@ -1155,6 +1147,11 @@ interface Temporal {
 input TemporalInput @oneOf {
   instant: String
   zdt: ZonedDateTimeInput
+}
+
+input TemporalRangeInput {
+  after: TemporalInput
+  before: TemporalInput
 }
 
 """

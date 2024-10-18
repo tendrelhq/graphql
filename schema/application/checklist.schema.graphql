@@ -22,20 +22,21 @@ type Query {
     before: String
     sortBy: [ChecklistSortOrder!]
     withActive: Boolean
-    withAssignee: String
-    withDueDate: RangeInput
+    withAssignee: [ID!]
+    withDueDate: TemporalRangeInput
     withName: String
     withStatus: [ChecklistStatusStates!]
   ): ChecklistConnection!
 
-  checklistAgg(
-    parent: ID!
-    withActive: Boolean
-    withStatus: [ChecklistStatusStates!]
-  ): ChecklistStats!
+  checklistAgg: ChecklistAggregate!
 }
 
-input RangeInput {
+type ChecklistAggregate {
+  assignedTo(parent: ID!, assignees: [ID!]!): Int @semanticNonNull
+  dueOn(parent: ID!, input: TemporalRangeInput!): Int @semanticNonNull
+}
+
+input TemporalRangeInput {
   before: TemporalInput
   after: TemporalInput
 }
@@ -148,10 +149,6 @@ type ChecklistConnection implements Connection {
 type ChecklistEdge implements Edge {
   cursor: String!
   node: Checklist!
-}
-
-type ChecklistStats {
-  count: Int!
 }
 
 ## We want our checklists to support nesting
