@@ -114,7 +114,49 @@ describe("checklists", () => {
               "b3JnYW5pemF0aW9uOmN1c3RvbWVyXzFiMmQ2YzYwLTg2NzgtNDVhZC1iMzBkLWExMDMyM2MyYzQ0MQ==",
             cursor: cursor,
             limit: 10,
+            sortBy: [{ status: "desc" }],
+            withActive: true,
             withStatus: ["open"], // <-- gets us into the ECS world
+          },
+        );
+
+        expect(result.errors).toBeFalsy();
+
+        const edges = result.data?.checklists.edges ?? [];
+        for (const e of edges) {
+          expect(seen.has(e.node.id)).toBeFalse();
+          seen.add(e.node.id);
+        }
+
+        // ...somehow this line fucks up type inference and is what necessitates
+        // the explicit type declaration above:
+        cursor = result.data?.checklists.pageInfo.endCursor ?? undefined;
+        hasNext = result.data?.checklists.pageInfo.hasNextPage ?? false;
+        expectedTotalCount = result.data?.checklists.totalCount ?? 0;
+      } while (cursor && hasNext);
+
+      expect(seen.size).toBe(expectedTotalCount);
+    });
+
+    test("ecs - forward - multi status", async () => {
+      const seen = new Set<string>();
+
+      let cursor: InputMaybe<string> = undefined;
+      let hasNext = false;
+      let expectedTotalCount = 0;
+      do {
+        // Not sure why we need the explicit type declaration here...
+        const result: ExecutionResult<TestQuery> = await execute(
+          schema,
+          TestDocument,
+          {
+            parent:
+              "b3JnYW5pemF0aW9uOmN1c3RvbWVyXzFiMmQ2YzYwLTg2NzgtNDVhZC1iMzBkLWExMDMyM2MyYzQ0MQ==",
+            cursor: cursor,
+            limit: 10,
+            sortBy: [],
+            withActive: true,
+            withStatus: ["open", "closed", "inProgress"], // <-- gets us into the ECS world
           },
         );
 
