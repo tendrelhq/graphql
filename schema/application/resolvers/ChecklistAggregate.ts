@@ -31,7 +31,7 @@ export const ChecklistAggregate: ChecklistAggregateResolvers = {
             )
     `;
 
-    return { count: count };
+    return count;
   },
   async dueOn(_, args) {
     const { type, id } = decodeGlobalId(args.parent);
@@ -68,7 +68,7 @@ export const ChecklistAggregate: ChecklistAggregateResolvers = {
       }
     });
 
-    if (!after && !before) return { count: 0 };
+    if (!after && !before) return 0;
 
     const [{ count }] = await sql<[{ count: number }]>`
         SELECT count(*)
@@ -97,6 +97,6 @@ export const ChecklistAggregate: ChecklistAggregateResolvers = {
             )}
     `;
 
-    return { count: count };
+    return count;
   },
 };

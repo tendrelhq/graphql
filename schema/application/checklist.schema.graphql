@@ -32,13 +32,8 @@ type Query {
 }
 
 type ChecklistAggregate {
-  assignedTo(parent: ID!, assignees: [ID!]!): AggregatePayload @semanticNonNull
-  dueOn(parent: ID!, input: TemporalRangeInput!): AggregatePayload
-    @semanticNonNull
-}
-
-type AggregatePayload {
-  count: Int
+  assignedTo(parent: ID!, assignees: [ID!]!): Int @semanticNonNull
+  dueOn(parent: ID!, input: TemporalRangeInput!): Int @semanticNonNull
 }
 
 input TemporalRangeInput {

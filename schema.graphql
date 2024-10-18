@@ -42,10 +42,6 @@ input ActiveInput {
   updatedAt: TemporalInput
 }
 
-type AggregatePayload {
-  count: Int
-}
-
 enum ApplicationType {
   Checklist
 }
@@ -221,9 +217,8 @@ type Checklist implements Activatable & Assignable & Component & Node {
 }
 
 type ChecklistAggregate {
-  assignedTo(assignees: [ID!]!, parent: ID!): AggregatePayload @semanticNonNull
-  dueOn(input: TemporalRangeInput!, parent: ID!): AggregatePayload
-    @semanticNonNull
+  assignedTo(assignees: [ID!]!, parent: ID!): Int @semanticNonNull
+  dueOn(input: TemporalRangeInput!, parent: ID!): Int @semanticNonNull
 }
 
 type ChecklistClosed implements State {
