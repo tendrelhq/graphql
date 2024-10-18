@@ -39,6 +39,7 @@ const config: CodegenConfig = {
     "./schema.graphql": {
       plugins: ["schema-ast"],
       config: {
+        includeDirectives: true,
         sort: true,
       },
     },
