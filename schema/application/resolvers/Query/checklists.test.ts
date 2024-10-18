@@ -1,8 +1,9 @@
 import { describe, expect, test } from "bun:test";
-import { resolvers, typeDefs } from "@/schema";
+import { type InputMaybe, resolvers, typeDefs } from "@/schema";
 import { execute, testGlobalId } from "@/test/prelude";
 import { makeExecutableSchema } from "@graphql-tools/schema";
-import { TestDocument } from "./checklists.test.generated";
+import type { ExecutionResult } from "graphql";
+import { TestDocument, type TestQuery } from "./checklists.test.generated";
 
 const schema = makeExecutableSchema({ resolvers, typeDefs });
 
@@ -61,7 +62,7 @@ describe("checklists", () => {
   });
 
   describe.skipIf(SKIP_IN_CI)("pagination", () => {
-    test("forward", async () => {
+    test("ast - forward", async () => {
       const r0 = await execute(schema, TestDocument, {
         parent: PARENT,
         limit: 1,
@@ -95,6 +96,44 @@ describe("checklists", () => {
       expect(r0.data?.checklists.edges.length).toBe(s0.size);
       expect(r1.data?.checklists.edges.length).toBe(s1.size);
       expect(s0.isDisjointFrom(s1)).toBeTrue();
+    });
+
+    test("ecs - forward", async () => {
+      const seen = new Set<string>();
+
+      let cursor: InputMaybe<string> = undefined;
+      let hasNext = false;
+      let expectedTotalCount = 0;
+      do {
+        // Not sure why we need the explicit type declaration here...
+        const result: ExecutionResult<TestQuery> = await execute(
+          schema,
+          TestDocument,
+          {
+            parent:
+              "b3JnYW5pemF0aW9uOmN1c3RvbWVyXzFiMmQ2YzYwLTg2NzgtNDVhZC1iMzBkLWExMDMyM2MyYzQ0MQ==",
+            cursor: cursor,
+            limit: 10,
+            withStatus: ["open"], // <-- gets us into the ECS world
+          },
+        );
+
+        expect(result.errors).toBeFalsy();
+
+        const edges = result.data?.checklists.edges ?? [];
+        for (const e of edges) {
+          expect(seen.has(e.node.id)).toBeFalse();
+          seen.add(e.node.id);
+        }
+
+        // ...somehow this line fucks up type inference and is what necessitates
+        // the explicit type declaration above:
+        cursor = result.data?.checklists.pageInfo.endCursor ?? undefined;
+        hasNext = result.data?.checklists.pageInfo.hasNextPage ?? false;
+        expectedTotalCount = result.data?.checklists.totalCount ?? 0;
+      } while (cursor && hasNext);
+
+      expect(seen.size).toBe(expectedTotalCount);
     });
   });
 

@@ -69,6 +69,6 @@
     "negotiator": "^0.6.3",
     "pattycake": "^0.0.2",
     "postgres": "^3.4.4",
-    "ts-pattern": "^5.2.0"
+    "ts-pattern": "^5.5.0"
   }
 }
