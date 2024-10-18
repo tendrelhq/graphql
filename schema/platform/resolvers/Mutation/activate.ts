@@ -20,11 +20,7 @@ export const activate: NonNullable<MutationResolvers["activate"]> = async (
               workresultmodifieddate = now()
           WHERE
               id = ${id}
-              AND (
-                  workresultenddate IS NOT null
-                  OR
-                  workresultenddate < now()
-              )
+              AND workresultenddate IS NOT null
           RETURNING 1;
       `,
     )
@@ -37,11 +33,7 @@ export const activate: NonNullable<MutationResolvers["activate"]> = async (
               worktemplatemodifieddate = now()
           WHERE
               id = ${id}
-              AND (
-                  worktemplateenddate IS NOT null
-                  OR
-                  worktemplateenddate < now()
-              )
+              AND worktemplateenddate IS NOT null
           RETURNING 1;
       `,
     )
