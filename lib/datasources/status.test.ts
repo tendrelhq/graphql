@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
-import { makeStatusLoader } from "./status";
 import { testGlobalId } from "@/test/prelude";
+import { makeStatusLoader } from "./status";
 
 // biome-ignore lint/suspicious/noExplicitAny:
 const makeLoader = () => makeStatusLoader({} as any);

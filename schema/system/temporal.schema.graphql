@@ -35,6 +35,11 @@ input TemporalInput @oneOf {
   zdt: ZonedDateTimeInput
 }
 
+input TemporalRangeInput {
+  before: TemporalInput
+  after: TemporalInput
+}
+
 """
 Fixed point in time (i.e. "exact time") without regard to calendar or location
 """

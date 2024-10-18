@@ -2,7 +2,11 @@ import z from "myzod";
 import postgres, { type Fragment } from "postgres";
 
 import type { Request } from "express";
+import { makeActiveLoader } from "./activatable";
+import { makeAuditableLoader } from "./auditable";
 import makeCustomerRequestedLanguageLoader from "./crl";
+import { makeDescriptionLoader } from "./description";
+import { makeDynamicStringLoader } from "./dynamicString";
 import makeInvitationLoader from "./invitation";
 import makeLanguageLoader from "./language";
 import makeLocationLoader from "./location";
@@ -12,16 +16,12 @@ import {
   makeNameMetadataLoader,
 } from "./name";
 import makeOrganizationLoader from "./organization";
-import makeTagLoader from "./tag";
-import makeUserLoader from "./user";
-import makeWorkerLoader from "./worker";
-import { makeDynamicStringLoader } from "./dynamicString";
-import { makeActiveLoader } from "./activatable";
-import { makeDescriptionLoader } from "./description";
-import { makeAuditableLoader } from "./auditable";
 import { makeRequirementLoader } from "./requirement";
 import { makeSopLoader } from "./sop";
 import { makeStatusLoader } from "./status";
+import makeTagLoader from "./tag";
+import makeUserLoader from "./user";
+import makeWorkerLoader from "./worker";
 
 if (process.env.DATABASE_URL) {
   const url = new URL(process.env.DATABASE_URL);

@@ -22,9 +22,18 @@ type Query {
     before: String
     sortBy: [ChecklistSortOrder!]
     withActive: Boolean
+    withAssignee: [ID!]
+    withDueDate: TemporalRangeInput
     withName: String
     withStatus: [ChecklistStatusStates!]
   ): ChecklistConnection!
+
+  checklistAgg: ChecklistAggregate!
+}
+
+type ChecklistAggregate {
+  assignedTo(parent: ID!, assignees: [ID!]!): Int @semanticNonNull
+  dueOn(parent: ID!, input: TemporalRangeInput!): Int @semanticNonNull
 }
 
 type Mutation {

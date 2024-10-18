@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
-import { buildPaginationArgs } from "./util";
-import { testGlobalId } from "@/test/prelude";
 import { encodeGlobalId } from "@/schema/system";
+import { testGlobalId } from "@/test/prelude";
+import { buildPaginationArgs } from "./util";
 
 const CURSOR = encodeGlobalId({ type: "__test__", id: "1" });
 
