@@ -243,20 +243,22 @@ function buildAstPaginationFragments({ p, s }: Args, parent: Parent) {
 
 async function ecsQuery(args: Args, parent: Parent) {
   const edges = await sql<ChecklistEdge[]>`
-    WITH nodes AS (
-        SELECT encode(('workinstance:' || node.id)::bytea, 'base64') AS id
-        FROM public.workinstance AS node
-        ${buildEcsJoinFragments(args, parent)}
-        WHERE ${join(
-          [
-            buildEcsFilterFragments(args, parent),
-            ...buildEcsPaginationFragments(args, parent),
-          ],
-          sql`AND`,
-        )}
-        ORDER BY ${buildEcsSortFragments(args, parent)}
-        LIMIT ${args.p.limit}
-    )
+    WITH
+        ${args.p.cursor ? sql`cursor AS ${buildEcsCursor(args.p.cursor.id)},` : sql``}
+        nodes AS (
+            SELECT encode(('workinstance:' || node.id)::bytea, 'base64') AS id
+            FROM public.workinstance AS node
+            ${buildEcsJoinFragments(args, parent)}
+            WHERE ${join(
+              [
+                buildEcsFilterFragments(args, parent),
+                ...buildEcsPaginationFragments(args, parent),
+              ],
+              sql`AND`,
+            )}
+            ORDER BY ${buildEcsSortFragments(args, parent)}
+            LIMIT ${args.p.limit}
+        )
 
     SELECT
         id AS cursor,
@@ -284,6 +286,21 @@ async function ecsQuery(args: Args, parent: Parent) {
   `;
 
   return { edges, pageInfo, totalCount: count };
+}
+
+function buildEcsCursor(cursor: string) {
+  return sql`(
+      SELECT
+          workinstanceid,
+          workinstancecompleteddate,
+          workinstancemodifieddate,
+          workinstancestartdate,
+          workinstancestatusid,
+          workinstancetargetstartdate,
+          workinstanceworktemplateid
+      FROM public.workinstance
+      WHERE id = ${cursor}
+  )`;
 }
 
 function buildEcsJoinFragments({ f, s }: Args, parent: Parent): Fragment {
@@ -431,13 +448,12 @@ function buildEcsPaginationFragments(
             sql`(name.languagemastersource, node.workinstancetargetstartdate) ${cmp} (
                 SELECT
                     languagemastersource,
-                    workinstancetargetstartdate
-                FROM public.workinstance AS wi
+                    cursor.workinstancetargetstartdate
+                FROM cursor
                 INNER JOIN public.worktemplate AS wt
-                    ON wi.workinstanceworktemplateid = wt.worktemplateid
+                    ON cursor.workinstanceworktemplateid = wt.worktemplateid
                 INNER JOIN public.languagemaster
                     ON wt.worktemplatenameid = languagemasterid
-                WHERE wi.id = ${p.cursor.id}
             )`,
           ];
         case "inProgress":
@@ -445,13 +461,12 @@ function buildEcsPaginationFragments(
             sql`(name.languagemastersource, node.workinstancestartdate) ${cmp} (
                 SELECT
                     languagemastersource,
-                    workinstancestartdate
-                FROM public.workinstance AS wi
+                    cursor.workinstancestartdate
+                FROM cursor
                 INNER JOIN public.worktemplate AS wt
-                    ON wi.workinstanceworktemplateid = wt.worktemplateid
+                    ON cursor.workinstanceworktemplateid = wt.worktemplateid
                 INNER JOIN public.languagemaster
                     ON wt.worktemplatenameid = languagemasterid
-                WHERE wi.id = ${p.cursor.id}
             )`,
           ];
         case "closed":
@@ -459,13 +474,12 @@ function buildEcsPaginationFragments(
             sql`(name.languagemastersource, node.workinstancecompleteddate) ${cmp} (
                 SELECT
                     languagemastersource,
-                    workinstancecompleteddate
-                FROM public.workinstance AS wi
+                    cursor.workinstancecompleteddate
+                FROM cursor
                 INNER JOIN public.worktemplate AS wt
-                    ON wi.workinstanceworktemplateid = wt.worktemplateid
+                    ON cursor.workinstanceworktemplateid = wt.worktemplateid
                 INNER JOIN public.languagemaster
                     ON wt.worktemplatenameid = languagemasterid
-                WHERE wi.id = ${p.cursor.id}
             )`,
           ];
       }
@@ -476,14 +490,13 @@ function buildEcsPaginationFragments(
           SELECT
               languagemastersource,
               systagorder
-          FROM public.workinstance AS wi
+          FROM cursor
           INNER JOIN public.worktemplate AS wt
-              ON wi.workinstanceworktemplateid = wt.worktemplateid
+              ON cursor.workinstanceworktemplateid = wt.worktemplateid
           INNER JOIN public.languagemaster
               ON wt.worktemplatenameid = languagemasterid
           INNER JOIN public.systag
-              ON wi.workinstancestatusid = systagid
-          WHERE wi.id = ${p.cursor.id}
+              ON cursor.workinstancestatusid = systagid
       )`,
     ];
   }
@@ -491,14 +504,15 @@ function buildEcsPaginationFragments(
   const sortByName = s.sortBy?.find(s => !!s.name);
   if (sortByName) {
     return [
-      sql`(name.languagemastersource) ${cmp} (
-          SELECT languagemastersource
-          FROM public.workinstance AS wi
+      sql`(name.languagemastersource, node.workinstanceid) ${cmp} (
+          SELECT
+              languagemastersource,
+              cursor.workinstanceid
+          FROM cursor
           INNER JOIN public.worktemplate AS wt
-              ON wi.workinstanceworktemplateid = wt.worktemplateid
+              ON cursor.workinstanceworktemplateid = wt.worktemplateid
           INNER JOIN public.languagemaster
               ON wt.worktemplatenameid = languagemasterid
-          WHERE wi.id = ${p.cursor.id}
       )`,
     ];
   }
@@ -510,13 +524,44 @@ function buildEcsPaginationFragments(
       switch (f.withStatus[0]) {
         case "open":
           return [
-            sql`(node.workinstancetargetstartdate, node.workinstanceid) ${comp} (
-                SELECT workinstancetargetstartdate, workinstanceid
-                FROM public.workinstance
-                WHERE id = ${p.cursor.id}
+            // Why all this weird looking mumbo jumbo? Try it for yourself;
+            //  SELECT
+            //    now() > null AS gt,
+            //    now() < null AS lt,
+            //    now() = null AS eq,
+            //    now() != null AS ne
+            sql`(
+                (
+                    (
+                        node.workinstancetargetstartdate IS null
+                        OR EXISTS (
+                            SELECT 1
+                            FROM cursor
+                            WHERE workinstancetargetstartdate IS null
+                        )
+                    )
+                    AND (node.workinstancetargetstartdate IS null, node.workinstanceid) ${comp} (
+                        SELECT
+                            workinstancetargetstartdate IS null,
+                            workinstanceid
+                        FROM cursor
+                    )
+                )
+                OR
+                (
+                    node.workinstancetargetstartdate IS NOT null
+                    AND EXISTS (SELECT 1 FROM cursor WHERE workinstancetargetstartdate IS NOT null)
+                    AND (node.workinstancetargetstartdate, node.workinstanceid) ${comp} (
+                        SELECT
+                            workinstancetargetstartdate,
+                            workinstanceid
+                        FROM cursor
+                    )
+                )
             )`,
           ];
         case "inProgress":
+          // workinstancestartdate is semantically non-null in this context.
           return [
             sql`(node.workinstancestartdate, node.workinstanceid) ${comp} (
                 SELECT workinstancestartdate, workinstanceid
@@ -525,23 +570,22 @@ function buildEcsPaginationFragments(
             )`,
           ];
         case "closed":
+          // workinstancecompleteddate is semantically non-null in this context.
           return [
             sql`(node.workinstancecompleteddate, node.workinstanceid) ${comp} (
                 SELECT workinstancecompleteddate, workinstanceid
-                FROM public.workinstance
-                WHERE id = ${p.cursor.id}
+                FROM cursor
             )`,
           ];
       }
     }
 
     return [
-      sql`(status.systagorder, e.workinstanceid) ${cmp} (
+      sql`(status.systagorder, node.workinstanceid) ${cmpInv} (
           SELECT systagorder, workinstanceid
-          FROM public.workinstance
+          FROM cursor
           INNER JOIN public.systag
               ON workinstancestatusid = systagid
-          WHERE id = ${p.cursor.id}
       )`,
     ];
   }
@@ -550,8 +594,7 @@ function buildEcsPaginationFragments(
   return [
     sql`(node.workinstancemodifieddate, node.workinstanceid) ${cmpInv} (
         SELECT workinstancemodifieddate, workinstanceid
-        FROM public.workinstance
-        WHERE id = ${p.cursor.id}
+        FROM cursor
     )`,
   ];
 }
@@ -567,8 +610,8 @@ function buildEcsSortFragments({ f, s }: Args, parent: Parent): Fragment {
   //        closed: workinstancecompleteddate
   //    - otherwise: systagorder
   // - `sortByName`: languagemastersource
-  // - If no other conditions apply, we order by workinstancecreateddate DESC,
-  //   i.e. newest first.
+  // - If no other conditions apply, we order by workinstancemodifieddate DESC,
+  //   i.e. most recently modified first
   const exprs = s.sortBy?.map(s => {
     const order = sortOrder(s.name ?? s.status);
     switch (true) {
@@ -597,7 +640,7 @@ function buildEcsSortFragments({ f, s }: Args, parent: Parent): Fragment {
 
   return join(
     [
-      ...(exprs ?? [sql`node.workinstancecreateddate DESC`]),
+      ...(exprs?.length ? exprs : [sql`node.workinstancemodifieddate DESC`]),
       // In any case, we provide a tie breaker.
       sql`node.workinstanceid DESC`,
     ],

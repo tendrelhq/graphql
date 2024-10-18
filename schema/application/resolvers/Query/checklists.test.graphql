@@ -3,6 +3,7 @@ query Test(
   $cursor: String
   $limit: Int!
   $sortBy: [ChecklistSortOrder!]
+  $withActive: Boolean
   $withName: String
   $withStatus: [ChecklistStatusStates!]
 ) {
@@ -11,6 +12,7 @@ query Test(
     first: $limit
     after: $cursor
     sortBy: $sortBy
+    withActive: $withActive
     withName: $withName
     withStatus: $withStatus
   ) {
