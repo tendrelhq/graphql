@@ -58,8 +58,7 @@ export const setStatus: NonNullable<MutationResolvers["setStatus"]> = async (
            FROM inputs
            WHERE
                id = ${id}
-               AND
-               workinstancestatusid != inputs.status
+               AND workinstancestatusid IS DISTINCT FROM inputs.status
         `;
 
         const r1 = await match(targetStatus)
@@ -165,23 +164,31 @@ export const setStatus: NonNullable<MutationResolvers["setStatus"]> = async (
                   systagtype = ${targetStatus}
           )
 
-          UPDATE public.workresultinstance
-          SET
-              workresultinstancestatusid = inputs.status,
-              workresultinstancemodifieddate = now()
-          FROM inputs
+          INSERT INTO public.workresultinstance AS wri (
+              workresultinstancecustomerid,
+              workresultinstanceworkresultid,
+              workresultinstanceworkinstanceid,
+              workresultinstancestatusid,
+              workresultinstancevalue
+          )
+          SELECT
+              wr.workresultcustomerid,
+              wr.workresultid,
+              inputs.status,
+              wi.workinstanceid
+          FROM
+              inputs,
+              public.workresult AS wr,
+              public.workinstance AS wi
           WHERE
-              workresultinstancestatusid != inputs.status
-              AND workresultinstanceworkresultid IN (
-                  SELECT workresultid
-                  FROM public.workresult
-                  WHERE id = ${id}
-              )
-              AND workresultinstanceworkinstanceid IN (
-                  SELECT workinstanceid
-                  FROM public.workinstance
-                  WHERE id = ${parentId}
-              )
+              wr.id = ${id}
+              AND wi.id = ${parentId}
+          ON CONFLICT (workresultinstanceworkresultid, workresultinstanceworkinstanceid)
+          DO UPDATE
+              SET
+                  workresultinstancestatusid = excluded.workresultinstancestatusid,
+                  workresultinstancemodifieddate = now()
+          RETURNING encode(('workresultinstance:' || wri.workresultinstanceuuid)::bytea, 'base64') AS id
         `,
       ]);
     })

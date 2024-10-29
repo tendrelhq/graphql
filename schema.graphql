@@ -15,6 +15,7 @@ Identifies an entity as being either "active" or "inactive".
 Activatable entities have two operations: activate and deactivate.
 """
 interface Activatable implements Component {
+  active: Active @semanticNonNull
   id: ID!
 }
 
@@ -27,9 +28,8 @@ type ActivationStatus {
 """
 TODO
 """
-type Active implements Component {
+type Active {
   active: Boolean!
-  id: ID!
   updatedAt: Temporal @semanticNonNull
 }
 
@@ -38,7 +38,6 @@ TODO
 """
 input ActiveInput {
   active: Boolean!
-  id: ID!
   updatedAt: TemporalInput
 }
 
@@ -178,7 +177,7 @@ input CheckboxWidgetInput {
 }
 
 type Checklist implements Activatable & Assignable & Component & Node {
-  active: Active
+  active: Active @semanticNonNull
   assignees(
     after: String
     before: String
@@ -206,6 +205,7 @@ type Checklist implements Activatable & Assignable & Component & Node {
     before: String
     first: Int
     last: Int
+    withActive: Boolean
   ): ChecklistItemConnection!
   metadata: Metadata!
   name: DisplayName!
@@ -321,7 +321,8 @@ input ChecklistOpenInput {
 """
 TODO
 """
-type ChecklistResult implements Component & Node {
+type ChecklistResult implements Activatable & Component & Node {
+  active: Active @semanticNonNull
   assignees(
     after: String
     before: String

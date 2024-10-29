@@ -22,8 +22,7 @@ export const deactivate: NonNullable<MutationResolvers["deactivate"]> = async (
               id = ${id}
               AND (
                   workresultenddate IS null
-                  OR
-                  workresultenddate > now()
+                  OR workresultenddate > now()
               )
           RETURNING 1;
       `,
@@ -39,8 +38,7 @@ export const deactivate: NonNullable<MutationResolvers["deactivate"]> = async (
               id = ${id}
               AND (
                   worktemplateenddate IS null
-                  OR
-                  worktemplateenddate > now()
+                  OR worktemplateenddate > now()
               )
           RETURNING 1;
       `,
@@ -60,7 +58,7 @@ export const deactivate: NonNullable<MutationResolvers["deactivate"]> = async (
   );
 
   return {
-    __typename: "Checklist", // it's the only one right now
+    __typename: type === "workresult" ? "ChecklistResult" : "Checklist",
     id: args.entity,
     // biome-ignore lint/suspicious/noExplicitAny:
   } as any;

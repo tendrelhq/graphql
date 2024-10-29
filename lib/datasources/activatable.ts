@@ -25,7 +25,6 @@ export function makeActiveLoader(_req: Request) {
                   WITH cte AS (
                       SELECT
                           wr.id AS _key,
-                          encode(('workresult:' || wr.id || ':active')::bytea, 'base64') AS id,
                           (
                               wr.workresultenddate IS NULL
                               OR wr.workresultenddate > now()
@@ -38,28 +37,30 @@ export function makeActiveLoader(_req: Request) {
 
                   SELECT
                       _key,
-                      id,
                       active,
                       (
                           SELECT row_to_json(t)
                           FROM (
-                              'Instant' AS "__typename",
-                              (extract(epoch from workresultstartdate) * 1000)::text AS "epochMilliseconds"
-                          ) t
+                              VALUES (
+                                  'Instant',
+                                  (extract(epoch from workresultstartdate) * 1000)::text
+                              )
+                          ) t ("__typename", "epochMilliseconds")
                       )
                   FROM cte
                   WHERE active = true
                   UNION ALL
                   SELECT
                       _key,
-                      id,
                       active,
                       (
                           SELECT row_to_json(t)
                           FROM (
-                              'Instant' AS "__typename",
-                              (extract(epoch from workresultenddate) * 1000)::text AS "epochMilliseconds"
-                          ) t
+                              VALUES (
+                                  'Instant',
+                                  (extract(epoch from workresultenddate) * 1000)::text
+                              )
+                          ) t ("__typename", "epochMilliseconds")
                       )
                   FROM cte
                   WHERE active = false
@@ -73,7 +74,6 @@ export function makeActiveLoader(_req: Request) {
                   WITH cte AS (
                       SELECT
                           id AS _key,
-                          encode(('worktemplate:' || id || ':active')::bytea, 'base64') AS id,
                           (
                               worktemplateenddate IS NULL
                               OR worktemplateenddate > now()
@@ -86,7 +86,6 @@ export function makeActiveLoader(_req: Request) {
 
                   SELECT
                       _key,
-                      id,
                       active,
                       (
                           SELECT row_to_json(t)
@@ -101,7 +100,6 @@ export function makeActiveLoader(_req: Request) {
                   UNION ALL
                   SELECT
                       _key,
-                      id,
                       active,
                       (
                           SELECT row_to_json(t)

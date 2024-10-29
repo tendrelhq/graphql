@@ -121,15 +121,11 @@ export const Checklist: ChecklistResolvers = {
   async description(parent, _, ctx) {
     return (await ctx.orm.description.load(parent.id)) as Description;
   },
-  async items(parent, args, ctx) {
+  async items(parent, args) {
+    // NOTE: We don't support pagination of ChecklistResults yet, even though
+    // the API suggests otherwise...
     const { first, last } = args;
     const { id, type } = decodeGlobalId(parent.id);
-    const { id: afterId } = args.after
-      ? decodeGlobalId(args.after)
-      : { id: null };
-    const { id: beforeId } = args.before
-      ? decodeGlobalId(args.before)
-      : { id: null };
 
     const rows = await match(type)
       .with(
@@ -156,8 +152,23 @@ export const Checklist: ChecklistResolvers = {
                     FROM public.workinstance
                     WHERE id = ${id}
                 )
-                AND
-                wr.workresultisprimary = false
+                AND wr.workresultisprimary = false
+                ${match(args.withActive)
+                  .with(
+                    true,
+                    () => sql`AND (
+                        wr.workresultenddate IS null
+                        OR wr.workresultenddate > now()
+                    )`,
+                  )
+                  .with(
+                    false,
+                    () => sql`AND (
+                        wr.workresultenddate IS NOT null
+                        AND wr.workresultenddate < now()
+                    )`,
+                  )
+                  .otherwise(() => sql``)}
             ORDER BY wr.workresultorder ${last ? sql`DESC` : sql`ASC`},
                      wr.workresultid ${last ? sql`DESC` : sql`ASC`}
             LIMIT ${first ?? last ?? null};
@@ -174,7 +185,24 @@ export const Checklist: ChecklistResolvers = {
                 ON
                     wr.workresultworktemplateid = wt.worktemplateid
                     AND wt.id = ${id}
-            WHERE workresultisprimary = false
+            WHERE
+                wr.workresultisprimary = false
+                ${match(args.withActive)
+                  .with(
+                    true,
+                    () => sql`AND (
+                        wr.workresultenddate IS null
+                        OR wr.workresultenddate > now()
+                    )`,
+                  )
+                  .with(
+                    false,
+                    () => sql`AND (
+                        wr.workresultenddate IS NOT null
+                        AND wr.workresultenddate < now()
+                    )`,
+                  )
+                  .otherwise(() => sql``)}
             ORDER BY wr.workresultorder ${last ? sql`DESC` : sql`ASC`},
                      wr.workresultid ${last ? sql`DESC` : sql`ASC`}
             LIMIT ${first ?? last ?? null};
@@ -193,30 +221,60 @@ export const Checklist: ChecklistResolvers = {
           "workinstance",
           () => sql<[{ count: number }]>`
               SELECT count(*)
-              FROM public.workresult
+              FROM public.workresult AS wr
               WHERE
-                  workresultworktemplateid IN (
+                  wr.workresultworktemplateid IN (
                       SELECT workinstanceworktemplateid
                       FROM public.workinstance
                       WHERE id = ${id}
                   )
-                  AND
-                  workresultisprimary = false
+                  AND wr.workresultisprimary = false
+                  ${match(args.withActive)
+                    .with(
+                      true,
+                      () => sql`AND (
+                          wr.workresultenddate IS null
+                          OR wr.workresultenddate > now()
+                      )`,
+                    )
+                    .with(
+                      false,
+                      () => sql`AND (
+                          wr.workresultenddate IS NOT null
+                          AND wr.workresultenddate < now()
+                      )`,
+                    )
+                    .otherwise(() => sql``)}
           `,
         )
         .with(
           "worktemplate",
           () => sql<[{ count: number }]>`
               SELECT count(*)
-              FROM public.workresult
+              FROM public.workresult AS wr
               WHERE
-                  workresultworktemplateid IN (
+                  wr.workresultworktemplateid IN (
                       SELECT worktemplateid
                       FROM public.worktemplate
                       WHERE id = ${id}
                   )
-                  AND
-                  workresultisprimary = false
+                  AND wr.workresultisprimary = false
+                  ${match(args.withActive)
+                    .with(
+                      true,
+                      () => sql`AND (
+                          wr.workresultenddate IS null
+                          OR wr.workresultenddate > now()
+                      )`,
+                    )
+                    .with(
+                      false,
+                      () => sql`AND (
+                          wr.workresultenddate IS NOT null
+                          AND wr.workresultenddate < now()
+                      )`,
+                    )
+                    .otherwise(() => sql``)}
           `,
         )
         .otherwise(() => Promise.reject("invariant violated"))

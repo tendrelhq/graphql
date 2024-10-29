@@ -52,7 +52,7 @@ export const activate: NonNullable<MutationResolvers["activate"]> = async (
   );
 
   return {
-    __typename: "Checklist", // it's the only one right now...
+    __typename: type === "workresult" ? "ChecklistResult" : "Checklist",
     id: args.entity,
     // biome-ignore lint/suspicious/noExplicitAny:
   } as any;

@@ -58,7 +58,7 @@ input CopyFromOptions {
 
 type Checklist implements Component & Activatable & Assignable & Node {
   id: ID!
-  active: Active
+  active: Active @semanticNonNull
   assignees(
     first: Int
     last: Int
@@ -78,6 +78,7 @@ type Checklist implements Component & Activatable & Assignable & Node {
     last: Int
     before: String
     after: String
+    withActive: Boolean
   ): ChecklistItemConnection!
   name: DisplayName!
   required: Boolean
@@ -157,8 +158,9 @@ input ChecklistItemInput @oneOf {
 """
 TODO
 """
-type ChecklistResult implements Component & Node {
+type ChecklistResult implements Component & Activatable & Node {
   id: ID!
+  active: Active @semanticNonNull
   assignees(
     first: Int
     last: Int
