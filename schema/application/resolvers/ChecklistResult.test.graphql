@@ -7,6 +7,9 @@ query TestChecklistResult {
         edges {
           node {
             ... on ChecklistResult {
+              active {
+                active
+              }
               assignees {
                 totalCount
               }

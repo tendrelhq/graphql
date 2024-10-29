@@ -23,11 +23,7 @@ export const setValue: NonNullable<MutationResolvers["setValue"]> = async (
   const value = (() => {
     switch (true) {
       case "checkbox" in input:
-        return input.checkbox?.value === true
-          ? "true"
-          : input.checkbox?.value === false
-            ? "false"
-            : null;
+        return input.checkbox?.value?.toString() ?? null;
       case "clicker" in input:
         return input.clicker?.value?.toString();
       case "duration" in input:
@@ -47,18 +43,23 @@ export const setValue: NonNullable<MutationResolvers["setValue"]> = async (
         if (!input.temporal.value) return null;
 
         if ("instant" in input.temporal.value) {
-          const t = Temporal.Instant.fromEpochMilliseconds(
-            Number(input.temporal.value.instant),
+          return (
+            Temporal.Instant
+              //
+              .fromEpochMilliseconds(Number(input.temporal.value.instant))
+              .toString()
           );
-          return t.toString();
         }
 
-        const t = Temporal.Instant.fromEpochMilliseconds(
-          Number(input.temporal.value.zdt.epochMilliseconds),
+        return (
+          Temporal.Instant
+            //
+            .fromEpochMilliseconds(
+              Number(input.temporal.value.zdt.epochMilliseconds),
+            )
+            .toZonedDateTimeISO(input.temporal.value.zdt.timeZone)
+            .toString({ calendarName: "never", timeZoneName: "never" })
         );
-        return t
-          .toZonedDateTimeISO(input.temporal.value.zdt.timeZone)
-          .toString({ calendarName: "never", timeZoneName: "never" });
       }
       default: {
         const _: never = input;
@@ -82,23 +83,7 @@ export const setValue: NonNullable<MutationResolvers["setValue"]> = async (
         FROM inputs
         WHERE
             workresultinstanceuuid = ${id}
-            AND (
-                (
-                    workresultinstancevalue IS null
-                    AND
-                    inputs.value IS NOT null
-                )
-                OR
-                (
-                    workresultinstancevalue IS NOT null
-                    AND
-                    inputs.value IS null
-                )
-                OR
-                (
-                    workresultinstancevalue != inputs.value
-                )
-            )
+            AND workresultinstancevalue IS DISTINCT FROM inputs.value;
     `;
 
     console.log(
@@ -129,7 +114,6 @@ export const setValue: NonNullable<MutationResolvers["setValue"]> = async (
           workresultinstanceworkinstanceid,
           workresultinstancevalue
       )
-
       SELECT
           wr.workresultcustomerid,
           wr.workresultid,
@@ -138,8 +122,7 @@ export const setValue: NonNullable<MutationResolvers["setValue"]> = async (
       FROM public.workresult AS wr, public.workinstance AS wi
       WHERE
           wr.id = ${id}
-          AND
-          wi.id = ${parentId}
+          AND wi.id = ${parentId}
       ON CONFLICT (workresultinstanceworkresultid, workresultinstanceworkinstanceid)
       DO UPDATE
           SET

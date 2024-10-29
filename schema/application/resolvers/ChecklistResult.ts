@@ -1,10 +1,12 @@
 import { sql } from "@/datasources/postgres";
 import type { ChecklistResultResolvers, ResolversTypes } from "@/schema";
 import { decodeGlobalId } from "@/schema/system";
-import { GraphQLError } from "graphql";
 import { match } from "ts-pattern";
 
 export const ChecklistResult: ChecklistResultResolvers = {
+  active(parent, _, ctx) {
+    return ctx.orm.active.load(parent.id);
+  },
   assignees() {
     return {
       edges: [],
