@@ -18,7 +18,7 @@ exports[`status loader open 1`] = `
 exports[`status loader item - open 1`] = `
 {
   "__typename": "ChecklistOpen",
-  "_key": "wri_2d9cf120-1d88-4b5a-8e8a-b716a56d6729",
+  "_key": "work-instance_8930ad12-471f-406a-a4b6-0f0f27e80396:work-result_a7844036-4fe2-46dd-acb9-66bf5757afed",
   "closedAt": null,
   "dueAt": null,
   "inProgressAt": null,

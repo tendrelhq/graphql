@@ -1,5 +1,5 @@
 import type { ID, ResolversTypes } from "@/schema";
-import { decodeGlobalId } from "@/schema/system";
+import { decodeGlobalId, type GlobalId } from "@/schema/system";
 import type { WithKey } from "@/util";
 import DataLoader from "dataloader";
 import type { Request } from "express";
@@ -10,11 +10,11 @@ export function makeStatusLoader(_req: Request) {
   return new DataLoader<ID, ResolversTypes["ChecklistStatus"] | undefined>(
     async keys => {
       const entities = keys.map(decodeGlobalId);
-      const byUnderlyingType = entities.reduce((acc, { type, id }) => {
+      const byUnderlyingType = entities.reduce((acc, { type, ...ids }) => {
         if (!acc.has(type)) acc.set(type, []);
-        acc.get(type)?.push(id);
+        acc.get(type)?.push(ids);
         return acc;
-      }, new Map<string, string[]>());
+      }, new Map<string, Omit<GlobalId, "type">[]>());
 
       const qs = [...byUnderlyingType.entries()].flatMap(([type, ids]) =>
         match(type)
@@ -37,7 +37,7 @@ export function makeStatusLoader(_req: Request) {
                     FROM public.workinstance AS wi
                     INNER JOIN public.systag AS s
                         ON wi.workinstancestatusid = s.systagid
-                    WHERE wi.id IN ${sql(ids)}
+                    WHERE wi.id IN ${sql(ids.map(i => i.id))}
                 )
 
                 SELECT
@@ -132,7 +132,7 @@ export function makeStatusLoader(_req: Request) {
               (
                 WITH cte AS (
                     SELECT
-                        wri.workresultinstanceuuid AS _key,
+                        (wi.id || ':' || wr.id) AS _key,
                         CASE WHEN s.systagtype = 'Open' THEN 'ChecklistOpen'
                              WHEN s.systagtype = 'In Progress' THEN 'ChecklistInProgress'
                              ELSE 'ChecklistClosed'
@@ -145,9 +145,12 @@ export function makeStatusLoader(_req: Request) {
                     FROM public.workresultinstance AS wri
                     INNER JOIN public.workinstance AS wi
                         ON wri.workresultinstanceworkinstanceid = wi.workinstanceid
+                    INNER JOIN public.workresult AS wr
+                        ON wri.workresultinstanceworkresultid = wr.workresultid
                     INNER JOIN public.systag AS s
                         ON wri.workresultinstancestatusid = s.systagid
-                    WHERE wri.workresultinstanceuuid IN ${sql(ids)}
+                    WHERE
+                        (wi.id, wr.id) IN ${sql(ids.map(i => sql([i.id, i.suffix?.at(0) ?? ""])))}
                 )
 
                 SELECT
@@ -216,7 +219,10 @@ export function makeStatusLoader(_req: Request) {
 
       type X = WithKey<ResolversTypes["ChecklistStatus"]>;
       const xs = await sql<X[]>`${unionAll(qs)}`;
-      return entities.map(e => xs.find(x => e.id === x._key));
+      return entities.map(e => {
+        const key = [e.id, ...(e.suffix ?? [])].join(":");
+        return xs.find(x => x._key === key);
+      });
     },
   );
 }

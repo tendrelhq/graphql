@@ -6,21 +6,22 @@ import type {
   NameMetadata,
   UpdateNameInput,
 } from "@/schema";
-import { decodeGlobalId } from "@/schema/system";
+import { decodeGlobalId, type GlobalId } from "@/schema/system";
 import type { WithKey } from "@/util";
 import Dataloader from "dataloader";
 import type { Request } from "express";
 import { match } from "ts-pattern";
 import { type SQL, sql, unionAll } from "./postgres";
+import { GraphQLError } from "graphql";
 
 export function makeDisplayNameLoader(_req: Request) {
   return new Dataloader<ID, Component>(async keys => {
     const entities = keys.map(decodeGlobalId);
-    const byUnderlyingType = entities.reduce((acc, { type, id }) => {
+    const byUnderlyingType = entities.reduce((acc, { type, ...ids }) => {
       if (!acc.has(type)) acc.set(type, []);
-      acc.get(type)?.push(id);
+      acc.get(type)?.push(ids);
       return acc;
-    }, new Map<string, string[]>());
+    }, new Map<string, Omit<GlobalId, "type">[]>());
 
     const qs = [...byUnderlyingType.entries()].flatMap(([type, ids]) =>
       match(type)
@@ -35,7 +36,7 @@ export function makeDisplayNameLoader(_req: Request) {
                   ON wi.workinstanceworktemplateid = wt.worktemplateid
               INNER JOIN public.languagemaster
                   ON worktemplatenameid = languagemasterid
-              WHERE wi.id IN ${sql(ids)}
+              WHERE wi.id IN ${sql(ids.map(i => i.id))}
           `,
         )
         .with(
@@ -43,11 +44,11 @@ export function makeDisplayNameLoader(_req: Request) {
           () => sql`
               SELECT
                   id AS _key,
-                  encode(('name:' || languagemasteruuid)::bytea, 'base64') AS id
-              FROM public.worktemplate
-              INNER JOIN public.languagemaster
-                  ON worktemplatenameid = languagemasterid
-              WHERE id IN ${sql(ids)}
+                  encode(('name:' || lm.languagemasteruuid)::bytea, 'base64') AS id
+              FROM public.worktemplate AS wt
+              INNER JOIN public.languagemaster AS lm
+                  ON wt.worktemplatenameid = lm.languagemasterid
+              WHERE wt.id IN ${sql(ids.map(i => i.id))}
           `,
         )
         .with(
@@ -59,32 +60,56 @@ export function makeDisplayNameLoader(_req: Request) {
               FROM public.workresult
               INNER JOIN public.languagemaster
                   ON workresultlanguagemasterid = languagemasterid
-              WHERE id IN ${sql(ids)}
+              WHERE id IN ${sql(ids.map(i => i.id))}
           `,
         )
         .with(
           "workresultinstance",
           () => sql`
               SELECT
-                  wri.workresultinstanceuuid AS _key,
+                  (wi.id || ':' || wr.id) AS _key,
                   encode(('name:' || languagemasteruuid)::bytea, 'base64') AS id
-              FROM public.workresultinstance AS wri
+              FROM public.workinstance AS wi
               INNER JOIN public.workresult AS wr
-                  ON wri.workresultinstanceworkresultid = wr.workresultid
+                  ON wi.workinstanceworktemplateid = wr.workresultworktemplateid
               INNER JOIN public.languagemaster AS lm
                   ON wr.workresultlanguagemasterid = lm.languagemasterid
-              WHERE wri.workresultinstanceuuid IN ${sql(ids)}
+              WHERE
+                  (wi.id, wr.id) IN ${sql(ids.map(i => sql([i.id, i.suffix?.at(0)!])))}
           `,
         )
         .otherwise(() => []),
     );
 
-    if (!qs.length) return entities.map(() => new EntityNotFound("name"));
+    if (!qs.length)
+      return entities.map(
+        e =>
+          new GraphQLError(
+            `No DisplayName for (${e.type}:${e.id}${e.suffix?.length ? `:${e.suffix.join()}` : ""})`,
+            {
+              extensions: {
+                code: "NOT_FOUND",
+              },
+            },
+          ),
+      );
 
     const xs = await sql<[WithKey<Component>]>`${unionAll(qs)}`;
-    return entities.map(
-      e => xs.find(x => e.id === x._key) ?? new EntityNotFound("name"),
-    );
+    return entities.map(e => {
+      const key = [e.id, ...(e.suffix ?? [])].join(":");
+      const x = xs.find(x => x._key === key);
+
+      if (x) return x;
+
+      return new GraphQLError(
+        `No DisplayName for (${e.type}:${e.id}${e.suffix?.length ? `:${e.suffix.join()}` : ""})`,
+        {
+          extensions: {
+            code: "NOT_FOUND",
+          },
+        },
+      );
+    });
   });
 }
 

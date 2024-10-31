@@ -1,11 +1,11 @@
 // Bun Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`setValue lazy instantiation 1`] = `
+exports[`setValue no delta 1`] = `
 {
   "data": {
     "setValue": {
       "__typename": "SetValuePayload",
-      "delta": 1,
+      "delta": 0,
       "node": {
         "__typename": "ChecklistResult",
         "status": {
@@ -13,6 +13,7 @@ exports[`setValue lazy instantiation 1`] = `
         },
         "widget": {
           "__typename": "NumberWidget",
+          "number": 42,
         },
       },
       "parent": {
@@ -26,11 +27,20 @@ exports[`setValue lazy instantiation 1`] = `
 }
 `;
 
-exports[`setValue invalid type 1`] = `
+exports[`setValue entity is not mutable 1`] = `
 {
   "data": null,
   "errors": [
-    [GraphQLError: Invalid input to ECS operation: AST node],
+    [GraphQLError: Entity is not mutable: foo],
+  ],
+}
+`;
+
+exports[`setValue global id invariant 1`] = `
+{
+  "data": null,
+  "errors": [
+    [GraphQLError: Unexpected error value: "invariant violated"],
   ],
 }
 `;

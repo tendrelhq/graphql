@@ -1,0 +1,29 @@
+// Bun Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`status loader workinstance 1`] = `
+{
+  "_key": "work-instance_37b5c0b5-0b48-492a-98f7-6690b0328095",
+  "id": "bmFtZTpsbV85ZDc4MGQ0OS1iYTI3LTRlZDEtYTg0Zi1jMTY3NzEwODViODg=",
+}
+`;
+
+exports[`status loader worktemplate 1`] = `
+{
+  "_key": "1462a4b5-0cc9-424f-9856-7b845d86080c",
+  "id": "bmFtZTpsbV9jNWE1MWFhZi1hYzk5LTQ5NTctYmJjMC0xZmY3OWFlMDNkMTY=",
+}
+`;
+
+exports[`status loader workresult 1`] = `
+{
+  "_key": "a08f4b6a-166e-4e0e-a770-834b89732102",
+  "id": "bmFtZTpsbV85YTg3ZjA5NS1hNjRiLTQ2MTUtYmJhNS02NTZjYmRhM2E2NzU=",
+}
+`;
+
+exports[`status loader workresultinstance 1`] = `
+{
+  "_key": "work-instance_37b5c0b5-0b48-492a-98f7-6690b0328095:fb9b811a-ec70-4421-a931-6e654a0fa864",
+  "id": "bmFtZTpsbV8yNDNkYzRmZi04ZThlLTQzMWItYTNjNC0yYWEzNTU4ODBmYTM=",
+}
+`;

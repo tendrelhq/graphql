@@ -9,15 +9,34 @@ export const setValue: NonNullable<MutationResolvers["setValue"]> = async (
   { entity, parent, input },
   _ctx,
 ) => {
-  const { type: parentType, id: parentId } = decodeGlobalId(parent);
-  const { type, id } = decodeGlobalId(entity);
+  const { type, id, suffix } = decodeGlobalId(entity);
 
-  if (parentType !== "workinstance") {
-    throw new GraphQLError("Invalid input to ECS operation: AST node", {
+  if (type !== "workresultinstance") {
+    throw new GraphQLError(`Entity is not mutable: ${type}`, {
       extensions: {
-        code: "E_INVALID_OPERAND",
+        code: "E_INVALID_OPERATION",
       },
     });
+  }
+
+  if (!suffix?.length) {
+    console.warn();
+    throw "invariant violated";
+  }
+
+  // At this point this is merely a convenience to get at the parent from the
+  // node. I can't remember if we are using this convenience in the client, but
+  // if not then we can probably just remove it entirely.
+  const { type: parentType } = decodeGlobalId(parent);
+  if (parentType !== "workinstance") {
+    throw new GraphQLError(
+      `Type '${parentType}' is an invalid parent type for type '${type}'`,
+      {
+        extensions: {
+          code: "E_INVALID_OPERAND",
+        },
+      },
+    );
   }
 
   const value = (() => {
@@ -68,80 +87,49 @@ export const setValue: NonNullable<MutationResolvers["setValue"]> = async (
     }
   })();
 
-  if (type === "workresultinstance") {
-    const result = await sql`
-        WITH inputs (value) AS (
-            VALUES (
-                ${value ?? null}::text
-            )
-        )
-
-        UPDATE public.workresultinstance AS wri
-        SET
-            workresultinstancevalue = inputs.value,
-            workresultinstancemodifieddate = now()
-        FROM inputs
-        WHERE
-            workresultinstanceuuid = ${id}
-            AND workresultinstancevalue IS DISTINCT FROM inputs.value;
-    `;
-
-    console.log(
-      `Applied ${result.count} update(s) to Entity ${entity} (${type}:${id})`,
-    );
-
-    return {
-      delta: result.count,
-      node: {
-        __typename: "ChecklistResult",
-        id: entity,
-        // biome-ignore lint/suspicious/noExplicitAny:
-      } as any,
-      parent: {
-        __typename: "Checklist",
-        id: parent,
-        // biome-ignore lint/suspicious/noExplicitAny:
-      } as any,
-    };
-  }
-
-  // Otherwise it's a workresult, in which case we need to create a new
-  // workresultinstance.
-  const [row] = await sql<[{ id: string }]>`
+  // Note that this is a no-op if the values are identical.
+  const result = await sql<[{ id: string }]>`
       INSERT INTO public.workresultinstance AS wri (
           workresultinstancecustomerid,
           workresultinstanceworkresultid,
           workresultinstanceworkinstanceid,
           workresultinstancevalue
       )
-      SELECT
-          wr.workresultcustomerid,
-          wr.workresultid,
-          wi.workinstanceid,
-          ${value ?? null}::text
-      FROM public.workresult AS wr, public.workinstance AS wi
-      WHERE
-          wr.id = ${id}
-          AND wi.id = ${parentId}
+      (
+        SELECT
+            wr.workresultcustomerid,
+            wr.workresultid,
+            wi.workinstanceid,
+            ${value ?? null}::text
+        FROM
+            public.workinstance AS wi,
+            public.workresult AS wr
+        WHERE
+            wi.id = ${id}
+            AND wr.id = ${suffix[0]}
+      )
       ON CONFLICT (workresultinstanceworkresultid, workresultinstanceworkinstanceid)
       DO UPDATE
           SET
               workresultinstancevalue = excluded.workresultinstancevalue,
-              workresultinstancemodifieddate = excluded.workresultinstancemodifieddate
-      RETURNING encode(('workresultinstance:' || wri.workresultinstanceuuid)::bytea, 'base64') AS id
+              workresultinstancemodifieddate = now()
+          WHERE
+              wri.workresultinstancevalue IS DISTINCT FROM excluded.workresultinstancevalue
+      RETURNING 1
   `;
 
   console.log(
-    `Lazy instantiation of AST node ${entity} resulted in the creation of ${1} entity`,
+    `Applied ${result.count} update(s) to Entity ${entity} (${type}:${id}:${suffix.join(":")})`,
   );
 
   return {
-    delta: 1,
+    delta: result.count,
     node: {
       __typename: "ChecklistResult",
-      id: row.id,
+      id: entity,
       // biome-ignore lint/suspicious/noExplicitAny:
     } as any,
+    // This is what I mean by "convenience":
     parent: {
       __typename: "Checklist",
       id: parent,

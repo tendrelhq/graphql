@@ -3,17 +3,17 @@ import { resolvers, typeDefs } from "@/schema";
 import { encodeGlobalId } from "@/schema/system";
 import { execute } from "@/test/prelude";
 import { makeExecutableSchema } from "@graphql-tools/schema";
-import { TestChecklistResultDocument } from "./ChecklistResult.test.generated";
+import { TestChecklistDocument } from "./Checklist.test.generated";
 
 const schema = makeExecutableSchema({ resolvers, typeDefs });
 
-describe.skipIf(!!process.env.CI)("ChecklistResult", () => {
+describe.skipIf(!!process.env.CI)("Checklist", () => {
   test("ast", async () => {
     const entity = encodeGlobalId({
-      type: "workresult",
-      id: "work-result_5b325ee3-68ef-4d42-8475-bc5e91e50a85",
+      type: "worktemplate",
+      id: "work-template_77a55567-6b2b-4506-9d2b-f375e0c29e3f",
     });
-    const result = await execute(schema, TestChecklistResultDocument, {
+    const result = await execute(schema, TestChecklistDocument, {
       entity,
     });
     expect(result.errors).toBeFalsy();
@@ -22,11 +22,10 @@ describe.skipIf(!!process.env.CI)("ChecklistResult", () => {
 
   test("ecs", async () => {
     const entity = encodeGlobalId({
-      type: "workresultinstance",
-      id: "work-instance_7fc17a8c-73f9-4ea7-9f64-90a11c1f4e54",
-      suffix: "work-result_5b325ee3-68ef-4d42-8475-bc5e91e50a85",
+      type: "workinstance",
+      id: "work-instance_0bf7fc40-4e0a-4714-8b81-a4d7bc696158",
     });
-    const result = await execute(schema, TestChecklistResultDocument, {
+    const result = await execute(schema, TestChecklistDocument, {
       entity,
     });
     expect(result.errors).toBeFalsy();

@@ -1,5 +1,5 @@
 import type { ID } from "@/schema";
-import { decodeGlobalId } from "@/schema/system";
+import { decodeGlobalId, type GlobalId } from "@/schema/system";
 import type { WithKey } from "@/util";
 import DataLoader from "dataloader";
 import type { Request } from "express";
@@ -11,11 +11,11 @@ type Required = { required: boolean };
 export function makeRequirementLoader(_req: Request) {
   return new DataLoader<ID, boolean | undefined>(async keys => {
     const entities = keys.map(decodeGlobalId);
-    const byUnderlyingType = entities.reduce((acc, { type, id }) => {
+    const byUnderlyingType = entities.reduce((acc, { type, ...ids }) => {
       if (!acc.has(type)) acc.set(type, []);
-      acc.get(type)?.push(id);
+      acc.get(type)?.push(ids);
       return acc;
-    }, new Map<string, string[]>());
+    }, new Map<string, Omit<GlobalId, "type">[]>());
 
     const qs = [...byUnderlyingType.entries()].flatMap(([type, ids]) =>
       match(type)
@@ -26,7 +26,7 @@ export function makeRequirementLoader(_req: Request) {
                     id AS _key,
                     false AS required
                 FROM public.workinstance
-                WHERE id IN ${sql(ids)}
+                WHERE id IN ${sql(ids.map(i => i.id))}
             `,
         )
         .with(
@@ -36,19 +36,20 @@ export function makeRequirementLoader(_req: Request) {
                     id AS _key,
                     workresultisrequired AS required
                 FROM public.workresult
-                WHERE id IN ${sql(ids)}
+                WHERE id IN ${sql(ids.map(i => i.id))}
             `,
         )
         .with(
           "workresultinstance",
           () => sql`
                 SELECT
-                    wri.workresultinstanceuuid AS _key,
+                    (wi.id || ':' || wr.id) AS _key,
                     wr.workresultisrequired AS required
-                FROM public.workresultinstance AS wri
+                FROM public.workinstance AS wi
                 INNER JOIN public.workresult AS wr
-                    ON wri.workresultinstanceworkresultid = wr.workresultid
-                WHERE wri.workresultinstanceuuid IN ${sql(ids)}
+                    ON wi.workinstanceworktemplateid = wr.workresultworktemplateid
+                WHERE
+                    (wi.id, wr.id) IN ${sql(ids.map(i => sql([i.id, i.suffix?.at(0)!])))}
             `,
         )
         .with(
@@ -58,7 +59,7 @@ export function makeRequirementLoader(_req: Request) {
                     id AS _key,
                     false AS required
                 FROM public.worktemplate
-                WHERE id IN ${sql(ids)}
+                WHERE id IN ${sql(ids.map(i => i.id))}
             `,
         )
         .otherwise(() => []),
@@ -67,6 +68,9 @@ export function makeRequirementLoader(_req: Request) {
     if (!qs.length) return entities.map(() => undefined);
 
     const xs = await sql<WithKey<Required>[]>`${unionAll(qs)}`;
-    return entities.map(e => xs.find(x => e.id === x._key)?.required);
+    return entities.map(e => {
+      const key = [e.id, ...(e.suffix ?? [])].join(":");
+      return xs.find(x => x._key === key)?.required;
+    });
   });
 }

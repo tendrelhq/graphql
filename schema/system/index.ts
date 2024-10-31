@@ -21,7 +21,7 @@ const GlobalId = z.string().map(id => {
 export type GlobalId = {
   type: string;
   id: string;
-  suffix?: string | string[];
+  suffix?: string[];
 };
 
 export function decodeGlobalId(id: unknown): GlobalId {
@@ -35,7 +35,13 @@ export function decodeGlobalIdRaw(id: unknown): string {
   return Buffer.from(decodeURIComponent(id), "base64").toString();
 }
 
-export function encodeGlobalId({ type, id, ...rest }: GlobalId) {
+export type GlobalIdInput = {
+  type: string;
+  id: string;
+  suffix?: string | string[];
+};
+
+export function encodeGlobalId({ type, id, ...rest }: GlobalIdInput) {
   const suffix = rest.suffix
     ? typeof rest.suffix === "string"
       ? rest.suffix
