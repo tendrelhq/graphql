@@ -1,7 +1,7 @@
-import { EntityNotFound } from "@/errors";
 import type { ID, Tag } from "@/schema";
 import Dataloader from "dataloader";
 import type { Request } from "express";
+import { GraphQLError } from "graphql/error";
 import { sql } from "./postgres";
 
 export default (_: Request) =>
@@ -25,5 +25,13 @@ export default (_: Request) =>
       new Map<ID, Tag>(),
     );
 
-    return keys.map(key => byKey.get(key) ?? new EntityNotFound("tag"));
+    return keys.map(
+      key =>
+        byKey.get(key) ??
+        new GraphQLError(`No Tag for key '${key}'`, {
+          extensions: {
+            code: "NOT_FOUND",
+          },
+        }),
+    );
   });

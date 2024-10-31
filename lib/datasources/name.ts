@@ -1,4 +1,3 @@
-import { EntityNotFound } from "@/errors";
 import type {
   Component,
   ID,
@@ -6,13 +5,13 @@ import type {
   NameMetadata,
   UpdateNameInput,
 } from "@/schema";
-import { decodeGlobalId, type GlobalId } from "@/schema/system";
+import { type GlobalId, decodeGlobalId } from "@/schema/system";
 import type { WithKey } from "@/util";
 import Dataloader from "dataloader";
 import type { Request } from "express";
+import { GraphQLError } from "graphql";
 import { match } from "ts-pattern";
 import { type SQL, sql, unionAll } from "./postgres";
-import { GraphQLError } from "graphql";
 
 export function makeDisplayNameLoader(_req: Request) {
   return new Dataloader<ID, Component>(async keys => {
@@ -75,7 +74,7 @@ export function makeDisplayNameLoader(_req: Request) {
               INNER JOIN public.languagemaster AS lm
                   ON wr.workresultlanguagemasterid = lm.languagemasterid
               WHERE
-                  (wi.id, wr.id) IN ${sql(ids.map(i => sql([i.id, i.suffix?.at(0)!])))}
+                  (wi.id, wr.id) IN ${sql(ids.map(i => sql([i.id, i.suffix?.at(0) ?? ""])))}
           `,
         )
         .otherwise(() => []),
@@ -145,7 +144,15 @@ export function makeNameLoader(req: Request) {
         new Map<string, Name>(),
       );
 
-      return keys.map(key => byId.get(key) ?? new EntityNotFound("name"));
+      return keys.map(
+        key =>
+          byId.get(key) ??
+          new GraphQLError(`No Name for key '${key}'`, {
+            extensions: {
+              code: "NOT_FOUND",
+            },
+          }),
+      );
     },
     {
       cacheKeyFn: key => `${key}:${req.i18n.language}`,
@@ -213,7 +220,13 @@ export function makeNameMetadataLoader(_: Request) {
     );
 
     return keys.map(
-      key => byId.get(key) ?? new EntityNotFound("name-metadata"),
+      key =>
+        byId.get(key) ??
+        new GraphQLError(`No NameMetadata for key '${key}'`, {
+          extensions: {
+            code: "NOT_FOUND",
+          },
+        }),
     );
   });
 }

@@ -1,9 +1,9 @@
-import { EntityNotFound } from "@/errors";
 import type { DynamicString, ID } from "@/schema";
 import { decodeGlobalId } from "@/schema/system";
 import type { WithKey } from "@/util";
 import DataLoader from "dataloader";
 import type { Request } from "express";
+import { GraphQLError } from "graphql/error";
 import { sql } from "./postgres";
 
 export function makeDynamicStringLoader(req: Request) {
@@ -39,6 +39,14 @@ export function makeDynamicStringLoader(req: Request) {
       new Map<string, DynamicString>(),
     );
 
-    return entities.map(id => byId.get(id) ?? new EntityNotFound("trans"));
+    return entities.map(
+      id =>
+        byId.get(id) ??
+        new GraphQLError(`No DynamicString for key '${id}'`, {
+          extensions: {
+            code: "NOT_FOUND",
+          },
+        }),
+    );
   });
 }

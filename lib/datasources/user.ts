@@ -1,8 +1,8 @@
-import { EntityNotFound } from "@/errors";
 import type { User } from "@/schema";
 import type { WithKey } from "@/util";
 import Dataloader from "dataloader";
 import type { Request } from "express";
+import { GraphQLError } from "graphql/error";
 import { sql } from "./postgres";
 
 function selectUsers(
@@ -40,7 +40,15 @@ export default (_: Request) => {
         new Map(),
       );
 
-      return keys.map(key => byKey.get(key) ?? new EntityNotFound("user"));
+      return keys.map(
+        key =>
+          byKey.get(key) ??
+          new GraphQLError(`No User for key '${key}'`, {
+            extensions: {
+              code: "NOT_FOUND",
+            },
+          }),
+      );
     }),
     byIdentityId: new Dataloader<string, User>(async keys => {
       const rows = await selectUsers("workeridentityid", keys);
@@ -49,7 +57,15 @@ export default (_: Request) => {
         new Map(),
       );
 
-      return keys.map(key => byKey.get(key) ?? new EntityNotFound("user"));
+      return keys.map(
+        key =>
+          byKey.get(key) ??
+          new GraphQLError(`No User for key '${key}'`, {
+            extensions: {
+              code: "NOT_FOUND",
+            },
+          }),
+      );
     }),
   };
 };

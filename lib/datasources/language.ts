@@ -1,7 +1,7 @@
-import { EntityNotFound } from "@/errors";
 import type { ID, Language } from "@/schema";
 import Dataloader from "dataloader";
 import type { Request } from "express";
+import { GraphQLError } from "graphql/error";
 import { sql } from "./postgres";
 
 export default (_: Request) => {
@@ -25,7 +25,15 @@ export default (_: Request) => {
         new Map<string, Language>(),
       );
 
-      return keys.map(key => byId.get(key) ?? new EntityNotFound("language"));
+      return keys.map(
+        key =>
+          byId.get(key) ??
+          new GraphQLError(`No Language for key '${key}'`, {
+            extensions: {
+              code: "NOT_FOUND",
+            },
+          }),
+      );
     }),
     byId: new Dataloader<ID, Language>(async keys => {
       const rows = await sql<Language[]>`
@@ -44,7 +52,15 @@ export default (_: Request) => {
         new Map<ID, Language>(),
       );
 
-      return keys.map(key => byId.get(key) ?? new EntityNotFound("language"));
+      return keys.map(
+        key =>
+          byId.get(key) ??
+          new GraphQLError(`No Language for key '${key}'`, {
+            extensions: {
+              code: "NOT_FOUND",
+            },
+          }),
+      );
     }),
   };
 };

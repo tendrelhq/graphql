@@ -1,4 +1,3 @@
-import { EntityNotFound } from "@/errors";
 import type { ID, Invitation } from "@/schema";
 import {
   type Invitation as ClerkInvitation,
@@ -25,7 +24,7 @@ async function* listInvitations() {
 }
 
 export default (_: Request) => ({
-  byId: new Dataloader<ID, Invitation>(async keys => {
+  byId: new Dataloader<ID, Invitation | undefined>(async keys => {
     // TODO: this is likely our first case where we want to restrict access at a
     // more granular level (i.e. using the user's role). Probably, we only want
     // invitations to be visible by Admins, and maybe Supervisors? This is,
@@ -59,10 +58,10 @@ export default (_: Request) => ({
           workerId: i.publicMetadata?.tendrel_id as string,
         };
       }
-      return new EntityNotFound("invitation");
+      return undefined;
     });
   }),
-  byWorkerId: new Dataloader<ID, Invitation>(async keys => {
+  byWorkerId: new Dataloader<ID, Invitation | undefined>(async keys => {
     const invitations = new Map<ID, ClerkInvitation>();
     for await (const batch of listInvitations()) {
       for (const i of batch) {
@@ -88,7 +87,7 @@ export default (_: Request) => ({
           workerId: i.publicMetadata?.tendrel_id as string,
         };
       }
-      return new EntityNotFound("invitation");
+      return undefined;
     });
   }),
 });

@@ -1,5 +1,5 @@
 import type { ID } from "@/schema";
-import { decodeGlobalId, type GlobalId } from "@/schema/system";
+import { type GlobalId, decodeGlobalId } from "@/schema/system";
 import type { WithKey } from "@/util";
 import DataLoader from "dataloader";
 import type { Request } from "express";
@@ -49,7 +49,7 @@ export function makeRequirementLoader(_req: Request) {
                 INNER JOIN public.workresult AS wr
                     ON wi.workinstanceworktemplateid = wr.workresultworktemplateid
                 WHERE
-                    (wi.id, wr.id) IN ${sql(ids.map(i => sql([i.id, i.suffix?.at(0)!])))}
+                    (wi.id, wr.id) IN ${sql(ids.map(i => sql([i.id, i.suffix?.at(0) ?? ""])))}
             `,
         )
         .with(

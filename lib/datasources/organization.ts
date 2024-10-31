@@ -1,8 +1,8 @@
-import { EntityNotFound } from "@/errors";
 import type { Organization } from "@/schema";
 import type { WithKey } from "@/util";
 import Dataloader from "dataloader";
 import type { Request } from "express";
+import { GraphQLError } from "graphql/error";
 import { sql } from "./postgres";
 
 export default (_: Request) =>
@@ -27,5 +27,13 @@ export default (_: Request) =>
       new Map<string, Organization>(),
     );
 
-    return keys.map(key => byId.get(key) ?? new EntityNotFound("organization"));
+    return keys.map(
+      key =>
+        byId.get(key) ??
+        new GraphQLError(`No Customer for key '${key}'`, {
+          extensions: {
+            code: "NOT_FOUND",
+          },
+        }),
+    );
   });
