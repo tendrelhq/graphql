@@ -121,7 +121,9 @@ export const setStatus: NonNullable<MutationResolvers["setStatus"]> = async (
       ];
 
       if (!suffix?.length) {
-        console.warn(`...`);
+        console.warn(
+          "Invalid global id for underlying type 'workresultinstance'. Expected it to be of the form `workresultinstance:<workinstanceid>:<workresultid>`, but no <workresultid> was found.",
+        );
         throw "invariant violated";
       }
 
@@ -173,8 +175,8 @@ export const setStatus: NonNullable<MutationResolvers["setStatus"]> = async (
     `Applied ${result.count} update(s) to Entity ${entity} (${type}:${id})`,
   );
 
-  switch (true) {
-    case type === "workinstance":
+  switch (type) {
+    case "workinstance":
       return {
         __typename: "SetChecklistStatusPayload",
         delta: result.count,
@@ -187,7 +189,7 @@ export const setStatus: NonNullable<MutationResolvers["setStatus"]> = async (
           } as any,
         },
       };
-    case type === "workresult" || type === "workresultinstance":
+    case "workresultinstance":
       return {
         __typename: "SetChecklistItemStatusPayload",
         delta: result.count,

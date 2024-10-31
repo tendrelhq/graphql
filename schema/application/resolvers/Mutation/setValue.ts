@@ -20,7 +20,9 @@ export const setValue: NonNullable<MutationResolvers["setValue"]> = async (
   }
 
   if (!suffix?.length) {
-    console.warn();
+    console.warn(
+      "Invalid global id for underlying type 'workresultinstance'. Expected it to be of the form `workresultinstance:<workinstanceid>:<workresultid>`, but no <workresultid> was found.",
+    );
     throw "invariant violated";
   }
 
@@ -33,7 +35,7 @@ export const setValue: NonNullable<MutationResolvers["setValue"]> = async (
       `Type '${parentType}' is an invalid parent type for type '${type}'`,
       {
         extensions: {
-          code: "E_INVALID_OPERAND",
+          code: "TYPE_ERROR",
         },
       },
     );
