@@ -6,7 +6,6 @@ import { match } from "ts-pattern";
 export const Assignee: AssigneeResolvers = {
   async assignedAt(parent, _, ctx) {
     const { type, id } = decodeGlobalId(parent.id);
-    console.log({ type, id });
     const [row] = await match(type)
       .with(
         "workresultinstance",

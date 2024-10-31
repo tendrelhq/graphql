@@ -1,0 +1,9 @@
+// Bun Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`status loader workinstance 1`] = `false`;
+
+exports[`status loader worktemplate 1`] = `false`;
+
+exports[`status loader workresult 1`] = `true`;
+
+exports[`status loader workresultinstance 1`] = `true`;

@@ -1,16 +1,19 @@
 import { describe, expect, test } from "bun:test";
 import { resolvers, typeDefs } from "@/schema";
-import { execute } from "@/test/prelude";
+import { encodeGlobalId } from "@/schema/system";
+import { execute, testGlobalId } from "@/test/prelude";
 import { makeExecutableSchema } from "@graphql-tools/schema";
 import { TestSetStatusDocument } from "./setStatus.test.generated";
 
 const schema = makeExecutableSchema({ resolvers, typeDefs });
 
 describe.skipIf(!!process.env.CI)("setStatus", () => {
-  test("set open", async () => {
+  test("workinstance", async () => {
     const result = await execute(schema, TestSetStatusDocument, {
-      entity:
-        "d29ya2luc3RhbmNlOndvcmstaW5zdGFuY2VfMDA4NWE3Y2YtMmI5ZC00MDU2LTlhYzUtYTBiNTgxYTliNmZh",
+      entity: encodeGlobalId({
+        type: "workinstance",
+        id: "work-instance_93c61cb5-e5ec-43e1-8777-d9f6e930e6b0",
+      }),
       input: {
         open: {
           at: {
@@ -19,13 +22,59 @@ describe.skipIf(!!process.env.CI)("setStatus", () => {
         },
       },
     });
+
     expect(result).toMatchSnapshot();
   });
 
-  test("invalid state change", async () => {
+  test("workresultinstance", async () => {
     const result = await execute(schema, TestSetStatusDocument, {
-      entity:
-        "d29ya3Jlc3VsdDp3b3JrLXJlc3VsdF9hYjE3N2IwMS0yNjA4LTQxOTgtYmI4Zi0yZjMzYTRhM2QzNTg=",
+      parent: encodeGlobalId({
+        type: "workinstance",
+        id: "work-instance_93c61cb5-e5ec-43e1-8777-d9f6e930e6b0",
+      }),
+      entity: encodeGlobalId({
+        type: "workresultinstance",
+        id: "work-instance_93c61cb5-e5ec-43e1-8777-d9f6e930e6b0",
+        suffix: "work-result_fa536e61-2e9f-480c-b815-5cb1ec0a0f79",
+      }),
+      input: {
+        closed: {
+          at: {
+            instant: Date.now().toString(),
+          },
+        },
+      },
+    });
+
+    expect(result).toMatchSnapshot();
+  });
+
+  test("invalid status change", async () => {
+    const result = await execute(schema, TestSetStatusDocument, {
+      parent: encodeGlobalId({
+        type: "workinstance",
+        id: "work-instance_93c61cb5-e5ec-43e1-8777-d9f6e930e6b0",
+      }),
+      entity: encodeGlobalId({
+        type: "workresultinstance",
+        id: "work-instance_93c61cb5-e5ec-43e1-8777-d9f6e930e6b0",
+        suffix: "work-result_fa536e61-2e9f-480c-b815-5cb1ec0a0f79",
+      }),
+      input: {
+        inProgress: {
+          at: {
+            instant: Date.now().toString(),
+          },
+        },
+      },
+    });
+
+    expect(result).toMatchSnapshot();
+  });
+
+  test("entity cannot have its status changed", async () => {
+    const result = await execute(schema, TestSetStatusDocument, {
+      entity: testGlobalId(),
       input: {
         open: {
           at: {

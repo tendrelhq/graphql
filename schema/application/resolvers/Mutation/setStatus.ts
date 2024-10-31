@@ -1,4 +1,4 @@
-import { sql } from "@/datasources/postgres";
+import { join, sql } from "@/datasources/postgres";
 import type { MutationResolvers } from "@/schema";
 import { decodeGlobalId } from "@/schema/system";
 import { GraphQLError } from "graphql";
@@ -9,13 +9,9 @@ export const setStatus: NonNullable<MutationResolvers["setStatus"]> = async (
   _,
   { entity, parent, input },
 ) => {
-  const { type, id } = decodeGlobalId(entity);
+  const { type, id, suffix } = decodeGlobalId(entity);
 
-  if (
-    type !== "workinstance" &&
-    type !== "workresult" &&
-    type !== "workresultinstance"
-  ) {
+  if (type !== "workinstance" && type !== "workresultinstance") {
     throw new GraphQLError("Entity cannot have its status changed", {
       extensions: {
         code: "E_INVALID_STATE_CHANGE",
@@ -39,122 +35,107 @@ export const setStatus: NonNullable<MutationResolvers["setStatus"]> = async (
   })();
 
   const result = await match(type)
-    .with("workinstance", () =>
-      sql.begin(async tx => {
-        const r0 = await tx`
-           WITH inputs AS (
-               SELECT systagid AS status
-               FROM public.systag
-               WHERE
-                   systagparentid = 705
-                   AND
-                   systagtype = ${targetStatus}
-           )
-      
-           UPDATE public.workinstance
-           SET
-               workinstancestatusid = inputs.status,
-               workinstancemodifieddate = now()
-           FROM inputs
-           WHERE
-               id = ${id}
-               AND workinstancestatusid IS DISTINCT FROM inputs.status
-        `;
+    .with("workinstance", () => {
+      const updates = {
+        workinstancestatusid: sql`inputs.status`,
+        workinstancemodifieddate: sql`now()`,
+        workinstancestartdate: match(targetStatus)
+          .with("In Progress", () => sql`now()`)
+          .otherwise(() => sql`NULL`),
+        workinstancecompleteddate: match(targetStatus)
+          .with("Complete", () => sql`now()`)
+          .otherwise(() => sql`NULL`),
+      };
 
-        const r1 = await match(targetStatus)
-          .with(
-            "Open",
-            () => tx`
-                UPDATE public.workinstance
-                SET
-                   workinstancestartdate = null,
-                   workinstancecompleteddate = null,
-                   workinstancemodifieddate = now()
-                WHERE id = ${id}
-            `,
+      const columns = [
+        "workinstancemodifieddate" as const,
+        "workinstancestatusid" as const,
+        ...match(targetStatus)
+          .with("Open", () => [
+            "workinstancestartdate" as const,
+            "workinstancecompleteddate" as const,
+          ])
+          .with("In Progress", () => [
+            "workinstancestartdate" as const,
+            "workinstancecompleteddate" as const,
+          ])
+          .with("Complete", () => ["workinstancecompleteddate" as const])
+          .exhaustive(),
+      ];
+
+      const filters = [
+        sql`id = ${id}`,
+        sql`workinstancestatusid IS DISTINCT FROM inputs.status`,
+      ];
+
+      return sql.begin(async tx => {
+        const r = await tx`
+          WITH inputs AS (
+              SELECT systagid AS status
+              FROM public.systag
+              WHERE
+                  systagparentid = 705
+                  AND systagtype = ${targetStatus}
           )
-          .with(
-            "In Progress",
-            () => tx`
-                UPDATE public.workinstance
-                SET
-                    workinstancestartdate = now(),
-                    workinstancecompleteddate = null,
-                    workinstancemodifieddate = now()
-                WHERE id = ${id}
-            `,
-          )
-          .with(
-            "Complete",
-            () => tx`
-                UPDATE public.workinstance
-                SET
-                    workinstancecompleteddate = now(),
-                    workinstancemodifieddate = now()
-                WHERE id = ${id}
-            `,
-          )
-          .exhaustive();
+
+          UPDATE public.workinstance
+          SET ${sql(updates, columns)}
+          FROM inputs
+          WHERE ${join(filters, sql`AND`)};
+        `;
 
         if (targetStatus === "In Progress") {
           // HACK: this is "running the rules engine" for now lmao.
           await copyFromWorkInstance(tx, id, {});
         }
 
-        return [r0, r1];
-      }),
-    )
-    .with("workresultinstance", () =>
-      sql.begin(tx => [
-        tx`
-          WITH inputs AS (
-              SELECT systagid AS status
-              FROM public.systag
-              WHERE
-                  systagparentid = 965
-                  AND
-                  systagtype = ${targetStatus}
-          )
+        return r;
+      });
+    })
+    .with("workresultinstance", () => {
+      const updates = {
+        workresultinstancestatusid: sql`excluded.workresultinstancestatusid`,
+        workresultinstancemodifieddate: sql`now()`,
+        workresultinstancestartdate: match(targetStatus)
+          .with("In Progress", () => sql`now()`)
+          .otherwise(() => sql`NULL`),
+        workresultinstancecompleteddate: match(targetStatus)
+          .with("Complete", () => sql`now()`)
+          .otherwise(() => sql`NULL`),
+      };
 
-          UPDATE public.workresultinstance
-          SET
-              workresultinstancestatusid = inputs.status,
-              workresultinstancemodifieddate = now()
-          FROM inputs
-          WHERE
-              workresultinstanceuuid = ${id}
-              AND
-              workresultinstancestatusid != inputs.status
-        `,
-      ]),
-    )
-    .with("workresult", () => {
-      if (!parent) {
-        throw new GraphQLError(
-          "Cannot lazily evaluate AST node without ECS reference",
-          {
-            extensions: {
-              code: "BAD_REQUEST",
-            },
-          },
+      const columns = [
+        "workresultinstancemodifieddate" as const,
+        "workresultinstancestatusid" as const,
+        ...match(targetStatus)
+          .with("Open", () => [
+            "workresultinstancestartdate" as const,
+            "workresultinstancecompleteddate" as const,
+          ])
+          .with("In Progress", () => [
+            "workresultinstancestartdate" as const,
+            "workresultinstancecompleteddate" as const,
+          ])
+          .with("Complete", () => ["workresultinstancecompleteddate" as const])
+          .exhaustive(),
+      ];
+
+      if (!suffix?.length) {
+        console.warn(
+          "Invalid global id for underlying type 'workresultinstance'. Expected it to be of the form `workresultinstance:<workinstanceid>:<workresultid>`, but no <workresultid> was found.",
         );
+        throw "invariant violated";
       }
 
-      const { type: parentType, id: parentId } = decodeGlobalId(parent);
-
-      if (parentType !== "workinstance") {
-        throw new GraphQLError(
-          "Invalid ECS reference provided to AST lazy evaluation",
-          {
-            extensions: {
-              code: "E_INVALID_REFERENCE",
-            },
+      if (targetStatus === "In Progress") {
+        throw new GraphQLError("Invalid status change", {
+          extensions: {
+            code: "E_INVALID_STATE_CHANGE",
           },
-        );
+        });
       }
 
-      return sql.begin(tx => [
-        tx`
+      return sql`
           WITH inputs AS (
               SELECT systagid AS status
               FROM public.systag
@@ -168,40 +149,37 @@ export const setStatus: NonNullable<MutationResolvers["setStatus"]> = async (
               workresultinstancecustomerid,
               workresultinstanceworkresultid,
               workresultinstanceworkinstanceid,
-              workresultinstancestatusid,
-              workresultinstancevalue
+              workresultinstancestatusid
           )
           SELECT
               wr.workresultcustomerid,
               wr.workresultid,
-              inputs.status,
-              wi.workinstanceid
+              wi.workinstanceid,
+              inputs.status
           FROM
               inputs,
               public.workresult AS wr,
               public.workinstance AS wi
           WHERE
-              wr.id = ${id}
-              AND wi.id = ${parentId}
+              wi.id = ${id}
+              AND wr.id = ${suffix[0]}
           ON CONFLICT (workresultinstanceworkresultid, workresultinstanceworkinstanceid)
           DO UPDATE
-              SET
-                  workresultinstancestatusid = excluded.workresultinstancestatusid,
-                  workresultinstancemodifieddate = now()
-          RETURNING encode(('workresultinstance:' || wri.workresultinstanceuuid)::bytea, 'base64') AS id
-        `,
-      ]);
+              SET ${sql(updates, columns)}
+              WHERE wri.workresultinstancestatusid IS DISTINCT FROM excluded.workresultinstancestatusid
+      `;
     })
     .exhaustive();
 
-  const delta = result.reduce((acc, row) => acc + row.count, 0);
-  console.log(`Applied ${delta} update(s) to Entity ${entity} (${type}:${id})`);
+  console.log(
+    `Applied ${result.count} update(s) to Entity ${entity} (${type}:${id})`,
+  );
 
-  switch (true) {
-    case type === "workinstance":
+  switch (type) {
+    case "workinstance":
       return {
         __typename: "SetChecklistStatusPayload",
-        delta,
+        delta: result.count,
         edge: {
           cursor: entity,
           node: {
@@ -211,10 +189,10 @@ export const setStatus: NonNullable<MutationResolvers["setStatus"]> = async (
           } as any,
         },
       };
-    case type === "workresult" || type === "workresultinstance":
+    case "workresultinstance":
       return {
         __typename: "SetChecklistItemStatusPayload",
-        delta,
+        delta: result.count,
         edge: {
           cursor: entity,
           node: {

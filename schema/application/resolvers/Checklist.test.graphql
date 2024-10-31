@@ -1,0 +1,53 @@
+query TestChecklist($entity: ID!) {
+  node(id: $entity) {
+    ... on Checklist {
+      active {
+        active
+      }
+      assignees {
+        edges {
+          node {
+            assignedTo {
+              ... on Worker {
+                displayName
+              }
+            }
+          }
+        }
+      }
+      auditable {
+        auditable
+      }
+      description {
+        description {
+          value
+        }
+      }
+      items {
+        edges {
+          node {
+            ... on ChecklistResult {
+              name {
+                name {
+                  value
+                }
+              }
+            }
+          }
+        }
+      }
+      name {
+        name {
+          value
+        }
+      }
+      required
+      sop {
+        sop
+      }
+      status {
+        __typename
+      }
+    }
+  }
+}

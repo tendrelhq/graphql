@@ -133,25 +133,12 @@ export const Checklist: ChecklistResolvers = {
         () => sql<{ __typename: "ChecklistResult"; id: string }[]>`
             SELECT
                 'ChecklistResult' AS "__typename",
-                coalesce(
-                    encode(('workresultinstance:' || wri.workresultinstanceuuid)::bytea, 'base64'),
-                    encode(('workresult:' || wr.id)::bytea, 'base64')
-                ) AS id
-            FROM public.workresult AS wr
-            LEFT JOIN public.workresultinstance AS wri
-                ON
-                    wr.workresultid = wri.workresultinstanceworkresultid
-                    AND wri.workresultinstanceworkinstanceid IN (
-                        SELECT workinstanceid
-                        FROM public.workinstance
-                        WHERE id = ${id}
-                    )
+                encode(('workresultinstance:' || wi.id || ':' || wr.id)::bytea, 'base64') AS id
+            FROM public.workinstance AS wi
+            INNER JOIN public.workresult AS wr
+                ON wi.workinstanceworktemplateid = wr.workresultworktemplateid
             WHERE
-                wr.workresultworktemplateid IN (
-                    SELECT workinstanceworktemplateid
-                    FROM public.workinstance
-                    WHERE id = ${id}
-                )
+                wi.id = ${id}
                 AND wr.workresultisprimary = false
                 ${match(args.withActive)
                   .with(

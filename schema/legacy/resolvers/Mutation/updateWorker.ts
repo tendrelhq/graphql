@@ -1,11 +1,7 @@
-import { sql } from "@/datasources/postgres";
+import { shouldUpdate, sql } from "@/datasources/postgres";
 import type { Context, MutationResolvers, UpdateWorkerInput } from "@/schema";
 import { decodeGlobalId } from "@/schema/system";
 import { GraphQLError } from "graphql";
-
-function shouldUpdate<T>(input?: T, existing?: T): input is T {
-  return typeof input !== "undefined" && input !== existing;
-}
 
 export const updateWorker: NonNullable<
   MutationResolvers["updateWorker"]

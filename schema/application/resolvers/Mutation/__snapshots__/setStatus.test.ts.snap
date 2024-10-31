@@ -1,6 +1,6 @@
 // Bun Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`setStatus set open 1`] = `
+exports[`setStatus workinstance 1`] = `
 {
   "data": {
     "setStatus": {
@@ -10,7 +10,9 @@ exports[`setStatus set open 1`] = `
         "__typename": "ChecklistEdge",
         "node": {
           "__typename": "Checklist",
-          "status": null,
+          "status": {
+            "__typename": "ChecklistOpen",
+          },
         },
       },
     },
@@ -18,11 +20,40 @@ exports[`setStatus set open 1`] = `
 }
 `;
 
-exports[`setStatus invalid state change 1`] = `
+exports[`setStatus workresultinstance 1`] = `
+{
+  "data": {
+    "setStatus": {
+      "__typename": "SetChecklistItemStatusPayload",
+      "delta": 0,
+      "edge": {
+        "__typename": "ChecklistItemEdge",
+        "node": {
+          "__typename": "ChecklistResult",
+          "status": {
+            "__typename": "ChecklistClosed",
+          },
+        },
+      },
+    },
+  },
+}
+`;
+
+exports[`setStatus entity cannot have its status changed 1`] = `
 {
   "data": null,
   "errors": [
-    [GraphQLError: Cannot lazily evaluate AST node without ECS reference],
+    [GraphQLError: Entity cannot have its status changed],
+  ],
+}
+`;
+
+exports[`setStatus invalid status change 1`] = `
+{
+  "data": null,
+  "errors": [
+    [GraphQLError: Invalid status change],
   ],
 }
 `;

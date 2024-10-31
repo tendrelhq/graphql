@@ -1,66 +1,56 @@
-query TestChecklistResult {
-  node(
-    id: "d29ya3RlbXBsYXRlOjJiZThjNjdlLTBlMGMtNGMwYi1hM2RiLWI4NjYyYjNiMWYyNA=="
-  ) {
-    ... on Checklist {
-      items {
-        edges {
-          node {
-            ... on ChecklistResult {
-              active {
-                active
-              }
-              assignees {
-                totalCount
-              }
-              attachments {
-                totalCount
-              }
-              name {
-                name {
-                  value
-                }
-              }
-              order
-              required
-              status {
-                __typename
-              }
-              widget {
-                ... on CheckboxWidget {
-                  checked
-                }
-                ... on ClickerWidget {
-                  number
-                }
-                ... on DurationWidget {
-                  duration
-                }
-                ... on MultilineStringWidget {
-                  string
-                }
-                ... on NumberWidget {
-                  number
-                }
-                ... on ReferenceWidget {
-                  possibleTypes
-                  ref {
-                    __typename
-                  }
-                }
-                ... on SentimentWidget {
-                  number
-                }
-                ... on StringWidget {
-                  string
-                }
-                ... on TemporalWidget {
-                  temporal {
-                    __typename
-                  }
-                }
-              }
-            }
+query TestChecklistResult($entity: ID!) {
+  node(id: $entity) {
+    ... on ChecklistResult {
+      active {
+        active
+      }
+      assignees {
+        totalCount
+      }
+      attachments {
+        totalCount
+      }
+      name {
+        name {
+          value
+        }
+      }
+      order
+      required
+      status {
+        __typename
+      }
+      widget {
+        ... on CheckboxWidget {
+          checked
+        }
+        ... on ClickerWidget {
+          number
+        }
+        ... on DurationWidget {
+          duration
+        }
+        ... on MultilineStringWidget {
+          string
+        }
+        ... on NumberWidget {
+          number
+        }
+        ... on ReferenceWidget {
+          possibleTypes
+          ref {
+            __typename
+          }
+        }
+        ... on SentimentWidget {
+          number
+        }
+        ... on StringWidget {
+          string
+        }
+        ... on TemporalWidget {
+          temporal {
+            __typename
           }
         }
       }

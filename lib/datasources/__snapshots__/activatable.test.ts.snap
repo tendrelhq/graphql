@@ -4,7 +4,6 @@ exports[`active loader load 1`] = `
 {
   "_key": "827de419-44bc-4a12-b9af-b641fb576429",
   "active": true,
-  "id": "d29ya3RlbXBsYXRlOjgyN2RlNDE5LTQ0YmMtNGExMi1iOWFmLWI2NDFmYjU3NjQyOTphY3RpdmU=",
   "updatedAt": {
     "__typename": "Instant",
     "epochMilliseconds": "1727121569246.000000",

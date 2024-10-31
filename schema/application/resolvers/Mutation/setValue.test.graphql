@@ -6,8 +6,9 @@ mutation TestSetValue($entity: ID!, $parent: ID!, $input: WidgetInput!) {
         __typename
       }
       widget {
-        ... on StringWidget {
-          string
+        __typename
+        ... on NumberWidget {
+          number
         }
       }
     }

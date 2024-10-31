@@ -31,7 +31,7 @@ export const ChecklistResult: ChecklistResultResolvers = {
     return ctx.orm.auditable.load(parent.id);
   },
   async order(parent) {
-    const { id, type } = decodeGlobalId(parent.id);
+    const { id, type, suffix } = decodeGlobalId(parent.id);
 
     switch (type) {
       case "workresult": {
@@ -43,12 +43,16 @@ export const ChecklistResult: ChecklistResultResolvers = {
         return row.order;
       }
       case "workresultinstance": {
+        if (!suffix?.length) {
+          console.warn(
+            "Invalid global id for underlying type 'workresultinstance'. Expected it to be of the form `workresultinstance:<workinstanceid>:<workresultid>`, but no <workresultid> was found.",
+          );
+          throw "invariant violated";
+        }
         const [row] = await sql<[{ order: number }]>`
             SELECT workresultorder AS order
-            FROM public.workresultinstance
-            INNER JOIN public.workresult
-                ON workresultinstanceworkresultid = workresultid
-            WHERE workresultinstanceuuid = ${id}
+            FROM public.workresult
+            WHERE id = ${suffix[0]}
         `;
         return row.order;
       }
@@ -68,89 +72,97 @@ export const ChecklistResult: ChecklistResultResolvers = {
     return ctx.orm.status.load(parent.id);
   },
   async widget(parent) {
-    const { type, id } = decodeGlobalId(parent.id);
+    const { type, id, suffix } = decodeGlobalId(parent.id);
     // Note that currently we treat the following as "unknown":
     // - Calculated
-    // - Clicker (deprecated; use widget type)
     // - Geolocation
     // - List
     // - Payload
     // - Photo
-    // - Sentiment (deprecated; use widget type)
-    // - Time at Task (deprecated; use widget type)
     //
     // Unknown types are eventually dropped.
+    //
+    // The following "Result Type"s are deprecated in favor of widget types:
+    // - Clicker -> Number (deprecated; use widget type)
+    // - Sentiment -> Number (deprecated; use widget type)
+    // - Text -> String (deprecated; use widget type)
+    // - Time at Task -> Duration (deprecated; use widget type)
     const [row] = await sql<[ResolversTypes["Widget"]]>`
         WITH cte AS (
         ${match(type)
           .with(
             "workresult",
             () => sql`
-            SELECT
-                CASE WHEN dt.systagtype = 'Boolean' THEN 'CheckboxWidget'
-                     WHEN dt.systagtype = 'Clicker' THEN 'NumberWidget'
-                     WHEN dt.systagtype = 'Date' THEN 'TemporalWidget'
-                     WHEN dt.systagtype = 'Duration' THEN 'DurationWidget'
-                     WHEN dt.systagtype = 'Entity' THEN 'ReferenceWidget'
-                     WHEN dt.systagtype = 'Number' THEN 'NumberWidget'
-                     WHEN dt.systagtype = 'Sentiment' THEN 'NumberWidget'
-                     WHEN dt.systagtype = 'String' THEN 'StringWidget'
-                     WHEN dt.systagtype = 'Text' THEN 'StringWidget'
-                     WHEN dt.systagtype = 'Time At Task' THEN 'DurationWidget'
-                     ELSE 'Unknown'
-                END AS data_type,
-                rt.systagtype AS ref_type,
-                CASE WHEN wt.custagtype = 'Clicker' THEN 'ClickerWidget'
-                     WHEN wt.custagtype = 'Sentiment' THEN 'SentimentWidget'
-                     WHEN wt.custagtype = 'Text' THEN 'MultilineStringWidget'
-                     ELSE null
-                END AS widget_type,
-                nullif(wr.workresultdefaultvalue, '') AS raw_value,
-                encode(('workresult:' || wr.id || ':' || coalesce(rt.systagtype, dt.systagtype))::bytea, 'base64') AS id
-            FROM public.workresult AS wr
-            INNER JOIN public.systag AS dt
-                ON wr.workresulttypeid = dt.systagid
-            LEFT JOIN public.systag AS rt
-                ON wr.workresultentitytypeid = rt.systagid
-            LEFT JOIN public.custag AS wt
-                ON wr.workresultwidgetid = wt.custagid
-            WHERE wr.id = ${id}
+              SELECT
+                  CASE WHEN dt.systagtype = 'Boolean' THEN 'CheckboxWidget'
+                       WHEN dt.systagtype = 'Clicker' THEN 'NumberWidget'
+                       WHEN dt.systagtype = 'Date' THEN 'TemporalWidget'
+                       WHEN dt.systagtype = 'Duration' THEN 'DurationWidget'
+                       WHEN dt.systagtype = 'Entity' THEN 'ReferenceWidget'
+                       WHEN dt.systagtype = 'Number' THEN 'NumberWidget'
+                       WHEN dt.systagtype = 'Sentiment' THEN 'NumberWidget'
+                       WHEN dt.systagtype = 'String' THEN 'StringWidget'
+                       WHEN dt.systagtype = 'Text' THEN 'StringWidget'
+                       WHEN dt.systagtype = 'Time At Task' THEN 'DurationWidget'
+                       ELSE 'Unknown'
+                  END AS data_type,
+                  rt.systagtype AS ref_type,
+                  CASE WHEN wt.custagtype = 'Clicker' THEN 'ClickerWidget'
+                       WHEN wt.custagtype = 'Sentiment' THEN 'SentimentWidget'
+                       WHEN wt.custagtype = 'Text' THEN 'MultilineStringWidget'
+                       ELSE null
+                  END AS widget_type,
+                  nullif(wr.workresultdefaultvalue, '') AS raw_value,
+                  encode(('workresult:' || wr.id || ':' || coalesce(rt.systagtype, dt.systagtype))::bytea, 'base64') AS id
+              FROM public.workresult AS wr
+              INNER JOIN public.systag AS dt
+                  ON wr.workresulttypeid = dt.systagid
+              LEFT JOIN public.systag AS rt
+                  ON wr.workresultentitytypeid = rt.systagid
+              LEFT JOIN public.custag AS wt
+                  ON wr.workresultwidgetid = wt.custagid
+              WHERE wr.id = ${id}
             `,
           )
           .with(
             "workresultinstance",
             () => sql`
-            SELECT
-                CASE WHEN dt.systagtype = 'Boolean' THEN 'CheckboxWidget'
-                     WHEN dt.systagtype = 'Clicker' THEN 'NumberWidget'
-                     WHEN dt.systagtype = 'Date' THEN 'TemporalWidget'
-                     WHEN dt.systagtype = 'Duration' THEN 'DurationWidget'
-                     WHEN dt.systagtype = 'Entity' THEN 'ReferenceWidget'
-                     WHEN dt.systagtype = 'Number' THEN 'NumberWidget'
-                     WHEN dt.systagtype = 'Sentiment' THEN 'NumberWidget'
-                     WHEN dt.systagtype = 'String' THEN 'StringWidget'
-                     WHEN dt.systagtype = 'Text' THEN 'StringWidget'
-                     WHEN dt.systagtype = 'Time At Task' THEN 'DurationWidget'
-                     ELSE 'Unknown'
-                END AS data_type,
-                rt.systagtype AS ref_type,
-                CASE WHEN wt.custagtype = 'Clicker' THEN 'ClickerWidget'
-                     WHEN wt.custagtype = 'Sentiment' THEN 'SentimentWidget'
-                     WHEN wt.custagtype = 'Text' THEN 'MultilineStringWidget'
-                     ELSE null
-                END AS widget_type,
-                nullif(wri.workresultinstancevalue, '') AS raw_value,
-                encode(('workresultinstance:' || wri.workresultinstanceuuid || ':' || coalesce(rt.systagtype, dt.systagtype))::bytea, 'base64') AS id
-            FROM public.workresultinstance AS wri
-            INNER JOIN public.workresult AS wr
-                ON wri.workresultinstanceworkresultid = wr.workresultid
-            INNER JOIN public.systag AS dt
-                ON wr.workresulttypeid = dt.systagid
-            LEFT JOIN public.systag AS rt
-                ON wr.workresultentitytypeid = rt.systagid
-            LEFT JOIN public.custag AS wt
-                ON wr.workresultwidgetid = wt.custagid
-            WHERE wri.workresultinstanceuuid = ${id}
+              SELECT
+                  CASE WHEN dt.systagtype = 'Boolean' THEN 'CheckboxWidget'
+                       WHEN dt.systagtype = 'Clicker' THEN 'NumberWidget'
+                       WHEN dt.systagtype = 'Date' THEN 'TemporalWidget'
+                       WHEN dt.systagtype = 'Duration' THEN 'DurationWidget'
+                       WHEN dt.systagtype = 'Entity' THEN 'ReferenceWidget'
+                       WHEN dt.systagtype = 'Number' THEN 'NumberWidget'
+                       WHEN dt.systagtype = 'Sentiment' THEN 'NumberWidget'
+                       WHEN dt.systagtype = 'String' THEN 'StringWidget'
+                       WHEN dt.systagtype = 'Text' THEN 'StringWidget'
+                       WHEN dt.systagtype = 'Time At Task' THEN 'DurationWidget'
+                       ELSE 'Unknown'
+                  END AS data_type,
+                  rt.systagtype AS ref_type,
+                  CASE WHEN wt.custagtype = 'Clicker' THEN 'ClickerWidget'
+                       WHEN wt.custagtype = 'Sentiment' THEN 'SentimentWidget'
+                       WHEN wt.custagtype = 'Text' THEN 'MultilineStringWidget'
+                       ELSE null
+                  END AS widget_type,
+                  nullif(wri.workresultinstancevalue, '') AS raw_value,
+                  encode(('workresultinstance:' || wi.id || ':' || wr.id || ':' || coalesce(rt.systagtype, dt.systagtype))::bytea, 'base64') AS id
+              FROM public.workinstance AS wi
+              INNER JOIN public.workresult AS wr
+                  ON wi.workinstanceworktemplateid = wr.workresultworktemplateid
+              LEFT JOIN public.workresultinstance AS wri
+                  ON wi.workinstanceid = wri.workresultinstanceworkinstanceid
+                  AND wr.workresultid = wri.workresultinstanceworkresultid
+              INNER JOIN public.systag AS dt
+                  ON wr.workresulttypeid = dt.systagid
+              LEFT JOIN public.systag AS rt
+                  ON wr.workresultentitytypeid = rt.systagid
+              LEFT JOIN public.custag AS wt
+                  ON wr.workresultwidgetid = wt.custagid
+              WHERE
+                  wi.id = ${id}
+                  AND wr.id = ${suffix?.at(0) ?? null}
             `,
           )
           .otherwise(() => {

@@ -1,5 +1,5 @@
 import type { ID, ResolversTypes } from "@/schema";
-import { decodeGlobalId } from "@/schema/system";
+import { decodeGlobalId, type GlobalId } from "@/schema/system";
 import type { WithKey } from "@/util";
 import DataLoader from "dataloader";
 import type { Request } from "express";
@@ -10,11 +10,11 @@ export function makeAuditableLoader(_req: Request) {
   return new DataLoader<ID, ResolversTypes["Auditable"] | undefined>(
     async keys => {
       const entities = keys.map(decodeGlobalId);
-      const byUnderlyingType = entities.reduce((acc, { type, id }) => {
+      const byUnderlyingType = entities.reduce((acc, { type, ...ids }) => {
         if (!acc.has(type)) acc.set(type, []);
-        acc.get(type)?.push(id);
+        acc.get(type)?.push(ids);
         return acc;
-      }, new Map<string, string[]>());
+      }, new Map<string, Omit<GlobalId, "type">[]>());
 
       const qs = [...byUnderlyingType.entries()].flatMap(([type, ids]) =>
         match(type)
@@ -27,7 +27,7 @@ export function makeAuditableLoader(_req: Request) {
                     encode(('workresult:' || id || ':auditable')::bytea, 'base64') AS id,
                     workresultforaudit AS auditable
                 FROM public.workresult
-                WHERE id IN ${sql(ids)}
+                WHERE id IN ${sql(ids.map(i => i.id))}
             `,
           )
           .with(
@@ -39,7 +39,7 @@ export function makeAuditableLoader(_req: Request) {
                     encode(('worktemplate:' || id || ':auditable')::bytea, 'base64') AS id,
                     worktemplateisauditable AS auditable
                 FROM public.worktemplate
-                WHERE id IN ${sql(ids)}
+                WHERE id IN ${sql(ids.map(i => i.id))}
             `,
           )
           .otherwise(() => []),

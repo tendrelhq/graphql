@@ -68,8 +68,21 @@ export const sql = postgres({
 export type SQL = typeof sql;
 export type TxSQL = Parameters<Parameters<typeof sql.begin>[1]>[0];
 
+/**
+ * Like Array.prototype.join but for sql.Fragments.
+ */
 export function join(xs: readonly Fragment[], d: Fragment) {
   return xs.reduce((acc, x, i) => sql`${acc} ${i ? sql`${d} ${x}` : x}`, sql``);
+}
+
+/**
+ * Type predicate for whether to include a user input in a dynamic update
+ * clause. Note that we only check for `undefined`, and not `null`, because we
+ * say that `null` indicates we want to set the underlying database column to
+ * NULL.
+ */
+export function shouldUpdate<T>(input?: T, existing?: T): input is T {
+  return typeof input !== "undefined" && input !== existing;
 }
 
 export function unionAll(xs: readonly Fragment[]) {

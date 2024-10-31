@@ -1,5 +1,5 @@
 import type { ID, ResolversTypes } from "@/schema";
-import { decodeGlobalId } from "@/schema/system";
+import { decodeGlobalId, type GlobalId } from "@/schema/system";
 import type { WithKey } from "@/util";
 import DataLoader from "dataloader";
 import type { Request } from "express";
@@ -10,11 +10,11 @@ export function makeActiveLoader(_req: Request) {
   return new DataLoader<ID, ResolversTypes["Active"] | undefined>(
     async keys => {
       const entities = keys.map(decodeGlobalId);
-      const byUnderlyingType = entities.reduce((acc, { type, id }) => {
+      const byUnderlyingType = entities.reduce((acc, { type, ...ids }) => {
         if (!acc.has(type)) acc.set(type, []);
-        acc.get(type)?.push(id);
+        acc.get(type)?.push(ids);
         return acc;
-      }, new Map<string, string[]>());
+      }, new Map<string, Omit<GlobalId, "type">[]>());
 
       const qs = [...byUnderlyingType.entries()].flatMap(([type, ids]) =>
         match(type)
@@ -32,36 +32,76 @@ export function makeActiveLoader(_req: Request) {
                           wr.workresultstartdate,
                           wr.workresultenddate
                       FROM public.workresult AS wr
-                      WHERE wr.id IN ${sql(ids)}
+                      WHERE wr.id IN ${sql(ids.map(i => i.id))}
                   )
 
                   SELECT
                       _key,
                       active,
-                      (
-                          SELECT row_to_json(t)
-                          FROM (
-                              VALUES (
-                                  'Instant',
-                                  (extract(epoch from workresultstartdate) * 1000)::text
-                              )
-                          ) t ("__typename", "epochMilliseconds")
-                      )
+                      jsonb_build_object(
+                          '__typename',
+                          'Instant',
+                          'epochMilliseconds',
+                          (extract(epoch from workresultstartdate) * 1000)::text
+                      ) AS "updatedAt"
                   FROM cte
                   WHERE active = true
                   UNION ALL
                   SELECT
                       _key,
                       active,
-                      (
-                          SELECT row_to_json(t)
-                          FROM (
-                              VALUES (
-                                  'Instant',
-                                  (extract(epoch from workresultenddate) * 1000)::text
-                              )
-                          ) t ("__typename", "epochMilliseconds")
-                      )
+                      jsonb_build_object(
+                          '__typename',
+                          'Instant',
+                          'epochMilliseconds',
+                          (extract(epoch from workresultenddate) * 1000)::text
+                      ) AS "updatedAt"
+                  FROM cte
+                  WHERE active = false
+                )
+            `,
+          )
+          .with(
+            "workresultinstance",
+            () => sql`
+                (
+                  WITH cte AS (
+                      SELECT
+                          (wi.id || ':' || wr.id) AS _key,
+                          (
+                              wr.workresultenddate IS null
+                              OR wr.workresultenddate > now()
+                          ) AS active,
+                          wr.workresultstartdate,
+                          wr.workresultenddate
+                      FROM public.workinstance AS wi
+                      INNER JOIN public.workresult AS wr
+                          ON wi.workinstanceworktemplateid = wr.workresultworktemplateid
+                      WHERE
+                          (wi.id, wr.id) IN ${sql(ids.map(i => sql([i.id, i.suffix?.at(0) ?? ""])))}
+                  )
+
+                  SELECT
+                      _key,
+                      active,
+                      jsonb_build_object(
+                          '__typename',
+                          'Instant',
+                          'epochMilliseconds',
+                          (extract(epoch from workresultstartdate) * 1000)::text
+                      ) AS "updatedAt"
+                  FROM cte
+                  WHERE active = true
+                  UNION ALL
+                  SELECT
+                      _key,
+                      active,
+                      jsonb_build_object(
+                          '__typename',
+                          'Instant',
+                          'epochMilliseconds',
+                          (extract(epoch from workresultenddate) * 1000)::text
+                      ) AS "updatedAt"
                   FROM cte
                   WHERE active = false
                 )
@@ -81,19 +121,17 @@ export function makeActiveLoader(_req: Request) {
                           worktemplatestartdate,
                           worktemplateenddate
                       FROM public.worktemplate
-                      WHERE id IN ${sql(ids)}
+                      WHERE id IN ${sql(ids.map(i => i.id))}
                   )
 
                   SELECT
                       _key,
                       active,
-                      (
-                          SELECT row_to_json(t)
-                          FROM (
-                              SELECT
-                                  'Instant' AS "__typename",
-                                  (extract(epoch from worktemplatestartdate) * 1000)::text AS "epochMilliseconds"
-                          ) t
+                      jsonb_build_object(
+                          '__typename',
+                          'Instant',
+                          'epochMilliseconds',
+                          (extract(epoch from worktemplatestartdate) * 1000)::text
                       ) AS "updatedAt"
                   FROM cte
                   WHERE active = true
@@ -101,14 +139,12 @@ export function makeActiveLoader(_req: Request) {
                   SELECT
                       _key,
                       active,
-                      (
-                          SELECT row_to_json(t)
-                          FROM (
-                              SELECT
-                                  'Instant' AS "__typename",
-                                  (extract(epoch from worktemplateenddate) * 1000)::text AS "epochMilliseconds"
-                          ) t
-                      ) as "updatedAt"
+                      jsonb_build_object(
+                          '__typename',
+                          'Instant',
+                          'epochMilliseconds',
+                          (extract(epoch from worktemplateenddate) * 1000)::text
+                      ) AS "updatedAt"
                   FROM cte
                   WHERE active = false
                 )
@@ -121,7 +157,10 @@ export function makeActiveLoader(_req: Request) {
 
       type X = WithKey<ResolversTypes["Active"]>;
       const xs = await sql<X[]>`${unionAll(qs)}`;
-      return entities.map(e => xs.find(x => e.id === x._key));
+      return entities.map(e => {
+        const key = [e.id, ...(e.suffix ?? [])].join(":");
+        return xs.find(x => x._key === key);
+      });
     },
   );
 }

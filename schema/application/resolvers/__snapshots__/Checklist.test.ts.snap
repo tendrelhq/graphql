@@ -1,0 +1,325 @@
+// Bun Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Checklist ast 1`] = `
+{
+  "data": {
+    "node": {
+      "__typename": "Checklist",
+      "active": {
+        "__typename": "Active",
+        "active": true,
+      },
+      "assignees": {
+        "__typename": "AssigneeConnection",
+        "edges": [],
+      },
+      "auditable": {
+        "__typename": "Auditable",
+        "auditable": false,
+      },
+      "description": {
+        "__typename": "Description",
+        "description": {
+          "__typename": "DynamicString",
+          "value": "This is the checklist that was created by Keller's "create checklist customer" procedure",
+        },
+      },
+      "items": {
+        "__typename": "ChecklistItemConnection",
+        "edges": [
+          {
+            "__typename": "ChecklistItemEdge",
+            "node": {
+              "__typename": "ChecklistResult",
+              "name": {
+                "__typename": "DisplayName",
+                "name": {
+                  "__typename": "DynamicString",
+                  "value": "Checklist - Boolean",
+                },
+              },
+            },
+          },
+          {
+            "__typename": "ChecklistItemEdge",
+            "node": {
+              "__typename": "ChecklistResult",
+              "name": {
+                "__typename": "DisplayName",
+                "name": {
+                  "__typename": "DynamicString",
+                  "value": "Checklist - Clicker",
+                },
+              },
+            },
+          },
+          {
+            "__typename": "ChecklistItemEdge",
+            "node": {
+              "__typename": "ChecklistResult",
+              "name": {
+                "__typename": "DisplayName",
+                "name": {
+                  "__typename": "DynamicString",
+                  "value": "Checklist - Text",
+                },
+              },
+            },
+          },
+          {
+            "__typename": "ChecklistItemEdge",
+            "node": {
+              "__typename": "ChecklistResult",
+              "name": {
+                "__typename": "DisplayName",
+                "name": {
+                  "__typename": "DynamicString",
+                  "value": "Checklist - Number",
+                },
+              },
+            },
+          },
+          {
+            "__typename": "ChecklistItemEdge",
+            "node": {
+              "__typename": "ChecklistResult",
+              "name": {
+                "__typename": "DisplayName",
+                "name": {
+                  "__typename": "DynamicString",
+                  "value": "Checklist - Geolocation",
+                },
+              },
+            },
+          },
+          {
+            "__typename": "ChecklistItemEdge",
+            "node": {
+              "__typename": "ChecklistResult",
+              "name": {
+                "__typename": "DisplayName",
+                "name": {
+                  "__typename": "DynamicString",
+                  "value": "Checklist - Sentiment",
+                },
+              },
+            },
+          },
+          {
+            "__typename": "ChecklistItemEdge",
+            "node": {
+              "__typename": "ChecklistResult",
+              "name": {
+                "__typename": "DisplayName",
+                "name": {
+                  "__typename": "DynamicString",
+                  "value": "Checklist - Date",
+                },
+              },
+            },
+          },
+          {
+            "__typename": "ChecklistItemEdge",
+            "node": {
+              "__typename": "ChecklistResult",
+              "name": {
+                "__typename": "DisplayName",
+                "name": {
+                  "__typename": "DynamicString",
+                  "value": "Checklist - String",
+                },
+              },
+            },
+          },
+          {
+            "__typename": "ChecklistItemEdge",
+            "node": {
+              "__typename": "ChecklistResult",
+              "name": {
+                "__typename": "DisplayName",
+                "name": {
+                  "__typename": "DynamicString",
+                  "value": "Time At Task",
+                },
+              },
+            },
+          },
+        ],
+      },
+      "name": {
+        "__typename": "DisplayName",
+        "name": {
+          "__typename": "DynamicString",
+          "value": "Checklist",
+        },
+      },
+      "required": false,
+      "sop": {
+        "__typename": "Sop",
+        "sop": "https://www.notion.so/tendrel/d87fc5418f0e407e85f0039340b57a89?v=898c653c34a042a2802533173178f5e0&p=105db5238fbc807fbaafd8a23f1c66e3&pm=s",
+      },
+      "status": null,
+    },
+  },
+}
+`;
+
+exports[`Checklist ecs 1`] = `
+{
+  "data": {
+    "node": {
+      "__typename": "Checklist",
+      "active": null,
+      "assignees": {
+        "__typename": "AssigneeConnection",
+        "edges": [],
+      },
+      "auditable": null,
+      "description": {
+        "__typename": "Description",
+        "description": {
+          "__typename": "DynamicString",
+          "value": "This is the checklist that was created by Keller's "create checklist customer" procedure",
+        },
+      },
+      "items": {
+        "__typename": "ChecklistItemConnection",
+        "edges": [
+          {
+            "__typename": "ChecklistItemEdge",
+            "node": {
+              "__typename": "ChecklistResult",
+              "name": {
+                "__typename": "DisplayName",
+                "name": {
+                  "__typename": "DynamicString",
+                  "value": "Checklist - Boolean",
+                },
+              },
+            },
+          },
+          {
+            "__typename": "ChecklistItemEdge",
+            "node": {
+              "__typename": "ChecklistResult",
+              "name": {
+                "__typename": "DisplayName",
+                "name": {
+                  "__typename": "DynamicString",
+                  "value": "Checklist - Clicker",
+                },
+              },
+            },
+          },
+          {
+            "__typename": "ChecklistItemEdge",
+            "node": {
+              "__typename": "ChecklistResult",
+              "name": {
+                "__typename": "DisplayName",
+                "name": {
+                  "__typename": "DynamicString",
+                  "value": "Checklist - Text",
+                },
+              },
+            },
+          },
+          {
+            "__typename": "ChecklistItemEdge",
+            "node": {
+              "__typename": "ChecklistResult",
+              "name": {
+                "__typename": "DisplayName",
+                "name": {
+                  "__typename": "DynamicString",
+                  "value": "Checklist - Number",
+                },
+              },
+            },
+          },
+          {
+            "__typename": "ChecklistItemEdge",
+            "node": {
+              "__typename": "ChecklistResult",
+              "name": {
+                "__typename": "DisplayName",
+                "name": {
+                  "__typename": "DynamicString",
+                  "value": "Checklist - Geolocation",
+                },
+              },
+            },
+          },
+          {
+            "__typename": "ChecklistItemEdge",
+            "node": {
+              "__typename": "ChecklistResult",
+              "name": {
+                "__typename": "DisplayName",
+                "name": {
+                  "__typename": "DynamicString",
+                  "value": "Checklist - Sentiment",
+                },
+              },
+            },
+          },
+          {
+            "__typename": "ChecklistItemEdge",
+            "node": {
+              "__typename": "ChecklistResult",
+              "name": {
+                "__typename": "DisplayName",
+                "name": {
+                  "__typename": "DynamicString",
+                  "value": "Checklist - Date",
+                },
+              },
+            },
+          },
+          {
+            "__typename": "ChecklistItemEdge",
+            "node": {
+              "__typename": "ChecklistResult",
+              "name": {
+                "__typename": "DisplayName",
+                "name": {
+                  "__typename": "DynamicString",
+                  "value": "Checklist - String",
+                },
+              },
+            },
+          },
+          {
+            "__typename": "ChecklistItemEdge",
+            "node": {
+              "__typename": "ChecklistResult",
+              "name": {
+                "__typename": "DisplayName",
+                "name": {
+                  "__typename": "DynamicString",
+                  "value": "Time At Task",
+                },
+              },
+            },
+          },
+        ],
+      },
+      "name": {
+        "__typename": "DisplayName",
+        "name": {
+          "__typename": "DynamicString",
+          "value": "Checklist",
+        },
+      },
+      "required": false,
+      "sop": {
+        "__typename": "Sop",
+        "sop": "https://www.notion.so/tendrel/d87fc5418f0e407e85f0039340b57a89?v=898c653c34a042a2802533173178f5e0&p=105db5238fbc807fbaafd8a23f1c66e3&pm=s",
+      },
+      "status": {
+        "__typename": "ChecklistOpen",
+      },
+    },
+  },
+}
+`;
