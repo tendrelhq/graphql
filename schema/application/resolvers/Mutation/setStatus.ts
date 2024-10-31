@@ -1,9 +1,28 @@
 import { join, sql } from "@/datasources/postgres";
-import type { MutationResolvers } from "@/schema";
+import type { MutationResolvers, TemporalInput } from "@/schema";
 import { decodeGlobalId } from "@/schema/system";
+import { Temporal } from "@js-temporal/polyfill";
 import { GraphQLError } from "graphql";
 import { match } from "ts-pattern";
 import { copyFromWorkInstance } from "./copyFrom";
+
+function temporalInputToTimestamptz(input: TemporalInput) {
+  if (input.zdt) {
+    return (
+      Temporal.Instant
+        //
+        .fromEpochMilliseconds(Number(input.zdt.epochMilliseconds))
+        .toZonedDateTimeISO(input.zdt.timeZone)
+        .toString({ calendarName: "never", timeZoneName: "never" })
+    );
+  }
+  return (
+    Temporal.Instant
+      //
+      .fromEpochMilliseconds(Number(input.instant))
+      .toString()
+  );
+}
 
 export const setStatus: NonNullable<MutationResolvers["setStatus"]> = async (
   _,
@@ -26,7 +45,9 @@ export const setStatus: NonNullable<MutationResolvers["setStatus"]> = async (
       case "inProgress" in input:
         return "In Progress";
       case "closed" in input:
-        return "Complete";
+        return input.closed.because?.code === "cancel"
+          ? "Cancelled"
+          : "Complete";
       default: {
         const _: never = input;
         throw "invariant violated";
@@ -34,33 +55,37 @@ export const setStatus: NonNullable<MutationResolvers["setStatus"]> = async (
     }
   })();
 
+  const targetDate = temporalInputToTimestamptz(
+    (() => {
+      if (input.open) return input.open.at;
+      if (input.inProgress) return input.inProgress.at;
+      return input.closed.at;
+    })(),
+  );
+
   const result = await match(type)
     .with("workinstance", () => {
       const updates = {
         workinstancestatusid: sql`inputs.status`,
         workinstancemodifieddate: sql`now()`,
         workinstancestartdate: match(targetStatus)
-          .with("In Progress", () => sql`now()`)
-          .otherwise(() => sql`NULL`),
+          .with("In Progress", () => targetDate)
+          .with("Open", () => sql`NULL`)
+          .otherwise(
+            // Coalesce in case where we are going Open -> Complete
+            () => sql`coalesce(workinstancestartdate, ${targetDate})`,
+          ),
         workinstancecompleteddate: match(targetStatus)
-          .with("Complete", () => sql`now()`)
+          .with("Cancelled", () => targetDate)
+          .with("Complete", () => targetDate)
           .otherwise(() => sql`NULL`),
       };
 
       const columns = [
         "workinstancemodifieddate" as const,
         "workinstancestatusid" as const,
-        ...match(targetStatus)
-          .with("Open", () => [
-            "workinstancestartdate" as const,
-            "workinstancecompleteddate" as const,
-          ])
-          .with("In Progress", () => [
-            "workinstancestartdate" as const,
-            "workinstancecompleteddate" as const,
-          ])
-          .with("Complete", () => ["workinstancecompleteddate" as const])
-          .exhaustive(),
+        "workinstancestartdate" as const,
+        "workinstancecompleteddate" as const,
       ];
 
       const filters = [
@@ -84,6 +109,52 @@ export const setStatus: NonNullable<MutationResolvers["setStatus"]> = async (
           WHERE ${join(filters, sql`AND`)};
         `;
 
+        if (targetStatus === "Complete") {
+          // FIXME: Since we are in a transaction, we will not see our updates
+          // to workresultinstancecompleteddate.
+          const result = await tx`
+            INSERT INTO public.workresultinstance AS wri (
+                workresultinstancecustomerid,
+                workresultinstanceworkresultid,
+                workresultinstanceworkinstanceid,
+                workresultinstancestatusid,
+                workresultinstancestartdate,
+                workresultinstancecompleteddate,
+                workresultinstancevalue
+            )
+            SELECT
+                wr.workresultcustomerid,
+                wr.workresultid,
+                wi.workinstanceid,
+                status.systagid,
+                coalesce(wi.workinstancestartdate, ${targetDate}),
+                ${targetDate},
+                trunc(
+                  extract(epoch from (${targetDate}::timestamptz - coalesce(wi.workinstancestartdate, ${targetDate}::timestamptz))),
+                  3
+                )::text
+            FROM public.workinstance AS wi
+            INNER JOIN public.workresult AS wr
+                ON wi.workinstanceworktemplateid = wr.workresultworktemplateid
+                AND wr.workresulttypeid = 737
+            INNER JOIN public.systag AS status
+                ON status.systagparentid = 965
+                AND status.systagtype = 'Complete'
+            WHERE
+                wi.id = ${id}
+            ON CONFLICT (workresultinstanceworkresultid, workresultinstanceworkinstanceid)
+            DO UPDATE
+                SET
+                    workresultinstancemodifieddate = now(),
+                    workresultinstancestatusid = excluded.workresultinstancestatusid,
+                    workresultinstancestartdate = excluded.workresultinstancestartdate,
+                    workresultinstancecompleteddate = excluded.workresultinstancecompleteddate,
+                    workresultinstancevalue = excluded.workresultinstancevalue
+          `;
+          // TODO: Should we IS DISTINCT FROM above? I think we're probably ok...
+          console.debug(`Wrote TAT? ${!!result.count}`);
+        }
+
         if (targetStatus === "In Progress") {
           // HACK: this is "running the rules engine" for now lmao.
           await copyFromWorkInstance(tx, id, {});
@@ -93,31 +164,26 @@ export const setStatus: NonNullable<MutationResolvers["setStatus"]> = async (
       });
     })
     .with("workresultinstance", () => {
+      const targetDate = temporalInputToTimestamptz(
+        (() => {
+          if (input.open) return input.open.at;
+          if (input.inProgress) return input.inProgress.at;
+          return input.closed.at;
+        })(),
+      );
+
       const updates = {
         workresultinstancestatusid: sql`excluded.workresultinstancestatusid`,
-        workresultinstancemodifieddate: sql`now()`,
-        workresultinstancestartdate: match(targetStatus)
-          .with("In Progress", () => sql`now()`)
-          .otherwise(() => sql`NULL`),
-        workresultinstancecompleteddate: match(targetStatus)
-          .with("Complete", () => sql`now()`)
-          .otherwise(() => sql`NULL`),
+        workresultinstancemodifieddate: sql`excluded.workresultinstancemodifieddate`,
+        workresultinstancecompleteddate: sql`excluded.workresultinstancecompleteddate`,
+        workresultinstancestartdate: sql`excluded.workresultinstancestartdate`,
       };
 
       const columns = [
         "workresultinstancemodifieddate" as const,
         "workresultinstancestatusid" as const,
-        ...match(targetStatus)
-          .with("Open", () => [
-            "workresultinstancestartdate" as const,
-            "workresultinstancecompleteddate" as const,
-          ])
-          .with("In Progress", () => [
-            "workresultinstancestartdate" as const,
-            "workresultinstancecompleteddate" as const,
-          ])
-          .with("Complete", () => ["workresultinstancecompleteddate" as const])
-          .exhaustive(),
+        "workresultinstancestartdate" as const,
+        "workresultinstancecompleteddate" as const,
       ];
 
       if (!suffix?.length) {
@@ -149,17 +215,21 @@ export const setStatus: NonNullable<MutationResolvers["setStatus"]> = async (
               workresultinstancecustomerid,
               workresultinstanceworkresultid,
               workresultinstanceworkinstanceid,
-              workresultinstancestatusid
+              workresultinstancestatusid,
+              workresultinstancestartdate,
+              workresultinstancecompleteddate
           )
           SELECT
               wr.workresultcustomerid,
               wr.workresultid,
               wi.workinstanceid,
-              inputs.status
+              inputs.status,
+              ${targetStatus === "Open" ? sql`NULL` : sql`coalesce(wi.workinstancestartdate, ${targetDate})`},
+              ${targetStatus === "Open" ? sql`NULL` : targetDate}
           FROM
               inputs,
-              public.workresult AS wr,
-              public.workinstance AS wi
+              public.workinstance AS wi,
+              public.workresult AS wr
           WHERE
               wi.id = ${id}
               AND wr.id = ${suffix[0]}

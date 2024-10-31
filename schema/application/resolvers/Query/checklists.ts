@@ -394,6 +394,8 @@ function buildEcsFilterFragments({ f }: Args, parent: Parent): Fragment {
   }
 
   if (f.withStatus?.length) {
+    // NOTE: for now we are simply excluding Cancelleds entirely.
+    // Perhaps one day we will include them.
     fs.push(
       sql`status.systagtype IN ${sql(
         f.withStatus.map(e =>
