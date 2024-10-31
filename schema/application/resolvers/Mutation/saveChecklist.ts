@@ -653,7 +653,87 @@ export const saveChecklist: NonNullable<
             )
       `;
 
-      return [r0, r2, r3, r4, r5, r6, r7];
+      // Create a Time At Task result.
+      const r8 = await tx`
+        WITH inputs AS (
+            SELECT
+                worktemplateid,
+                worktemplatecustomerid,
+                worktemplatesiteid
+            FROM public.worktemplate
+            WHERE id = ${id}
+        ),
+
+        name (languagemasterid) AS (
+            VALUES (4367::bigint)
+        ),
+
+        -- TODO: Eventually switch this to 'Duration'?
+        type AS (
+            SELECT t.systagid AS type
+            FROM public.systag AS t
+            WHERE
+                (t.systagparentid, t.systagtype) = (699, 'Time At Task')
+        ),
+
+        widget AS (
+            SELECT custagid AS type
+            FROM public.custag, inputs
+            WHERE
+                custagcustomerid = inputs.worktemplatecustomerid
+                AND custagsystagid = (
+                    SELECT systagid
+                    FROM public.systag
+                    WHERE
+                        systagparentid = 1
+                        AND systagtype = 'Widget Type'
+                )
+                AND custagtype = 'Time At Task'
+            UNION
+            SELECT custagid AS type
+            FROM public.custag
+            WHERE
+                custagcustomerid = 0
+                AND custagsystagid = (
+                    SELECT systagid
+                    FROM public.systag
+                    WHERE
+                        systagparentid = 1
+                        AND systagtype = 'Widget Type'
+                )
+                AND custagtype = 'Time At Task'
+            LIMIT 1
+        )
+
+        INSERT INTO public.workresult (
+            workresultcustomerid,
+            workresultforaudit,
+            workresultfortask,
+            workresultisprimary,
+            workresultisvisible,
+            workresultlanguagemasterid,
+            workresultorder,
+            workresultsiteid,
+            workresulttypeid,
+            workresultwidgetid,
+            workresultworktemplateid
+        )
+        SELECT
+            inputs.worktemplatecustomerid,
+            false,
+            true,
+            true,
+            false,
+            name.languagemasterid,
+            999,
+            inputs.worktemplatesiteid,
+            type.type,
+            widget.type,
+            inputs.worktemplateid
+        FROM inputs, name, type, widget
+      `;
+
+      return [r0, r2, r3, r4, r5, r6, r7, r8];
     });
 
     const delta = result.reduce((acc, res) => acc + res.count, 0);
