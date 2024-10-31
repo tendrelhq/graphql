@@ -6,7 +6,7 @@ import type {
   MutationResolvers,
 } from "@/schema";
 import { decodeGlobalId } from "@/schema/system";
-import { map } from "@/util";
+import { type WithKey, map } from "@/util";
 import { GraphQLError } from "graphql";
 import type { TransactionSql } from "postgres";
 import { match } from "ts-pattern";
@@ -59,7 +59,7 @@ export async function copyFromWorkTemplate(
   id: string,
   options: CopyFromOptions,
 ): Promise<CopyFromPayload> {
-  const [row] = await tx<[{ _key: number; id: string }?]>`
+  const [row] = await tx<[WithKey<{ _key_uuid: string; id: string }>?]>`
       INSERT INTO public.workinstance (
           workinstancecustomerid,
           workinstancesiteid,
@@ -106,7 +106,8 @@ export async function copyFromWorkTemplate(
           worktemplatesiteid = locationid
       WHERE worktemplate.id = ${id}
       RETURNING
-          workinstanceid AS "_key",
+          workinstance.workinstanceid AS "_key",
+          workinstance.id AS "_key_uuid",
           encode(('workinstance:' || workinstance.id)::bytea, 'base64') AS id
   `;
 
@@ -114,6 +115,8 @@ export async function copyFromWorkTemplate(
     console.debug(`No worktemplate exists for the given id '${id}'`);
     throw "invariant violated";
   }
+
+  console.debug(`Created Entity ${row.id} (workinstance:${row._key_uuid})`);
 
   const result = await tx`
       INSERT INTO public.workresultinstance (

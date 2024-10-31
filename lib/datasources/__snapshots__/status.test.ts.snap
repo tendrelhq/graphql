@@ -5,6 +5,7 @@ exports[`status loader open 1`] = `
   "__typename": "ChecklistOpen",
   "_key": "work-instance_8930ad12-471f-406a-a4b6-0f0f27e80396",
   "closedAt": null,
+  "closedBecause": null,
   "dueAt": null,
   "inProgressAt": null,
   "openedAt": {
@@ -20,6 +21,7 @@ exports[`status loader item - open 1`] = `
   "__typename": "ChecklistOpen",
   "_key": "work-instance_8930ad12-471f-406a-a4b6-0f0f27e80396:work-result_a7844036-4fe2-46dd-acb9-66bf5757afed",
   "closedAt": null,
+  "closedBecause": null,
   "dueAt": null,
   "inProgressAt": null,
   "openedAt": {

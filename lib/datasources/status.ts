@@ -31,6 +31,9 @@ export function makeStatusLoader(_req: Request) {
                         END AS type,
                         wi.workinstancecreateddate AS opendate,
                         wi.workinstancestartdate AS startdate,
+                        CASE WHEN s.systagtype = 'Cancelled' THEN jsonb_build_object('code', 'cancel')
+                             ELSE null
+                        END AS closedbecause,
                         wi.workinstancecompleteddate AS closeddate,
                         wi.workinstancetargetstartdate AS duedate,
                         wi.workinstancetimezone AS tz
@@ -64,7 +67,8 @@ export function makeStatusLoader(_req: Request) {
                         ) t
                     ) AS "openedAt",
                     null::json AS "inProgressAt",
-                    null::json AS "closedAt"
+                    null::json AS "closedAt",
+                    null::json AS "closedBecause"
                 FROM cte
                 WHERE type = 'ChecklistOpen'
                 UNION ALL
@@ -92,7 +96,8 @@ export function makeStatusLoader(_req: Request) {
                             WHERE startdate IS NOT null
                         ) t
                     ) AS "inProgressAt",
-                    null::json AS "closedAt"
+                    null::json AS "closedAt",
+                    null::json AS "closedBecause"
                 FROM cte
                 WHERE type = 'ChecklistInProgress'
                 UNION ALL
@@ -120,7 +125,8 @@ export function makeStatusLoader(_req: Request) {
                                 tz AS "timeZone"
                             WHERE closeddate IS NOT null
                         ) t
-                    ) AS "closedAt"
+                    ) AS "closedAt",
+                    closedbecause::json AS "closedBecause"
                 FROM cte
                 WHERE type = 'ChecklistClosed'
               )
@@ -168,7 +174,8 @@ export function makeStatusLoader(_req: Request) {
                         ) t
                     ) AS "openedAt",
                     null::json AS "inProgressAt",
-                    null::json AS "closedAt"
+                    null::json AS "closedAt",
+                    null::json AS "closedBecause"
                 FROM cte
                 WHERE type = 'ChecklistOpen'
                 UNION ALL
@@ -187,7 +194,8 @@ export function makeStatusLoader(_req: Request) {
                             WHERE startdate IS NOT null
                         ) t
                     ) AS "inProgressAt",
-                    null::json AS "closedAt"
+                    null::json AS "closedAt",
+                    null::json AS "closedBecause"
                 FROM cte
                 WHERE type = 'ChecklistInProgress'
                 UNION ALL
@@ -206,7 +214,8 @@ export function makeStatusLoader(_req: Request) {
                                 tz AS "timeZone"
                             WHERE closeddate IS NOT null
                         ) t
-                    ) AS "closedAt"
+                    ) AS "closedAt",
+                    null::json AS "closedBecause"
                 FROM cte
                 WHERE type = 'ChecklistClosed'
               )

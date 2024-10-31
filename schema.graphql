@@ -241,6 +241,7 @@ type ChecklistClosedReason {
 }
 
 enum ChecklistClosedReasonCode {
+  cancel
   error
   success
 }
@@ -518,11 +519,6 @@ input DescriptionInput {
   value: DynamicStringInput!
 }
 
-type DiscardChecklistPayload {
-  discardedChecklistIds: [ID!]!
-  edge: ChecklistEdge!
-}
-
 """
 TODO
 """
@@ -776,7 +772,6 @@ type Mutation {
   deactivate(entity: ID!): Activatable!
   deactivateWorker(id: ID!): Worker!
   disableLanguage(languageId: ID!, orgId: ID!): EnabledLanguageEdge!
-  discardChecklist(entity: ID!): DiscardChecklistPayload!
   enableLanguage(languageId: ID!, orgId: ID!): EnabledLanguageEdge!
   saveChecklist(input: ChecklistInput!): ChecklistEdge!
   setStatus(
