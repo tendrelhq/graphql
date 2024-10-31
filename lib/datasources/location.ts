@@ -1,9 +1,9 @@
-import { EntityNotFound } from "@/errors";
 import type { Location } from "@/schema";
 import type { WithKey } from "@/util";
 import Dataloader from "dataloader";
 import type { Request } from "express";
 import { sql } from "./postgres";
+import { GraphQLError } from "graphql/error";
 
 export default (_: Request) =>
   new Dataloader<string, Location>(async keys => {
@@ -31,5 +31,13 @@ export default (_: Request) =>
       new Map<string, Location>(),
     );
 
-    return keys.map(key => byId.get(key) ?? new EntityNotFound("location"));
+    return keys.map(
+      key =>
+        byId.get(key) ??
+        new GraphQLError(`No Location with id '${key}'`, {
+          extensions: {
+            code: "NOT_FOUND",
+          },
+        }),
+    );
   });

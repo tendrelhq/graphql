@@ -50,9 +50,9 @@ describe.skipIf(!!process.env.CI)("updateWorker", () => {
     });
 
     expect(result.errors?.at(0)).toMatchObject({
-      message: "entity_not_found",
+      message: expect.stringMatching(/No Worker for key/),
       extensions: {
-        type: "worker",
+        code: "NOT_FOUND",
       },
     });
   });

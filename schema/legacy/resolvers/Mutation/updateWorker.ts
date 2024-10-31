@@ -1,7 +1,7 @@
 import { shouldUpdate, sql } from "@/datasources/postgres";
 import type { Context, MutationResolvers, UpdateWorkerInput } from "@/schema";
 import { decodeGlobalId } from "@/schema/system";
-import { GraphQLError } from "graphql";
+import { GraphQLError } from "graphql/error";
 
 export const updateWorker: NonNullable<
   MutationResolvers["updateWorker"]
@@ -33,29 +33,19 @@ export const updateWorker: NonNullable<
       });
     }
   }
-  try {
-    const node = await execute(
-      {
-        ...input,
-        id: workerId,
-      },
-      ctx,
-    );
-    return {
-      cursor: node.id.toString(),
-      node,
-    };
-  } catch (e) {
-    if (e instanceof GraphQLError) {
-      throw e;
-    }
 
-    throw new GraphQLError("Failed to update worker", {
-      extensions: {
-        code: "unknown",
-      },
-    });
-  }
+  const node = await execute(
+    {
+      ...input,
+      id: workerId,
+    },
+    ctx,
+  );
+
+  return {
+    cursor: node.id.toString(),
+    node,
+  };
 };
 
 async function execute(input: UpdateWorkerInput, ctx: Context) {

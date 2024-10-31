@@ -1,7 +1,7 @@
 import { sql } from "@/datasources/postgres";
-import { EntityNotFound } from "@/errors";
 import type { DescriptionResolvers } from "@/schema";
 import { decodeGlobalId } from "@/schema/system";
+import { GraphQLError } from "graphql/error";
 import { match } from "ts-pattern";
 
 export const Description: DescriptionResolvers = {
@@ -32,7 +32,15 @@ export const Description: DescriptionResolvers = {
             WHERE wt.id = ${id}
         `,
       )
-      .otherwise(() => Promise.reject(new EntityNotFound("description")));
+      .otherwise(() =>
+        Promise.reject(
+          new GraphQLError(`No Description for key '${id}'`, {
+            extensions: {
+              code: "NOT_FOUND",
+            },
+          }),
+        ),
+      );
 
     // This is where we actually grab the rest of the fields.
     return ctx.orm.dynamicString.load(row.id);

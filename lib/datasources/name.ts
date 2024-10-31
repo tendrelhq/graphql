@@ -1,4 +1,3 @@
-import { EntityNotFound } from "@/errors";
 import type {
   Component,
   ID,
@@ -145,7 +144,15 @@ export function makeNameLoader(req: Request) {
         new Map<string, Name>(),
       );
 
-      return keys.map(key => byId.get(key) ?? new EntityNotFound("name"));
+      return keys.map(
+        key =>
+          byId.get(key) ??
+          new GraphQLError(`No Name for key '${key}'`, {
+            extensions: {
+              code: "NOT_FOUND",
+            },
+          }),
+      );
     },
     {
       cacheKeyFn: key => `${key}:${req.i18n.language}`,
@@ -213,7 +220,13 @@ export function makeNameMetadataLoader(_: Request) {
     );
 
     return keys.map(
-      key => byId.get(key) ?? new EntityNotFound("name-metadata"),
+      key =>
+        byId.get(key) ??
+        new GraphQLError(`No NameMetadata for key '${key}'`, {
+          extensions: {
+            code: "NOT_FOUND",
+          },
+        }),
     );
   });
 }

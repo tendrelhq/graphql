@@ -1,9 +1,9 @@
-import { EntityNotFound } from "@/errors";
 import type { EnabledLanguage, ID } from "@/schema";
 import type { WithKey } from "@/util";
 import Dataloader from "dataloader";
 import type { Request } from "express";
 import { sql } from "./postgres";
+import { GraphQLError } from "graphql/error";
 
 export default (_: Request) =>
   new Dataloader<ID, EnabledLanguage>(async keys => {
@@ -27,6 +27,12 @@ export default (_: Request) =>
     );
 
     return keys.map(
-      key => byKey.get(key) ?? new EntityNotFound("enabled-language"),
+      key =>
+        byKey.get(key) ??
+        new GraphQLError(`No CRL with id '${key}'`, {
+          extensions: {
+            code: "NOT_FOUND",
+          },
+        }),
     );
   });
