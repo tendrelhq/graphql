@@ -1,5 +1,5 @@
 import type { ID, ResolversTypes } from "@/schema";
-import { decodeGlobalId, type GlobalId } from "@/schema/system";
+import { type GlobalId, decodeGlobalId } from "@/schema/system";
 import type { WithKey } from "@/util";
 import DataLoader from "dataloader";
 import type { Request } from "express";

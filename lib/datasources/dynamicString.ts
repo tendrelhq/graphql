@@ -3,8 +3,8 @@ import { decodeGlobalId } from "@/schema/system";
 import type { WithKey } from "@/util";
 import DataLoader from "dataloader";
 import type { Request } from "express";
-import { sql } from "./postgres";
 import { GraphQLError } from "graphql/error";
+import { sql } from "./postgres";
 
 export function makeDynamicStringLoader(req: Request) {
   return new DataLoader<ID, DynamicString>(async keys => {
@@ -42,7 +42,7 @@ export function makeDynamicStringLoader(req: Request) {
     return entities.map(
       id =>
         byId.get(id) ??
-        new GraphQLError(`No `, {
+        new GraphQLError(`No DynamicString for key '${id}'`, {
           extensions: {
             code: "NOT_FOUND",
           },

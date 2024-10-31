@@ -5,13 +5,13 @@ import type {
   NameMetadata,
   UpdateNameInput,
 } from "@/schema";
-import { decodeGlobalId, type GlobalId } from "@/schema/system";
+import { type GlobalId, decodeGlobalId } from "@/schema/system";
 import type { WithKey } from "@/util";
 import Dataloader from "dataloader";
 import type { Request } from "express";
+import { GraphQLError } from "graphql";
 import { match } from "ts-pattern";
 import { type SQL, sql, unionAll } from "./postgres";
-import { GraphQLError } from "graphql";
 
 export function makeDisplayNameLoader(_req: Request) {
   return new Dataloader<ID, Component>(async keys => {
@@ -74,7 +74,7 @@ export function makeDisplayNameLoader(_req: Request) {
               INNER JOIN public.languagemaster AS lm
                   ON wr.workresultlanguagemasterid = lm.languagemasterid
               WHERE
-                  (wi.id, wr.id) IN ${sql(ids.map(i => sql([i.id, i.suffix?.at(0)!])))}
+                  (wi.id, wr.id) IN ${sql(ids.map(i => sql([i.id, i.suffix?.at(0) ?? ""])))}
           `,
         )
         .otherwise(() => []),

@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
+import { encodeGlobalId } from "@/schema/system";
 import { testGlobalId } from "@/test/prelude";
 import { makeRequirementLoader } from "./requirement";
-import { encodeGlobalId } from "@/schema/system";
 
 // biome-ignore lint/suspicious/noExplicitAny:
 const makeLoader = () => makeRequirementLoader({} as any);

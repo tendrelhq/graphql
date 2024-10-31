@@ -1,8 +1,8 @@
 import type { ID, Language } from "@/schema";
 import Dataloader from "dataloader";
 import type { Request } from "express";
-import { sql } from "./postgres";
 import { GraphQLError } from "graphql/error";
+import { sql } from "./postgres";
 
 export default (_: Request) => {
   return {

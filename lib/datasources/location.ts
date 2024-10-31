@@ -2,8 +2,8 @@ import type { Location } from "@/schema";
 import type { WithKey } from "@/util";
 import Dataloader from "dataloader";
 import type { Request } from "express";
-import { sql } from "./postgres";
 import { GraphQLError } from "graphql/error";
+import { sql } from "./postgres";
 
 export default (_: Request) =>
   new Dataloader<string, Location>(async keys => {

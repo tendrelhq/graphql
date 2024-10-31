@@ -2,8 +2,8 @@ import type { User } from "@/schema";
 import type { WithKey } from "@/util";
 import Dataloader from "dataloader";
 import type { Request } from "express";
-import { sql } from "./postgres";
 import { GraphQLError } from "graphql/error";
+import { sql } from "./postgres";
 
 function selectUsers(
   key: "workeridentityid" | "workeruuid",
