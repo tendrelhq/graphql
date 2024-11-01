@@ -44,7 +44,7 @@ export const copyFrom: NonNullable<MutationResolvers["copyFrom"]> = async (
  *
  * When true, `options.chain` causes the current chain to continue, i.e. we set
  * the new workinstance's previousid to the id of the workinstance being copied.
- * Otherwise, a new (beneath the originator) is started.
+ * Otherwise, a new chain (beneath the originator) is started.
  */
 export async function copyFromWorkInstance(
   tx: TransactionSql,
