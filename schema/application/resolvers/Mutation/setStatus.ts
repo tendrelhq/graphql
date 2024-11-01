@@ -165,9 +165,9 @@ export const setStatus: NonNullable<MutationResolvers["setStatus"]> = async (
             // (a) create a new branch beneath originator:
             // chain: "originator",
             // (b) continue the current chain:
-            // chain: "previous",
+            chain: "previous",
             // As stated above, I think this makes the most sense:
-            chain: undefined, // i.e. create a new chain
+            // chain: undefined, // i.e. create a new chain
           });
         }
 

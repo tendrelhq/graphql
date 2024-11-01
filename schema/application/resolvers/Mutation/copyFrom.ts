@@ -89,19 +89,22 @@ type TemplateChainOptions =
  * workinstance into an existing chain. When an originator is not specified, the
  * result is a brand new originator "token" (as Keller likes to call them).
  */
+
+// TODO: need to use real frequency for target start date
 export async function copyFromWorkTemplate(
   tx: TransactionSql,
   id: string,
   options: CopyFromOptions & TemplateChainOptions,
 ): Promise<CopyFromPayload> {
   const [row] = await tx<[WithKey<{ _key_uuid: string; id: string }>?]>`
-      INSERT INTO public.workinstance (
+INSERT INTO public.workinstance (
           workinstancecustomerid,
           workinstancesiteid,
           workinstanceoriginatorworkinstanceid,
           workinstancepreviousid,
           workinstancesoplink,
           workinstancestartdate,
+          workinstancetargetstartdate,
           workinstancestatusid,
           workinstancetypeid,
           workinstanceworktemplateid,
@@ -119,6 +122,7 @@ export async function copyFromWorkTemplate(
             .with("closed", () => sql`now()`)
             .with(undefined, () => null)
             .exhaustive()},
+          now(), -- TODO: this should use real frequency
           (
               SELECT systagid
               FROM public.systag
