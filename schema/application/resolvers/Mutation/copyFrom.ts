@@ -49,7 +49,7 @@ export const copyFrom: NonNullable<MutationResolvers["copyFrom"]> = async (
 export async function copyFromWorkInstance(
   tx: TransactionSql,
   id: string,
-  options: CopyFromOptions & { chain?: boolean },
+  options: CopyFromOptions & { chain?: "originator" | "previous" },
 ): Promise<CopyFromPayload> {
   const [row] = await tx<
     [{ id: string; originator: string; previous: string }]
@@ -66,8 +66,8 @@ export async function copyFromWorkInstance(
   // For now, we just do a template-based copy:
   return copyFromWorkTemplate(tx, row.id, {
     ...options,
-    originator: row.originator,
-    previous: options.chain ? row.previous : undefined,
+    originator: options.chain ? row.originator : undefined,
+    previous: options.chain === "previous" ? row.previous : undefined,
   });
 }
 
