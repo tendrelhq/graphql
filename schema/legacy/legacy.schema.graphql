@@ -68,6 +68,7 @@ enum InvitationStatus {
   pending
   accepted
   revoked
+  expired
 }
 
 type Invitation {
