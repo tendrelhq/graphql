@@ -38,31 +38,68 @@ export const copyFrom: NonNullable<MutationResolvers["copyFrom"]> = async (
 // TODO: We could extend the `options` here to include things like:
 // - copying over result statuses, values
 // - ...?
+/**
+ * Creates a new workinstance from an existing workinstance.
+ * Currently, this is purely a templated-based copy.
+ *
+ * When true, `options.chain` causes the current chain to continue, i.e. we set
+ * the new workinstance's previousid to the id of the workinstance being copied.
+ * Otherwise, a new (beneath the originator) is started.
+ */
 export async function copyFromWorkInstance(
   tx: TransactionSql,
   id: string,
-  options: CopyFromOptions,
+  options: CopyFromOptions & { chain?: boolean },
 ): Promise<CopyFromPayload> {
-  const [row] = await tx<[{ id: string }]>`
-      SELECT wt.id
+  const [row] = await tx<
+    [{ id: string; originator: string; previous: string }]
+  >`
+      SELECT
+          wt.id,
+          wi.workinstanceoriginatorworkinstanceid AS originator,
+          wi.workinstanceid AS previous
       FROM public.workinstance AS wi
       INNER JOIN public.worktemplate AS wt
           ON wi.workinstanceworktemplateid = wt.worktemplateid
       WHERE wi.id = ${id};
   `;
   // For now, we just do a template-based copy:
-  return copyFromWorkTemplate(tx, row.id, options);
+  return copyFromWorkTemplate(tx, row.id, {
+    ...options,
+    originator: row.originator,
+    previous: options.chain ? row.previous : undefined,
+  });
 }
 
+type TemplateChainOptions =
+  | {
+      originator?: string;
+    }
+  | {
+      originator: string;
+      previous: string;
+    };
+
+/**
+ * Creates a new workinstance from a worktemplate. This is a "full
+ * instantiation", i.e. we create a workinstance AND all workresultinstances
+ * as specified by the underlying workresults.
+ *
+ * `options.originator` and `options.previous` can be used to insert a
+ * workinstance into an existing chain. When an originator is not specified, the
+ * result is a brand new originator "token" (as Keller likes to call them).
+ */
 export async function copyFromWorkTemplate(
   tx: TransactionSql,
   id: string,
-  options: CopyFromOptions,
+  options: CopyFromOptions & TemplateChainOptions,
 ): Promise<CopyFromPayload> {
   const [row] = await tx<[WithKey<{ _key_uuid: string; id: string }>?]>`
       INSERT INTO public.workinstance (
           workinstancecustomerid,
           workinstancesiteid,
+          workinstanceoriginatorworkinstanceid,
+          workinstancepreviousid,
           workinstancesoplink,
           workinstancestartdate,
           workinstancestatusid,
@@ -73,6 +110,8 @@ export async function copyFromWorkTemplate(
       SELECT
           worktemplatecustomerid,
           worktemplatesiteid,
+          ${options.originator ?? null}::bigint,
+          ${"previous" in options ? options.previous : null}::bigint,
           worktemplatesoplink,
           ${match(options.withStatus)
             .with("open", () => null)
@@ -104,7 +143,12 @@ export async function copyFromWorkTemplate(
       FROM public.worktemplate
       INNER JOIN public.location ON
           worktemplatesiteid = locationid
-      WHERE worktemplate.id = ${id}
+      WHERE
+          worktemplate.id = ${id}
+          AND (
+              worktemplateenddate IS null
+              OR worktemplateenddate > now()
+          )
       RETURNING
           workinstance.workinstanceid AS "_key",
           workinstance.id AS "_key_uuid",
@@ -112,11 +156,27 @@ export async function copyFromWorkTemplate(
   `;
 
   if (!row) {
-    console.debug(`No worktemplate exists for the given id '${id}'`);
-    throw "invariant violated";
+    throw new GraphQLError(
+      "Cannot copy a Checklist that is inactive. Activate the Checklist and then try again.",
+      {
+        extensions: {
+          code: "E_NOT_COPYABLE",
+        },
+      },
+    );
   }
 
   console.debug(`Created Entity ${row.id} (workinstance:${row._key_uuid})`);
+
+  // We must have an originator, even if it needlessly points right back at us.
+  // All hail the datawarehouse :heavy sigh:
+  await tx`
+      UPDATE public.workinstance
+      SET workinstanceoriginatorworkinstanceid = workinstanceid
+      WHERE
+          workinstanceid = ${row._key}
+          AND workinstanceoriginatorworkinstanceid IS null;
+  `;
 
   const result = await tx`
       INSERT INTO public.workresultinstance (
@@ -180,17 +240,21 @@ export async function copyFromWorkTemplate(
                     .exhaustive()}
           ) AS workresultinstancestatusid,
           locationtimezone
-      FROM public.workresult
-      INNER JOIN public.worktemplate
-          ON workresultworktemplateid = worktemplateid
+      FROM public.worktemplate
+      INNER JOIN public.workresult
+          ON
+              worktemplateid = workresultworktemplateid
+              AND (
+                  workresultenddate IS null
+                  OR workresultenddate < now()
+              )
       INNER JOIN public.location
           ON worktemplatesiteid = locationid
       INNER JOIN public.workinstance
           ON workinstance.workinstanceid = ${row._key}
       LEFT JOIN public.systag AS entity_type
           ON workresultentitytypeid = systagid
-      WHERE
-          worktemplate.id = ${id}
+      WHERE worktemplate.id = ${id};
   `;
 
   console.debug(`Created ${result.count} items.`);
