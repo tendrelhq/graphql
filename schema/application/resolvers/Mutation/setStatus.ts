@@ -157,7 +157,18 @@ export const setStatus: NonNullable<MutationResolvers["setStatus"]> = async (
 
         if (targetStatus === "In Progress") {
           // HACK: this is "running the rules engine" for now lmao.
-          await copyFromWorkInstance(tx, id, {});
+          // TODO: This is what I think makes sense. The people may decide
+          // otherwise. Regardless, uncomment the line corresponding to whatever
+          // you decide.
+          await copyFromWorkInstance(tx, id, {
+            // If the people want to:
+            // (a) create a new branch beneath originator:
+            // chain: "originator",
+            // (b) continue the current chain:
+            chain: "previous",
+            // As stated above, I think this makes the most sense:
+            // chain: undefined, // i.e. create a new chain
+          });
         }
 
         return r;
