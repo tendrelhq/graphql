@@ -262,7 +262,6 @@ type Mutation {
   ## CRUD
   createUser(input: CreateUserInput!): User!
   updateUser(input: UpdateUserInput!): User!
-  signUp(input: SignUpInput!): User!
 
   # Worker
   ## CRUD
@@ -274,7 +273,8 @@ type Mutation {
   createInvitation(input: CreateInvitationInput!): Worker!
   acceptInvitation(input: AcceptInvitationInput!): Worker!
 
-  # Organization helpers
+  # Customer
+  ## Helpers
   enableLanguage(orgId: ID!, languageId: ID!): EnabledLanguageEdge!
   disableLanguage(orgId: ID!, languageId: ID!): EnabledLanguageEdge!
 }
@@ -296,15 +296,6 @@ input UpdateLocationInput {
 }
 
 input CreateUserInput {
-  identityId: String!
-  active: Boolean!
-  firstName: String!
-  lastName: String!
-  displayName: String
-  username: String
-}
-
-input SignUpInput {
   identityId: String!
   active: Boolean!
   firstName: String!
