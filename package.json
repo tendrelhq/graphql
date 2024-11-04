@@ -1,6 +1,6 @@
 {
   "name": "@tendrelhq/graphql",
-  "version": "0.11.0",
+  "version": "0.12.0",
   "module": "schema/index.ts",
   "type": "module",
   "scripts": {
