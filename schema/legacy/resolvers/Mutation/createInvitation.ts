@@ -81,7 +81,7 @@ export const createInvitation: NonNullable<
       WHERE
           u.workerid = w.workerinstanceworkerid
           AND w.workerinstanceuuid = ${decodeGlobalId(input.workerId).id}
-          AND u.workerusername <> ${input.emailAddress};
+          AND u.workerusername IS DISTINCT FROM ${input.emailAddress}
   `;
 
   return ctx.orm.worker.load(decodeGlobalId(input.workerId).id);

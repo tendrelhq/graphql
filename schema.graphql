@@ -781,7 +781,6 @@ type Mutation {
     parent: ID
   ): SetStatusPayload!
   setValue(entity: ID!, input: WidgetInput!, parent: ID!): SetValuePayload!
-  signUp(input: SignUpInput!): User!
   """
   Unssign an entity from another entity. If the entity is already unassigned,
   this operation is a no-op.
@@ -1049,15 +1048,6 @@ type SetValuePayload {
   delta: Int!
   node: ChecklistResult!
   parent: Checklist!
-}
-
-input SignUpInput {
-  active: Boolean!
-  displayName: String
-  firstName: String!
-  identityId: String!
-  lastName: String!
-  username: String
 }
 
 enum SmallestTimeUnit {

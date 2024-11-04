@@ -2,6 +2,7 @@ import { sql } from "@/datasources/postgres";
 import type { MutationResolvers } from "@/schema";
 import { decodeGlobalId } from "@/schema/system";
 import { clerkClient } from "@clerk/clerk-sdk-node";
+import { GraphQLError } from "graphql";
 
 export const acceptInvitation: NonNullable<
   MutationResolvers["acceptInvitation"]
@@ -13,10 +14,23 @@ export const acceptInvitation: NonNullable<
     await new Promise(resolve => setTimeout(resolve, 1000));
   }
 
-  // FIXME: potentially unnecessary write
+  const user = await clerkClient.users.getUser(input.authenticationIdentityId);
+  const emailAddress = user.primaryEmailAddress?.emailAddress;
+
+  // This is required during Clerk sign-up, so we expect this to never throw.
+  if (!emailAddress) {
+    console.warn(
+      `Clerk user ${user.id} does not have a primary email address? Suspicious.`,
+    );
+    throw "invariant violated";
+  }
+
+  // Note that we must set `workerusername` in order for this worker to be able
+  // to login to the mobile app. Don't ask me why :/
   const rows = await sql`
       UPDATE public.worker AS u
       SET
+          workerusername = ${emailAddress},
           workeridentitysystemid = 915, -- Clerk
           workeridentitysystemuuid = (
               SELECT systaguuid
@@ -24,16 +38,23 @@ export const acceptInvitation: NonNullable<
               WHERE systagid = 915
           ),
           workeridentityid = ${input.authenticationIdentityId},
-          workermodifieddate = NOW()
+          workermodifieddate = now(),
+          workermodifiedby = w.workerinstanceid
       FROM public.workerinstance AS w
       WHERE
           u.workerid = w.workerinstanceworkerid
           AND w.workerinstanceuuid = ${workerId}
-      RETURNING 1;
   `;
 
-  if (!rows.length) {
-    throw new Error("Failed to accept invitation");
+  if (!rows.count) {
+    throw new GraphQLError(
+      `Cannot accept invitation for non-existent User/Worker combination: ${input.authenticationIdentityId}/${workerId}`,
+      {
+        extensions: {
+          code: "NOT_FOUND",
+        },
+      },
+    );
   }
 
   await clerkClient.users.updateUserMetadata(input.authenticationIdentityId, {
