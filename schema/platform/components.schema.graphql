@@ -239,6 +239,7 @@ input SopInput {
 TODO
 """
 union Widget =
+  | BooleanWidget
   | CheckboxWidget
   | ClickerWidget
   | DurationWidget
@@ -254,6 +255,7 @@ TODO
 """
 input WidgetInput @oneOf {
   checkbox: CheckboxWidgetInput
+  boolean: BooleanWidgetInput
   clicker: ClickerWidgetInput
   duration: DurationWidgetInput
   multiline: MultilineStringWidgetInput
@@ -276,6 +278,18 @@ type CheckboxWidget implements Component {
 TODO
 """
 input CheckboxWidgetInput {
+  value: Boolean
+}
+
+type BooleanWidget implements Component {
+  id: ID!
+  checked: Boolean
+}
+
+"""
+TODO
+"""
+input BooleanWidgetInput {
   value: Boolean
 }
 

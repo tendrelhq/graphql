@@ -882,6 +882,8 @@ async function saveChecklistResults(
                             VALUES (
                                 ${(() => {
                                   switch (true) {
+                                    case "boolean" in i.result.widget:
+                                      return "Boolean";
                                     case "checkbox" in i.result.widget:
                                       return "Boolean";
                                     case "clicker" in i.result.widget:
@@ -908,6 +910,8 @@ async function saveChecklistResults(
                                 })()}::text,
                                 ${(() => {
                                   switch (true) {
+                                    case "boolean" in i.result.widget:
+                                      return "Boolean";
                                     case "checkbox" in i.result.widget:
                                       return "Boolean";
                                     case "clicker" in i.result.widget:
@@ -948,6 +952,10 @@ async function saveChecklistResults(
                                 }::text,
                                 ${(() => {
                                   switch (true) {
+                                    case "boolean" in i.result.widget:
+                                      return (
+                                        i.result.widget.boolean?.value ?? null
+                                      );
                                     case "checkbox" in i.result.widget:
                                       return (
                                         i.result.widget.checkbox?.value ?? null
@@ -1107,6 +1115,8 @@ async function saveChecklistResults(
                             AND
                             t.systagtype = ${(() => {
                               switch (true) {
+                                case "boolean" in i.result.widget:
+                                  return "Boolean";
                                 case "checkbox" in i.result.widget:
                                   return "Boolean";
                                 case "clicker" in i.result.widget:
@@ -1147,6 +1157,8 @@ async function saveChecklistResults(
                             )
                             AND custagtype = ${(() => {
                               switch (true) {
+                                case "boolean" in i.result.widget:
+                                  return "Boolean";
                                 case "checkbox" in i.result.widget:
                                   return "Boolean";
                                 case "clicker" in i.result.widget:
@@ -1187,6 +1199,8 @@ async function saveChecklistResults(
                             )
                             AND custagtype = ${(() => {
                               switch (true) {
+                                case "boolean" in i.result.widget:
+                                  return "Boolean";
                                 case "checkbox" in i.result.widget:
                                   return "Boolean";
                                 case "clicker" in i.result.widget:
@@ -1220,6 +1234,8 @@ async function saveChecklistResults(
                         VALUES (
                             ${(() => {
                               switch (true) {
+                                case "boolean" in i.result.widget:
+                                  return i.result.widget.boolean?.value ?? null;
                                 case "checkbox" in i.result.widget:
                                   return (
                                     i.result.widget.checkbox?.value ?? null

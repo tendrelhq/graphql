@@ -87,6 +87,7 @@ export const ChecklistResult: ChecklistResultResolvers = {
     // - Sentiment -> Number (deprecated; use widget type)
     // - Text -> String (deprecated; use widget type)
     // - Time at Task -> Duration (deprecated; use widget type)
+    // TODO: convert dt.systagtype = 'Boolean' THEN 'CheckboxWidget' to dt.systagtype = 'Boolean' THEN 'BooleanWidget' once app version exists with BooleanWidget
     const [row] = await sql<[ResolversTypes["Widget"]]>`
         WITH cte AS (
         ${match(type)
@@ -110,6 +111,7 @@ export const ChecklistResult: ChecklistResultResolvers = {
                   CASE WHEN wt.custagtype = 'Clicker' THEN 'ClickerWidget'
                        WHEN wt.custagtype = 'Sentiment' THEN 'SentimentWidget'
                        WHEN wt.custagtype = 'Text' THEN 'MultilineStringWidget'
+                       WHEN wt.custagtype = 'Checkbox' THEN 'CheckboxWidget'
                        ELSE null
                   END AS widget_type,
                   nullif(wr.workresultdefaultvalue, '') AS raw_value,
@@ -144,6 +146,7 @@ export const ChecklistResult: ChecklistResultResolvers = {
                   CASE WHEN wt.custagtype = 'Clicker' THEN 'ClickerWidget'
                        WHEN wt.custagtype = 'Sentiment' THEN 'SentimentWidget'
                        WHEN wt.custagtype = 'Text' THEN 'MultilineStringWidget'
+                       WHEN wt.custagtype = 'Checkbox' THEN 'CheckboxWidget'
                        ELSE null
                   END AS widget_type,
                   nullif(wri.workresultinstancevalue, '') AS raw_value,
@@ -182,6 +185,19 @@ export const ChecklistResult: ChecklistResultResolvers = {
             null::json AS temporal
         FROM cte
         WHERE data_type = 'CheckboxWidget'
+        UNION ALL
+        SELECT
+            coalesce(widget_type, data_type) AS "__typename",
+            id,
+            raw_value::boolean AS checked,
+            null::decimal AS duration,
+            null::int AS number,
+            null::text[] AS "possibleTypes",
+            null::json AS ref,
+            null::text AS string,
+            null::json AS temporal
+        FROM cte
+        WHERE data_type = 'BooleanWidget'
         UNION ALL
         SELECT
             coalesce(widget_type, data_type) AS "__typename",

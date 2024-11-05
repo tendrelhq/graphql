@@ -139,6 +139,18 @@ type AuthenticationStatus {
   invitation: Invitation
 }
 
+type BooleanWidget implements Component {
+  checked: Boolean
+  id: ID!
+}
+
+"""
+TODO
+"""
+input BooleanWidgetInput {
+  value: Boolean
+}
+
 """
 TODO
 """
@@ -1242,6 +1254,7 @@ input UserSearchOptions {
 TODO
 """
 union Widget =
+  | BooleanWidget
   | CheckboxWidget
   | ClickerWidget
   | DurationWidget
@@ -1256,6 +1269,7 @@ union Widget =
 TODO
 """
 input WidgetInput @oneOf {
+  boolean: BooleanWidgetInput
   checkbox: CheckboxWidgetInput
   clicker: ClickerWidgetInput
   duration: DurationWidgetInput
