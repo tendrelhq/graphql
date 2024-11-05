@@ -61,9 +61,7 @@ export const ChecklistResult: ChecklistResultResolvers = {
     throw "invariant violated";
   },
   async name(parent, _, ctx) {
-    return (await ctx.orm.displayName.load(
-      parent.id,
-    )) as ResolversTypes["DisplayName"];
+    return (await ctx.orm.displayName.load(parent.id)) as ResolversTypes["DisplayName"];
   },
   required(parent, _, ctx) {
     return ctx.orm.requirement.load(parent.id);
@@ -87,7 +85,6 @@ export const ChecklistResult: ChecklistResultResolvers = {
     // - Sentiment -> Number (deprecated; use widget type)
     // - Text -> String (deprecated; use widget type)
     // - Time at Task -> Duration (deprecated; use widget type)
-    // TODO: convert dt.systagtype = 'Boolean' THEN 'CheckboxWidget' to dt.systagtype = 'Boolean' THEN 'BooleanWidget' once app version exists with BooleanWidget
     const [row] = await sql<[ResolversTypes["Widget"]]>`
         WITH cte AS (
         ${match(type)
@@ -95,7 +92,7 @@ export const ChecklistResult: ChecklistResultResolvers = {
             "workresult",
             () => sql`
               SELECT
-                  CASE WHEN dt.systagtype = 'Boolean' THEN 'CheckboxWidget'
+                  CASE WHEN dt.systagtype = 'Boolean' THEN 'BooleanWidget'
                        WHEN dt.systagtype = 'Clicker' THEN 'NumberWidget'
                        WHEN dt.systagtype = 'Date' THEN 'TemporalWidget'
                        WHEN dt.systagtype = 'Duration' THEN 'DurationWidget'
@@ -130,7 +127,7 @@ export const ChecklistResult: ChecklistResultResolvers = {
             "workresultinstance",
             () => sql`
               SELECT
-                  CASE WHEN dt.systagtype = 'Boolean' THEN 'CheckboxWidget'
+                  CASE WHEN dt.systagtype = 'Boolean' THEN 'BooleanWidget'
                        WHEN dt.systagtype = 'Clicker' THEN 'NumberWidget'
                        WHEN dt.systagtype = 'Date' THEN 'TemporalWidget'
                        WHEN dt.systagtype = 'Duration' THEN 'DurationWidget'
