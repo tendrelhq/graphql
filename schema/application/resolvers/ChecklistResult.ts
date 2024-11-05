@@ -181,19 +181,6 @@ export const ChecklistResult: ChecklistResultResolvers = {
             null::text AS string,
             null::json AS temporal
         FROM cte
-        WHERE data_type = 'CheckboxWidget'
-        UNION ALL
-        SELECT
-            coalesce(widget_type, data_type) AS "__typename",
-            id,
-            raw_value::boolean AS checked,
-            null::decimal AS duration,
-            null::int AS number,
-            null::text[] AS "possibleTypes",
-            null::json AS ref,
-            null::text AS string,
-            null::json AS temporal
-        FROM cte
         WHERE data_type = 'BooleanWidget'
         UNION ALL
         SELECT
