@@ -62,7 +62,7 @@ mutation TestSaveChecklist($input: ChecklistInput!) {
                 }
               }
               widget {
-                ... on CheckboxWidget {
+                ... on BooleanWidget {
                   checked
                 }
                 ... on ClickerWidget {

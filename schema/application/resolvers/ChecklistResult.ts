@@ -94,7 +94,7 @@ export const ChecklistResult: ChecklistResultResolvers = {
             "workresult",
             () => sql`
               SELECT
-                  CASE WHEN dt.systagtype = 'Boolean' THEN 'CheckboxWidget'
+                  CASE WHEN dt.systagtype = 'Boolean' THEN 'BooleanWidget'
                        WHEN dt.systagtype = 'Clicker' THEN 'NumberWidget'
                        WHEN dt.systagtype = 'Date' THEN 'TemporalWidget'
                        WHEN dt.systagtype = 'Duration' THEN 'DurationWidget'
@@ -128,7 +128,7 @@ export const ChecklistResult: ChecklistResultResolvers = {
             "workresultinstance",
             () => sql`
               SELECT
-                  CASE WHEN dt.systagtype = 'Boolean' THEN 'CheckboxWidget'
+                  CASE WHEN dt.systagtype = 'Boolean' THEN 'BooleanWidget'
                        WHEN dt.systagtype = 'Clicker' THEN 'NumberWidget'
                        WHEN dt.systagtype = 'Date' THEN 'TemporalWidget'
                        WHEN dt.systagtype = 'Duration' THEN 'DurationWidget'
@@ -181,7 +181,7 @@ export const ChecklistResult: ChecklistResultResolvers = {
             null::text AS string,
             null::json AS temporal
         FROM cte
-        WHERE data_type = 'CheckboxWidget'
+        WHERE data_type = 'BooleanWidget'
         UNION ALL
         SELECT
             coalesce(widget_type, data_type) AS "__typename",

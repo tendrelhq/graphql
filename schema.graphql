@@ -142,6 +142,21 @@ type AuthenticationStatus {
 """
 TODO
 """
+type BooleanWidget implements Component {
+  checked: Boolean
+  id: ID!
+}
+
+"""
+TODO
+"""
+input BooleanWidgetInput {
+  value: Boolean
+}
+
+"""
+TODO
+"""
 enum CalendarNameOptions {
   """
   TODO
@@ -159,21 +174,6 @@ enum CalendarNameOptions {
   TODO
   """
   never
-}
-
-"""
-TODO
-"""
-type CheckboxWidget implements Component {
-  checked: Boolean
-  id: ID!
-}
-
-"""
-TODO
-"""
-input CheckboxWidgetInput {
-  value: Boolean
 }
 
 type Checklist implements Activatable & Assignable & Component & Node {
@@ -1242,7 +1242,7 @@ input UserSearchOptions {
 TODO
 """
 union Widget =
-  | CheckboxWidget
+  | BooleanWidget
   | ClickerWidget
   | DurationWidget
   | MultilineStringWidget
@@ -1256,7 +1256,7 @@ union Widget =
 TODO
 """
 input WidgetInput @oneOf {
-  checkbox: CheckboxWidgetInput
+  checkbox: BooleanWidgetInput
   clicker: ClickerWidgetInput
   duration: DurationWidgetInput
   multiline: MultilineStringWidgetInput

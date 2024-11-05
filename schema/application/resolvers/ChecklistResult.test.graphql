@@ -21,7 +21,7 @@ query TestChecklistResult($entity: ID!) {
         __typename
       }
       widget {
-        ... on CheckboxWidget {
+        ... on BooleanWidget {
           checked
         }
         ... on ClickerWidget {
