@@ -61,9 +61,7 @@ export const ChecklistResult: ChecklistResultResolvers = {
     throw "invariant violated";
   },
   async name(parent, _, ctx) {
-    return (await ctx.orm.displayName.load(
-      parent.id,
-    )) as ResolversTypes["DisplayName"];
+    return (await ctx.orm.displayName.load(parent.id)) as ResolversTypes["DisplayName"];
   },
   required(parent, _, ctx) {
     return ctx.orm.requirement.load(parent.id);
@@ -94,7 +92,7 @@ export const ChecklistResult: ChecklistResultResolvers = {
             "workresult",
             () => sql`
               SELECT
-                  CASE WHEN dt.systagtype = 'Boolean' THEN 'CheckboxWidget'
+                  CASE WHEN dt.systagtype = 'Boolean' THEN 'BooleanWidget'
                        WHEN dt.systagtype = 'Clicker' THEN 'NumberWidget'
                        WHEN dt.systagtype = 'Date' THEN 'TemporalWidget'
                        WHEN dt.systagtype = 'Duration' THEN 'DurationWidget'
@@ -110,6 +108,7 @@ export const ChecklistResult: ChecklistResultResolvers = {
                   CASE WHEN wt.custagtype = 'Clicker' THEN 'ClickerWidget'
                        WHEN wt.custagtype = 'Sentiment' THEN 'SentimentWidget'
                        WHEN wt.custagtype = 'Text' THEN 'MultilineStringWidget'
+                       WHEN wt.custagtype = 'Checkbox' THEN 'CheckboxWidget'
                        ELSE null
                   END AS widget_type,
                   nullif(wr.workresultdefaultvalue, '') AS raw_value,
@@ -128,7 +127,7 @@ export const ChecklistResult: ChecklistResultResolvers = {
             "workresultinstance",
             () => sql`
               SELECT
-                  CASE WHEN dt.systagtype = 'Boolean' THEN 'CheckboxWidget'
+                  CASE WHEN dt.systagtype = 'Boolean' THEN 'BooleanWidget'
                        WHEN dt.systagtype = 'Clicker' THEN 'NumberWidget'
                        WHEN dt.systagtype = 'Date' THEN 'TemporalWidget'
                        WHEN dt.systagtype = 'Duration' THEN 'DurationWidget'
@@ -144,6 +143,7 @@ export const ChecklistResult: ChecklistResultResolvers = {
                   CASE WHEN wt.custagtype = 'Clicker' THEN 'ClickerWidget'
                        WHEN wt.custagtype = 'Sentiment' THEN 'SentimentWidget'
                        WHEN wt.custagtype = 'Text' THEN 'MultilineStringWidget'
+                       WHEN wt.custagtype = 'Checkbox' THEN 'CheckboxWidget'
                        ELSE null
                   END AS widget_type,
                   nullif(wri.workresultinstancevalue, '') AS raw_value,
@@ -181,7 +181,7 @@ export const ChecklistResult: ChecklistResultResolvers = {
             null::text AS string,
             null::json AS temporal
         FROM cte
-        WHERE data_type = 'CheckboxWidget'
+        WHERE data_type = 'BooleanWidget'
         UNION ALL
         SELECT
             coalesce(widget_type, data_type) AS "__typename",
