@@ -47,6 +47,8 @@ export const node: NonNullable<QueryResolvers["node"]> = async (
         id: args.id,
         // biome-ignore lint/suspicious/noExplicitAny:
       } as any;
+    case "workpictureinstance":
+      return ctx.orm.attachment.byId.load(args.id);
     default:
       throw new GraphQLError("Unknown node type", {
         extensions: {

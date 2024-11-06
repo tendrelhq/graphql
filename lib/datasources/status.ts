@@ -6,6 +6,20 @@ import type { Request } from "express";
 import { match } from "ts-pattern";
 import { sql, unionAll } from "./postgres";
 
+function buildTemporalFragment(from: string) {
+  return sql`(
+      SELECT jsonb_build_object(
+          '__typename',
+          'ZonedDateTime',
+          'epochMilliseconds',
+          (extract(epoch from ${sql(from)}) * 1000)::text,
+          'timeZone',
+          tz
+      )
+      WHERE ${sql(from)} IS NOT null
+  )`;
+}
+
 export function makeStatusLoader(_req: Request) {
   return new DataLoader<ID, ResolversTypes["ChecklistStatus"] | undefined>(
     async keys => {
@@ -29,13 +43,13 @@ export function makeStatusLoader(_req: Request) {
                              WHEN s.systagtype = 'In Progress' THEN 'ChecklistInProgress'
                              ELSE 'ChecklistClosed'
                         END AS type,
-                        wi.workinstancecreateddate AS opendate,
-                        wi.workinstancestartdate AS startdate,
+                        wi.workinstancecreateddate AS opened_at,
+                        wi.workinstancestartdate AS in_progress_at,
                         CASE WHEN s.systagtype = 'Cancelled' THEN jsonb_build_object('code', 'cancel')
                              ELSE null
-                        END AS closedbecause,
-                        wi.workinstancecompleteddate AS closeddate,
-                        wi.workinstancetargetstartdate AS duedate,
+                        END AS closed_because,
+                        wi.workinstancecompleteddate AS closed_at,
+                        wi.workinstancetargetstartdate AS due_at,
                         wi.workinstancetimezone AS tz
                     FROM public.workinstance AS wi
                     INNER JOIN public.systag AS s
@@ -46,26 +60,8 @@ export function makeStatusLoader(_req: Request) {
                 SELECT
                     _key,
                     type AS "__typename",
-                    (
-                        SELECT row_to_json(t)
-                        FROM (
-                            SELECT
-                                'ZonedDateTime' AS "__typename",
-                                (extract(epoch from duedate) * 1000)::text AS "epochMilliseconds",
-                                tz AS "timeZone"
-                            WHERE duedate IS NOT null
-                        ) t
-                    ) AS "dueAt",
-                    (
-                        SELECT row_to_json(t)
-                        FROM (
-                            SELECT
-                                'ZonedDateTime' AS "__typename",
-                                (extract(epoch from opendate) * 1000)::text AS "epochMilliseconds",
-                                tz AS "timeZone"
-                            WHERE opendate IS NOT null
-                        ) t
-                    ) AS "openedAt",
+                    ${buildTemporalFragment("due_at")}::json AS "dueAt",
+                    ${buildTemporalFragment("opened_at")}::json AS "openedAt",
                     null::json AS "inProgressAt",
                     null::json AS "closedAt",
                     null::json AS "closedBecause"
@@ -75,27 +71,9 @@ export function makeStatusLoader(_req: Request) {
                 SELECT
                     _key,
                     type AS "__typename",
-                    (
-                        SELECT row_to_json(t)
-                        FROM (
-                            SELECT
-                                'ZonedDateTime' AS "__typename",
-                                (extract(epoch from duedate) * 1000)::text AS "epochMilliseconds",
-                                tz AS "timeZone"
-                            WHERE duedate IS NOT null
-                        ) t
-                    ) AS "dueAt",
-                    null::json AS "openedAt",
-                    (
-                        SELECT row_to_json(t)
-                        FROM (
-                            SELECT
-                                'ZonedDateTime' AS "__typename",
-                                (extract(epoch from startdate) * 1000)::text AS "epochMilliseconds",
-                                tz AS "timeZone"
-                            WHERE startdate IS NOT null
-                        ) t
-                    ) AS "inProgressAt",
+                    ${buildTemporalFragment("due_at")}::json AS "dueAt",
+                    ${buildTemporalFragment("opened_at")}::json AS "openedAt",
+                    ${buildTemporalFragment("in_progress_at")}::json AS "inProgressAt",
                     null::json AS "closedAt",
                     null::json AS "closedBecause"
                 FROM cte
@@ -104,29 +82,11 @@ export function makeStatusLoader(_req: Request) {
                 SELECT
                     _key,
                     type AS "__typename",
-                    (
-                        SELECT row_to_json(t)
-                        FROM (
-                            SELECT
-                                'ZonedDateTime' AS "__typename",
-                                (extract(epoch from duedate) * 1000)::text AS "epochMilliseconds",
-                                tz AS "timeZone"
-                            WHERE duedate IS NOT null
-                        ) t
-                    ) AS "dueAt",
-                    null::json AS "openedAt",
-                    null::json AS "inProgressAt",
-                    (
-                        SELECT row_to_json(t)
-                        FROM (
-                            SELECT
-                                'ZonedDateTime' AS "__typename",
-                                (extract(epoch from closeddate) * 1000)::text AS "epochMilliseconds",
-                                tz AS "timeZone"
-                            WHERE closeddate IS NOT null
-                        ) t
-                    ) AS "closedAt",
-                    closedbecause::json AS "closedBecause"
+                    ${buildTemporalFragment("due_at")}::json AS "dueAt",
+                    ${buildTemporalFragment("opened_at")}::json AS "openedAt",
+                    ${buildTemporalFragment("in_progress_at")}::json AS "inProgressAt",
+                    ${buildTemporalFragment("closed_at")}::json AS "closedAt",
+                    closed_because::json AS "closedBecause"
                 FROM cte
                 WHERE type = 'ChecklistClosed'
               )
@@ -143,10 +103,10 @@ export function makeStatusLoader(_req: Request) {
                              WHEN s.systagtype = 'In Progress' THEN 'ChecklistInProgress'
                              ELSE 'ChecklistClosed'
                         END AS type,
-                        wri.workresultinstancecreateddate AS opendate,
-                        wri.workresultinstancestartdate AS startdate,
-                        wri.workresultinstancecompleteddate AS closeddate,
-                        null::timestamp AS duedate,
+                        wri.workresultinstancecreateddate AS opened_at,
+                        wri.workresultinstancestartdate AS in_progress_at,
+                        wri.workresultinstancecompleteddate AS closed_at,
+                        null::timestamp AS due_at,
                         wi.workinstancetimezone AS tz
                     FROM public.workresultinstance AS wri
                     INNER JOIN public.workinstance AS wi
@@ -163,16 +123,7 @@ export function makeStatusLoader(_req: Request) {
                     _key,
                     type AS "__typename",
                     null::json AS "dueAt",
-                    (
-                        SELECT row_to_json(t)
-                        FROM (
-                            SELECT
-                                'ZonedDateTime' AS "__typename",
-                                (extract(epoch from opendate) * 1000)::text AS "epochMilliseconds",
-                                tz AS "timeZone"
-                            WHERE opendate IS NOT null
-                        ) t
-                    ) AS "openedAt",
+                    ${buildTemporalFragment("opened_at")}::json AS "openedAt",
                     null::json AS "inProgressAt",
                     null::json AS "closedAt",
                     null::json AS "closedBecause"
@@ -183,17 +134,8 @@ export function makeStatusLoader(_req: Request) {
                     _key,
                     type AS "__typename",
                     null::json AS "dueAt",
-                    null::json AS "openedAt",
-                    (
-                        SELECT row_to_json(t)
-                        FROM (
-                            SELECT
-                                'ZonedDateTime' AS "__typename",
-                                (extract(epoch from startdate) * 1000)::text AS "epochMilliseconds",
-                                tz AS "timeZone"
-                            WHERE startdate IS NOT null
-                        ) t
-                    ) AS "inProgressAt",
+                    ${buildTemporalFragment("opened_at")}::json AS "openedAt",
+                    ${buildTemporalFragment("in_progress_at")}::json AS "inProgressAt",
                     null::json AS "closedAt",
                     null::json AS "closedBecause"
                 FROM cte
@@ -203,18 +145,9 @@ export function makeStatusLoader(_req: Request) {
                     _key,
                     type AS "__typename",
                     null::json AS "dueAt",
-                    null::json AS "openedAt",
-                    null::json AS "inProgressAt",
-                    (
-                        SELECT row_to_json(t)
-                        FROM (
-                            SELECT
-                                'ZonedDateTime' AS "__typename",
-                                (extract(epoch from closeddate) * 1000)::text AS "epochMilliseconds",
-                                tz AS "timeZone"
-                            WHERE closeddate IS NOT null
-                        ) t
-                    ) AS "closedAt",
+                    ${buildTemporalFragment("opened_at")}::json AS "openedAt",
+                    ${buildTemporalFragment("in_progress_at")}::json AS "inProgressAt",
+                    ${buildTemporalFragment("closed_at")}::json AS "closedAt",
                     null::json AS "closedBecause"
                 FROM cte
                 WHERE type = 'ChecklistClosed'

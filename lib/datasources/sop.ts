@@ -47,13 +47,15 @@ export function makeSopLoader(_req: Request) {
           "workinstance",
           () => sql`
                 SELECT
-                    id AS _key,
-                    encode(('workinstance:' || id || ':sop')::bytea, 'base64') AS id,
-                    workinstancesoplink AS sop
-                FROM public.workinstance
+                    wi.id AS _key,
+                    encode(('workinstance:' || wi.id || ':sop')::bytea, 'base64') AS id,
+                    coalesce(wi.workinstancesoplink, wt.worktemplatesoplink) AS sop
+                FROM public.workinstance AS wi
+                INNER JOIN public.worktemplate AS wt
+                    ON wi.workinstanceworktemplateid = wt.worktemplateid
                 WHERE
-                    id IN ${sql(ids)}
-                    AND workinstancesoplink IS NOT NULL
+                    wi.id IN ${sql(ids)}
+                    AND coalesce(wi.workinstancesoplink, wt.worktemplatesoplink) IS NOT null
             `,
         )
 

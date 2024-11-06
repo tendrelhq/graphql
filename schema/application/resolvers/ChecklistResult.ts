@@ -1,6 +1,11 @@
-import { sql } from "@/datasources/postgres";
-import type { ChecklistResultResolvers, ResolversTypes } from "@/schema";
+import { join, sql } from "@/datasources/postgres";
+import type {
+  ChecklistResultResolvers,
+  PageInfo,
+  ResolversTypes,
+} from "@/schema";
 import { decodeGlobalId } from "@/schema/system";
+import { buildPaginationArgs } from "@/util";
 import { match } from "ts-pattern";
 
 export const ChecklistResult: ChecklistResultResolvers = {
@@ -17,14 +22,118 @@ export const ChecklistResult: ChecklistResultResolvers = {
       totalCount: 0,
     };
   },
-  attachments() {
+  async attachments(parent, args) {
+    const { type, id, suffix } = decodeGlobalId(parent.id);
+
+    if (type !== "workresultinstance") {
+      return {
+        edges: [],
+        pageInfo: {
+          hasNextPage: false,
+          hasPreviousPage: false,
+        },
+        totalCount: 0,
+      };
+    }
+
+    if (!suffix?.length) {
+      /*
+       * Remember our global id format here is:
+       * workresultinstance:<workinstance.id>:<workresult.id>
+       *                id: ^^^^^^^^^^^^^^^^^
+       *                           suffix[0]: ^^^^^^^^^^^^^^^
+       */
+      throw "invariant violated";
+    }
+
+    const { cursor, direction, limit } = buildPaginationArgs(args, {
+      defaultLimit: Number(
+        process.env.DEFAULT_ATTACHMENT_PAGINATION_LIMIT ?? 20,
+      ),
+      maxLimit: Number(process.env.MAX_ATTACHMENT_PAGINATION_LIMIT ?? 20),
+    });
+
+    // Our (default) order clause specifies:
+    // 1. workpictureinstancemodifieddate DESC
+    // 2. workpictureinstanceid DESC
+    // So, forward => < implies "recently modified first"
+    const cmp = direction === "forward" ? sql`<` : sql`>`;
+
+    // We are operating at the instance level here.
+    const rows = await sql<{ id: string }[]>`
+      ${
+        cursor
+          ? sql`
+      WITH cursor AS (
+          SELECT
+              workpictureinstanceid AS id,
+              workpictureinstancemodifieddate AS updated_at
+          FROM public.workpictureinstance
+          WHERE workpictureinstanceuuid = ${cursor.id}
+      )`
+          : sql``
+      }
+      SELECT
+          encode(('workpictureinstance:' || wpi.workpictureinstanceuuid)::bytea, 'base64') AS id
+      FROM public.workpictureinstance AS wpi
+      INNER JOIN public.workinstance AS wi
+          ON wpi.workpictureinstanceworkinstanceid = workinstanceid
+      INNER JOIN public.workresultinstance AS wri
+          ON wpi.workpictureinstanceworkresultinstanceid = wri.workresultinstanceid
+      INNER JOIN public.workresult AS wr
+          ON wri.workresultinstanceworkresultid = wr.workresultid
+      ${cursor ? sql`INNER JOIN cursor ON true` : sql``}
+      WHERE ${join(
+        [
+          ...(cursor
+            ? [
+                sql`(wpi.workpictureinstancemodifieddate, wpi.workpictureinstanceid) ${cmp} (cursor.updated_at, cursor.id)`,
+              ]
+            : []),
+          sql`wi.id = ${id}`,
+          sql`wr.id = ${suffix[0]}`,
+        ],
+        sql`AND`,
+      )}
+      ORDER BY
+          wpi.workpictureinstancemodifieddate DESC,
+          wpi.workpictureinstanceid DESC
+      LIMIT ${limit + 1};
+    `;
+
+    const edges = rows.map(row => ({
+      cursor: row.id as string,
+      // biome-ignore lint/suspicious/noExplicitAny: defer to Attachment
+      node: row as any,
+    }));
+
+    const n1 = edges.length >= limit + 1 ? edges.pop() : undefined;
+
+    const pageInfo: PageInfo = {
+      startCursor: edges.at(0)?.cursor,
+      endCursor: edges.at(-1)?.cursor,
+      hasNextPage: direction === "forward" && !!n1,
+      hasPreviousPage: direction === "backward" && !!n1,
+    };
+
+    const [{ count }] = await sql`
+      SELECT count(*)
+      FROM public.workpictureinstance AS wpi
+      INNER JOIN public.workinstance AS wi
+          ON wpi.workpictureinstanceworkinstanceid = workinstanceid
+      INNER JOIN public.workresultinstance AS wri
+          ON wpi.workpictureinstanceworkresultinstanceid = wri.workresultinstanceid
+      INNER JOIN public.workresult AS wr
+          ON wri.workresultinstanceworkresultid = wr.workresultid
+      WHERE
+          wi.id = ${id}
+          AND wr.id = ${suffix[0]}
+    `;
+
     return {
-      edges: [],
-      pageInfo: {
-        hasNextPage: false,
-        hasPreviousPage: false,
-      },
-      totalCount: 0,
+      edges,
+      pageInfo,
+      totalCount: count,
     };
   },
   auditable(parent, _, ctx) {

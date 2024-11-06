@@ -102,8 +102,10 @@ type AssignmentPayload {
 """
 TODO
 """
-type Attachment implements Component {
-  attachment: String!
+type Attachment implements Component & Node {
+  attachedBy: Identity
+  attachedOn: Temporal @semanticNonNull
+  attachment: URL!
   id: ID!
 }
 
@@ -238,6 +240,8 @@ type ChecklistClosed implements State {
   closedBecause: ChecklistClosedReason
   closedBy: Identity
   dueAt: Temporal
+  inProgressAt: Temporal
+  openedAt: Temporal!
   tag: String
 }
 
@@ -278,6 +282,7 @@ type ChecklistInProgress implements State {
   dueAt: Temporal
   inProgressAt: Temporal!
   inProgressBy: Identity
+  openedAt: Temporal!
   tag: String
 }
 
@@ -784,6 +789,7 @@ type Mutation {
   - E_ASSIGN_CONFLICT, if the entity is assigned to a different entity
   """
   assign(entity: ID!, to: ID!): AssignmentPayload!
+  attach(attachments: [URL!]!, entity: ID!): [AttachmentEdge!]!
   copyFrom(entity: ID!, options: CopyFromOptions!): CopyFromPayload!
   createEntity(id: String, suffix: [String!], type: String!): ID!
   createInvitation(input: CreateInvitationInput!): Worker!

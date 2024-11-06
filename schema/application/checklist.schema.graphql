@@ -246,6 +246,7 @@ type ChecklistInProgress implements State {
   dueAt: Temporal
   inProgressBy: Identity
   inProgressAt: Temporal!
+  openedAt: Temporal!
 }
 
 input ChecklistInProgressInput {
@@ -255,10 +256,12 @@ input ChecklistInProgressInput {
 
 type ChecklistClosed implements State {
   tag: String
-  closedBy: Identity
   closedAt: Temporal!
   closedBecause: ChecklistClosedReason
+  closedBy: Identity
   dueAt: Temporal
+  inProgressAt: Temporal
+  openedAt: Temporal!
 }
 
 input ChecklistClosedInput {
