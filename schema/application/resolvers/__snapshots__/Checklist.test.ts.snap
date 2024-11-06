@@ -13,6 +13,17 @@ exports[`Checklist ast 1`] = `
         "__typename": "AssigneeConnection",
         "edges": [],
       },
+      "attachments": {
+        "__typename": "AttachmentConnection",
+        "edges": [],
+        "pageInfo": {
+          "__typename": "PageInfo",
+          "endCursor": null,
+          "hasNextPage": false,
+          "startCursor": null,
+        },
+        "totalCount": 0,
+      },
       "auditable": {
         "__typename": "Auditable",
         "auditable": false,
@@ -173,6 +184,25 @@ exports[`Checklist ecs 1`] = `
       "assignees": {
         "__typename": "AssigneeConnection",
         "edges": [],
+      },
+      "attachments": {
+        "__typename": "AttachmentConnection",
+        "edges": [
+          {
+            "__typename": "AttachmentEdge",
+            "node": {
+              "__typename": "Attachment",
+              "id": "d29ya3BpY3R1cmVpbnN0YW5jZTphY2U0MTc4MS01OGRmLTQ1MmItODUyNS1kN2YxYzgxMzA1ODY=",
+            },
+          },
+        ],
+        "pageInfo": {
+          "__typename": "PageInfo",
+          "endCursor": "d29ya3BpY3R1cmVpbnN0YW5jZTphY2U0MTc4MS01OGRmLTQ1MmItODUyNS1kN2YxYzgxMzA1ODY=",
+          "hasNextPage": false,
+          "startCursor": "d29ya3BpY3R1cmVpbnN0YW5jZTphY2U0MTc4MS01OGRmLTQ1MmItODUyNS1kN2YxYzgxMzA1ODY=",
+        },
+        "totalCount": 1,
       },
       "auditable": null,
       "description": {

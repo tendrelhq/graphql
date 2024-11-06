@@ -136,9 +136,11 @@ type AssigneeEdge implements Edge {
 """
 TODO
 """
-type Attachment implements Component {
+type Attachment implements Component & Node {
   id: ID!
-  attachment: String!
+  attachment: URL!
+  attachedBy: Identity
+  attachedOn: Temporal @semanticNonNull
 }
 
 type AttachmentConnection implements Connection {
@@ -152,10 +154,9 @@ type AttachmentEdge implements Edge {
   node: Attachment!
 }
 
-# extend type Mutation {
-#   attach(input: [AttachmentInput!]): AttachmentConnection!
-#   detach(input: ???): AttachmentConnection!
-# }
+extend type Mutation {
+  attach(entity: ID!, attachments: [URL!]!): [AttachmentEdge!]!
+}
 
 """
 TODO

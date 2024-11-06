@@ -22,6 +22,7 @@ const config: CodegenConfig = {
           "!*.ChecklistInProgress",
           "!*.ChecklistClosed*",
           "!*Payload",
+          "!*Geofence",
         ],
         query: "*",
         scalar: "*",

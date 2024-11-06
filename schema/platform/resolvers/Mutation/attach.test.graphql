@@ -1,0 +1,14 @@
+mutation TestAttach($entity: ID!, $urls: [URL!]!) {
+  attach(entity: $entity, attachments: $urls) {
+    node {
+      attachedBy {
+        ... on Worker {
+          displayName
+        }
+      }
+      attachedOn {
+        epochMilliseconds
+      }
+    }
+  }
+}

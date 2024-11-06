@@ -1,12 +1,14 @@
-import { sql } from "@/datasources/postgres";
+import { join, sql } from "@/datasources/postgres";
 import type {
   Assignee,
   ChecklistItem,
   ChecklistResolvers,
   Description,
+  PageInfo,
   ResolversTypes,
 } from "@/schema";
 import { decodeGlobalId } from "@/schema/system";
+import { buildPaginationArgs } from "@/util";
 import { match } from "ts-pattern";
 
 export const Checklist: ChecklistResolvers = {
@@ -95,14 +97,113 @@ export const Checklist: ChecklistResolvers = {
         .then(([row]) => row.count),
     };
   },
-  attachments() {
+  async attachments(parent, args) {
+    const { type, id } = decodeGlobalId(parent.id);
+
+    // Checklists can be either workinstance or worktemplate.
+    // The latter cannot have attachments.
+    if (type !== "workinstance") {
+      return {
+        edges: [],
+        pageInfo: {
+          hasNextPage: false,
+          hasPreviousPage: false,
+        },
+        totalCount: 0,
+      };
+    }
+
+    const { cursor, direction, limit } = buildPaginationArgs(args, {
+      defaultLimit: Number(
+        process.env.DEFAULT_ATTACHMENT_PAGINATION_LIMIT ?? 20,
+      ),
+      maxLimit: Number(process.env.MAX_ATTACHMENT_PAGINATION_LIMIT ?? 20),
+    });
+
+    // Our (default) order clause specifies:
+    // 1. workpictureinstancemodifieddate DESC
+    // 2. workpictureinstanceid DESC
+    // So, forward => < implies "recently modified first"
+    const cmp = direction === "forward" ? sql`<` : sql`>`;
+
+    // We are operating at the instance level here.
+    const rows = await sql<{ id: string }[]>`
+      ${
+        cursor
+          ? sql`
+      WITH cursor AS (
+          SELECT
+              workpictureinstanceid AS id,
+              workpictureinstancemodifieddate AS updated_at
+          FROM public.workpictureinstance
+          WHERE
+              workpictureinstanceuuid = ${cursor.id}
+      )`
+          : sql``
+      }
+      SELECT
+          encode(('workpictureinstance:' || workpictureinstanceuuid)::bytea, 'base64') AS id
+      FROM public.workpictureinstance
+      ${cursor ? sql`INNER JOIN cursor ON true` : sql``}
+      WHERE ${join(
+        [
+          ...(cursor
+            ? [
+                sql`(workpictureinstancemodifieddate, workpictureinstanceid) ${cmp} (cursor.updated_at, cursor.id)`,
+              ]
+            : []),
+          sql`workpictureinstanceworkinstanceid = (
+              SELECT workinstanceid
+              FROM public.workinstance
+              WHERE id = ${id}
+          )`,
+          sql`workpictureinstanceworkresultinstanceid IS null`,
+        ],
+        sql`AND`,
+      )}
+      ORDER BY
+          workpictureinstancemodifieddate DESC,
+          workpictureinstanceid DESC
+      LIMIT ${limit + 1};
+    `;
+
+    const n1 = rows.length >= limit + 1 ? rows.pop() : undefined;
+    const hasNext = direction === "forward" && !!n1;
+    const hasPrev = direction === "backward" && !!n1;
+
+    const edges = rows.map(row => ({
+      cursor: row.id as string,
+      // biome-ignore lint/suspicious/noExplicitAny: defer to Attachment
+      node: row as any,
+    }));
+
+    const pageInfo: PageInfo = {
+      startCursor: edges.at(0)?.cursor,
+      endCursor: edges.at(-1)?.cursor,
+      hasNextPage: hasNext,
+      hasPreviousPage: hasPrev,
+    };
+
+    const [{ count }] = await sql<[{ count: number }]>`
+      SELECT count(*)
+      FROM public.workpictureinstance
+      WHERE ${join(
+        [
+          sql`workpictureinstanceworkinstanceid = (
+              SELECT workinstanceid
+              FROM public.workinstance
+              WHERE id = ${id}
+          )`,
+          sql`workpictureinstanceworkresultinstanceid IS null`,
+        ],
+        sql`AND`,
+      )}
+    `;
+
     return {
-      edges: [],
-      pageInfo: {
-        hasNextPage: false,
-        hasPreviousPage: false,
-      },
-      totalCount: 0,
+      edges,
+      pageInfo,
+      totalCount: count,
     };
   },
   auditable(parent, _, ctx) {
@@ -122,43 +223,73 @@ export const Checklist: ChecklistResolvers = {
     return (await ctx.orm.description.load(parent.id)) as Description;
   },
   async items(parent, args) {
-    // NOTE: We don't support pagination of ChecklistResults yet, even though
-    // the API suggests otherwise...
-    const { first, last } = args;
-    const { id, type } = decodeGlobalId(parent.id);
+    const { type: parentType, id: parentId } = decodeGlobalId(parent.id);
 
-    const rows = await match(type)
+    const { cursor, direction, limit } = buildPaginationArgs(args, {
+      defaultLimit: Number(
+        process.env.DEFAULT_ATTACHMENT_PAGINATION_LIMIT ?? 20,
+      ),
+      maxLimit: Number(process.env.MAX_ATTACHMENT_PAGINATION_LIMIT ?? 20),
+    });
+
+    // Our (default) order clause specifies:
+    // 1. workresultorder ASC
+    // 2. workresultid ASC
+    const cmp = direction === "forward" ? sql`>` : sql`<`;
+
+    const rows = await match(parentType)
       .with(
         "workinstance",
         () => sql<{ __typename: "ChecklistResult"; id: string }[]>`
+            ${
+              cursor?.suffix?.length
+                ? sql`
+            WITH cursor AS (
+                SELECT
+                    workresultorder AS order,
+                    workresultid AS id
+                FROM public.workresult
+                WHERE id = ${cursor.suffix[0]}
+            )
+                `
+                : sql``
+            }
             SELECT
                 'ChecklistResult' AS "__typename",
                 encode(('workresultinstance:' || wi.id || ':' || wr.id)::bytea, 'base64') AS id
             FROM public.workinstance AS wi
+            ${cursor?.suffix?.length ? sql`INNER JOIN cursor ON true` : sql``}
             INNER JOIN public.workresult AS wr
                 ON wi.workinstanceworktemplateid = wr.workresultworktemplateid
-            WHERE
-                wi.id = ${id}
-                AND wr.workresultisprimary = false
-                ${match(args.withActive)
-                  .with(
-                    true,
-                    () => sql`AND (
+            WHERE ${join(
+              [
+                sql`wi.id = ${parentId}`,
+                sql`wr.workresultisprimary = false`,
+                ...(cursor
+                  ? [
+                      sql`(wr.workresultorder, wr.workresultid) ${cmp} (cursor.order, cursor.id)`,
+                    ]
+                  : []),
+                ...match(args.withActive)
+                  .with(true, () => [
+                    sql`(
                         wr.workresultenddate IS null
                         OR wr.workresultenddate > now()
                     )`,
-                  )
-                  .with(
-                    false,
-                    () => sql`AND (
+                  ])
+                  .with(false, () => [
+                    sql`(
                         wr.workresultenddate IS NOT null
                         AND wr.workresultenddate < now()
                     )`,
-                  )
-                  .otherwise(() => sql``)}
-            ORDER BY wr.workresultorder ${last ? sql`DESC` : sql`ASC`},
-                     wr.workresultid ${last ? sql`DESC` : sql`ASC`}
-            LIMIT ${first ?? last ?? null};
+                  ])
+                  .otherwise(() => []),
+              ],
+              sql`AND`,
+            )}
+            ORDER BY wr.workresultorder ${direction === "forward" ? sql`ASC` : sql`DESC`},
+                     wr.workresultid ${direction === "forward" ? sql`ASC` : sql`DESC`}
+            LIMIT ${limit + 1};
         `,
       )
       .with(
@@ -171,7 +302,7 @@ export const Checklist: ChecklistResolvers = {
             INNER JOIN public.worktemplate AS wt
                 ON
                     wr.workresultworktemplateid = wt.worktemplateid
-                    AND wt.id = ${id}
+                    AND wt.id = ${parentId}
             WHERE
                 wr.workresultisprimary = false
                 ${match(args.withActive)
@@ -190,82 +321,97 @@ export const Checklist: ChecklistResolvers = {
                     )`,
                   )
                   .otherwise(() => sql``)}
-            ORDER BY wr.workresultorder ${last ? sql`DESC` : sql`ASC`},
-                     wr.workresultid ${last ? sql`DESC` : sql`ASC`}
-            LIMIT ${first ?? last ?? null};
+            ORDER BY wr.workresultorder ${direction === "forward" ? sql`DESC` : sql`ASC`},
+                     wr.workresultid ${direction === "forward" ? sql`DESC` : sql`ASC`}
+            LIMIT ${limit + 1};
+        `,
+      )
+      .otherwise(() => Promise.reject("invariant violated"));
+
+    const n1 = rows.length >= limit + 1 ? rows.pop() : undefined;
+    const hasNext = direction === "forward" && !!n1;
+    const hasPrev = direction === "backward" && !!n1;
+
+    const edges = rows.map(row => ({
+      cursor: row.id as string,
+      // biome-ignore lint/suspicious/noExplicitAny: defer to Checklist[Result]
+      node: row as any,
+    }));
+
+    const pageInfo: PageInfo = {
+      startCursor: edges.at(0)?.cursor,
+      endCursor: edges.at(-1)?.cursor,
+      hasNextPage: hasNext,
+      hasPreviousPage: hasPrev,
+    };
+
+    const [{ count }] = await match(parentType)
+      .with(
+        "workinstance",
+        () => sql<[{ count: number }]>`
+            SELECT count(*)
+            FROM public.workresult AS wr
+            WHERE
+                wr.workresultworktemplateid IN (
+                    SELECT workinstanceworktemplateid
+                    FROM public.workinstance
+                    WHERE id = ${parentId}
+                )
+                AND wr.workresultisprimary = false
+                ${match(args.withActive)
+                  .with(
+                    true,
+                    () => sql`AND (
+                        wr.workresultenddate IS null
+                        OR wr.workresultenddate > now()
+                    )`,
+                  )
+                  .with(
+                    false,
+                    () => sql`AND (
+                        wr.workresultenddate IS NOT null
+                        AND wr.workresultenddate < now()
+                    )`,
+                  )
+                  .otherwise(() => sql``)}
+        `,
+      )
+      .with(
+        "worktemplate",
+        () => sql<[{ count: number }]>`
+            SELECT count(*)
+            FROM public.workresult AS wr
+            WHERE
+                wr.workresultworktemplateid IN (
+                    SELECT worktemplateid
+                    FROM public.worktemplate
+                    WHERE id = ${parentId}
+                )
+                AND wr.workresultisprimary = false
+                ${match(args.withActive)
+                  .with(
+                    true,
+                    () => sql`AND (
+                        wr.workresultenddate IS null
+                        OR wr.workresultenddate > now()
+                    )`,
+                  )
+                  .with(
+                    false,
+                    () => sql`AND (
+                        wr.workresultenddate IS NOT null
+                        AND wr.workresultenddate < now()
+                    )`,
+                  )
+                  .otherwise(() => sql``)}
         `,
       )
       .otherwise(() => Promise.reject("invariant violated"));
 
     return {
-      edges: rows.map(row => ({ cursor: row.id, node: row as ChecklistItem })),
-      pageInfo: {
-        hasNextPage: false,
-        hasPreviousPage: false,
-      },
-      totalCount: await match(type)
-        .with(
-          "workinstance",
-          () => sql<[{ count: number }]>`
-              SELECT count(*)
-              FROM public.workresult AS wr
-              WHERE
-                  wr.workresultworktemplateid IN (
-                      SELECT workinstanceworktemplateid
-                      FROM public.workinstance
-                      WHERE id = ${id}
-                  )
-                  AND wr.workresultisprimary = false
-                  ${match(args.withActive)
-                    .with(
-                      true,
-                      () => sql`AND (
-                          wr.workresultenddate IS null
-                          OR wr.workresultenddate > now()
-                      )`,
-                    )
-                    .with(
-                      false,
-                      () => sql`AND (
-                          wr.workresultenddate IS NOT null
-                          AND wr.workresultenddate < now()
-                      )`,
-                    )
-                    .otherwise(() => sql``)}
-          `,
-        )
-        .with(
-          "worktemplate",
-          () => sql<[{ count: number }]>`
-              SELECT count(*)
-              FROM public.workresult AS wr
-              WHERE
-                  wr.workresultworktemplateid IN (
-                      SELECT worktemplateid
-                      FROM public.worktemplate
-                      WHERE id = ${id}
-                  )
-                  AND wr.workresultisprimary = false
-                  ${match(args.withActive)
-                    .with(
-                      true,
-                      () => sql`AND (
-                          wr.workresultenddate IS null
-                          OR wr.workresultenddate > now()
-                      )`,
-                    )
-                    .with(
-                      false,
-                      () => sql`AND (
-                          wr.workresultenddate IS NOT null
-                          AND wr.workresultenddate < now()
-                      )`,
-                    )
-                    .otherwise(() => sql``)}
-          `,
-        )
-        .otherwise(() => Promise.reject("invariant violated"))
-        .then(([row]) => row.count),
+      edges,
+      pageInfo,
+      totalCount: count,
     };
   },
   async metadata(parent) {

@@ -3,6 +3,7 @@ import postgres, { type Fragment } from "postgres";
 
 import type { Request } from "express";
 import { makeActiveLoader } from "./activatable";
+import makeAttachmentLoader from "./attachment";
 import { makeAuditableLoader } from "./auditable";
 import makeCustomerRequestedLanguageLoader from "./crl";
 import { makeDescriptionLoader } from "./description";
@@ -92,6 +93,7 @@ export function unionAll(xs: readonly Fragment[]) {
 export function orm(req: Request) {
   return {
     active: makeActiveLoader(req),
+    attachment: makeAttachmentLoader(req),
     auditable: makeAuditableLoader(req),
     crl: makeCustomerRequestedLanguageLoader(req),
     description: makeDescriptionLoader(req),
