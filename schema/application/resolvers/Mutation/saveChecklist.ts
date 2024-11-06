@@ -885,7 +885,7 @@ async function saveChecklistResults(
                                     case "boolean" in i.result.widget:
                                       return "Boolean";
                                     case "checkbox" in i.result.widget:
-                                      return "Checkbox";
+                                      return "Boolean";
                                     case "clicker" in i.result.widget:
                                       return "Number";
                                     case "duration" in i.result.widget:
@@ -1118,7 +1118,7 @@ async function saveChecklistResults(
                                 case "boolean" in i.result.widget:
                                   return "Boolean";
                                 case "checkbox" in i.result.widget:
-                                  return "Checkbox";
+                                  return "Boolean";
                                 case "clicker" in i.result.widget:
                                   return "Number";
                                 case "duration" in i.result.widget:
