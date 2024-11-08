@@ -255,7 +255,7 @@ union Widget =
 TODO
 """
 input WidgetInput @oneOf {
-  section: StringWidgetInput
+  section: SectionWidgetInput
   checkbox: CheckboxWidgetInput
   boolean: BooleanWidgetInput
   clicker: ClickerWidgetInput

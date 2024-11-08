@@ -1292,7 +1292,7 @@ input WidgetInput @oneOf {
   multiline: MultilineStringWidgetInput
   number: NumberWidgetInput
   reference: ReferenceWidgetInput
-  section: StringWidgetInput
+  section: SectionWidgetInput
   sentiment: SentimentWidgetInput
   string: StringWidgetInput
   temporal: TemporalWidgetInput
