@@ -61,7 +61,9 @@ export const ChecklistResult: ChecklistResultResolvers = {
     throw "invariant violated";
   },
   async name(parent, _, ctx) {
-    return (await ctx.orm.displayName.load(parent.id)) as ResolversTypes["DisplayName"];
+    return (await ctx.orm.displayName.load(
+      parent.id,
+    )) as ResolversTypes["DisplayName"];
   },
   required(parent, _, ctx) {
     return ctx.orm.requirement.load(parent.id);
@@ -109,6 +111,7 @@ export const ChecklistResult: ChecklistResultResolvers = {
                        WHEN wt.custagtype = 'Sentiment' THEN 'SentimentWidget'
                        WHEN wt.custagtype = 'Text' THEN 'MultilineStringWidget'
                        WHEN wt.custagtype = 'Checkbox' THEN 'CheckboxWidget'
+                       WHEN wt.custagtype = 'Section' THEN 'SectionWidget'
                        ELSE null
                   END AS widget_type,
                   nullif(wr.workresultdefaultvalue, '') AS raw_value,
@@ -144,6 +147,7 @@ export const ChecklistResult: ChecklistResultResolvers = {
                        WHEN wt.custagtype = 'Sentiment' THEN 'SentimentWidget'
                        WHEN wt.custagtype = 'Text' THEN 'MultilineStringWidget'
                        WHEN wt.custagtype = 'Checkbox' THEN 'CheckboxWidget'
+                       WHEN wt.custagtype = 'Section' THEN 'SectionWidget'
                        ELSE null
                   END AS widget_type,
                   nullif(wri.workresultinstancevalue, '') AS raw_value,

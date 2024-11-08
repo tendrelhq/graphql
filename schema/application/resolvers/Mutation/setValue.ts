@@ -47,6 +47,8 @@ export const setValue: NonNullable<MutationResolvers["setValue"]> = async (
         return input.checkbox?.value?.toString() ?? null;
       case "boolean" in input:
         return input.boolean?.value?.toString() ?? null;
+      case "section" in input:
+        return input.section?.value?.toString() ?? null;
       case "clicker" in input:
         return input.clicker?.value?.toString();
       case "duration" in input:

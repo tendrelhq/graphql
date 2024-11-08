@@ -1020,6 +1020,21 @@ enum ScheduleType {
   OnceSchedule
 }
 
+"""
+TODO
+"""
+type SectionWidget implements Component {
+  id: ID!
+  title: String
+}
+
+"""
+TODO
+"""
+input SectionWidgetInput {
+  value: String
+}
+
 enum Sentiment {
   negative
   neutral
@@ -1261,6 +1276,7 @@ union Widget =
   | MultilineStringWidget
   | NumberWidget
   | ReferenceWidget
+  | SectionWidget
   | SentimentWidget
   | StringWidget
   | TemporalWidget
@@ -1276,6 +1292,7 @@ input WidgetInput @oneOf {
   multiline: MultilineStringWidgetInput
   number: NumberWidgetInput
   reference: ReferenceWidgetInput
+  section: StringWidgetInput
   sentiment: SentimentWidgetInput
   string: StringWidgetInput
   temporal: TemporalWidgetInput
