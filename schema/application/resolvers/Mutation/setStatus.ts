@@ -146,10 +146,10 @@ export const setStatus: NonNullable<MutationResolvers["setStatus"]> = async (
             DO UPDATE
                 SET
                     workresultinstancemodifieddate = now(),
-                    workresultinstancestatusid = excluded.workresultinstancestatusid,
-                    workresultinstancestartdate = excluded.workresultinstancestartdate,
-                    workresultinstancecompleteddate = excluded.workresultinstancecompleteddate,
-                    workresultinstancevalue = excluded.workresultinstancevalue
+                    workresultinstancestatusid = EXCLUDED.workresultinstancestatusid,
+                    workresultinstancestartdate = EXCLUDED.workresultinstancestartdate,
+                    workresultinstancecompleteddate = EXCLUDED.workresultinstancecompleteddate,
+                    workresultinstancevalue = EXCLUDED.workresultinstancevalue
           `;
           // TODO: Should we IS DISTINCT FROM above? I think we're probably ok...
           console.debug(`Wrote TAT? ${!!result.count}`);
@@ -184,10 +184,10 @@ export const setStatus: NonNullable<MutationResolvers["setStatus"]> = async (
       );
 
       const updates = {
-        workresultinstancestatusid: sql`excluded.workresultinstancestatusid`,
-        workresultinstancemodifieddate: sql`excluded.workresultinstancemodifieddate`,
-        workresultinstancecompleteddate: sql`excluded.workresultinstancecompleteddate`,
-        workresultinstancestartdate: sql`excluded.workresultinstancestartdate`,
+        workresultinstancestatusid: sql`EXCLUDED.workresultinstancestatusid`,
+        workresultinstancemodifieddate: sql`EXCLUDED.workresultinstancemodifieddate`,
+        workresultinstancecompleteddate: sql`EXCLUDED.workresultinstancecompleteddate`,
+        workresultinstancestartdate: sql`EXCLUDED.workresultinstancestartdate`,
       };
 
       const columns = [
@@ -247,7 +247,7 @@ export const setStatus: NonNullable<MutationResolvers["setStatus"]> = async (
           ON CONFLICT (workresultinstanceworkresultid, workresultinstanceworkinstanceid)
           DO UPDATE
               SET ${sql(updates, columns)}
-              WHERE wri.workresultinstancestatusid IS DISTINCT FROM excluded.workresultinstancestatusid
+              WHERE wri.workresultinstancestatusid IS DISTINCT FROM EXCLUDED.workresultinstancestatusid
       `;
     })
     .exhaustive();

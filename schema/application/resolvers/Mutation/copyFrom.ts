@@ -97,7 +97,7 @@ export async function copyFromWorkTemplate(
   options: CopyFromOptions & TemplateChainOptions,
 ): Promise<CopyFromPayload> {
   const [row] = await tx<[WithKey<{ _key_uuid: string; id: string }>?]>`
-INSERT INTO public.workinstance (
+      INSERT INTO public.workinstance (
           workinstancecustomerid,
           workinstancesiteid,
           workinstanceoriginatorworkinstanceid,
@@ -182,6 +182,7 @@ INSERT INTO public.workinstance (
           AND workinstanceoriginatorworkinstanceid IS null;
   `;
 
+  // Create all workresultinstances, based on workresult.
   const result = await tx`
       INSERT INTO public.workresultinstance (
           workresultinstancecompleteddate,
@@ -221,7 +222,7 @@ INSERT INTO public.workinstance (
               }::text AS value
               WHERE entity_type.systagtype = 'Worker' AND workresultisprimary
               UNION ALL
-              SELECT null::text AS value
+              SELECT workresultdefaultvalue AS value
               WHERE
                   entity_type IS null
                   OR (

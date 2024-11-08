@@ -1064,7 +1064,7 @@ async function saveChecklistResults(
                                 )
                             )
                             AND
-                            coalesce(wr.workresultdefaultvalue, '')::text != coalesce(inputs.value, '')::text
+                            wr.workresultdefaultvalue IS DISTINCT FROM inputs.value
                     `
                     : tx`
                         UPDATE public.workresult AS wr

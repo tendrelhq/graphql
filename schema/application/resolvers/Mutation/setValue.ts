@@ -104,7 +104,7 @@ export const setValue: NonNullable<MutationResolvers["setValue"]> = async (
             wr.workresultcustomerid,
             wr.workresultid,
             wi.workinstanceid,
-            ${value ?? null}::text
+            COALESCE(${value ?? null}::text, wr.workresultdefaultvalue)
         FROM
             public.workinstance AS wi,
             public.workresult AS wr
@@ -115,10 +115,10 @@ export const setValue: NonNullable<MutationResolvers["setValue"]> = async (
       ON CONFLICT (workresultinstanceworkresultid, workresultinstanceworkinstanceid)
       DO UPDATE
           SET
-              workresultinstancevalue = excluded.workresultinstancevalue,
+              workresultinstancevalue = EXCLUDED.workresultinstancevalue,
               workresultinstancemodifieddate = now()
           WHERE
-              wri.workresultinstancevalue IS DISTINCT FROM excluded.workresultinstancevalue
+              wri.workresultinstancevalue IS DISTINCT FROM EXCLUDED.workresultinstancevalue
       RETURNING 1
   `;
 

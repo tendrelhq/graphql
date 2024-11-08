@@ -110,11 +110,11 @@ async function assignWorkInstance(entity: string, to: ID, _ctx: Context) {
               (workresultinstanceworkinstanceid, workresultinstanceworkresultid)
           DO UPDATE
               SET
-                  workresultinstancevalue = excluded.workresultinstancevalue,
+                  workresultinstancevalue = EXCLUDED.workresultinstancevalue,
                   workresultinstancemodifieddate = now()
               WHERE
                   nullif(wri.workresultinstancevalue, '') IS null
-                  OR wri.workresultinstancevalue != excluded.workresultinstancevalue
+                  OR wri.workresultinstancevalue != EXCLUDED.workresultinstancevalue
           RETURNING encode(('workresultinstance:' || wri.workresultinstanceuuid)::bytea, 'base64') AS id
       )
 
