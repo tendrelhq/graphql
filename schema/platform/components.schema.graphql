@@ -239,6 +239,7 @@ input SopInput {
 TODO
 """
 union Widget =
+  | SectionWidget
   | BooleanWidget
   | CheckboxWidget
   | ClickerWidget
@@ -254,6 +255,7 @@ union Widget =
 TODO
 """
 input WidgetInput @oneOf {
+  section: SectionWidgetInput
   checkbox: CheckboxWidgetInput
   boolean: BooleanWidgetInput
   clicker: ClickerWidgetInput
@@ -264,6 +266,21 @@ input WidgetInput @oneOf {
   sentiment: SentimentWidgetInput
   string: StringWidgetInput
   temporal: TemporalWidgetInput
+}
+
+"""
+TODO
+"""
+type SectionWidget implements Component {
+  id: ID!
+  title: String
+}
+
+"""
+TODO
+"""
+input SectionWidgetInput {
+  value: String
 }
 
 """

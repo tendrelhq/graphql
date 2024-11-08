@@ -886,6 +886,8 @@ async function saveChecklistResults(
                                       return "Boolean";
                                     case "checkbox" in i.result.widget:
                                       return "Boolean";
+                                    case "section" in i.result.widget:
+                                      return "String";
                                     case "clicker" in i.result.widget:
                                       return "Number";
                                     case "duration" in i.result.widget:
@@ -914,6 +916,8 @@ async function saveChecklistResults(
                                       return "Boolean";
                                     case "checkbox" in i.result.widget:
                                       return "Checkbox";
+                                    case "section" in i.result.widget:
+                                      return "Section";
                                     case "clicker" in i.result.widget:
                                       return "Clicker";
                                     case "duration" in i.result.widget:
@@ -959,6 +963,10 @@ async function saveChecklistResults(
                                     case "checkbox" in i.result.widget:
                                       return (
                                         i.result.widget.checkbox?.value ?? null
+                                      );
+                                    case "section" in i.result.widget:
+                                      return (
+                                        i.result.widget.section?.value ?? null
                                       );
                                     case "clicker" in i.result.widget:
                                       return (
@@ -1118,7 +1126,9 @@ async function saveChecklistResults(
                                 case "boolean" in i.result.widget:
                                   return "Boolean";
                                 case "checkbox" in i.result.widget:
-                                  return "Boolean";
+                                  return "Checkbox";
+                                case "section" in i.result.widget:
+                                  return "String";
                                 case "clicker" in i.result.widget:
                                   return "Number";
                                 case "duration" in i.result.widget:
@@ -1161,6 +1171,8 @@ async function saveChecklistResults(
                                   return "Boolean";
                                 case "checkbox" in i.result.widget:
                                   return "Checkbox";
+                                case "section" in i.result.widget:
+                                  return "Section";
                                 case "clicker" in i.result.widget:
                                   return "Clicker";
                                 case "duration" in i.result.widget:
@@ -1203,6 +1215,8 @@ async function saveChecklistResults(
                                   return "Boolean";
                                 case "checkbox" in i.result.widget:
                                   return "Checkbox";
+                                case "section" in i.result.widget:
+                                  return "Section";
                                 case "clicker" in i.result.widget:
                                   return "Clicker";
                                 case "duration" in i.result.widget:
@@ -1240,6 +1254,8 @@ async function saveChecklistResults(
                                   return (
                                     i.result.widget.checkbox?.value ?? null
                                   );
+                                case "section" in i.result.widget:
+                                  return i.result.widget.section?.value ?? null;
                                 case "clicker" in i.result.widget:
                                   return i.result.widget.clicker?.value ?? null;
                                 case "duration" in i.result.widget:
