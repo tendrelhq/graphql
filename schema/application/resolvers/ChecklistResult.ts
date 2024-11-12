@@ -4,7 +4,7 @@ import type {
   PageInfo,
   ResolversTypes,
 } from "@/schema";
-import { decodeGlobalId } from "@/schema/system";
+import { decodeGlobalId, encodeGlobalId } from "@/schema/system";
 import { buildPaginationArgs } from "@/util";
 import { match } from "ts-pattern";
 
@@ -173,6 +173,39 @@ export const ChecklistResult: ChecklistResultResolvers = {
     return (await ctx.orm.displayName.load(
       parent.id,
     )) as ResolversTypes["DisplayName"];
+  },
+  async parent(parent) {
+    const { type, id } = decodeGlobalId(parent.id);
+    const [row] = await match(type)
+      .with(
+        "workresult",
+        () => sql`
+          SELECT encode(('worktemplate:' || wt.id)::bytea, 'base64') AS id
+          FROM public.workresult AS wr
+          INNER JOIN public.worktemplate AS wt
+              ON wr.workresultworktemplateid = wt.worktemplateid
+          WHERE wr.id = ${id}
+        `,
+      )
+      .with(
+        "workresultinstance",
+        // Result "instances" have global ids of the form:
+        // workresultinstance:<workinstance.id>:<workresult.id>
+        // which means `id` is <workinstance.id>
+        () => [
+          {
+            id: encodeGlobalId({ type: "workinstance", id }),
+          },
+        ],
+      )
+      .otherwise(() => {
+        throw "invariant violated";
+      });
+    return {
+      __typename: "Checklist",
+      id: row.id,
+      // biome-ignore lint/suspicious/noExplicitAny: defer to Checklist
+    } as any;
   },
   required(parent, _, ctx) {
     return ctx.orm.requirement.load(parent.id);

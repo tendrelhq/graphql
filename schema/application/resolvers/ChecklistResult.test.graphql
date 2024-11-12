@@ -16,6 +16,13 @@ query TestChecklistResult($entity: ID!) {
         }
       }
       order
+      parent {
+        name {
+          name {
+            value
+          }
+        }
+      }
       required
       status {
         __typename

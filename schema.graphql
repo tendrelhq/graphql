@@ -357,6 +357,7 @@ type ChecklistResult implements Activatable & Component & Node {
   id: ID!
   name: DisplayName!
   order: Int!
+  parent: Checklist!
   required: Boolean
   status: ChecklistStatus
   widget: Widget!
