@@ -112,11 +112,18 @@ type Organization implements Node {
   ): WorkerConnection!
 }
 
+type Geofence {
+  longitude: String!
+  latitude: String!
+  radius: Float!
+}
+
 type Location implements Component & Referenceable {
   id: ID!
   active: ActivationStatus!
   children(options: LocationsQueryOptions): [Location!]!
   name: Name!
+  geofence: Geofence
   nameId: ID!
   parent: Location
   parentId: ID
@@ -287,12 +294,19 @@ input CreateLocationInput {
   scanCode: ID
 }
 
+input GeofenceInput {
+  longitude: String
+  latitude: String
+  radius: Float
+}
+
 input UpdateLocationInput {
   id: ID!
   activatedAt: String
   deactivatedAt: String
   name: UpdateNameInput
   scanCode: ID
+  geofence: GeofenceInput
 }
 
 input CreateUserInput {
