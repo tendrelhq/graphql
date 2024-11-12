@@ -1,7 +1,7 @@
 import { sql } from "@/datasources/postgres";
 import type { ActivationStatus, LocationResolvers } from "@/schema";
 import { decodeGlobalId } from "@/schema/system";
-import { isValue } from "@/util";
+import { isValue, nullish } from "@/util";
 
 export const Location: LocationResolvers = {
   async active(parent) {
@@ -40,6 +40,19 @@ export const Location: LocationResolvers = {
     `;
     const children = await ctx.orm.location.loadMany(childIds.map(c => c.id));
     return children.filter(isValue);
+  },
+  async geofence(parent, _, ctx) {
+    const hack = await ctx.orm.location.load(decodeGlobalId(parent.id).id);
+    const isGeofenceDefined =
+      nullish(hack.latitude) || nullish(hack.longitude) || nullish(hack.radius);
+
+    if (isGeofenceDefined) return undefined;
+
+    return {
+      latitude: hack.latitude,
+      longitude: hack.longitude,
+      radius: hack.radius,
+    };
   },
   async name(parent, _, ctx) {
     const hack = await ctx.orm.location.load(decodeGlobalId(parent.id).id);

@@ -22,6 +22,14 @@ export const updateLocation: NonNullable<
           WHERE locationuuid = ${id};
       `;
     }
+    await sql`
+        UPDATE public.location
+        SET
+             locationradius = ${input.geofence?.radius ?? null},
+              locationlatitude = ${input.geofence?.latitude ?? null},
+              locationlongitude = ${input.geofence?.longitude ?? null}
+        WHERE locationuuid = ${id};
+    `;
   });
 
   return ctx.orm.location.clear(id).load(id);

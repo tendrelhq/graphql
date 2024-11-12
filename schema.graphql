@@ -627,6 +627,18 @@ type Flag {
   enabled: Boolean
 }
 
+type Geofence {
+  latitude: String!
+  longitude: String!
+  radius: Float!
+}
+
+input GeofenceInput {
+  latitude: String
+  longitude: String
+  radius: Float
+}
+
 type Geography {
   geog: String
 }
@@ -696,6 +708,7 @@ scalar Locale
 type Location implements Component & Referenceable {
   active: ActivationStatus!
   children(options: LocationsQueryOptions): [Location!]!
+  geofence: Geofence
   id: ID!
   name: Name!
   nameId: ID!
@@ -1206,6 +1219,7 @@ type UnassignmentPayload {
 input UpdateLocationInput {
   activatedAt: String
   deactivatedAt: String
+  geofence: GeofenceInput
   id: ID!
   name: UpdateNameInput
   scanCode: ID
