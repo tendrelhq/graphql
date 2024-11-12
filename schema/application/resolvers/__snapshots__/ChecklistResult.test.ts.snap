@@ -25,6 +25,16 @@ exports[`ChecklistResult ast 1`] = `
         },
       },
       "order": 0,
+      "parent": {
+        "__typename": "Checklist",
+        "name": {
+          "__typename": "DisplayName",
+          "name": {
+            "__typename": "DynamicString",
+            "value": "GENERATED DO NOT EDIT",
+          },
+        },
+      },
       "required": false,
       "status": null,
       "widget": {
@@ -61,6 +71,16 @@ exports[`ChecklistResult ecs 1`] = `
         },
       },
       "order": 0,
+      "parent": {
+        "__typename": "Checklist",
+        "name": {
+          "__typename": "DisplayName",
+          "name": {
+            "__typename": "DynamicString",
+            "value": "GENERATED DO NOT EDIT",
+          },
+        },
+      },
       "required": false,
       "status": {
         "__typename": "ChecklistOpen",
