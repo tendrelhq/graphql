@@ -44,7 +44,8 @@ export const Location: LocationResolvers = {
   async geofence(parent, _, ctx) {
     const hack = await ctx.orm.location.load(decodeGlobalId(parent.id).id);
 
-    if (!hack.latitude || !hack.longitude || !hack.radius) return undefined;
+    if (!hack.latitude || !hack.longitude || hack.radius === null)
+      return undefined;
 
     return {
       latitude: hack.latitude,
