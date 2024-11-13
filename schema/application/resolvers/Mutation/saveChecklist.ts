@@ -800,8 +800,7 @@ async function saveChecklistResults(
                             workresultmodifieddate = now()
                         WHERE
                             id = ${decodeGlobalId(i.result.id).id}
-                            AND
-                            workresultforaudit != inputs.auditable
+                            AND workresultforaudit IS DISTINCT FROM inputs.auditable
                     `
                     : tx`
                         UPDATE public.workresult
@@ -810,8 +809,7 @@ async function saveChecklistResults(
                             workresultmodifieddate = now()
                         WHERE
                             id = ${decodeGlobalId(i.result.id).id}
-                            AND
-                            workresultforaudit = true
+                            AND workresultforaudit = true
                     `,
                   tx`
                     WITH inputs (value, locale) AS (
@@ -835,11 +833,7 @@ async function saveChecklistResults(
                             WHERE id = ${decodeGlobalId(i.result.id).id}
                         )
                         AND (locale.systagparentid, locale.systagtype) = (2, inputs.locale)
-                        AND (
-                            languagemastersource != inputs.value
-                            OR
-                            languagemastersourcelanguagetypeid != locale.systagid
-                        )
+                        AND (languagemastersource, languagemastersourcelanguagetypeid) IS DISTINCT FROM (inputs.value, locale.systagid)
                   `,
                   tx`
                       WITH inputs (required) AS (
@@ -855,180 +849,176 @@ async function saveChecklistResults(
                       FROM inputs
                       WHERE
                           id = ${decodeGlobalId(i.result.id).id}
-                          AND 
-                          workresultorder IS NOT null
-                          AND
-                          workresultisrequired != inputs.required
+                          AND workresultisrequired IS DISTINCT FROM inputs.required
                   `,
                   tx`
-                      WITH inputs (oder) AS (
-                            VALUES (
-                            ${i.result.order}::integer
-                            )
+                      WITH inputs (ordinality) AS (
+                          VALUES (
+                              ${i.result.order}::integer
+                          )
                       )
+
                       UPDATE public.workresult
                       SET 
-                          workresultorder = inputs.oder,
+                          workresultorder = inputs.ordinality,
                           workresultmodifieddate = now()
                       FROM inputs
                       WHERE
                           id = ${decodeGlobalId(i.result.id).id}
-                          AND workresultorder != inputs.oder
-                            
+                          AND workresultorder IS DISTINCT FROM inputs.ordinality
                     `,
-                  i.result.widget
-                    ? tx`
+                  tx`
                         WITH inputs (type, widget, reftype, value) AS (
                             VALUES (
-                                ${(() => {
-                                  switch (true) {
-                                    case "boolean" in i.result.widget:
-                                      return "Boolean";
-                                    case "checkbox" in i.result.widget:
-                                      return "Boolean";
-                                    case "section" in i.result.widget:
-                                      return "String";
-                                    case "clicker" in i.result.widget:
-                                      return "Number";
-                                    case "duration" in i.result.widget:
-                                      return "Duration";
-                                    case "multiline" in i.result.widget:
-                                      return "String";
-                                    case "number" in i.result.widget:
-                                      return "Number";
-                                    case "reference" in i.result.widget:
-                                      return "Entity";
-                                    case "sentiment" in i.result.widget:
-                                      return "Number";
-                                    case "string" in i.result.widget:
-                                      return "String";
-                                    case "temporal" in i.result.widget:
-                                      return "Date";
-                                    default: {
-                                      const _: never = i.result.widget;
-                                      throw "invariant violated";
-                                    }
+                              ${(() => {
+                                switch (true) {
+                                  case "boolean" in i.result.widget:
+                                    return "Boolean";
+                                  case "checkbox" in i.result.widget:
+                                    return "Boolean";
+                                  case "clicker" in i.result.widget:
+                                    return "Number";
+                                  case "duration" in i.result.widget:
+                                    return "Duration";
+                                  case "multiline" in i.result.widget:
+                                    return "String";
+                                  case "number" in i.result.widget:
+                                    return "Number";
+                                  case "reference" in i.result.widget:
+                                    return "Entity";
+                                  case "section" in i.result.widget:
+                                    return "String";
+                                  case "sentiment" in i.result.widget:
+                                    return "Number";
+                                  case "string" in i.result.widget:
+                                    return "String";
+                                  case "temporal" in i.result.widget:
+                                    return "Date";
+                                  default: {
+                                    const _: never = i.result.widget;
+                                    throw "invariant violated";
                                   }
-                                })()}::text,
-                                ${(() => {
-                                  switch (true) {
-                                    case "boolean" in i.result.widget:
-                                      return "Boolean";
-                                    case "checkbox" in i.result.widget:
-                                      return "Checkbox";
-                                    case "section" in i.result.widget:
-                                      return "Section";
-                                    case "clicker" in i.result.widget:
-                                      return "Clicker";
-                                    case "duration" in i.result.widget:
-                                      return "Duration";
-                                    case "multiline" in i.result.widget:
-                                      return "Text";
-                                    case "number" in i.result.widget:
-                                      return "Number";
-                                    case "reference" in i.result.widget:
-                                      // biome-ignore lint/style/noNonNullAssertion:
-                                      return i.result.widget.reference!
-                                        .possibleTypes[0];
-                                    case "sentiment" in i.result.widget:
-                                      return "Number";
-                                    case "string" in i.result.widget:
-                                      return "String";
-                                    case "temporal" in i.result.widget:
-                                      return "Date";
-                                    default: {
-                                      const _: never = i.result.widget;
-                                      throw "invariant violated";
-                                    }
+                                }
+                              })()}::text,
+                              ${(() => {
+                                switch (true) {
+                                  case "boolean" in i.result.widget:
+                                    return "Boolean";
+                                  case "checkbox" in i.result.widget:
+                                    return "Checkbox";
+                                  case "clicker" in i.result.widget:
+                                    return "Clicker";
+                                  case "duration" in i.result.widget:
+                                    return "Duration";
+                                  case "multiline" in i.result.widget:
+                                    return "Text";
+                                  case "number" in i.result.widget:
+                                    return "Number";
+                                  case "reference" in i.result.widget:
+                                    // biome-ignore lint/style/noNonNullAssertion:
+                                    return i.result.widget.reference!
+                                      .possibleTypes[0];
+                                  case "section" in i.result.widget:
+                                    return "Section";
+                                  case "sentiment" in i.result.widget:
+                                    return "Number";
+                                  case "string" in i.result.widget:
+                                    return "String";
+                                  case "temporal" in i.result.widget:
+                                    return "Date";
+                                  default: {
+                                    const _: never = i.result.widget;
+                                    throw "invariant violated";
                                   }
-                                })()}::text,
-                                ${
-                                  i.result.widget.reference?.value
-                                    ? match(
-                                        decodeGlobalId(
-                                          i.result.widget.reference.value,
-                                        ).type,
-                                      )
-                                        .with("location", () => "Location")
-                                        .with("worker", () => "Worker")
-                                        .otherwise(() => null)
-                                    : null
-                                }::text,
-                                ${(() => {
-                                  switch (true) {
-                                    case "boolean" in i.result.widget:
-                                      return (
-                                        i.result.widget.boolean?.value ?? null
-                                      );
-                                    case "checkbox" in i.result.widget:
-                                      return (
-                                        i.result.widget.checkbox?.value ?? null
-                                      );
-                                    case "section" in i.result.widget:
-                                      return (
-                                        i.result.widget.section?.value ?? null
-                                      );
-                                    case "clicker" in i.result.widget:
-                                      return (
-                                        i.result.widget.clicker?.value ?? null
-                                      );
-                                    case "duration" in i.result.widget:
-                                      return (
-                                        i.result.widget.duration?.value ?? null
-                                      );
-                                    case "multiline" in i.result.widget:
-                                      return (
-                                        i.result.widget.multiline?.value ?? null
-                                      );
-                                    case "number" in i.result.widget:
-                                      return (
-                                        i.result.widget.number?.value ?? null
-                                      );
-                                    case "reference" in i.result.widget: {
-                                      return i.result.widget.reference?.value
-                                        ? match(
-                                            decodeGlobalId(
-                                              i.result.widget.reference.value,
-                                            ),
+                                }
+                              })()}::text,
+                              ${
+                                i.result.widget.reference?.value
+                                  ? match(
+                                      decodeGlobalId(
+                                        i.result.widget.reference.value,
+                                      ).type,
+                                    )
+                                      .with("location", () => "Location")
+                                      .with("worker", () => "Worker")
+                                      .otherwise(() => null)
+                                  : null
+                              }::text,
+                              ${(() => {
+                                switch (true) {
+                                  case "boolean" in i.result.widget:
+                                    return (
+                                      i.result.widget.boolean?.value ?? null
+                                    );
+                                  case "checkbox" in i.result.widget:
+                                    return (
+                                      i.result.widget.checkbox?.value ?? null
+                                    );
+                                  case "clicker" in i.result.widget:
+                                    return (
+                                      i.result.widget.clicker?.value ?? null
+                                    );
+                                  case "duration" in i.result.widget:
+                                    return (
+                                      i.result.widget.duration?.value ?? null
+                                    );
+                                  case "multiline" in i.result.widget:
+                                    return (
+                                      i.result.widget.multiline?.value ?? null
+                                    );
+                                  case "number" in i.result.widget:
+                                    return (
+                                      i.result.widget.number?.value ?? null
+                                    );
+                                  case "reference" in i.result.widget: {
+                                    return i.result.widget.reference?.value
+                                      ? match(
+                                          decodeGlobalId(
+                                            i.result.widget.reference.value,
+                                          ),
+                                        )
+                                          .with(
+                                            {
+                                              type: "location",
+                                              id: P.string,
+                                            },
+                                            ({ id }) => sql`(
+                                                SELECT locationid
+                                                FROM public.location
+                                                WHERE locationuuid = ${id}
+                                            )`,
                                           )
-                                            .with(
-                                              {
-                                                type: "location",
-                                                id: P.string,
-                                              },
-                                              ({ id }) => sql`(
-                                                  SELECT locationid
-                                                  FROM public.location
-                                                  WHERE locationuuid = ${id}
-                                              )`,
-                                            )
-                                            .with(
-                                              { type: "worker", id: P.string },
-                                              ({ id }) => sql`(
-                                                  SELECT workerinstanceid
-                                                  FROM public.workerinstance
-                                                  WHERE workerinstanceuuid = ${id}
-                                              )`,
-                                            )
-                                            .otherwise(() => null)
-                                        : null;
-                                    }
-                                    case "sentiment" in i.result.widget:
-                                      return (
-                                        i.result.widget.sentiment?.value ?? null
-                                      );
-                                    case "string" in i.result.widget:
-                                      return (
-                                        i.result.widget.string?.value ?? null
-                                      );
-                                    case "temporal" in i.result.widget:
-                                      return null;
-                                    default: {
-                                      const _: never = i.result.widget;
-                                      throw "invariant violated";
-                                    }
+                                          .with(
+                                            { type: "worker", id: P.string },
+                                            ({ id }) => sql`(
+                                                SELECT workerinstanceid
+                                                FROM public.workerinstance
+                                                WHERE workerinstanceuuid = ${id}
+                                            )`,
+                                          )
+                                          .otherwise(() => null)
+                                      : null;
                                   }
-                                })()}::text
+                                  case "section" in i.result.widget:
+                                    return (
+                                      i.result.widget.section?.value ?? null
+                                    );
+                                  case "sentiment" in i.result.widget:
+                                    return (
+                                      i.result.widget.sentiment?.value ?? null
+                                    );
+                                  case "string" in i.result.widget:
+                                    return (
+                                      i.result.widget.string?.value ?? null
+                                    );
+                                  case "temporal" in i.result.widget:
+                                    return null;
+                                  default: {
+                                    const _: never = i.result.widget;
+                                    throw "invariant violated";
+                                  }
+                                }
+                              })()}::text
                             )
                         ),
 
@@ -1040,49 +1030,21 @@ async function saveChecklistResults(
                             INNER JOIN public.systag AS t
                                 ON
                                     t.systagparentid = 699
-                                    AND
-                                    t.systagtype = inputs.type
+                                    AND t.systagtype = inputs.type
                             LEFT JOIN public.systag AS r
                                 ON
                                     r.systagparentid = 849
-                                    AND
-                                    r.systagtype = inputs.reftype
+                                    AND r.systagtype = inputs.reftype
                         )
 
                         UPDATE public.workresult AS wr
                         SET
-                            workresultdefaultvalue = nullif(inputs.value, ''),
+                            workresultdefaultvalue = inputs.value,
                             workresultmodifieddate = now()
                         FROM inputs, type
                         WHERE
                             wr.id = ${decodeGlobalId(i.result.id).id}
-                            AND
-                            wr.workresulttypeid = type.type
-                            AND (
-                                (
-                                    wr.workresultentitytypeid IS null
-                                    AND
-                                    type.reftype IS null
-                                )
-                                OR
-                                (
-                                    wr.workresultentitytypeid IS NOT null
-                                    AND
-                                    type.reftype IS NOT null
-                                )
-                            )
-                            AND
-                            wr.workresultdefaultvalue IS DISTINCT FROM inputs.value
-                    `
-                    : tx`
-                        UPDATE public.workresult AS wr
-                        SET
-                            workresultdefaultvalue = null,
-                            workresultmodifieddate = now()
-                        WHERE
-                            wr.id = ${decodeGlobalId(i.result.id).id}
-                            AND
-                            wr.workresultdefaultvalue IS NOT null
+                            AND wr.workresultdefaultvalue IS DISTINCT FROM inputs.value
                     `,
                 ]
               : [],
@@ -1109,8 +1071,7 @@ async function saveChecklistResults(
                         LEFT JOIN public.systag AS r
                             ON
                                 r.systagparentid = 849
-                                AND
-                                r.systagtype = ${match(
+                                AND r.systagtype = ${match(
                                   i.result.widget.reference?.possibleTypes.at(
                                     0,
                                   ),
@@ -1120,15 +1081,12 @@ async function saveChecklistResults(
                                   .otherwise(() => null)}::text
                         WHERE
                             t.systagparentid = 699
-                            AND
-                            t.systagtype = ${(() => {
+                            AND t.systagtype = ${(() => {
                               switch (true) {
                                 case "boolean" in i.result.widget:
                                   return "Boolean";
                                 case "checkbox" in i.result.widget:
-                                  return "Checkbox";
-                                case "section" in i.result.widget:
-                                  return "String";
+                                  return "Boolean";
                                 case "clicker" in i.result.widget:
                                   return "Number";
                                 case "duration" in i.result.widget:
@@ -1139,6 +1097,8 @@ async function saveChecklistResults(
                                   return "Number";
                                 case "reference" in i.result.widget:
                                   return "Entity";
+                                case "section" in i.result.widget:
+                                  return "String";
                                 case "sentiment" in i.result.widget:
                                   return "Number";
                                 case "string" in i.result.widget:
@@ -1367,7 +1327,7 @@ async function saveChecklistResults(
                         true,
                         c.required,
                         n.id,
-                        0,
+                        ${i.result.order},
                         p.location,
                         a.sop,
                         t.type,
