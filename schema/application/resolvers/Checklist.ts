@@ -1,7 +1,6 @@
 import { join, sql } from "@/datasources/postgres";
 import type {
   Assignee,
-  ChecklistItem,
   ChecklistResolvers,
   Description,
   PageInfo,
