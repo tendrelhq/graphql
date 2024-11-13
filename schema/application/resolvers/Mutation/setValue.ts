@@ -3,6 +3,7 @@ import type { MutationResolvers } from "@/schema";
 import { decodeGlobalId } from "@/schema/system";
 import { Temporal } from "@js-temporal/polyfill";
 import { GraphQLError } from "graphql";
+import { match } from "ts-pattern";
 
 export const setValue: NonNullable<MutationResolvers["setValue"]> = async (
   _,
@@ -11,7 +12,7 @@ export const setValue: NonNullable<MutationResolvers["setValue"]> = async (
 ) => {
   const { type, id, suffix } = decodeGlobalId(entity);
 
-  if (type !== "workresultinstance") {
+  if (type !== "workresult" && type !== "workresultinstance") {
     throw new GraphQLError(`Entity is not mutable: ${type}`, {
       extensions: {
         code: "E_INVALID_OPERATION",
@@ -19,18 +20,11 @@ export const setValue: NonNullable<MutationResolvers["setValue"]> = async (
     });
   }
 
-  if (!suffix?.length) {
-    console.warn(
-      "Invalid global id for underlying type 'workresultinstance'. Expected it to be of the form `workresultinstance:<workinstanceid>:<workresultid>`, but no <workresultid> was found.",
-    );
-    throw "invariant violated";
-  }
-
   // At this point this is merely a convenience to get at the parent from the
   // node. I can't remember if we are using this convenience in the client, but
   // if not then we can probably just remove it entirely.
   const { type: parentType } = decodeGlobalId(parent);
-  if (parentType !== "workinstance") {
+  if (parentType !== "workinstance" && parentType !== "worktemplate") {
     throw new GraphQLError(
       `Type '${parentType}' is an invalid parent type for type '${type}'`,
       {
@@ -93,39 +87,61 @@ export const setValue: NonNullable<MutationResolvers["setValue"]> = async (
     }
   })();
 
-  // Note that this is a no-op if the values are identical.
-  const result = await sql<[{ id: string }]>`
-      INSERT INTO public.workresultinstance AS wri (
-          workresultinstancecustomerid,
-          workresultinstanceworkresultid,
-          workresultinstanceworkinstanceid,
-          workresultinstancevalue
-      )
-      (
-        SELECT
-            wr.workresultcustomerid,
-            wr.workresultid,
-            wi.workinstanceid,
-            COALESCE(${value ?? null}::text, wr.workresultdefaultvalue)
-        FROM
-            public.workinstance AS wi,
-            public.workresult AS wr
+  const result = await match(type)
+    .with(
+      "workresult",
+      () => sql`
+        UPDATE public.workresult
+        SET
+            workresultdefaultvalue = ${value ?? null},
+            workresultmodifieddate = now()
         WHERE
-            wi.id = ${id}
-            AND wr.id = ${suffix[0]}
-      )
-      ON CONFLICT (workresultinstanceworkresultid, workresultinstanceworkinstanceid)
-      DO UPDATE
-          SET
-              workresultinstancevalue = EXCLUDED.workresultinstancevalue,
-              workresultinstancemodifieddate = now()
+            id = ${id}
+            AND workresultdefaultvalue IS DISTINCT FROM ${value ?? null}
+      `,
+    )
+    .with("workresultinstance", () => {
+      if (!suffix?.length) {
+        console.warn(
+          "Invalid global id for underlying type 'workresultinstance'. Expected it to be of the form `workresultinstance:<workinstanceid>:<workresultid>`, but no <workresultid> was found.",
+        );
+        throw "invariant violated";
+      }
+      return sql`
+        INSERT INTO public.workresultinstance AS wri (
+            workresultinstancecustomerid,
+            workresultinstanceworkresultid,
+            workresultinstanceworkinstanceid,
+            workresultinstancevalue
+        )
+        (
+          SELECT
+              wr.workresultcustomerid,
+              wr.workresultid,
+              wi.workinstanceid,
+              COALESCE(${value ?? null}::text, wr.workresultdefaultvalue)
+          FROM
+              public.workinstance AS wi,
+              public.workresult AS wr
           WHERE
-              wri.workresultinstancevalue IS DISTINCT FROM EXCLUDED.workresultinstancevalue
-      RETURNING 1
-  `;
+              wi.id = ${id}
+              AND wr.id = ${suffix[0]}
+        )
+        ON CONFLICT (workresultinstanceworkresultid, workresultinstanceworkinstanceid)
+        DO UPDATE
+            SET
+                workresultinstancevalue = EXCLUDED.workresultinstancevalue,
+                workresultinstancemodifieddate = now()
+            WHERE
+                wri.workresultinstancevalue IS DISTINCT FROM EXCLUDED.workresultinstancevalue
+      `;
+    })
+    .exhaustive();
+
+  // Note that this is a no-op if the values are identical.
 
   console.log(
-    `Applied ${result.count} update(s) to Entity ${entity} (${type}:${id}:${suffix.join(":")})`,
+    `Applied ${result.count} update(s) to Entity ${entity} (${type}:${id}${suffix ? `:${suffix.join(":")}` : ""})`,
   );
 
   return {
