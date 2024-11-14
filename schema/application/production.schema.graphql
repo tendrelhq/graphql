@@ -1,0 +1,86 @@
+interface Production {
+  id: ID!
+  chainId: ID!
+  worker: ProductionWorker!
+  location: ProductionLocation!
+  timeline: Timeline!
+  override: Override
+  displayTime: DisplayTime!
+  duration: Int!
+  note: String
+}
+
+type ProductionWorker {
+  id: ID!
+  name: String!
+}
+
+type WorkableLocation implements ProductionLocation {
+  id: ID!
+  name: String!
+  activeProduction: [ActiveProduction]!
+}
+
+union ActiveProduction = ProductionRecord | DowntimeRecord
+
+interface ProductionLocation {
+  id: ID!
+  name: String!
+}
+
+type Timeline {
+  start: Temporal
+  end: Temporal
+}
+
+type Override {
+  start: String
+  end: String
+}
+
+type DisplayTime {
+  start: String
+  end: String
+}
+
+type ProductionRecord implements Production {
+  id: ID!
+  chainId: ID!
+  worker: ProductionWorker!
+  location: ProductionLocation!
+  timeline: Timeline!
+  override: Override
+  displayTime: DisplayTime!
+  duration: Int!
+  note: String
+  uptime: Int!
+  downtime: DowntimeDetails
+}
+
+type DowntimeDetails {
+  unplanned: Int
+  planned: Int
+  events: [DowntimeEvent]!
+}
+
+type DowntimeEvent {
+  id: ID!
+}
+
+type DowntimeRecord implements Production {
+  id: ID!
+  chainId: ID!
+  worker: ProductionWorker!
+  location: ProductionLocation!
+  timeline: Timeline!
+  override: Override
+  displayTime: DisplayTime!
+  duration: Int!
+  note: String
+  type: DowntimeType!
+}
+
+enum DowntimeType {
+  PLANNED
+  UNPLANNED
+}

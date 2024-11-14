@@ -41,6 +41,8 @@ input ActiveInput {
   updatedAt: TemporalInput
 }
 
+union ActiveProduction = DowntimeRecord | ProductionRecord
+
 enum ApplicationType {
   Checklist
 }
@@ -553,6 +555,39 @@ input DisplayNameInput {
   value: DynamicStringInput!
 }
 
+type DisplayTime {
+  end: String
+  start: String
+}
+
+type DowntimeDetails {
+  events: [DowntimeEvent]!
+  planned: Int
+  unplanned: Int
+}
+
+type DowntimeEvent {
+  id: ID!
+}
+
+type DowntimeRecord implements Production {
+  chainId: ID!
+  displayTime: DisplayTime!
+  duration: Int!
+  id: ID!
+  location: ProductionLocation!
+  note: String
+  override: Override
+  timeline: Timeline!
+  type: DowntimeType!
+  worker: ProductionWorker!
+}
+
+enum DowntimeType {
+  PLANNED
+  UNPLANNED
+}
+
 scalar Duration
 
 """
@@ -926,11 +961,52 @@ type OrganizationEdge {
   node: Organization!
 }
 
+type Override {
+  end: String
+  start: String
+}
+
 type PageInfo {
   endCursor: String
   hasNextPage: Boolean!
   hasPreviousPage: Boolean!
   startCursor: String
+}
+
+interface Production {
+  chainId: ID!
+  displayTime: DisplayTime!
+  duration: Int!
+  id: ID!
+  location: ProductionLocation!
+  note: String
+  override: Override
+  timeline: Timeline!
+  worker: ProductionWorker!
+}
+
+interface ProductionLocation {
+  id: ID!
+  name: String!
+}
+
+type ProductionRecord implements Production {
+  chainId: ID!
+  displayTime: DisplayTime!
+  downtime: DowntimeDetails
+  duration: Int!
+  id: ID!
+  location: ProductionLocation!
+  note: String
+  override: Override
+  timeline: Timeline!
+  uptime: Int!
+  worker: ProductionWorker!
+}
+
+type ProductionWorker {
+  id: ID!
+  name: String!
 }
 
 type Query {
@@ -1215,6 +1291,11 @@ enum TimeZoneNameOptions {
   never
 }
 
+type Timeline {
+  end: Temporal
+  start: Temporal
+}
+
 scalar URL
 
 type UnassignmentPayload {
@@ -1317,6 +1398,12 @@ input WidgetInput @oneOf {
   sentiment: SentimentWidgetInput
   string: StringWidgetInput
   temporal: TemporalWidgetInput
+}
+
+type WorkableLocation implements ProductionLocation {
+  activeProduction: [ActiveProduction]!
+  id: ID!
+  name: String!
 }
 
 type Worker implements Assignable & Component & Identity & Referenceable {
