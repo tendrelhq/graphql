@@ -78,10 +78,6 @@ app.use(
   }),
 );
 
-app.post("/upload", (req, res) => {
-  res.send("ok");
-});
-
 const port = Number(process.env.PORT ?? 4000);
 await new Promise<void>(resolve => httpServer.listen({ port }, resolve));
 
