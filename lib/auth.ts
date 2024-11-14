@@ -1,6 +1,6 @@
 import { decodeGlobalId } from "@/schema/system";
 import {
-  ClerkExpressWithAuth,
+  ClerkExpressRequireAuth,
   type StrictAuthProp,
 } from "@clerk/clerk-sdk-node";
 import type e from "express";
@@ -24,7 +24,6 @@ export default {
     //
     // tl;dr if you set the 'x-tendrel-user' header to a Clerk user id, we will
     // use that as the authenticated identity
-    const clerkMiddleware = ClerkExpressWithAuth();
     return async (req: e.Request, res: e.Response, next: e.NextFunction) => {
       if (process.env.NODE_ENV === "development") {
         const userId = req.headers["x-tendrel-user"];
@@ -38,7 +37,7 @@ export default {
         }
       }
 
-      clerkMiddleware(req, res, next);
+      ClerkExpressRequireAuth()(req, res, next);
     };
   },
 };
