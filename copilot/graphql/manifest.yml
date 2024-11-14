@@ -70,6 +70,7 @@ environments:
       DB_NAME:
         secretsmanager: "/database/service/graphql:dbname::"
     variables:
+      ATTACHMENT_BUCKET: test-lambdastack-photostoragebucketcc7aea4f-1cnysolqfj44u
       LOG_LEVEL: debug
   beta:
     nlb:
@@ -85,3 +86,5 @@ environments:
         secretsmanager: "/database/service/graphql:port::"
       DB_NAME:
         secretsmanager: "/database/service/graphql:dbname::"
+    variables:
+      ATTACHMENT_BUCKET: beta-lambdastack-photostoragebucketcc7aea4f-1ang3xq3j0cqv

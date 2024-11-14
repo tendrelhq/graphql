@@ -5,6 +5,7 @@ import auth from "@/auth";
 import { orm } from "@/datasources/postgres";
 import i18n from "@/i18n";
 import { type Context, resolvers, typeDefs } from "@/schema";
+import upload from "@/upload";
 import { ApolloServer } from "@apollo/server";
 import { expressMiddleware } from "@apollo/server/express4";
 import { ApolloServerPluginDrainHttpServer } from "@apollo/server/plugin/drainHttpServer";
@@ -36,22 +37,23 @@ app.use(
   morgan(
     ":date[iso] :method :url :status :res[content-length] - :response-time ms",
   ),
+  cors({
+    // for w3c trace context propagation
+    allowedHeaders: "*",
+  }),
 );
 
 app.use((req, _, next) => {
   if (process.env.DEBUG_HEADERS) {
     console.log(JSON.stringify(req.headers, null, 2));
   }
-
   next();
 });
 
+app.post("/upload", auth.clerk(), express.json(), upload.POST);
+
 app.use(
   "/",
-  cors({
-    // for w3c trace context propagation
-    allowedHeaders: "*",
-  }),
   auth.clerk(),
   i18n.accept(),
   express.json(),
