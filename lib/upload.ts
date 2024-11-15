@@ -15,7 +15,7 @@ const s3 = new S3Client();
 const POST: express.RequestHandler = async (
   req: express.Request,
   res: express.Response,
-) => {
+): Promise<express.Response> => {
   const { filename, mimetype, size } = parser.parse(req.body);
   console.log(
     `Requesting presigned upload url for ${filename} (${mimetype} ${size}B)`,
@@ -27,7 +27,7 @@ const POST: express.RequestHandler = async (
   console.log(`Presigning upload url for s3://${Bucket}/${Key}`);
 
   const url = await getSignedUrl(s3, command);
-  res.json({ uri: `s3://${Bucket}/${Key}`, url: url });
+  return res.json({ uri: `s3://${Bucket}/${Key}`, url: url });
 };
 
 export default { POST };
