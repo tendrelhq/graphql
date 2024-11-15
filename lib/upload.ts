@@ -12,22 +12,30 @@ const parser = z.object({
 
 const s3 = new S3Client();
 
-const POST: express.RequestHandler = async (
-  req: express.Request,
-  res: express.Response,
-) => {
-  const { filename, mimetype, size } = parser.parse(req.body);
+const POST: express.RequestHandler = async (req, res, next) => {
+  const input = parser.try(req.body);
+  if (input instanceof z.ValidationError) {
+    // @ts-ignore
+    input.statusCode = 400;
+    return next(input);
+  }
+
+  const { filename, mimetype, size } = input;
   console.log(
     `Requesting presigned upload url for ${filename} (${mimetype} ${size}B)`,
   );
 
-  const Bucket = process.env.ATTACHMENT_BUCKET as string;
-  const Key = `${randomUUID()}/${filename}`;
-  const command = new PutObjectCommand({ Bucket, Key });
-  console.log(`Presigning upload url for s3://${Bucket}/${Key}`);
-
-  const url = await getSignedUrl(s3, command);
-  res.json({ uri: `s3://${Bucket}/${Key}`, url: url });
+  try {
+    const Bucket = process.env.ATTACHMENT_BUCKET as string;
+    const Key = `${randomUUID()}/${filename}`;
+    const command = new PutObjectCommand({ Bucket, Key });
+    console.log(`Presigning upload url for s3://${Bucket}/${Key}`);
+    const url = await getSignedUrl(s3, command);
+    res.json({ uri: `s3://${Bucket}/${Key}`, url: url });
+  } catch (e) {
+    console.error("Error while generating presigned url", e);
+    return next(e);
+  }
 };
 
 export default { POST };

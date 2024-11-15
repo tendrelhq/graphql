@@ -17,14 +17,14 @@ export type Auth = StrictAuthProp["auth"];
 export default {
   clerk() {
     // In development it is nice to be able to use graphiql to help write your
-    // queries. The tendrel console explorer is pretty janky but one day this
-    // won't be necessary. Until then we'll add in this little backdoor.
-    // Note that this won't work (easily) once Clerk organizations and roles
-    // enter the fold.
+    // queries. The default `devenv` will spin up a ruru[^1] graphiql endpoint
+    // that you can use from your browser: http://localhost:1337.
+    //
+    // [^1]: https://github.com/graphile/crystal/tree/main/grafast/ruru
     //
     // tl;dr if you set the 'x-tendrel-user' header to a Clerk user id, we will
     // use that as the authenticated identity
-    return async (req: e.Request, res: e.Response, next: e.NextFunction) => {
+    return (req: e.Request, res: e.Response, next: e.NextFunction) => {
       if (process.env.NODE_ENV === "development") {
         const userId = req.headers["x-tendrel-user"];
         console.log(`Backdoor hack engaged? ${userId}`);
@@ -37,7 +37,14 @@ export default {
         }
       }
 
-      ClerkExpressRequireAuth()(req, res, next);
+      ClerkExpressRequireAuth()(req, res, err => {
+        if (err instanceof Error) {
+          // @ts-ignore
+          err.statusCode = 401;
+        }
+
+        next(err);
+      });
     };
   },
 };
