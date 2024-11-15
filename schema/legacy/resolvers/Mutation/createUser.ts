@@ -1,5 +1,5 @@
 import { sql } from "@/datasources/postgres";
-import type { Context, CreateUserInput, MutationResolvers } from "@/schema";
+import type { MutationResolvers } from "@/schema";
 import { GraphQLError } from "graphql";
 
 export const createUser: NonNullable<MutationResolvers["createUser"]> = async (
@@ -7,11 +7,7 @@ export const createUser: NonNullable<MutationResolvers["createUser"]> = async (
   { input },
   ctx,
 ) => {
-  return await createUserHelper(input, ctx);
-};
-
-export async function createUserHelper(input: CreateUserInput, ctx: Context) {
-  const [user] = await sql<[{ id: string }?]>`
+  await sql`
       INSERT INTO public.worker (
           workeridentityid,
           workerusername,
@@ -44,13 +40,18 @@ export async function createUserHelper(input: CreateUserInput, ctx: Context) {
               WHERE systagid = 915
           )
       )
-      ON CONFLICT (workerusername) DO NOTHING
-      RETURNING workeruuid AS id;
+      ON CONFLICT DO NOTHING
   `;
 
-  if (!user) {
-    // This implies ON CONFLICT DO NOTHING hit, meaning a user already exists
-    // for the given username.
+  // If ON CONFLICT DO NOTHING hit, and it happened for some unique constraint
+  // other than workeridentityid, this will throw a NOT_FOUND error:
+  try {
+    return await ctx.orm.user.byIdentityId.load(input.identityId);
+  } catch (e) {
+    // ON CONFLICT DO NOTHING hit for a constraint violation other than
+    // workeridentityid.
+    //
+    // workerusername is the only other unique constraint that _could_ hit:
     throw new GraphQLError(
       "That username already exists. Please try another.",
       {
@@ -60,6 +61,4 @@ export async function createUserHelper(input: CreateUserInput, ctx: Context) {
       },
     );
   }
-
-  return ctx.orm.user.byId.load(user.id);
-}
+};
