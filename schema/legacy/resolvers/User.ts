@@ -43,6 +43,10 @@ export const User: UserResolvers = {
                   customerconfigcustomeruuid = customeruuid
                   AND
                   systagtype IN ${sql(withApp)}
+                  AND
+                  customerconfigvalue = 'true'
+                  AND
+                  customerconfigenddate is null
           )`
               : sql``
           }
