@@ -41,8 +41,6 @@ input ActiveInput {
   updatedAt: TemporalInput
 }
 
-union ActiveProduction = DowntimeRecord | ProductionRecord
-
 enum ApplicationType {
   Checklist
 }
@@ -555,32 +553,14 @@ input DisplayNameInput {
   value: DynamicStringInput!
 }
 
-type DisplayTime {
-  end: String
-  start: String
-}
-
-type DowntimeDetails {
-  events: [DowntimeEvent]!
-  planned: Int
-  unplanned: Int
-}
-
-type DowntimeEvent {
-  id: ID!
-}
-
-type DowntimeRecord implements Production {
+type Downtime implements ProductionRecord {
   chainId: ID!
-  displayTime: DisplayTime!
-  duration: Int!
+  duration: Int
   id: ID!
-  location: ProductionLocation!
   note: String
-  override: Override
+  parent: ProductionEntity!
   timeline: Timeline!
-  type: DowntimeType!
-  worker: ProductionWorker!
+  type: DowntimeType
 }
 
 enum DowntimeType {
@@ -961,11 +941,6 @@ type OrganizationEdge {
   node: Organization!
 }
 
-type Override {
-  end: String
-  start: String
-}
-
 type PageInfo {
   endCursor: String
   hasNextPage: Boolean!
@@ -973,40 +948,36 @@ type PageInfo {
   startCursor: String
 }
 
-interface Production {
+type Production implements ProductionRecord {
   chainId: ID!
-  displayTime: DisplayTime!
-  duration: Int!
+  duration: Int
   id: ID!
-  location: ProductionLocation!
   note: String
-  override: Override
+  output: Int
+  parent: ProductionEntity!
   timeline: Timeline!
-  worker: ProductionWorker!
 }
 
-interface ProductionLocation {
+union ProductionActivity = Downtime | Production
+
+interface ProductionEntity {
   id: ID!
   name: String!
 }
 
-type ProductionRecord implements Production {
-  chainId: ID!
-  displayTime: DisplayTime!
-  downtime: DowntimeDetails
-  duration: Int!
-  id: ID!
-  location: ProductionLocation!
-  note: String
-  override: Override
-  timeline: Timeline!
-  uptime: Int!
-  worker: ProductionWorker!
-}
-
-type ProductionWorker {
+type ProductionLine implements ProductionEntity {
+  activity: [ProductionActivity!]
   id: ID!
   name: String!
+}
+
+interface ProductionRecord {
+  chainId: ID!
+  duration: Int
+  id: ID!
+  note: String
+  parent: ProductionEntity!
+  timeline: Timeline!
 }
 
 type Query {
@@ -1292,8 +1263,14 @@ enum TimeZoneNameOptions {
 }
 
 type Timeline {
-  end: Temporal
-  start: Temporal
+  end: Timestamp
+  start: Timestamp!
+}
+
+type Timestamp {
+  by: Worker
+  overriddenFrom: Temporal
+  value: Temporal!
 }
 
 scalar URL
@@ -1398,12 +1375,6 @@ input WidgetInput @oneOf {
   sentiment: SentimentWidgetInput
   string: StringWidgetInput
   temporal: TemporalWidgetInput
-}
-
-type WorkableLocation implements ProductionLocation {
-  activeProduction: [ActiveProduction]!
-  id: ID!
-  name: String!
 }
 
 type Worker implements Assignable & Component & Identity & Referenceable {

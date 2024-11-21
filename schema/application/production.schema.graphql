@@ -1,84 +1,55 @@
-interface Production {
+interface ProductionEntity {
+  id: ID!
+  name: String!
+}
+
+type ProductionLine implements ProductionEntity {
+  id: ID!
+  name: String!
+  activity: [ProductionActivity!]
+}
+
+interface ProductionRecord {
   id: ID!
   chainId: ID!
-  worker: ProductionWorker!
-  location: ProductionLocation!
+  parent: ProductionEntity!
   timeline: Timeline!
-  override: Override
-  displayTime: DisplayTime!
-  duration: Int!
+  duration: Int
   note: String
-}
-
-type ProductionWorker {
-  id: ID!
-  name: String!
-}
-
-type WorkableLocation implements ProductionLocation {
-  id: ID!
-  name: String!
-  activeProduction: [ActiveProduction]!
-}
-
-union ActiveProduction = ProductionRecord | DowntimeRecord
-
-interface ProductionLocation {
-  id: ID!
-  name: String!
 }
 
 type Timeline {
-  start: Temporal
-  end: Temporal
+  start: Timestamp!
+  end: Timestamp
 }
 
-type Override {
-  start: String
-  end: String
+type Timestamp {
+  value: Temporal!
+  overriddenFrom: Temporal
+  by: Worker
 }
 
-type DisplayTime {
-  start: String
-  end: String
-}
-
-type ProductionRecord implements Production {
+type Production implements ProductionRecord {
   id: ID!
   chainId: ID!
-  worker: ProductionWorker!
-  location: ProductionLocation!
+  parent: ProductionEntity!
   timeline: Timeline!
-  override: Override
-  displayTime: DisplayTime!
-  duration: Int!
+  duration: Int
   note: String
-  uptime: Int!
-  downtime: DowntimeDetails
+  output: Int
 }
 
-type DowntimeDetails {
-  unplanned: Int
-  planned: Int
-  events: [DowntimeEvent]!
-}
-
-type DowntimeEvent {
-  id: ID!
-}
-
-type DowntimeRecord implements Production {
+type Downtime implements ProductionRecord {
   id: ID!
   chainId: ID!
-  worker: ProductionWorker!
-  location: ProductionLocation!
+  parent: ProductionEntity!
   timeline: Timeline!
-  override: Override
-  displayTime: DisplayTime!
-  duration: Int!
+  duration: Int
   note: String
-  type: DowntimeType!
+  type: DowntimeType
 }
+
+union ProductionActivity = Production | Downtime
 
 enum DowntimeType {
   PLANNED
