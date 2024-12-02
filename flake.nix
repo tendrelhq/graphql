@@ -3,11 +3,6 @@
     devenv = {
       url = "github:cachix/devenv";
       inputs.nixpkgs.follows = "nixpkgs";
-      inputs.pre-commit-hooks.follows = "git-hooks";
-    };
-    git-hooks = {
-      url = "github:cachix/git-hooks.nix";
-      inputs.nixpkgs.follows = "nixpkgs";
     };
     nixpkgs.url = "github:nixos/nixpkgs/nixpkgs-unstable";
     treefmt = {
@@ -39,77 +34,69 @@
         self',
         ...
       }: {
-        devenv.shells.default = let
-          cfg = config.devenv.shells.default;
-        in {
+        devShells.ci = pkgs.mkShellNoCC {
+          name = "tendrel-graphql/ci";
+          buildInputs = [pkgs.bun config.packages.treefmt];
+          # Environment variables:
+          TREEFMT = "treefmt";
+        };
+        devenv.shells.default = {
           name = "tendrel-graphql";
           containers = lib.mkForce {};
           env = {
             BIOME_BINARY = lib.getExe config.packages.biome;
-            DATABASE_URL = "postgresql://localhost:5432/postgres";
+            # TODO: switch to dev, but I need to get a self contained test
+            # environment up and running first :/
+            PGDATABASE = "postgres";
+            # Janky af I know, but an easy way to silently fail successfully
+            TREEFMT = "treefmt";
           };
-          packages = with pkgs; [
+          packages = with pkgs;
+          with config.packages; [
             act
             awscli2
             biome
             bun
+            copilot-cli
             just
             nodejs # required by biome's entrypoint
-            cfg.services.postgres.package
-            config.treefmt.build.wrapper
-            (stdenv.mkDerivation rec {
-              pname = "copilot-cli";
-              version = "1.33.3";
-              src = fetchurl {
-                url = "https://github.com/aws/copilot-cli/releases/download/v${version}/copilot-linux";
-                hash = "sha256-Igr6JQzy6C2F8tzAZwaCw3Gnkny+LtFogyvaZ8eKDhA=";
-              };
-              sourceRoot = ".";
-              nativeBuildInputs = [autoPatchelfHook];
-              dontUnpack = true;
-              dontBuild = true;
-              installPhase = ''
-                runHook preInstall
-                install -D -m755 $src $out/bin/copilot
-                runHook postInstall
-              '';
-            })
+            perlPackages.TAPParserSourceHandlerpgTAP # pg_prove
+            python3.pkgs.sqlfmt
+            postgres
+            sqitchPg
+            squawk
+            treefmt
+            vtsls
           ];
           pre-commit.hooks.treefmt = {
             enable = true;
-            package = config.treefmt.build.wrapper;
+            package = config.packages.treefmt;
           };
           processes = {
-            app.exec = "bun dev";
-            ruru.exec = "bun explore";
+            app.exec = "bun --inspect ./bin/app.ts";
+            iql.exec = "bunx ruru@beta -Pe http://localhost:4000";
+            pgweb.exec = lib.getExe pkgs.pgweb;
           };
           services.postgres = {
             enable = true;
             extensions = exts:
-              with exts; [
+              with exts;
+              with config.packages; [
                 pg_cron
+                pgddl
                 pgtap
                 plpgsql_check
-                (pkgs.stdenv.mkDerivation rec {
-                  name = "pg_ddl";
-                  version = "0.27";
-                  src = pkgs.fetchFromGitHub {
-                    owner = "lacanoid";
-                    repo = "pgddl";
-                    rev = version;
-                    hash = "sha256-wX2ta+oFib/XzhixIg/BHjliFK3m9Kz+2XBctYCzemE=";
-                  };
-                  buildInputs = with pkgs; [perl cfg.services.postgres.package];
-                  postPatch = ''
-                    patchShebangs .
-                  '';
-                  installPhase = ''
-                    install -D -t $out/share/postgresql/extension *.sql
-                    install -D -t $out/share/postgresql/extension *.control
-                  '';
-                })
               ];
+            initialDatabases = [
+              {
+                name = "dev";
+              }
+            ];
+            initialScript = ''
+              CREATE EXTENSION IF NOT EXISTS ddlx SCHEMA pg_catalog;
+            '';
             listen_addresses = "127.0.0.1";
+            package = config.packages.postgres;
             port = 5432;
             settings = {
               log_statement = "all";
@@ -121,17 +108,17 @@
 
         packages = {
           biome = let
-            pkg = lib.importJSON ./package.json;
+            pkgJSON = lib.importJSON ./package.json;
           in
             pkgs.stdenv.mkDerivation rec {
               pname = "biome";
               version = let
-                v = pkg.devDependencies."@biomejs/biome";
+                v = pkgJSON.devDependencies."@biomejs/biome";
               in "v${lib.strings.removePrefix "^" v}";
 
               src = pkgs.fetchurl {
                 url = "https://github.com/biomejs/biome/releases/download/cli%2F${version}/biome-linux-x64";
-                hash = "sha256-VJXy9p7dlOnybtGtue2AI9fBQ8PMbydfkKvd7WEiF+Q=";
+                hash = "sha256-ziR/tkSZnvUuURHdb9bkcQGWafycSkS1aZch45twMsM=";
               };
 
               nativeBuildInputs = [pkgs.autoPatchelfHook];
@@ -144,6 +131,46 @@
 
               meta.mainProgram = "biome";
             };
+
+          copilot-cli = pkgs.stdenv.mkDerivation rec {
+            pname = "copilot-cli";
+            version = "1.33.3";
+            src = pkgs.fetchurl {
+              url = "https://github.com/aws/copilot-cli/releases/download/v${version}/copilot-linux";
+              hash = "sha256-Igr6JQzy6C2F8tzAZwaCw3Gnkny+LtFogyvaZ8eKDhA=";
+            };
+            sourceRoot = ".";
+            nativeBuildInputs = with pkgs; [autoPatchelfHook];
+            dontUnpack = true;
+            dontBuild = true;
+            installPhase = ''
+              runHook preInstall
+              install -D -m755 $src $out/bin/copilot
+              runHook postInstall
+            '';
+          };
+
+          pgddl = pkgs.stdenv.mkDerivation rec {
+            name = "pgddl";
+            version = "0.28";
+            src = pkgs.fetchFromGitHub {
+              owner = "lacanoid";
+              repo = name;
+              rev = version;
+              hash = "sha256-SWAdb2hZusDGLtB240MH15XbUm2LI/Z335TZjZIjw/s=";
+            };
+            buildInputs = with pkgs; [perl config.packages.postgres];
+            postPatch = ''
+              patchShebangs .
+            '';
+            installPhase = ''
+              install -D -t $out/share/postgresql/extension *.sql
+              install -D -t $out/share/postgresql/extension *.control
+            '';
+          };
+
+          postgres = pkgs.postgresql_16;
+          treefmt = config.treefmt.build.wrapper;
         };
 
         treefmt.config = {
@@ -153,11 +180,34 @@
             biome = {
               enable = true;
               package = config.packages.biome;
+              includes = ["*.graphql" "*.json" "*.ts"];
             };
             prettier = {
               enable = true;
-              includes = ["*.graphql" "*.md" "*.yaml" "*.yml"];
+              includes = ["*.md" "*.yaml" "*.yml"];
             };
+          };
+          settings = {
+            formatter = {
+              biome.options = lib.mkForce ["check" "--write"];
+              sqlfmt = {
+                command = lib.getExe pkgs.python3.pkgs.sqlfmt;
+                options = ["-"];
+                includes = ["*.sql"];
+              };
+            };
+            global.excludes = [
+              "*.conf"
+              "*.lockb"
+              "*.plan"
+              "*.snap"
+              "*.toml"
+              ".*" # hidden files
+              "copilot/.workspace"
+              "Dockerfile"
+              "justfile"
+              "sql/manual-deploy.sql"
+            ];
           };
         };
       };

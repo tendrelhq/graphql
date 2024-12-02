@@ -1,6 +1,7 @@
 import type { SortOrder } from "@/schema";
 import { type GlobalId, decodeGlobalId } from "@/schema/system";
 import { GraphQLError } from "graphql";
+import type { Fragment } from "postgres";
 import { sql } from "./datasources/postgres";
 
 export function isError<T>(e: T | Error): e is Error {
@@ -13,6 +14,55 @@ export function isValue<T>(v: T | Error): v is T {
 
 export function nullish<T>(t: T | null | undefined): t is null | undefined {
   return typeof t === "undefined" || t === null;
+}
+
+export class AssertionError extends Error {}
+
+/**
+ * Raises an assertion error when the condition does not hold, except in
+ * production (and when DISABLE_ASSERTIONS is set) in which case we just log a
+ * message instead of throwing.
+ */
+export function assert(condition: boolean, message = "assertion failed") {
+  if (!condition) {
+    if (
+      // Only fire assertions when in dev/test environments,
+      // and only when DISABLE_ASSERTIONS is unset.
+      process.env.NODE_ENV !== "production" &&
+      typeof process.env.DISABLE_ASSERTIONS === "undefined"
+    ) {
+      throw new AssertionError(message);
+    }
+
+    // Else just log a warning. We don't want to wholly lose our assertions.
+    console.debug(`invariant violated: ${message}`);
+  }
+}
+
+export function assertNonNull<T>(
+  value: T | null | undefined,
+  message = "Cannot return null for semantically non-nullable field.",
+): T {
+  if (nullish(value)) {
+    throw new Error(message);
+  }
+  return value;
+}
+
+export function assertUnderlyingType(
+  expected: string | string[],
+  received: string,
+) {
+  const valid =
+    typeof expected === "string"
+      ? expected === received
+      : expected.some(e => e === received);
+  if (!valid) {
+    throw new Error(
+      `Invalid typename; expected: ${expected}, received: ${received}`,
+    );
+  }
+  return received;
 }
 
 export type WithKey<T> = T & { _key: string };

@@ -1,11 +1,8 @@
-import { afterAll, describe, expect, test } from "bun:test";
-import { resolvers, typeDefs } from "@/schema";
+import { describe, expect, test } from "bun:test";
+import { schema } from "@/schema/final";
 import { encodeGlobalId } from "@/schema/system";
-import { execute, testGlobalId } from "@/test/prelude";
-import { makeExecutableSchema } from "@graphql-tools/schema";
+import { execute } from "@/test/prelude";
 import { TestAttachDocument } from "./attach.test.generated";
-
-const schema = makeExecutableSchema({ resolvers, typeDefs });
 
 process.env.X_TENDREL_USER = "user_2iADtxE5UonU4KO5lphsG59bkR9";
 

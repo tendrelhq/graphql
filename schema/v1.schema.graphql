@@ -1,0 +1,501 @@
+"""
+Indicates that a position is semantically non null: it is only null if there is a matching error in the `errors` array.
+In all other cases, the position is non-null.
+
+Tools doing code generation may use this information to generate the position as non-null if field errors are handled out of band:
+
+```graphql
+type User {
+    # email is semantically non-null and can be generated as non-null by error-handling clients.
+    email: String @semanticNonNull
+}
+```
+
+The `levels` argument indicates what levels are semantically non null in case of lists:
+
+```graphql
+type User {
+    # friends is semantically non null
+    friends: [User] @semanticNonNull # same as @semanticNonNull(levels: [0])
+
+    # every friends[k] is semantically non null
+    friends: [User] @semanticNonNull(levels: [1])
+
+    # friends as well as every friends[k] is semantically non null
+    friends: [User] @semanticNonNull(levels: [0, 1])
+}
+```
+
+`levels` are zero indexed.
+Passing a negative level or a level greater than the list dimension is an error.
+"""
+directive @semanticNonNull(levels: [Int] = [0]) on FIELD_DEFINITION
+
+"""
+A language tag in the format of a BCP 47 (RFC 5646) standard string.
+"""
+scalar Locale @specifiedBy(url: "https://www.rfc-editor.org/rfc/rfc5646.html")
+
+"""
+A date-time string in ISO 8601 format.
+"""
+scalar Timestamp
+  @specifiedBy(url: "https://www.rfc-editor.org/rfc/rfc3339.html#section-5.6")
+
+enum ValueType {
+  boolean
+  entity
+  number
+  string
+  timestamp
+  unknown
+}
+
+union TaskState = Closed | InProgress | Open
+
+union Value =
+  | BooleanValue
+  | EntityValue
+  | NumberValue
+  | StringValue
+  | TimestampValue
+
+"""
+Identifies an Entity as being assignable to another Entity.
+"""
+interface Assignable implements Component {
+  id: ID!
+}
+
+"""
+Components characterize Entities as possessing a particular trait.
+They are just simple structs, holding all data necessary to model that trait.
+"""
+interface Component {
+  id: ID!
+}
+
+"""
+Indicates an object that is "refetchable".
+"""
+interface Node {
+  """
+  A globally unique opaque identifier for a node.
+  """
+  id: ID!
+}
+
+"""
+Identifies an Entity as being "trackable".
+What exactly this means depends on the type underlying said entity and is
+entirely user defined.
+"""
+interface Trackable implements Component {
+  id: ID!
+  """
+  Entrypoint into the "tracking system(s)" for a given Entity. Note that while
+  many types admit to being trackable, this does not mean that all in fact are
+  in practice. In order for an Entity to be trackable, it must be explicitly
+  configured as such.
+  """
+  tracking: TrackableConnection
+}
+
+input AssignmentInput {
+  assignedTo: ID!
+}
+
+input CreateLocationInput {
+  category: String!
+  name: String!
+  parent: ID!
+  scanCode: String
+  timeZone: String!
+}
+
+input DynamicStringInput {
+  locale: Locale!
+  value: String!
+}
+
+input FieldInput {
+  field: ID!
+  value: ValueInput
+  """
+  Must match the type of the `value`, e.g.:
+  ```typescript
+  if (field.valueType === "string") {
+    assert("string" in field.value);
+  }
+  ```
+  """
+  valueType: ValueType!
+}
+
+input FsmOptions {
+  """
+  The unique identifier of the FSM on which you are operating. Wherever you
+  access the `fsm` field of a `Task`, that task's id should go here.
+  """
+  fsm: ID!
+  """
+  [object Object],[object Object],[object Object]
+  """
+  task: TaskInput!
+}
+
+input TaskInput {
+  id: ID!
+  overrides: [FieldInput!]
+}
+
+input ValueInput @oneOf {
+  boolean: Boolean
+  id: ID
+  number: Int
+  string: String
+  """
+  Date in either ISO or epoch millisecond format.
+  """
+  timestamp: String
+}
+
+type Aggregate {
+  """
+  The group, or bucket, that uniquely identifies this aggregate.
+  For example, this will be one of the `groupByTag`s passed to `trackingAgg`.
+  """
+  group: String @semanticNonNull
+  """
+  The computed aggregate value.
+
+  Currently, this will always be a string value representing a duration in
+  seconds, e.g. "360" -> 360 seconds. `null` will be returned when no such
+  aggregate can be computed, e.g. "time in planned downtime" when no "planned
+  downtime" events exist.
+  """
+  value: String
+}
+
+"""
+Encapsulates the "who" and "when" associated with the act of "assignment".
+For example, both Tasks and Workers implement Assignable and therefore a Task
+can be assigned to a Worker and vice versa ("assignment" is commutative). In
+this example, the "who" will always be the Worker and the "when" will be the
+timestamp when these two Entities were assigned.
+"""
+type Assignment implements Node {
+  """
+  NOT YET IMPLEMENTED - will always return null!
+  """
+  assignedAt: TimestampOverridable
+  assignedTo: Assignable
+  """
+  A globally unique opaque identifier for a node.
+  """
+  id: ID!
+}
+
+type AssignmentConnection {
+  edges: [AssignmentEdge!] @semanticNonNull
+  pageInfo: PageInfo @semanticNonNull
+  totalCount: Int @semanticNonNull
+}
+
+type AssignmentEdge {
+  cursor: String @semanticNonNull
+  node: Assignment @semanticNonNull
+}
+
+type BooleanValue {
+  boolean: Boolean
+}
+
+type Closed {
+  closedAt: TimestampOverridable @semanticNonNull
+  closedBecause: String
+  closedBy: String
+  inProgressAt: TimestampOverridable
+  inProgressBy: String
+  openedAt: TimestampOverridable @semanticNonNull
+  openedBy: String
+}
+
+type DisplayName implements Component & Node {
+  """
+  A globally unique opaque identifier for a node.
+  """
+  id: ID!
+  name: DynamicString @semanticNonNull
+}
+
+"""
+Plain text content that has been (potentially) translated into different
+languages as specified by the user's configuration.
+"""
+type DynamicString {
+  locale: Locale @semanticNonNull
+  value: String @semanticNonNull
+}
+
+type EntityValue {
+  entity: Component
+}
+
+type Field {
+  """
+  Unique identifier for this Field.
+  """
+  id: ID @semanticNonNull
+  """
+  Display name for a Field.
+  """
+  name: DisplayName @semanticNonNull
+  """
+  The value for this Field, if any. This field will always be present (when
+  requested) for the given Field so as to convey the underlying data type of
+  the (raw data) value. The underlying (raw data) value can be `null`.
+  """
+  value: Value @semanticNonNull
+  """
+  The type of data underlying `value`. This is provided as a convenience when
+  interacting with field-level edits through other apis.
+  """
+  valueType: ValueType @semanticNonNull
+}
+
+type FieldConnection {
+  edges: [FieldEdge!] @semanticNonNull
+  pageInfo: PageInfo @semanticNonNull
+  totalCount: Int @semanticNonNull
+}
+
+type FieldEdge {
+  cursor: String @semanticNonNull
+  node: Field @semanticNonNull
+}
+
+type InProgress {
+  inProgressAt: TimestampOverridable @semanticNonNull
+  inProgressBy: String
+  openedAt: TimestampOverridable @semanticNonNull
+  openedBy: String
+}
+
+type Location implements Component & Node & Trackable {
+  """
+  A globally unique opaque identifier for a node.
+  """
+  id: ID!
+  """
+  IANA time zone identifier for this Location.
+  """
+  timeZone: String @semanticNonNull
+  """
+  Entrypoint into the "tracking system(s)" for the given Location.
+  """
+  tracking: TrackableConnection @semanticNonNull
+}
+
+type Mutation {
+  advance(opts: FsmOptions!): Task @semanticNonNull
+  applyFieldEdits(edits: [FieldInput!]!, entity: ID!): Task @semanticNonNull
+  createLocation(input: CreateLocationInput!): Location @semanticNonNull
+}
+
+type NumberValue {
+  number: Int
+}
+
+type Open {
+  openedAt: TimestampOverridable @semanticNonNull
+  openedBy: String
+}
+
+type PageInfo {
+  endCursor: String
+  hasNextPage: Boolean @semanticNonNull
+  hasPreviousPage: Boolean @semanticNonNull
+  startCursor: String
+}
+
+type Query {
+  node(id: ID!): Node!
+  """
+  Query for Trackable entities in the given `parent` hierarchy.
+
+  Note that this api does not yet support pagination! The `first` argument is
+  used purely for testing at the moment.
+  """
+  trackables(
+    """
+    Forward pagination limit. Should only be used in conjunction with `after`.
+    """
+    first: Int
+    """
+    By default, this api will only return Trackables that are active. This can
+    be overridden using the `includeInactive` flag.
+    """
+    includeInactive: Boolean
+    """
+    Identifies the root of the hierarchy in which to search for Trackable
+    entities.
+
+    Valid parent types are currently:
+    - Customer
+
+    All other parent types will be gracefully ignored.
+    """
+    parent: ID!
+    """
+    Allows filtering the returned set of Trackables by the *implementing* type.
+
+    Currently this is only 'Location' (the default) or 'Task'. Note that
+    specifying the latter will return a connection of trackable Tasks that
+    represent the *chain roots* (i.e. originators). This is for you, Will
+    Twait, so you can get started on the history screen. Note also that it will
+    only give you *closed* chains, i.e. `workinstancecompleteddate is not null`.
+    """
+    withImplementation: String
+  ): TrackableConnection @semanticNonNull
+}
+
+type StringValue {
+  string: String
+}
+
+"""
+A system-level component that identifies an Entity as being applicable to
+tendrel's internal "task processing pipeline". In practice, Tasks most often
+represent "jobs" performed by humans. However, this need not always be the
+case.
+
+Technically speaking, a Task represents a (1) *named asynchronous process*
+that (2) exists in one of three states: open, in progress, or closed.
+"""
+type Task implements Assignable & Component & Node & Trackable {
+  """
+  [object Object],[object Object],[object Object]
+  """
+  assignees: AssignmentConnection
+  """
+  Inspect the chain (if any) in which the given Task exists.
+  As it stands, this can only be used to perform a downwards search of the
+  chain, i.e. the given Task is used as the "root" of the search tree.
+  """
+  chain(
+    """
+    For use in pagination. Specifies the limit for "forward pagination".
+    """
+    first: Int
+  ): TaskConnection @semanticNonNull
+  """
+  Given a Task identifying as a node in a chain, create an aggregate view of
+  said chain over the type tags given in `overType`. The result is a set of
+  aggregates representing the *sum total duration* of nodes tagged with any of
+  the given `overType` tags, *including* the given Task (if it is so tagged).
+
+  Colloquially: `chainAgg(overType: ["Foo", "Bar"])` will compute the total
+  time spent in all "Foo" or "Bar" tasks in the given chain;
+
+  ```json
+  [
+    {
+      "group": "Foo",
+      "value": "26.47", // 26.47 seconds spent doing "Foo" tasks
+    },
+    {
+      "group": "Bar",
+      "value": "5.82", // 5.82 seconds spent doing "Bar" tasks
+    },
+  ]
+  ```
+  """
+  chainAgg(
+    """
+    Which sub-type-hierarchies you are interested in aggregating over.
+    """
+    overType: [String!]!
+  ): [Aggregate!] @semanticNonNull
+  displayName: DisplayName @semanticNonNull
+  """
+  TODO: description.
+  """
+  fields: FieldConnection @semanticNonNull
+  """
+  Tasks can have an associated StateMachine, which defines a finite set of
+  states that the given Task can be in at any given time.
+  """
+  fsm: TaskStateMachine
+  """
+  A globally unique opaque identifier for a node.
+  """
+  id: ID!
+  """
+  Identifies the parent of the current Task.
+
+  This is different from previous. Previous models causality, parent models
+  ownership. In practice, the parent of a Task will always be a Location.
+  Note that currently this only supports workinstances. Tasks whose underlying
+  type is a worktemplate will **always have a null parent**.
+  """
+  parent: Node
+  state: TaskState
+  """
+  Entrypoint into the "tracking system(s)" for the given Task.
+  At the moment, sub-task tracking is not supported and therefore `null` will
+  always be returned for this field.
+  """
+  tracking: TrackableConnection
+}
+
+type TaskConnection {
+  edges: [TaskEdge!] @semanticNonNull
+  pageInfo: PageInfo @semanticNonNull
+  totalCount: Int @semanticNonNull
+}
+
+type TaskEdge {
+  cursor: String @semanticNonNull
+  node: Task @semanticNonNull
+}
+
+"""
+Where applicable, Entities can have an associated StateMachine that defines
+their current ("active") state in addition to possible next states that they
+can "transition into". Typically, an end user does not need to be aware of
+this state machine as Tendrel's internal engine maintains the machine and
+associated states for a given Entity. However, in some cases it can be useful
+to surface this information in userland such that a user can interact
+directly with the underlying state machine.
+"""
+type TaskStateMachine {
+  active: Task
+  transitions: TaskConnection
+}
+
+type TimestampOverridable {
+  override: TimestampOverride
+  value: Timestamp @semanticNonNull
+}
+
+type TimestampOverride {
+  overriddenAt: String
+  overriddenBy: String
+  previousValue: Timestamp @semanticNonNull
+}
+
+type TimestampValue {
+  timestamp: Timestamp
+}
+
+type TrackableConnection {
+  edges: [TrackableEdge!] @semanticNonNull
+  pageInfo: PageInfo @semanticNonNull
+  totalCount: Int @semanticNonNull
+}
+
+type TrackableEdge {
+  cursor: String @semanticNonNull
+  node: Trackable @semanticNonNull
+}

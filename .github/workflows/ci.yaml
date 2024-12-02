@@ -17,20 +17,27 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: oven-sh/setup-bun@v1
-      - run: bun install --frozen-lockfile
-      - uses: cachix/install-nix-action@v26
+      - uses: cachix/install-nix-action@v30
         with:
           github_access_token: ${{ secrets.GITHUB_TOKEN }}
           extra_nix_config: |
             accept-flake-config = true
+      - run: nix develop .#ci --command bun install --frozen-lockfile
+      # This step performs several checks, all of which are configured through
+      # flake.nix. If you are reading this because your GitHub PR workflow
+      # failed, it is almost certainly due to formatting. Formatting is done
+      # with `treefmt` and configured in flake.nix:
+      # - alejandra: nix
+      # - biome: graphql, json, typescript
+      # - prettier: markdown, yaml
+      # - sqlfmt: sql
       - run: nix flake check --impure .
 
   cycle:
-    name: dev cycle
+    name: dev cycle (sans nix)
     runs-on: ubuntu-latest
     steps:
-      - uses: oven-sh/setup-bun@v1
+      - uses: oven-sh/setup-bun@v2
       - uses: actions/setup-node@v4
         with:
           node-version: latest
@@ -48,7 +55,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: docker/setup-buildx-action@v3
-      - uses: docker/build-push-action@v5
+      - uses: docker/build-push-action@v6
         with:
           context: .
           cache-from: type=gha

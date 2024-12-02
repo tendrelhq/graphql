@@ -69,15 +69,7 @@ export const setStatus: NonNullable<MutationResolvers["setStatus"]> = async (
       const updates = {
         workinstancestatusid: sql`inputs.status`,
         workinstancemodifieddate: sql`now()`,
-        workinstancemodifiedby: sql`(
-            select workerinstanceid
-            from public.workerinstance
-            inner join public.worker
-                on workerinstanceworkerid = workerid
-            where
-                workinstancecustomerid = workerinstancecustomerid
-                and workeridentityid = ${ctx.auth.userId}
-        )`,
+        workinstancemodifiedby: sql`auth.current_identity(workinstancecustomerid, ${ctx.auth.userId})`,
         workinstancestartdate: match(targetStatus)
           .with("In Progress", () => targetDate)
           .with("Open", () => sql`NULL`)
@@ -128,7 +120,8 @@ export const setStatus: NonNullable<MutationResolvers["setStatus"]> = async (
                 select
                     wi.workinstancecustomerid as customerid,
                     wi.workinstanceid,
-                    wr.workresultid
+                    wr.workresultid,
+                    auth.current_identity(wi.workinstancecustomerid, ${ctx.auth.userId}) as _modified_by
                 from public.workinstance as wi
                 inner join public.workresult as wr
                     on wi.workinstanceworktemplateid = wr.workresultworktemplateid
@@ -139,19 +132,13 @@ export const setStatus: NonNullable<MutationResolvers["setStatus"]> = async (
             )
 
             update workresultinstance as t
-            set workresultinstancevalue = w.workerinstanceid::text,
+            set workresultinstancevalue = cte._modified_by::text,
                 workresultinstancemodifieddate = now(),
-                workresultinstancemodifiedby = w.workerinstanceid
-            from cte, public.workerinstance as w
+                workresultinstancemodifiedby = cte._modified_by
+            from cte
             where
                 t.workresultinstanceworkinstanceid = cte.workinstanceid
                 and t.workresultinstanceworkresultid = cte.workresultid
-                and w.workerinstancecustomerid = cte.customerid
-                and w.workerinstanceworkerid = (
-                    select workerid
-                    from public.worker
-                    where workeridentityid = ${ctx.auth.userId}
-                )
                 and t.workresultinstancevalue is null
           `;
           console.log(`Auto assign? ${!!result.count}`);
@@ -181,7 +168,7 @@ export const setStatus: NonNullable<MutationResolvers["setStatus"]> = async (
                   extract(epoch from (${targetDate}::timestamptz - coalesce(wi.workinstancestartdate, ${targetDate}::timestamptz))),
                   3
                 )::text,
-                workerinstance.workerinstanceid
+                auth.current_identity(wi.workinstancecustomerid, ${ctx.auth.userId})
             FROM public.workinstance AS wi
             INNER JOIN public.workresult AS wr
                 ON wi.workinstanceworktemplateid = wr.workresultworktemplateid
@@ -189,13 +176,6 @@ export const setStatus: NonNullable<MutationResolvers["setStatus"]> = async (
             INNER JOIN public.systag AS status
                 ON status.systagparentid = 965
                 AND status.systagtype = 'Complete'
-            LEFT JOIN public.workerinstance
-                ON wi.workinstancecustomerid = workerinstance.workerinstancecustomerid
-                AND workerinstance.workerinstanceworkerid = (
-                    SELECT workerid
-                    FROM public.worker
-                    WHERE workeridentityid = ${ctx.auth.userId}
-                )
             WHERE
                 wi.id = ${id}
             ON CONFLICT (workresultinstanceworkresultid, workresultinstanceworkinstanceid)
@@ -227,24 +207,17 @@ export const setStatus: NonNullable<MutationResolvers["setStatus"]> = async (
                 workresultinstancemodifiedby
             )
             select
-                wr.workresultcustomerid,
+                wi.workinstancecustomerid,
                 wr.workresultid,
                 wi.workinstanceid,
                 now(),
                 now(),
                 wr.workresultdefaultvalue,
-                w.workerinstanceid
+                auth.current_identity(wi.workinstancecustomerid, ${ctx.auth.userId})
             from public.workinstance as wi
             inner join public.workresult as wr
                 on wi.workinstanceworktemplateid = wr.workresultworktemplateid
                 and (wr.workresultenddate is null or wr.workresultenddate > now())
-            left join public.workerinstance as w
-                on wi.workinstancecustomerid = w.workerinstancecustomerid
-                and w.workerinstanceworkerid = (
-                    select workerid
-                    from public.worker
-                    where workeridentityid = ${ctx.auth.userId}
-                )
             where wi.id = ${id}
             on conflict do nothing
             ;
@@ -257,16 +230,16 @@ export const setStatus: NonNullable<MutationResolvers["setStatus"]> = async (
         }
 
         if (targetStatus === "In Progress") {
-          // HACK: this is "running the rules engine" for now lmao.
-          await copyFromWorkInstance(tx, id, {
-            // The options are:
-            // (a) create a new branch beneath originator:
-            chain: "branch",
-            // (b) continue the current chain:
-            // chain: "continue",
-            // (c) create an entirely new chain:
-            // chain: undefined,
-          });
+          // This is the "respawn" case: create an entirely new chain of work.
+          await copyFromWorkInstance(
+            tx,
+            id,
+            {
+              // The options are:,
+              chain: undefined,
+            },
+            ctx,
+          );
         }
 
         return r;
@@ -332,23 +305,13 @@ export const setStatus: NonNullable<MutationResolvers["setStatus"]> = async (
               workresultinstancemodifiedby
           )
           SELECT
-              wr.workresultcustomerid,
+              wi.workinstancecustomerid,
               wr.workresultid,
               wi.workinstanceid,
               inputs.status,
               ${targetStatus === "Open" ? sql`NULL` : sql`coalesce(wi.workinstancestartdate, ${targetDate})`},
               ${targetStatus === "Open" ? sql`NULL` : targetDate},
-              (
-                  SELECT workerinstanceid
-                  FROM public.workerinstance
-                  WHERE
-                      workerinstancecustomerid = wi.workinstancecustomerid
-                      AND workerinstanceworkerid = (
-                          SELECT workerid
-                          FROM public.worker
-                          WHERE workeridentityid = ${ctx.auth.userId}
-                      )
-              )
+              auth.current_identity(wi.workinstancecustomerid, ${ctx.auth.userId})
           FROM
               inputs,
               public.workinstance AS wi,

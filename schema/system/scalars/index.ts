@@ -6,8 +6,8 @@ import {
   GraphQLURL,
 } from "graphql-scalars";
 import { CronExpression } from "../resolvers/CronExpression";
-import { Entity } from "../resolvers/Entity";
 import { Duration } from "../resolvers/Duration";
+import { Entity } from "../resolvers/Entity";
 
 export const resolvers: Record<string, GraphQLScalarType> = {
   CronExpression: CronExpression,

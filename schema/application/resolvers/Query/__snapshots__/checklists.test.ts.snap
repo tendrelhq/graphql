@@ -60,7 +60,7 @@ YjA5Njg3"
               "__typename": "ChecklistOpen",
               "openedAt": {
                 "__typename": "ZonedDateTime",
-                "toString": "2024-10-10T13:54:37.193-07:00[America/Los_Angeles]",
+                "toString": "[object Object]",
               },
             },
           },
@@ -84,7 +84,7 @@ MWY0ZTU0"
               "__typename": "ChecklistOpen",
               "openedAt": {
                 "__typename": "ZonedDateTime",
-                "toString": "2024-10-10T13:48:27.994-07:00[America/Los_Angeles]",
+                "toString": "[object Object]",
               },
             },
           },
@@ -134,7 +134,7 @@ YjA5Njg3"
               "__typename": "ChecklistOpen",
               "openedAt": {
                 "__typename": "ZonedDateTime",
-                "toString": "2024-10-10T13:54:37.193-07:00[America/Los_Angeles]",
+                "toString": "[object Object]",
               },
             },
           },

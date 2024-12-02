@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
-import makeAttachmentLoader from "./attachment";
 import { encodeGlobalId } from "@/schema/system";
+import makeAttachmentLoader from "./attachment";
 
 // biome-ignore lint/suspicious/noExplicitAny:
 const makeLoader = () => makeAttachmentLoader({} as any);
