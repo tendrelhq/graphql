@@ -14,9 +14,9 @@ export default (_: Request) =>
           encode(('name:' || n.languagemasteruuid)::bytea, 'base64') AS "nameId",
           encode(('location:' || p.locationuuid)::bytea, 'base64') AS "parentId",
           l.locationscanid AS "scanCode",
-          l.locationradius AS "radius",
-          l.locationlatitude AS "latitude",
-          l.locationlongitude AS "longitude",
+          -- l.locationradius AS "radius",
+          -- l.locationlatitude AS "latitude",
+          -- l.locationlongitude AS "longitude",
           encode(('location:' || s.locationuuid)::bytea, 'base64') AS "siteId",
           l.locationtimezone AS "timeZone"
       FROM public.location AS l

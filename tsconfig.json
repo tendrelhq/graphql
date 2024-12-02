@@ -34,5 +34,12 @@
     // DX
     "pretty": false
   },
-  "exclude": ["node_modules", "out"]
+  "exclude": ["node_modules", "out"],
+  "grats": {
+    "graphqlSchema": "./schema/v1.schema.graphql",
+    "tsSchema": "./schema/v1.schema.ts",
+    "schemaHeader": null,
+    "strictSemanticNullability": true,
+    "tsSchemaHeader": null
+  }
 }

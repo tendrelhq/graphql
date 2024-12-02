@@ -4,7 +4,8 @@ import http from "node:http";
 import auth from "@/auth";
 import { orm } from "@/datasources/postgres";
 import i18n from "@/i18n";
-import { type Context, resolvers, typeDefs } from "@/schema";
+import type { Context } from "@/schema";
+import { schema } from "@/schema/final";
 import upload from "@/upload";
 import { ApolloServer } from "@apollo/server";
 import { expressMiddleware } from "@apollo/server/express4";
@@ -20,8 +21,7 @@ const app = express();
 const httpServer = http.createServer(app);
 
 const server = new ApolloServer<Context>({
-  resolvers,
-  typeDefs,
+  schema,
   introspection: true,
   formatError: (formattedError, error) => {
     console.warn(error);

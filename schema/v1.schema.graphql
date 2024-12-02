@@ -1,0 +1,248 @@
+"""
+Indicates that a position is semantically non null: it is only null if there is a matching error in the `errors` array.
+In all other cases, the position is non-null.
+
+Tools doing code generation may use this information to generate the position as non-null if field errors are handled out of band:
+
+```graphql
+type User {
+    # email is semantically non-null and can be generated as non-null by error-handling clients.
+    email: String @semanticNonNull
+}
+```
+
+The `levels` argument indicates what levels are semantically non null in case of lists:
+
+```graphql
+type User {
+    # friends is semantically non null
+    friends: [User] @semanticNonNull # same as @semanticNonNull(levels: [0])
+
+    # every friends[k] is semantically non null
+    friends: [User] @semanticNonNull(levels: [1])
+
+    # friends as well as every friends[k] is semantically non null
+    friends: [User] @semanticNonNull(levels: [0, 1])
+}
+```
+
+`levels` are zero indexed.
+Passing a negative level or a level greater than the list dimension is an error.
+"""
+directive @semanticNonNull(levels: [Int] = [0]) on FIELD_DEFINITION
+
+"""
+A language tag in the format of a BCP 47 (RFC 5646) standard string.
+"""
+scalar Locale @specifiedBy(url: "https://www.rfc-editor.org/rfc/rfc5646.html")
+
+union TaskState = Closed | InProgress | Open
+
+"""
+Components characterize Entities as possessing a particular trait.
+They are just simple structs, holding all data necessary to model that trait.
+"""
+interface Component {
+  id: ID!
+}
+
+"""
+Indicates an object that is "refetchable".
+"""
+interface Node {
+  """
+  A globally unique opaque identifier for a node.
+  """
+  id: ID!
+}
+
+"""
+Identifies an Entity as being "trackable".
+What exactly this means depends on the type underlying said entity and is
+entirely user defined.
+"""
+interface Trackable implements Component {
+  id: ID!
+  """
+  Entrypoint into the "tracking system(s)" for a given Entity. Note that while
+  many types admit to being trackable, this does not mean that all in fact are
+  in practice. In order for an Entity to be trackable, it must be explicitly
+  configured as such.
+  """
+  tracking: TrackableConnection
+}
+
+input DynamicStringInput {
+  locale: Locale!
+  value: String!
+}
+
+input TransitionInput {
+  into: ID!
+  payload: String
+}
+
+type Closed {
+  closedAt: String @semanticNonNull
+  closedBecause: String
+  closedBy: String
+  dueAt: String
+  inProgressAt: String
+  inProgressBy: String
+  openedAt: String @semanticNonNull
+  openedBy: String
+}
+
+type DisplayName implements Component & Node {
+  """
+  A globally unique opaque identifier for a node.
+  """
+  id: ID!
+  name: DynamicString @semanticNonNull
+}
+
+"""
+Plain text content that has been (potentially) translated into different
+languages as specified by the user's configuration.
+"""
+type DynamicString {
+  locale: Locale @semanticNonNull
+  value: String @semanticNonNull
+}
+
+type InProgress {
+  dueAt: String
+  inProgressAt: String @semanticNonNull
+  inProgressBy: String
+  openedAt: String @semanticNonNull
+  openedBy: String
+}
+
+type Location implements Component & Node & Trackable {
+  """
+  A globally unique opaque identifier for a node.
+  """
+  id: ID!
+  """
+  Entrypoint into the "tracking system(s)" for the given Location.
+  """
+  tracking: TrackableConnection
+}
+
+type Mutation {
+  transition(input: TransitionInput!): TransitionResult @semanticNonNull
+}
+
+type Open {
+  dueAt: String
+  openedAt: TimestampOverridable @semanticNonNull
+  openedBy: String
+}
+
+type PageInfo {
+  endCursor: String
+  hasNextPage: Boolean @semanticNonNull
+  hasPreviousPage: Boolean @semanticNonNull
+  startCursor: String
+}
+
+type Query {
+  trackables: TrackableConnection @semanticNonNull
+}
+
+"""
+A system-level component that identifies an Entity as being applicable to
+tendrel's internal "task processing pipeline". In practice, Tasks most often
+represent "jobs" performed by humans. However, this need not always be the
+case.
+
+Technically speaking, a Task represents a (1) *named asynchronous process*
+that (2) exists in one of three states: open, in progress, or closed.
+"""
+type Task implements Component & Trackable {
+  displayName: DisplayName @semanticNonNull
+  """
+  Tasks can have an associated StateMachine, which defines a finite set of
+  states that the given Task can be in at any given time.
+  """
+  fsm: TaskStateMachine
+  id: ID!
+  state: TaskState
+  """
+  Entrypoint into the "tracking system(s)" for the given Task.
+  At the moment, sub-task tracking is not supported and therefore `null` will
+  always be returned for this field.
+  """
+  tracking: TrackableConnection
+}
+
+type TaskConnection {
+  edges: [TaskEdge!] @semanticNonNull
+  pageInfo: PageInfo @semanticNonNull
+  totalCount: Int @semanticNonNull
+}
+
+type TaskEdge {
+  cursor: String @semanticNonNull
+  node: Task @semanticNonNull
+}
+
+"""
+Where applicable, Entities can have an associated StateMachine that defines
+their current ("active") state in addition to possible next states that they
+can "transition into". Typically, an end user does not need to be aware of
+this state machine as Tendrel's internal engine maintains the machine and
+associated states for a given Entity. However, in some cases it can be useful
+to surface this information in userland such that a user can interact
+directly with the underlying state machine.
+"""
+type TaskStateMachine {
+  active: Task
+  transitions: TaskConnection
+}
+
+type Timestamp {
+  value: String @semanticNonNull
+}
+
+type TimestampOverridable {
+  override: TimestampOverride @semanticNonNull
+  value: Timestamp @semanticNonNull
+}
+
+type TimestampOverride {
+  overriddenAt: String @semanticNonNull
+  overriddenBy: String @semanticNonNull
+  previousValue: Timestamp @semanticNonNull
+}
+
+type TrackableConnection {
+  edges: [TrackableEdge!] @semanticNonNull
+  pageInfo: PageInfo @semanticNonNull
+  totalCount: Int @semanticNonNull
+}
+
+type TrackableEdge {
+  cursor: String @semanticNonNull
+  node: Trackable @semanticNonNull
+}
+
+"""
+Identifies the current (or "active") state of a trackable Entity, as well as
+the various legal state transitions that one can perform on said Entity.
+"""
+type TrackingSystem {
+  """
+  The current (or "active") state of the trackable Entity.
+  It is perfectly valid for a trackable Entity to not be in *any* state, in
+  which case it is entirely implementation defined as to the semantic meaning
+  of such an "unknown" state. For example, this might indicate to an
+  application that the Entity is "idle".
+  """
+  active: Task
+  transitions: [Task!] @semanticNonNull
+}
+
+type TransitionResult {
+  trackable: Trackable @semanticNonNull
+}

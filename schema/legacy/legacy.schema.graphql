@@ -1,7 +1,3 @@
-interface Node {
-  id: ID!
-}
-
 type Language {
   id: ID!
   code: String!
@@ -118,7 +114,7 @@ type Geofence {
   radius: Float!
 }
 
-type Location implements Component & Referenceable {
+extend type Location implements Referenceable {
   id: ID!
   active: ActivationStatus!
   children(options: LocationsQueryOptions): [Location!]!
@@ -185,13 +181,6 @@ type OrganizationConnection {
 
 type OrganizationEdge {
   node: Organization!
-}
-
-type PageInfo {
-  hasNextPage: Boolean!
-  hasPreviousPage: Boolean!
-  startCursor: String
-  endCursor: String
 }
 
 type Worker implements Component & Assignable & Identity & Referenceable {

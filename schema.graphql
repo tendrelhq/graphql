@@ -3,6 +3,37 @@ schema {
   mutation: Mutation
 }
 
+"""
+Indicates that a position is semantically non null: it is only null if there is a matching error in the `errors` array.
+In all other cases, the position is non-null.
+
+Tools doing code generation may use this information to generate the position as non-null if field errors are handled out of band:
+
+```graphql
+type User {
+    # email is semantically non-null and can be generated as non-null by error-handling clients.
+    email: String @semanticNonNull
+}
+```
+
+The `levels` argument indicates what levels are semantically non null in case of lists:
+
+```graphql
+type User {
+    # friends is semantically non null
+    friends: [User] @semanticNonNull # same as @semanticNonNull(levels: [0])
+
+    # every friends[k] is semantically non null
+    friends: [User] @semanticNonNull(levels: [1])
+
+    # friends as well as every friends[k] is semantically non null
+    friends: [User] @semanticNonNull(levels: [0, 1])
+}
+```
+
+`levels` are zero indexed.
+Passing a negative level or a level greater than the list dimension is an error.
+"""
 directive @semanticNonNull(levels: [Int] = [0]) on FIELD_DEFINITION
 
 input AcceptInvitationInput {
@@ -53,13 +84,13 @@ interface Assignable implements Component {
   id: ID!
 }
 
-type AssignableConnection implements Connection {
+type AssignableConnection {
   edges: [AssignableEdge!]!
   pageInfo: PageInfo!
   totalCount: Int!
 }
 
-type AssignableEdge implements Edge {
+type AssignableEdge {
   cursor: String!
   node: Assignable!
 }
@@ -73,13 +104,13 @@ type Assignee implements Component {
   id: ID!
 }
 
-type AssigneeConnection implements Connection {
+type AssigneeConnection {
   edges: [AssigneeEdge!]!
   pageInfo: PageInfo!
   totalCount: Int!
 }
 
-type AssigneeEdge implements Edge {
+type AssigneeEdge {
   cursor: String!
   node: Assignee!
 }
@@ -109,13 +140,13 @@ type Attachment implements Component & Node {
   id: ID!
 }
 
-type AttachmentConnection implements Connection {
+type AttachmentConnection {
   edges: [AttachmentEdge!]!
   pageInfo: PageInfo!
   totalCount: Int!
 }
 
-type AttachmentEdge implements Edge {
+type AttachmentEdge {
   cursor: String!
   node: Attachment!
 }
@@ -276,13 +307,13 @@ input ChecklistClosedReasonInput {
   note: DynamicStringInput
 }
 
-type ChecklistConnection implements Connection {
+type ChecklistConnection {
   edges: [ChecklistEdge!]!
   pageInfo: PageInfo!
   totalCount: Int!
 }
 
-type ChecklistEdge implements Edge {
+type ChecklistEdge {
   cursor: String!
   node: Checklist!
 }
@@ -317,13 +348,13 @@ input ChecklistInput {
 
 union ChecklistItem = Checklist | ChecklistResult
 
-type ChecklistItemConnection implements Connection {
+type ChecklistItemConnection {
   edges: [ChecklistItemEdge!]!
   pageInfo: PageInfo!
   totalCount: Int!
 }
 
-type ChecklistItemEdge implements Edge {
+type ChecklistItemEdge {
   cursor: String!
   node: ChecklistItem!
 }
@@ -426,6 +457,17 @@ input ClickerWidgetInput {
   value: Int
 }
 
+type Closed {
+  closedAt: String @semanticNonNull
+  closedBecause: String
+  closedBy: String
+  dueAt: String
+  inProgressAt: String
+  inProgressBy: String
+  openedAt: String @semanticNonNull
+  openedBy: String
+}
+
 """
 Components characterize Entities as possessing a particular trait.
 They are just simple structs, holding all data necessary to model that trait.
@@ -434,21 +476,16 @@ interface Component {
   id: ID!
 }
 
-type ComponentConnection implements Connection {
+type ComponentConnection {
   edges: [ComponentEdge!]!
   pageInfo: PageInfo!
   totalCount: Int!
 }
 
-type ComponentEdge implements Edge {
+type ComponentEdge {
   cursor: String!
   debug: DebugInfo!
   node: Component!
-}
-
-interface Connection {
-  pageInfo: PageInfo!
-  totalCount: Int!
 }
 
 input CopyFromOptions {
@@ -546,12 +583,12 @@ input DescriptionInput {
   value: DynamicStringInput!
 }
 
-"""
-TODO
-"""
-type DisplayName implements Component {
+type DisplayName implements Component & Node {
+  """
+  A globally unique opaque identifier for a node.
+  """
   id: ID!
-  name: DynamicString!
+  name: DynamicString @semanticNonNull
 }
 
 """
@@ -562,6 +599,9 @@ input DisplayNameInput {
   value: DynamicStringInput!
 }
 
+"""
+Duration represented in seconds
+"""
 scalar Duration
 
 """
@@ -580,23 +620,17 @@ input DurationWidgetInput {
 }
 
 """
-TODO
+Plain text content that has been (potentially) translated into different
+languages as specified by the user's configuration.
 """
 type DynamicString {
-  locale: Locale!
-  value: String!
+  locale: Locale @semanticNonNull
+  value: String @semanticNonNull
 }
 
-"""
-TODO
-"""
 input DynamicStringInput {
   locale: Locale!
   value: String!
-}
-
-interface Edge {
-  cursor: String!
 }
 
 type EnabledLanguage implements Node {
@@ -662,6 +696,14 @@ interface Identity implements Component {
   id: ID!
 }
 
+type InProgress {
+  dueAt: String
+  inProgressAt: String @semanticNonNull
+  inProgressBy: String
+  openedAt: String @semanticNonNull
+  openedBy: String
+}
+
 """
 Fixed point in time (i.e. "exact time") without regard to calendar or location
 """
@@ -718,12 +760,18 @@ type Language {
   nameId: ID!
 }
 
-scalar Locale
+"""
+A language tag in the format of a BCP 47 (RFC 5646) standard string.
+"""
+scalar Locale @specifiedBy(url: "https://www.rfc-editor.org/rfc/rfc5646.html")
 
-type Location implements Component & Referenceable {
+type Location implements Component & Node & Referenceable & Trackable {
   active: ActivationStatus!
   children(options: LocationsQueryOptions): [Location!]!
   geofence: Geofence
+  """
+  A globally unique opaque identifier for a node.
+  """
   id: ID!
   name: Name!
   nameId: ID!
@@ -734,6 +782,10 @@ type Location implements Component & Referenceable {
   siteId: ID!
   tags: [Tag!]!
   timeZone: String!
+  """
+  Entrypoint into the "tracking system(s)" for the given Location.
+  """
+  tracking: TrackableConnection
 }
 
 type LocationConnection {
@@ -822,6 +874,7 @@ type Mutation {
     parent: ID
   ): SetStatusPayload!
   setValue(entity: ID!, input: WidgetInput!, parent: ID!): SetValuePayload!
+  transition(input: TransitionInput!): TransitionResult @semanticNonNull
   """
   Unssign an entity from another entity. If the entity is already unassigned,
   this operation is a no-op.
@@ -853,7 +906,13 @@ type NameMetadata {
   translatedAt: String!
 }
 
+"""
+Indicates an object that is "refetchable".
+"""
 interface Node {
+  """
+  A globally unique opaque identifier for a node.
+  """
   id: ID!
 }
 
@@ -891,6 +950,12 @@ Schedule implementation for "oneshot" events
 """
 type OnceSchedule {
   once: Temporal!
+}
+
+type Open {
+  dueAt: String
+  openedAt: TimestampOverridable @semanticNonNull
+  openedBy: String
 }
 
 type Organization implements Node {
@@ -937,8 +1002,8 @@ type OrganizationEdge {
 
 type PageInfo {
   endCursor: String
-  hasNextPage: Boolean!
-  hasPreviousPage: Boolean!
+  hasNextPage: Boolean @semanticNonNull
+  hasPreviousPage: Boolean @semanticNonNull
   startCursor: String
 }
 
@@ -969,6 +1034,7 @@ type Query {
   languages: [Language!]!
   node(id: ID!): Node!
   roles: [Tag!]!
+  trackables: TrackableConnection @semanticNonNull
   user: User!
 }
 
@@ -1172,6 +1238,59 @@ type Tag {
   type: String!
 }
 
+"""
+A system-level component that identifies an Entity as being applicable to
+tendrel's internal "task processing pipeline". In practice, Tasks most often
+represent "jobs" performed by humans. However, this need not always be the
+case.
+
+Technically speaking, a Task represents a (1) *named asynchronous process*
+that (2) exists in one of three states: open, in progress, or closed.
+"""
+type Task implements Component & Trackable {
+  displayName: DisplayName @semanticNonNull
+  """
+  Tasks can have an associated StateMachine, which defines a finite set of
+  states that the given Task can be in at any given time.
+  """
+  fsm: TaskStateMachine
+  id: ID!
+  state: TaskState
+  """
+  Entrypoint into the "tracking system(s)" for the given Task.
+  At the moment, sub-task tracking is not supported and therefore `null` will
+  always be returned for this field.
+  """
+  tracking: TrackableConnection
+}
+
+type TaskConnection {
+  edges: [TaskEdge!] @semanticNonNull
+  pageInfo: PageInfo @semanticNonNull
+  totalCount: Int @semanticNonNull
+}
+
+type TaskEdge {
+  cursor: String @semanticNonNull
+  node: Task @semanticNonNull
+}
+
+union TaskState = Closed | InProgress | Open
+
+"""
+Where applicable, Entities can have an associated StateMachine that defines
+their current ("active") state in addition to possible next states that they
+can "transition into". Typically, an end user does not need to be aware of
+this state machine as Tendrel's internal engine maintains the machine and
+associated states for a given Entity. However, in some cases it can be useful
+to surface this information in userland such that a user can interact
+directly with the underlying state machine.
+"""
+type TaskStateMachine {
+  active: Task
+  transitions: TaskConnection
+}
+
 interface Temporal {
   """
   Milliseconds since the UNIX epoch of 1/1/1970 00:00+00
@@ -1204,6 +1323,9 @@ input TemporalWidgetInput {
   value: TemporalInput
 }
 
+"""
+A field whose value exists in the standard IANA Time Zone Database: https://www.iana.org/time-zones
+"""
 scalar TimeZone
 
 """
@@ -1224,6 +1346,76 @@ enum TimeZoneNameOptions {
   never
 }
 
+type Timestamp {
+  value: String @semanticNonNull
+}
+
+type TimestampOverridable {
+  override: TimestampOverride @semanticNonNull
+  value: Timestamp @semanticNonNull
+}
+
+type TimestampOverride {
+  overriddenAt: String @semanticNonNull
+  overriddenBy: String @semanticNonNull
+  previousValue: Timestamp @semanticNonNull
+}
+
+"""
+Identifies an Entity as being "trackable".
+What exactly this means depends on the type underlying said entity and is
+entirely user defined.
+"""
+interface Trackable implements Component {
+  id: ID!
+  """
+  Entrypoint into the "tracking system(s)" for a given Entity. Note that while
+  many types admit to being trackable, this does not mean that all in fact are
+  in practice. In order for an Entity to be trackable, it must be explicitly
+  configured as such.
+  """
+  tracking: TrackableConnection
+}
+
+type TrackableConnection {
+  edges: [TrackableEdge!] @semanticNonNull
+  pageInfo: PageInfo @semanticNonNull
+  totalCount: Int @semanticNonNull
+}
+
+type TrackableEdge {
+  cursor: String @semanticNonNull
+  node: Trackable @semanticNonNull
+}
+
+"""
+Identifies the current (or "active") state of a trackable Entity, as well as
+the various legal state transitions that one can perform on said Entity.
+"""
+type TrackingSystem {
+  """
+  The current (or "active") state of the trackable Entity.
+  It is perfectly valid for a trackable Entity to not be in *any* state, in
+  which case it is entirely implementation defined as to the semantic meaning
+  of such an "unknown" state. For example, this might indicate to an
+  application that the Entity is "idle".
+  """
+  active: Task
+  transitions: [Task!] @semanticNonNull
+}
+
+input TransitionInput {
+  into: ID!
+  payload: String
+}
+
+type TransitionResult {
+  trackable: Trackable @semanticNonNull
+}
+
+"""
+A field whose value conforms to the standard URL format as specified in RFC3986: https://www.ietf.org/rfc/rfc3986.txt.
+"""
 scalar URL
 
 type UnassignmentPayload {

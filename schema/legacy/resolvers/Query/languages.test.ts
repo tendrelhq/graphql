@@ -1,10 +1,7 @@
 import { describe, expect, test } from "bun:test";
-import { resolvers, typeDefs } from "@/schema";
+import { schema } from "@/schema/final";
 import { execute } from "@/test/prelude";
-import { makeExecutableSchema } from "@graphql-tools/schema";
 import { TestLanguagesQueryDocument } from "./languages.test.generated";
-
-const schema = makeExecutableSchema({ resolvers, typeDefs });
 
 describe.skipIf(!!process.env.CI)("languages", () => {
   test("works", async () => {

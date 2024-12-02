@@ -1,11 +1,9 @@
 import { describe, expect, test } from "bun:test";
-import { type InputMaybe, resolvers, typeDefs } from "@/schema";
+import type { InputMaybe } from "@/schema";
+import { schema } from "@/schema/final";
 import { execute, testGlobalId } from "@/test/prelude";
-import { makeExecutableSchema } from "@graphql-tools/schema";
 import type { ExecutionResult } from "graphql";
 import { TestDocument, type TestQuery } from "./checklists.test.generated";
-
-const schema = makeExecutableSchema({ resolvers, typeDefs });
 
 const LIMIT = 10;
 const SKIP_IN_CI = !!process.env.CI;

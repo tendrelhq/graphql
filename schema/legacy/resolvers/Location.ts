@@ -3,7 +3,22 @@ import type { ActivationStatus, LocationResolvers } from "@/schema";
 import { decodeGlobalId } from "@/schema/system";
 import { isValue, nullish } from "@/util";
 
-export const Location: LocationResolvers = {
+export const Location: Pick<
+  LocationResolvers,
+  | "active"
+  | "children"
+  | "geofence"
+  | "id"
+  | "name"
+  | "nameId"
+  | "parent"
+  | "parentId"
+  | "scanCode"
+  | "site"
+  | "siteId"
+  | "tags"
+  | "timeZone"
+> = {
   async active(parent) {
     const { id } = decodeGlobalId(parent.id);
     const [row] = await sql<[ActivationStatus]>`
