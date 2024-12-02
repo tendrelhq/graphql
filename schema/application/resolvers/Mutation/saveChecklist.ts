@@ -812,28 +812,45 @@ async function saveChecklistResults(
                             AND workresultforaudit = true
                     `,
                   tx`
-                    WITH inputs (value, locale) AS (
-                        VALUES (
-                            ${i.result.name.value.value},
-                            ${i.result.name.value.locale}
+                    WITH
+                        inputs AS (
+                            SELECT
+                                ${i.result.name.value.value}::text AS name,
+                                systagid AS locale
+                            FROM public.systag
+                            WHERE
+                                systagparentid = 2
+                                AND systagtype = ${i.result.name.value.locale}
+                        ),
+
+                        master AS (
+                            SELECT languagemasterid AS id
+                            FROM public.languagemaster
+                            WHERE languagemasteruuid = ${decodeGlobalId(i.result.name.id).id}
+                        ),
+
+                        trans AS (
+                            UPDATE public.languagetranslations
+                            SET
+                                languagetranslationvalue = inputs.name,
+                                languagetranslationmodifieddate = now()
+                            FROM inputs, master
+                            WHERE
+                                languagetranslationmasterid = master.id
+                                AND languagetranslationtypeid = inputs.locale
+                                AND languagetranslationvalue IS DISTINCT FROM inputs.name
                         )
-                    )
 
                     UPDATE public.languagemaster
                     SET
-                        languagemastersource = inputs.value,
-                        languagemastersourcelanguagetypeid = locale.systagid,
+                        languagemastersource = inputs.name,
+                        languagemastersourcelanguagetypeid = inputs.locale,
                         languagemasterstatus = 'NEEDS_COMPLETE_RETRANSLATION',
                         languagemastermodifieddate = now()
-                    FROM inputs, public.systag AS locale
+                    FROM inputs, master
                     WHERE
-                        languagemasterid = (
-                            SELECT workresultlanguagemasterid
-                            FROM public.workresult
-                            WHERE id = ${decodeGlobalId(i.result.id).id}
-                        )
-                        AND (locale.systagparentid, locale.systagtype) = (2, inputs.locale)
-                        AND (languagemastersource, languagemastersourcelanguagetypeid) IS DISTINCT FROM (inputs.value, locale.systagid)
+                        languagemasterid = master.id
+                        AND (languagemastersource, languagemastersourcelanguagetypeid) IS DISTINCT FROM (inputs.name, inputs.locale)
                   `,
                   tx`
                       WITH inputs (required) AS (
