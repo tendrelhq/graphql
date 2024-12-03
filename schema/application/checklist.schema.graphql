@@ -149,6 +149,22 @@ input ChecklistItemInput @oneOf {
   result: ChecklistResultInput
 }
 
+# extend type Query {
+#   completedChecklistsByTemplate(
+#     templateId: ID!
+#     first: Int
+#   ): ChecklistConnection!
+# }
+
+type DailyCompletion {
+  date: String!
+  count: Int!
+}
+
+extend type Query {
+  checklistCompletionsByYear(year: Int!, parent: ID!): [DailyCompletion!]!
+}
+
 """
 TODO
 """

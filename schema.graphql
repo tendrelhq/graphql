@@ -515,6 +515,11 @@ type CronSchedule {
   cron: CronExpression!
 }
 
+type DailyCompletion {
+  count: Int!
+  date: String!
+}
+
 type DebugInfo {
   createdAt: String!
   updatedAt: String!
@@ -943,6 +948,7 @@ type Query {
   """
   assignable(entity: ID!): AssignableConnection!
   checklistAgg: ChecklistAggregate!
+  checklistCompletionsByYear(parent: ID!, year: Int!): [DailyCompletion!]!
   checklists(
     after: String
     before: String

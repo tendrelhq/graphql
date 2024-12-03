@@ -22,17 +22,32 @@ export const saveChecklist: NonNullable<
   // Schedule (worktemplate)
   // Status (workinstance)
 
-  if (type !== "worktemplate") {
+  if (type !== "worktemplate" && type !== "workinstance") {
     throw new Error("Can only modify templates right now");
   }
 
-  const { count: exists } =
-    await sql`SELECT 1 FROM public.worktemplate WHERE id = ${id}`;
+  if (type === "workinstance") {
+    // Work instance logic
+    const { count: exists } =
+      await sql`SELECT 1 FROM public.workinstance WHERE id = ${id}`;
 
-  if (exists) {
-    // update.
-    const result = await sql.begin(tx => [
-      tx`
+    if (exists) {
+      if (input.items?.length) {
+        await saveChecklistInstanceResults(id, input.items);
+      }
+    } else {
+      throw new Error("Cannot create new work instances through this mutation");
+    }
+  }
+
+  if (type === "worktemplate") {
+    const { count: exists } =
+      await sql`SELECT 1 FROM public.worktemplate WHERE id = ${id}`;
+
+    if (exists) {
+      // update.
+      const result = await sql.begin(tx => [
+        tx`
         UPDATE public.worktemplate
         SET
             worktemplateenddate = ${input.active?.active ? null : sql`now()`},
@@ -51,8 +66,8 @@ export const saveChecklist: NonNullable<
                 )`
             }
       `,
-      input.auditable
-        ? tx`
+        input.auditable
+          ? tx`
             WITH inputs (auditable) AS (
                 VALUES (
                     ${input.auditable.enabled}::boolean
@@ -69,7 +84,7 @@ export const saveChecklist: NonNullable<
                 AND
                 worktemplateisauditable != inputs.auditable
         `
-        : tx`
+          : tx`
             UPDATE public.worktemplate
             SET
                 worktemplateisauditable = false,
@@ -79,8 +94,8 @@ export const saveChecklist: NonNullable<
                 AND
                 worktemplateisauditable = true
         `,
-      input.description
-        ? tx`
+        input.description
+          ? tx`
             WITH inputs (source, locale) AS (
                 VALUES (
                     ${input.description.value.value}::text,
@@ -146,7 +161,7 @@ export const saveChecklist: NonNullable<
                     wt.worktemplatedescriptionid != i.id
                 )
         `
-        : tx`
+          : tx`
             UPDATE public.worktemplate
             SET
                 worktemplatedescriptionid = null,
@@ -156,7 +171,7 @@ export const saveChecklist: NonNullable<
                 AND
                 worktemplatedescriptionid IS NOT null
         `,
-      tx`
+        tx`
         WITH
             inputs AS (
                 SELECT
@@ -201,8 +216,8 @@ export const saveChecklist: NonNullable<
             languagemasterid = master.id
             AND (languagemastersource, languagemastersourcelanguagetypeid) IS DISTINCT FROM (inputs.name, inputs.locale)
       `,
-      input.sop
-        ? tx`
+        input.sop
+          ? tx`
             WITH inputs (sop) AS (
                 VALUES (
                     ${input.sop.link.toString()}::text
@@ -222,7 +237,7 @@ export const saveChecklist: NonNullable<
                     worktemplatesoplink != inputs.sop
                 )
         `
-        : tx`
+          : tx`
             UPDATE public.worktemplate
             SET
                 worktemplatesoplink = null,
@@ -231,20 +246,20 @@ export const saveChecklist: NonNullable<
                 id = ${id}
                 AND worktemplatesoplink IS NOT null
         `,
-    ]);
+      ]);
 
-    const delta = result.reduce((acc, res) => acc + res.count, 0);
-    console.log(
-      `Applied ${delta} update(s) to Entity ${input.id} (${type}:${id})`,
-    );
+      const delta = result.reduce((acc, res) => acc + res.count, 0);
+      console.log(
+        `Applied ${delta} update(s) to Entity ${input.id} (${type}:${id})`,
+      );
 
-    if (input.items?.length) {
-      await saveChecklistResults(id, input.items);
-    }
-  } else {
-    // else: create
-    const result = await sql.begin(async tx => {
-      const r0 = await tx`
+      if (input.items?.length) {
+        await saveChecklistResults(id, input.items);
+      }
+    } else {
+      // else: create
+      const result = await sql.begin(async tx => {
+        const r0 = await tx`
         WITH inputs (customer, source, locale, auditable, sop, description) AS (
             VALUES (
                 (
@@ -330,10 +345,10 @@ export const saveChecklist: NonNullable<
         LEFT JOIN description ON true
       `;
 
-      // Fix the hardcoded worktemplateworkfrequencyid we set in the last
-      // INSERT. Note that this is necessary because there is a circular
-      // dependency between worktemplate and workfrequency.
-      const r2 = await tx`
+        // Fix the hardcoded worktemplateworkfrequencyid we set in the last
+        // INSERT. Note that this is necessary because there is a circular
+        // dependency between worktemplate and workfrequency.
+        const r2 = await tx`
         WITH frequency AS (
             INSERT INTO public.workfrequency (
                 workfrequencycustomerid,
@@ -359,9 +374,9 @@ export const saveChecklist: NonNullable<
         WHERE wt.id = ${id}
       `;
 
-      // Create the necessary next template rule for the On Demand frequency
-      // type.
-      const r3 = await tx`
+        // Create the necessary next template rule for the On Demand frequency
+        // type.
+        const r3 = await tx`
         INSERT INTO public.worktemplatenexttemplate (
             worktemplatenexttemplateprevioustemplateid,
             worktemplatenexttemplatenexttemplateid,
@@ -384,11 +399,11 @@ export const saveChecklist: NonNullable<
         WHERE id = ${id}
       `;
 
-      // Assign the correct template type: Checklist.
-      // These things are kinda like "marker components". They don't really mean
-      // a whole lot to the rest of the system, but are crucial on the frontend
-      // and in the datawarehouse at the moment.
-      const r4 = await tx`
+        // Assign the correct template type: Checklist.
+        // These things are kinda like "marker components". They don't really mean
+        // a whole lot to the rest of the system, but are crucial on the frontend
+        // and in the datawarehouse at the moment.
+        const r4 = await tx`
           INSERT INTO public.worktemplatetype (
               worktemplatetypecustomerid,
               worktemplatetypecustomeruuid,
@@ -415,9 +430,9 @@ export const saveChecklist: NonNullable<
           WHERE wt.id = ${id}
       `;
 
-      // Create the primary location result. This essentially maps to an
-      // Assignee component.
-      const r5 = await tx`
+        // Create the primary location result. This essentially maps to an
+        // Assignee component.
+        const r5 = await tx`
         WITH inputs AS (
             SELECT
                 worktemplateid,
@@ -515,9 +530,9 @@ export const saveChecklist: NonNullable<
         FROM inputs, name, type, widget
       `;
 
-      // Create the primary worker result. This essentially maps to an
-      // Assignee component.
-      const r6 = await tx`
+        // Create the primary worker result. This essentially maps to an
+        // Assignee component.
+        const r6 = await tx`
         WITH inputs AS (
             SELECT
                 worktemplateid,
@@ -615,9 +630,9 @@ export const saveChecklist: NonNullable<
         FROM inputs, name, type, widget
       `;
 
-      // Create a template constraint for (primary) location.
-      // This is necessary for the rules engine to correctly (re)spawn instances.
-      const r7 = await tx`
+        // Create a template constraint for (primary) location.
+        // This is necessary for the rules engine to correctly (re)spawn instances.
+        const r7 = await tx`
         INSERT INTO public.worktemplateconstraint (
             worktemplateconstraintcustomerid,
             worktemplateconstraintcustomeruuid,
@@ -653,8 +668,8 @@ export const saveChecklist: NonNullable<
             )
       `;
 
-      // Create a Time At Task result.
-      const r8 = await tx`
+        // Create a Time At Task result.
+        const r8 = await tx`
         WITH inputs AS (
             SELECT
                 worktemplateid,
@@ -733,18 +748,19 @@ export const saveChecklist: NonNullable<
         FROM inputs, name, type, widget
       `;
 
-      return [r0, r2, r3, r4, r5, r6, r7, r8];
-    });
+        return [r0, r2, r3, r4, r5, r6, r7, r8];
+      });
 
-    const delta = result.reduce((acc, res) => acc + res.count, 0);
-    console.log(`Created Entity ${input.id} by way of ${delta} operation(s)`);
+      const delta = result.reduce((acc, res) => acc + res.count, 0);
+      console.log(`Created Entity ${input.id} by way of ${delta} operation(s)`);
 
-    if (input.items?.length) {
-      await saveChecklistResults(id, input.items);
+      if (input.items?.length) {
+        await saveChecklistResults(id, input.items);
+      }
+
+      // Create an Open instance of the newly created Checklist template.
+      await sql.begin(sql => copyFromWorkTemplate(sql, id, {}));
     }
-
-    // Create an Open instance of the newly created Checklist template.
-    await sql.begin(sql => copyFromWorkTemplate(sql, id, {}));
   }
 
   return {
@@ -1343,4 +1359,103 @@ async function saveChecklistResults(
 
   const delta = result?.reduce((acc, res) => acc + res.count, 0);
   console.log(`Applied ${delta} update(s) to nested Entities`);
+}
+
+async function saveChecklistInstanceResults(
+  parent: string,
+  input: NonNullable<ChecklistInput["items"]>,
+) {
+  // Get current results for this work instance
+  const current = await sql<{ id: ID }[]>`
+    SELECT encode(('workresultinstance:' || workresultinstanceid)::bytea, 'base64') AS id
+    FROM public.workresultinstance
+    WHERE workresultinstanceworkinstanceid = (
+      SELECT workinstanceid 
+      FROM public.workinstance 
+      WHERE id = ${parent}
+    )
+  `.then(rows => new Set(rows.map(r => r.id)));
+
+  const actions = input.reduce((acc, inp) => {
+    if ("checklist" in inp) return acc; // not yet supported
+    const exists = current.has(inp.result.id);
+    if (!acc.has(exists)) {
+      acc.set(exists, []);
+    }
+    acc.get(exists)?.push(inp);
+    return acc;
+  }, new Map<boolean, ChecklistItemInput[]>());
+
+  const result = await sql.begin(tx =>
+    [...actions.entries()].flatMap(
+      ([exists, items]) =>
+        exists
+          ? items.flatMap(i =>
+              i.result
+                ? [
+                    tx`
+                    UPDATE public.workresultinstance
+                    SET
+                        workresultinstancevalue = ${(() => {
+                          switch (true) {
+                            case "boolean" in i.result.widget:
+                              return (
+                                i.result.widget.boolean?.value?.toString() ??
+                                null
+                              );
+                            case "checkbox" in i.result.widget:
+                              return (
+                                i.result.widget.checkbox?.value?.toString() ??
+                                null
+                              );
+                            case "clicker" in i.result.widget:
+                              return (
+                                i.result.widget.clicker?.value?.toString() ??
+                                null
+                              );
+                            case "duration" in i.result.widget:
+                              return (
+                                i.result.widget.duration?.value?.toString() ??
+                                null
+                              );
+                            case "multiline" in i.result.widget:
+                              return i.result.widget.multiline?.value ?? null;
+                            case "number" in i.result.widget:
+                              return (
+                                i.result.widget.number?.value?.toString() ??
+                                null
+                              );
+                            case "reference" in i.result.widget:
+                              return i.result.widget.reference?.value ?? null;
+                            case "section" in i.result.widget:
+                              return i.result.widget.section?.value ?? null;
+                            case "sentiment" in i.result.widget:
+                              return (
+                                i.result.widget.sentiment?.value?.toString() ??
+                                null
+                              );
+                            case "string" in i.result.widget:
+                              return i.result.widget.string?.value ?? null;
+                            case "temporal" in i.result.widget:
+                              return null; // Handle temporal if needed
+                            default: {
+                              const _: never = i.result.widget;
+                              throw "invariant violated";
+                            }
+                          }
+                        })()},
+                        workresultinstancemodifieddate = now(),
+                        workresultinstancecompleteddate = now()
+                    WHERE
+                        id = ${decodeGlobalId(i.result.id).id}
+                  `,
+                  ]
+                : [],
+            )
+          : [], // We don't create new result instances here
+    ),
+  );
+
+  const delta = result?.reduce((acc, res) => acc + res.count, 0);
+  console.log(`Applied ${delta} update(s) to Work Instance Results`);
 }
