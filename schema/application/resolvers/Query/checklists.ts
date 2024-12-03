@@ -651,52 +651,6 @@ function buildEcsSortFragments({ f, s }: Args, parent: Parent): Fragment {
   );
 }
 
-// export const completedChecklistsByTemplate: NonNullable<
-//   QueryResolvers["completedChecklistsByTemplate"]
-// > = async (_, args) => {
-//   const edges = await sql<ChecklistEdge[]>`
-//     WITH nodes AS (
-//       SELECT encode(('workinstance:' || wi.id)::bytea, 'base64') AS id
-//       FROM public.workinstance AS wi
-//       INNER JOIN public.worktemplate AS wt
-//         ON wi.workinstanceworktemplateid = wt.worktemplateid
-//       INNER JOIN public.systag AS status
-//         ON wi.workinstancestatusid = status.systagid
-//       WHERE
-//         wt.id = ${args.templateId}
-//         AND status.systagtype = 'Complete'
-//       ORDER BY wi.workinstancecompleteddate DESC
-//       LIMIT ${args.first ?? 20}
-//     )
-
-//     SELECT
-//       id AS cursor,
-//       jsonb_build_object('__typename', 'Checklist', 'id', id) AS node
-//     FROM nodes
-//   `;
-
-//   const pageInfo: PageInfo = {
-//     startCursor: edges.at(0)?.cursor,
-//     endCursor: edges.at(-1)?.cursor,
-//     hasNextPage: false, // Simplified pagination for this example
-//     hasPreviousPage: false,
-//   };
-
-//   const [{ count }] = await sql<[{ count: number }]>`
-//     SELECT count(*)
-//     FROM public.workinstance AS wi
-//     INNER JOIN public.worktemplate AS wt
-//       ON wi.workinstanceworktemplateid = wt.worktemplateid
-//     INNER JOIN public.systag AS status
-//       ON wi.workinstancestatusid = status.systagid
-//     WHERE
-//       wt.id = ${args.templateId}
-//       AND status.systagtype = 'Complete'
-//   `;
-
-//   return { edges, pageInfo, totalCount: count };
-// };
-
 export const checklistCompletionsByYear: NonNullable<
   QueryResolvers["checklistCompletionsByYear"]
 > = async (_, { year }) => {

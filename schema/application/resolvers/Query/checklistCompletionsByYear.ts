@@ -1,15 +1,11 @@
 import { sql } from "@/datasources/postgres";
-import type { DailyCompletion } from "@/schema";
 import { decodeGlobalId } from "@/schema/system";
-import { validateParent } from "@/util";
-import { GraphQLError } from "graphql";
 import type { QueryResolvers } from "./../../../__generated__/types.generated";
 
 export const checklistCompletionsByYear: NonNullable<
   QueryResolvers["checklistCompletionsByYear"]
 > = async (_, args) => {
   const parent = decodeGlobalId(args.parent);
-  console.log(parent.id);
 
   const results = await sql<Array<{ date: string; count: string }>>`
     WITH template_id AS (
@@ -32,8 +28,6 @@ export const checklistCompletionsByYear: NonNullable<
     GROUP BY date
     ORDER BY date
   `;
-
-  console.log(JSON.stringify(results, null, 2));
 
   return results.map(({ date, count }) => ({
     date,
