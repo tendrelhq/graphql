@@ -42,14 +42,23 @@ export const copyFrom: NonNullable<MutationResolvers["copyFrom"]> = async (
  * Creates a new workinstance from an existing workinstance.
  * Currently, this is purely a templated-based copy.
  *
- * When true, `options.chain` causes the current chain to continue, i.e. we set
- * the new workinstance's previousid to the id of the workinstance being copied.
- * Otherwise, a new chain (beneath the originator) is started.
+ * `options.chain` allows for controlling how the new instance is (potentially)
+ * inserted into an existing chain. There are three options:
+ * (1) `branch` creates a new branch beneath the originator, no previous is set
+ * (2) `continue` effectively appends the new instance to the existing chain,
+ *      meaning previous is set
+ * (3) `undefined` creates a new chain, i.e. the new instance's originator is
+ *      set to itself
+ *
+ * In practice, audits and remediations typically `continue` the chain, as their
+ * existence is a result of some action (or insight) on the previous.
+ * The "respawn" case typically creates a new `branch`, since there is no real
+ * correlation between the previous and the new instance.
  */
 export async function copyFromWorkInstance(
   tx: TransactionSql,
   id: string,
-  options: CopyFromOptions & { chain?: "originator" | "previous" },
+  options: CopyFromOptions & { chain?: "branch" | "continue" },
 ): Promise<CopyFromPayload> {
   const [row] = await tx<
     [{ id: string; originator: string; previous: string }]
@@ -67,7 +76,7 @@ export async function copyFromWorkInstance(
   return copyFromWorkTemplate(tx, row.id, {
     ...options,
     originator: options.chain ? row.originator : undefined,
-    previous: options.chain === "previous" ? row.previous : undefined,
+    previous: options.chain === "continue" ? row.previous : undefined,
   });
 }
 

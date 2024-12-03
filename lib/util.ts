@@ -93,28 +93,3 @@ export function inspect<T>(t: T) {
   console.debug("t =:", t);
   return t;
 }
-
-type ParentType = "organization" | "workinstance";
-
-export function validateParent(
-  parent: string,
-  expectedParentType?: ParentType,
-) {
-  const { id: parentId, type: parentType } = decodeGlobalId(parent);
-
-  if (
-    (parentType !== "organization" && parentType !== "workinstance") ||
-    (expectedParentType && parentType !== expectedParentType)
-  ) {
-    throw new GraphQLError(
-      `Type '${parentType}' is an invalid parent type for type 'Checklist'`,
-      {
-        extensions: {
-          code: "TYPE_ERROR",
-        },
-      },
-    );
-  }
-
-  return { id: parentId, type: parentType as ParentType };
-}

@@ -18,6 +18,7 @@ const config: CodegenConfig = {
           "!*.Active",
           "!*.AssignmentPayload",
           "!*.UnassignmentPayload",
+          "!*.ChecklistChain",
           "!*.ChecklistOpen",
           "!*.ChecklistInProgress",
           "!*.ChecklistClosed*",

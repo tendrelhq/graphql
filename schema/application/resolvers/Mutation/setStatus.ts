@@ -163,11 +163,11 @@ export const setStatus: NonNullable<MutationResolvers["setStatus"]> = async (
           await copyFromWorkInstance(tx, id, {
             // If the people want to:
             // (a) create a new branch beneath originator:
-            // chain: "originator",
+            chain: "branch",
             // (b) continue the current chain:
-            chain: "previous",
-            // As stated above, I think this makes the most sense:
-            // chain: undefined, // i.e. create a new chain
+            // chain: "continue",
+            // (c) create an entirely new chain:
+            // chain: undefined,
           });
         }
 

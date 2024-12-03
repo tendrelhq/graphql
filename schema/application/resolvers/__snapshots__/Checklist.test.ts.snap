@@ -46,85 +46,7 @@ exports[`Checklist ast 1`] = `
                 "__typename": "DisplayName",
                 "name": {
                   "__typename": "DynamicString",
-                  "value": "Checklist - Boolean",
-                },
-              },
-            },
-          },
-          {
-            "__typename": "ChecklistItemEdge",
-            "node": {
-              "__typename": "ChecklistResult",
-              "name": {
-                "__typename": "DisplayName",
-                "name": {
-                  "__typename": "DynamicString",
-                  "value": "Checklist - Clicker",
-                },
-              },
-            },
-          },
-          {
-            "__typename": "ChecklistItemEdge",
-            "node": {
-              "__typename": "ChecklistResult",
-              "name": {
-                "__typename": "DisplayName",
-                "name": {
-                  "__typename": "DynamicString",
-                  "value": "Checklist - Text",
-                },
-              },
-            },
-          },
-          {
-            "__typename": "ChecklistItemEdge",
-            "node": {
-              "__typename": "ChecklistResult",
-              "name": {
-                "__typename": "DisplayName",
-                "name": {
-                  "__typename": "DynamicString",
-                  "value": "Checklist - Number",
-                },
-              },
-            },
-          },
-          {
-            "__typename": "ChecklistItemEdge",
-            "node": {
-              "__typename": "ChecklistResult",
-              "name": {
-                "__typename": "DisplayName",
-                "name": {
-                  "__typename": "DynamicString",
-                  "value": "Checklist - Geolocation",
-                },
-              },
-            },
-          },
-          {
-            "__typename": "ChecklistItemEdge",
-            "node": {
-              "__typename": "ChecklistResult",
-              "name": {
-                "__typename": "DisplayName",
-                "name": {
-                  "__typename": "DynamicString",
-                  "value": "Checklist - Sentiment",
-                },
-              },
-            },
-          },
-          {
-            "__typename": "ChecklistItemEdge",
-            "node": {
-              "__typename": "ChecklistResult",
-              "name": {
-                "__typename": "DisplayName",
-                "name": {
-                  "__typename": "DynamicString",
-                  "value": "Checklist - Date",
+                  "value": "Time At Task",
                 },
               },
             },
@@ -150,7 +72,85 @@ exports[`Checklist ast 1`] = `
                 "__typename": "DisplayName",
                 "name": {
                   "__typename": "DynamicString",
-                  "value": "Time At Task",
+                  "value": "Checklist - Date",
+                },
+              },
+            },
+          },
+          {
+            "__typename": "ChecklistItemEdge",
+            "node": {
+              "__typename": "ChecklistResult",
+              "name": {
+                "__typename": "DisplayName",
+                "name": {
+                  "__typename": "DynamicString",
+                  "value": "Checklist - Sentiment",
+                },
+              },
+            },
+          },
+          {
+            "__typename": "ChecklistItemEdge",
+            "node": {
+              "__typename": "ChecklistResult",
+              "name": {
+                "__typename": "DisplayName",
+                "name": {
+                  "__typename": "DynamicString",
+                  "value": "Checklist - Geolocation",
+                },
+              },
+            },
+          },
+          {
+            "__typename": "ChecklistItemEdge",
+            "node": {
+              "__typename": "ChecklistResult",
+              "name": {
+                "__typename": "DisplayName",
+                "name": {
+                  "__typename": "DynamicString",
+                  "value": "Checklist - Number",
+                },
+              },
+            },
+          },
+          {
+            "__typename": "ChecklistItemEdge",
+            "node": {
+              "__typename": "ChecklistResult",
+              "name": {
+                "__typename": "DisplayName",
+                "name": {
+                  "__typename": "DynamicString",
+                  "value": "Checklist - Text",
+                },
+              },
+            },
+          },
+          {
+            "__typename": "ChecklistItemEdge",
+            "node": {
+              "__typename": "ChecklistResult",
+              "name": {
+                "__typename": "DisplayName",
+                "name": {
+                  "__typename": "DynamicString",
+                  "value": "Checklist - Clicker",
+                },
+              },
+            },
+          },
+          {
+            "__typename": "ChecklistItemEdge",
+            "node": {
+              "__typename": "ChecklistResult",
+              "name": {
+                "__typename": "DisplayName",
+                "name": {
+                  "__typename": "DynamicString",
+                  "value": "Checklist - Boolean",
                 },
               },
             },
