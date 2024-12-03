@@ -1,0 +1,10 @@
+query TestChecklistAgg(
+  $parent: ID!
+  $assignedTo: [ID!]!
+  $dueOnInput: TemporalRangeInput!
+) {
+  checklistAgg {
+    assignedTo(parent: $parent, assignees: $assignedTo)
+    dueOn(parent: $parent, input: $dueOnInput)
+  }
+}
