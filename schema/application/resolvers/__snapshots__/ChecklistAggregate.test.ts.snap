@@ -1,0 +1,25 @@
+// Bun Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`ChecklistAggregate when parent is customer 1`] = `
+{
+  "data": {
+    "checklistAgg": {
+      "__typename": "ChecklistAggregate",
+      "assignedTo": 3,
+      "dueOn": 25,
+    },
+  },
+}
+`;
+
+exports[`ChecklistAggregate when parent is template 1`] = `
+{
+  "data": {
+    "checklistAgg": {
+      "__typename": "ChecklistAggregate",
+      "assignedTo": 1,
+      "dueOn": 2,
+    },
+  },
+}
+`;
