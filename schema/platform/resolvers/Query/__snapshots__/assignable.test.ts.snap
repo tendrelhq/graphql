@@ -19,7 +19,84 @@ exports[`assignable workers 1`] = `
           "__typename": "AssignableEdge",
           "node": {
             "__typename": "Worker",
+            "displayName": "Another Guy",
+          },
+        },
+        {
+          "__typename": "AssignableEdge",
+          "node": {
+            "__typename": "Worker",
+            "displayName": "Foo 1",
+          },
+        },
+        {
+          "__typename": "AssignableEdge",
+          "node": {
+            "__typename": "Worker",
+            "displayName": "Foo 2",
+          },
+        },
+        {
+          "__typename": "AssignableEdge",
+          "node": {
+            "__typename": "Worker",
+            "displayName": "How many Guys?",
+          },
+        },
+        {
+          "__typename": "AssignableEdge",
+          "node": {
+            "__typename": "Worker",
+            "displayName": "Jalen Hurts",
+          },
+        },
+        {
+          "__typename": "AssignableEdge",
+          "node": {
+            "__typename": "Worker",
+            "displayName": "Jason Bourne",
+          },
+        },
+        {
+          "__typename": "AssignableEdge",
+          "node": {
+            "__typename": "Worker",
+            "displayName": "New Guy",
+          },
+        },
+        {
+          "__typename": "AssignableEdge",
+          "node": {
+            "__typename": "Worker",
+            "displayName": "Randy Moss",
+          },
+        },
+        {
+          "__typename": "AssignableEdge",
+          "node": {
+            "__typename": "Worker",
+            "displayName": "Third Guy",
+          },
+        },
+        {
+          "__typename": "AssignableEdge",
+          "node": {
+            "__typename": "Worker",
             "displayName": "Will Ruggiano",
+          },
+        },
+        {
+          "__typename": "AssignableEdge",
+          "node": {
+            "__typename": "Worker",
+            "displayName": "Yet Another Brand New Guy",
+          },
+        },
+        {
+          "__typename": "AssignableEdge",
+          "node": {
+            "__typename": "Worker",
+            "displayName": "Yet Another New Guy",
           },
         },
       ],

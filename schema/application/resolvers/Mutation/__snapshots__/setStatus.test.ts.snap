@@ -40,20 +40,20 @@ exports[`setStatus workresultinstance 1`] = `
 }
 `;
 
-exports[`setStatus entity cannot have its status changed 1`] = `
-{
-  "data": null,
-  "errors": [
-    [GraphQLError: Entity cannot have its status changed],
-  ],
-}
-`;
-
 exports[`setStatus invalid status change 1`] = `
 {
   "data": null,
   "errors": [
     [GraphQLError: Invalid status change],
+  ],
+}
+`;
+
+exports[`setStatus entity cannot have its status changed 1`] = `
+{
+  "data": null,
+  "errors": [
+    [GraphQLError: Entity cannot have its status changed],
   ],
 }
 `;

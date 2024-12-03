@@ -11,19 +11,36 @@ import {
   buildPaginationArgs,
   nullish,
   sortOrder,
-  validateParent,
 } from "@/util";
 import { GraphQLError } from "graphql";
 import type { Fragment } from "postgres";
 import { match } from "ts-pattern";
 
-type ParentType = "organization" | "workinstance";
+type Parent = {
+  id: string;
+  type: "organization" | "workinstance" | "worktemplate";
+};
 
 export const checklists: NonNullable<QueryResolvers["checklists"]> = async (
   _,
   args,
 ) => {
-  const parent = validateParent(args.parent);
+  const parent = decodeGlobalId(args.parent);
+  if (
+    parent.type !== "organization" &&
+    parent.type !== "workinstance" &&
+    parent.type !== "worktemplate"
+  ) {
+    throw new GraphQLError(
+      `Type '${parent.type}' is an invalid parent type for type 'Checklist'`,
+      {
+        extensions: {
+          code: "TYPE_ERROR",
+        },
+      },
+    );
+  }
+
   const paginationArgs = buildPaginationArgs(args, {
     defaultLimit: Number(process.env.DEFAULT_PAGINATION_LIMIT ?? 20),
     maxLimit: Number(process.env.MAX_PAGINATION_LIMIT ?? 20),
@@ -39,21 +56,16 @@ export const checklists: NonNullable<QueryResolvers["checklists"]> = async (
   };
 
   if (isAstQuery(forwardArgs)) {
-    return astQuery(forwardArgs, parent);
+    return astQuery(forwardArgs, parent as Parent);
   }
 
-  return ecsQuery(forwardArgs, parent);
+  return ecsQuery(forwardArgs, parent as Parent);
 };
 
 type Args = {
   f: Pick<QuerychecklistsArgs, "withActive" | "withName" | "withStatus">;
   p: PaginationArgs;
   s: Pick<QuerychecklistsArgs, "sortBy">;
-};
-
-type Parent = {
-  id: string;
-  type: ParentType;
 };
 
 /**
@@ -120,7 +132,7 @@ async function astQuery(args: Args, parent: Parent) {
   return { edges, pageInfo, totalCount: count };
 }
 
-function buildAstJoinFragments(args: Args, parent: Parent) {
+function buildAstJoinFragments(_args: Args, _parent: Parent) {
   const fs: Fragment[] = [
     // We always join in the Name component. We use as the default sort order if
     // no other sort orders are specified.
@@ -173,7 +185,7 @@ function buildAstFilterFragments(args: Args, parent: Parent) {
   return join(fs, sql`AND`);
 }
 
-function buildAstSortFragments({ s }: Args, parent: Parent) {
+function buildAstSortFragments({ s }: Args, _parent: Parent) {
   const fs: Fragment[] = [];
 
   const sortByName = s.sortBy?.find(s => !!s.name);
@@ -190,7 +202,7 @@ function buildAstSortFragments({ s }: Args, parent: Parent) {
   return join(fs, sql`,`);
 }
 
-function buildAstPaginationFragments({ p, s }: Args, parent: Parent) {
+function buildAstPaginationFragments({ p, s }: Args, _parent: Parent) {
   if (!p.cursor) {
     return [];
   }
@@ -303,7 +315,7 @@ function buildEcsCursor(cursor: string) {
   )`;
 }
 
-function buildEcsJoinFragments({ f, s }: Args, parent: Parent): Fragment {
+function buildEcsJoinFragments({ f, s }: Args, _parent: Parent): Fragment {
   const fs: Fragment[] = [];
 
   // Type checking.
@@ -342,25 +354,38 @@ function buildEcsJoinFragments({ f, s }: Args, parent: Parent): Fragment {
 function buildEcsFilterFragments({ f }: Args, parent: Parent): Fragment {
   const fs: Fragment[] = [];
 
-  if (parent.type === "organization") {
-    fs.push(
-      sql`node.workinstancecustomerid IN (
-          SELECT customerid
-          FROM public.customer
-          WHERE customeruuid = ${parent.id}
-      )`,
-    );
-  } else {
-    fs.push(
-      sql`(
-          node.workinstancepreviousid IS NOT null
-          AND node.workinstancepreviousid IN (
-              SELECT workinstanceid
-              FROM public.workinstance
-              WHERE id = ${parent.id}
-          )
-      )`,
-    );
+  switch (parent.type) {
+    case "organization": {
+      fs.push(
+        sql`node.workinstancecustomerid IN (
+            SELECT customerid
+            FROM public.customer
+            WHERE customeruuid = ${parent.id}
+        )`,
+      );
+      break;
+    }
+    case "workinstance": {
+      fs.push(
+        sql`(
+            node.workinstancepreviousid IS NOT null
+            AND node.workinstancepreviousid IN (
+                SELECT workinstanceid
+                FROM public.workinstance
+                WHERE id = ${parent.id}
+            )
+        )`,
+      );
+      break;
+    }
+    case "worktemplate": {
+      fs.push(sql`ast.id = ${parent.id}`);
+      break;
+    }
+    default: {
+      const _: never = parent.type;
+      break;
+    }
   }
 
   fs.push(
@@ -414,7 +439,7 @@ function buildEcsFilterFragments({ f }: Args, parent: Parent): Fragment {
 
 function buildEcsPaginationFragments(
   { f, p, s }: Args,
-  parent: Parent,
+  _parent: Parent,
 ): Fragment[] {
   if (!p.cursor) {
     return [];
@@ -601,7 +626,7 @@ function buildEcsPaginationFragments(
   ];
 }
 
-function buildEcsSortFragments({ f, s }: Args, parent: Parent): Fragment {
+function buildEcsSortFragments({ f, s }: Args, _parent: Parent): Fragment {
   // Our ordering requirements are as follows:
   // - both `sortByName` and `sortByStatus`; see below.
   // - `sortByStatus` is affected by the `withStatus` filter.

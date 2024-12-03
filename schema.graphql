@@ -205,6 +205,7 @@ type Checklist implements Activatable & Assignable & Component & Node {
     last: Int
   ): AttachmentConnection!
   auditable: Auditable
+  chain: ChecklistChain
   children(
     after: String
     before: String
@@ -224,6 +225,9 @@ type Checklist implements Activatable & Assignable & Component & Node {
   metadata: Metadata!
   name: DisplayName!
   parent: Checklist
+    @deprecated(
+      reason: "Use Checklist.chain to inspect the chain, if that is what you are after. In the future, this will return a *Node* representing ownership."
+    )
   required: Boolean
   schedule: Schedule
   sop: Sop
@@ -233,6 +237,11 @@ type Checklist implements Activatable & Assignable & Component & Node {
 type ChecklistAggregate {
   assignedTo(assignees: [ID!]!, parent: ID!): Int @semanticNonNull
   dueOn(input: TemporalRangeInput!, parent: ID!): Int @semanticNonNull
+}
+
+type ChecklistChain {
+  prev: Checklist
+  root: Checklist
 }
 
 type ChecklistClosed implements State {

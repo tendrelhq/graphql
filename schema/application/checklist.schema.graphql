@@ -81,7 +81,7 @@ type Checklist implements Component & Activatable & Assignable & Node {
   status: ChecklistStatus
 
   # experimental - subject to change
-  parent: Checklist
+  chain: ChecklistChain
   children(
     first: Int
     last: Int
@@ -90,6 +90,23 @@ type Checklist implements Component & Activatable & Assignable & Node {
     search: ChecklistSearchOptions
   ): ChecklistConnection!
   metadata: Metadata!
+  # This is wrong actually. The "parent" of a Checklist should always be either
+  # a worktemplate or some entity, e.g. Customer, Location, etc. The parent
+  # pointer is not concerned with the "chain", but rather with ownership. This
+  # means that this should actually return a Node (or maybe some unimplemented
+  # type representing ownership, potentially even a *list* of Nodes).
+  # FIXME: remove usage of this from the checklist app (see ChecklistInlineView.ts)
+  # I think the intended behavior there is the same as the "Last Completed"
+  # column in the console (list) view.
+  parent: Checklist
+    @deprecated(
+      reason: "Use Checklist.chain to inspect the chain, if that is what you are after. In the future, this will return a *Node* representing ownership."
+    )
+}
+
+type ChecklistChain {
+  prev: Checklist
+  root: Checklist
 }
 
 input ChecklistInput {

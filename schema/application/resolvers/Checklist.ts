@@ -208,6 +208,43 @@ export const Checklist: ChecklistResolvers = {
   auditable(parent, _, ctx) {
     return ctx.orm.auditable.load(parent.id);
   },
+  async chain(parent) {
+    const { type, id } = decodeGlobalId(parent.id);
+
+    if (type !== "workinstance") {
+      // Only instances participate in chains.
+      return;
+    }
+
+    const [chain] = await sql<[{ prev?: string; root?: string }]>`
+      SELECT
+          encode(('workinstance:' || prev.id)::bytea, 'base64') AS "prev",
+          encode(('workinstance:' || root.id)::bytea, 'base64') AS "root"
+      FROM public.workinstance AS node
+      LEFT JOIN public.workinstance AS root
+          ON node.workinstanceoriginatorworkinstanceid = root.workinstanceid
+      LEFT JOIN public.workinstance AS prev
+          ON node.workinstancepreviousid = prev.workinstanceid
+      WHERE node.id = ${id}
+    `;
+
+    return {
+      prev: chain.prev
+        ? ({
+            __typename: "Checklist",
+            id: chain.prev,
+            // biome-ignore lint/suspicious/noExplicitAny: defer to Checklist
+          } as any)
+        : undefined,
+      root: chain.root
+        ? ({
+            __typename: "Checklist",
+            id: chain.root,
+            // biome-ignore lint/suspicious/noExplicitAny: defer to Checklist
+          } as any)
+        : undefined,
+    };
+  },
   children() {
     return {
       edges: [],
@@ -458,8 +495,7 @@ export const Checklist: ChecklistResolvers = {
             FROM public.workinstance AS c
             INNER JOIN public.workinstance AS p
                 ON c.workinstancepreviousid = p.workinstanceid
-            WHERE
-                c.id = ${id}
+            WHERE c.id = ${id}
         `,
       )
       .otherwise(() => []);
