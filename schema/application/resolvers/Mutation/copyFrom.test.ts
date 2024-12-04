@@ -1,9 +1,9 @@
 import { describe, expect, test } from "bun:test";
 import { resolvers, typeDefs } from "@/schema";
+import { encodeGlobalId } from "@/schema/system";
 import { execute } from "@/test/prelude";
 import { makeExecutableSchema } from "@graphql-tools/schema";
 import { TestCopyFromDocument } from "./copyFrom.test.generated";
-import { encodeGlobalId } from "@/schema/system";
 
 const schema = makeExecutableSchema({ resolvers, typeDefs });
 

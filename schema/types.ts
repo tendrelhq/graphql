@@ -1,6 +1,7 @@
 import type { Auth } from "@/auth";
 import type { ORM } from "@/datasources/postgres";
 
+/** @gqlContext */
 export type Context = {
   auth: Auth;
   orm: ORM;
