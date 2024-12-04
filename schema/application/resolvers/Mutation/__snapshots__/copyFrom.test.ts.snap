@@ -1,6 +1,30 @@
 // Bun Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`copyFrom copyFrom(:template, :withStatus[Open]) 1`] = `
+exports[`copyFrom when entity is a template 1`] = `
+{
+  "copyFrom": {
+    "__typename": "CopyFromPayload",
+    "edge": {
+      "__typename": "ChecklistEdge",
+      "node": {
+        "__typename": "Checklist",
+        "name": {
+          "__typename": "DisplayName",
+          "name": {
+            "__typename": "DynamicString",
+            "value": "Checklist",
+          },
+        },
+        "status": {
+          "__typename": "ChecklistOpen",
+        },
+      },
+    },
+  },
+}
+`;
+
+exports[`copyFrom when entity is an instance 1`] = `
 {
   "copyFrom": {
     "__typename": "CopyFromPayload",
