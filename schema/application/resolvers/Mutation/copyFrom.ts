@@ -123,7 +123,7 @@ export async function copyFromWorkTemplate(
           worktemplatecustomerid,
           worktemplatesiteid,
           ${options.originator ?? null}::bigint,
-          ${"previous" in options ? options.previous : null}::bigint,
+          ${"previous" in options && options.previous ? options.previous : null}::bigint,
           worktemplatesoplink,
           ${match(options.withStatus)
             .with("open", () => null)
