@@ -136,24 +136,24 @@ enum ChecklistStatusStates {
   closed
 }
 
-type ChecklistItemConnection implements Connection {
+type ChecklistItemConnection {
   edges: [ChecklistItemEdge!]!
   pageInfo: PageInfo!
   totalCount: Int!
 }
 
-type ChecklistItemEdge implements Edge {
+type ChecklistItemEdge {
   cursor: String!
   node: ChecklistItem!
 }
 
-type ChecklistConnection implements Connection {
+type ChecklistConnection {
   edges: [ChecklistEdge!]!
   pageInfo: PageInfo!
   totalCount: Int!
 }
 
-type ChecklistEdge implements Edge {
+type ChecklistEdge {
   cursor: String!
   node: Checklist!
 }

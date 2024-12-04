@@ -1,5 +1,3 @@
-directive @semanticNonNull(levels: [Int] = [0]) on FIELD_DEFINITION
-
 # Entrypoints into the "engine"
 type Query {
   entity(id: ID!): EntityConnection!
@@ -7,14 +5,6 @@ type Query {
 
 type Mutation {
   createEntity(type: String!, id: String, suffix: [String!]): ID!
-}
-
-"""
-Components characterize Entities as possessing a particular trait.
-They are just simple structs, holding all data necessary to model that trait.
-"""
-interface Component {
-  id: ID!
 }
 
 """
@@ -42,13 +32,13 @@ type EntityConnection {
   ): ComponentConnection!
 }
 
-type ComponentConnection implements Connection {
+type ComponentConnection {
   edges: [ComponentEdge!]!
   pageInfo: PageInfo!
   totalCount: Int!
 }
 
-type ComponentEdge implements Edge {
+type ComponentEdge {
   cursor: String!
   debug: DebugInfo!
   node: Component!
@@ -56,18 +46,6 @@ type ComponentEdge implements Edge {
 
 interface Referenceable implements Component {
   id: ID!
-}
-
-#
-# Pagination primitives
-#
-interface Connection {
-  totalCount: Int!
-  pageInfo: PageInfo!
-}
-
-interface Edge {
-  cursor: String!
 }
 
 #

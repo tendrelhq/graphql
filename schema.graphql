@@ -3,6 +3,37 @@ schema {
   mutation: Mutation
 }
 
+"""
+Indicates that a position is semantically non null: it is only null if there is a matching error in the `errors` array.
+In all other cases, the position is non-null.
+
+Tools doing code generation may use this information to generate the position as non-null if field errors are handled out of band:
+
+```graphql
+type User {
+    # email is semantically non-null and can be generated as non-null by error-handling clients.
+    email: String @semanticNonNull
+}
+```
+
+The `levels` argument indicates what levels are semantically non null in case of lists:
+
+```graphql
+type User {
+    # friends is semantically non null
+    friends: [User] @semanticNonNull # same as @semanticNonNull(levels: [0])
+
+    # every friends[k] is semantically non null
+    friends: [User] @semanticNonNull(levels: [1])
+
+    # friends as well as every friends[k] is semantically non null
+    friends: [User] @semanticNonNull(levels: [0, 1])
+}
+```
+
+`levels` are zero indexed.
+Passing a negative level or a level greater than the list dimension is an error.
+"""
 directive @semanticNonNull(levels: [Int] = [0]) on FIELD_DEFINITION
 
 input AcceptInvitationInput {
@@ -53,13 +84,13 @@ interface Assignable implements Component {
   id: ID!
 }
 
-type AssignableConnection implements Connection {
+type AssignableConnection {
   edges: [AssignableEdge!]!
   pageInfo: PageInfo!
   totalCount: Int!
 }
 
-type AssignableEdge implements Edge {
+type AssignableEdge {
   cursor: String!
   node: Assignable!
 }
@@ -73,13 +104,13 @@ type Assignee implements Component {
   id: ID!
 }
 
-type AssigneeConnection implements Connection {
+type AssigneeConnection {
   edges: [AssigneeEdge!]!
   pageInfo: PageInfo!
   totalCount: Int!
 }
 
-type AssigneeEdge implements Edge {
+type AssigneeEdge {
   cursor: String!
   node: Assignee!
 }
@@ -109,13 +140,13 @@ type Attachment implements Component & Node {
   id: ID!
 }
 
-type AttachmentConnection implements Connection {
+type AttachmentConnection {
   edges: [AttachmentEdge!]!
   pageInfo: PageInfo!
   totalCount: Int!
 }
 
-type AttachmentEdge implements Edge {
+type AttachmentEdge {
   cursor: String!
   node: Attachment!
 }
@@ -276,13 +307,13 @@ input ChecklistClosedReasonInput {
   note: DynamicStringInput
 }
 
-type ChecklistConnection implements Connection {
+type ChecklistConnection {
   edges: [ChecklistEdge!]!
   pageInfo: PageInfo!
   totalCount: Int!
 }
 
-type ChecklistEdge implements Edge {
+type ChecklistEdge {
   cursor: String!
   node: Checklist!
 }
@@ -317,13 +348,13 @@ input ChecklistInput {
 
 union ChecklistItem = Checklist | ChecklistResult
 
-type ChecklistItemConnection implements Connection {
+type ChecklistItemConnection {
   edges: [ChecklistItemEdge!]!
   pageInfo: PageInfo!
   totalCount: Int!
 }
 
-type ChecklistItemEdge implements Edge {
+type ChecklistItemEdge {
   cursor: String!
   node: ChecklistItem!
 }
@@ -434,21 +465,16 @@ interface Component {
   id: ID!
 }
 
-type ComponentConnection implements Connection {
+type ComponentConnection {
   edges: [ComponentEdge!]!
   pageInfo: PageInfo!
   totalCount: Int!
 }
 
-type ComponentEdge implements Edge {
+type ComponentEdge {
   cursor: String!
   debug: DebugInfo!
   node: Component!
-}
-
-interface Connection {
-  pageInfo: PageInfo!
-  totalCount: Int!
 }
 
 input CopyFromOptions {
@@ -562,6 +588,9 @@ input DisplayNameInput {
   value: DynamicStringInput!
 }
 
+"""
+Duration represented in seconds
+"""
 scalar Duration
 
 """
@@ -593,10 +622,6 @@ TODO
 input DynamicStringInput {
   locale: Locale!
   value: String!
-}
-
-interface Edge {
-  cursor: String!
 }
 
 type EnabledLanguage implements Node {
@@ -718,9 +743,12 @@ type Language {
   nameId: ID!
 }
 
+"""
+The locale in the format of a BCP 47 (RFC 5646) standard string
+"""
 scalar Locale
 
-type Location implements Component & Referenceable {
+type Location implements Component & Node & Referenceable & Trackable {
   active: ActivationStatus!
   children(options: LocationsQueryOptions): [Location!]!
   geofence: Geofence
@@ -734,6 +762,7 @@ type Location implements Component & Referenceable {
   siteId: ID!
   tags: [Tag!]!
   timeZone: String!
+  trackable: TrackingSystem
 }
 
 type LocationConnection {
@@ -937,8 +966,8 @@ type OrganizationEdge {
 
 type PageInfo {
   endCursor: String
-  hasNextPage: Boolean!
-  hasPreviousPage: Boolean!
+  hasNextPage: Boolean @semanticNonNull
+  hasPreviousPage: Boolean @semanticNonNull
   startCursor: String
 }
 
@@ -969,6 +998,7 @@ type Query {
   languages: [Language!]!
   node(id: ID!): Node!
   roles: [Tag!]!
+  trackable: TrackableConnection @semanticNonNull
   user: User!
 }
 
@@ -1204,6 +1234,9 @@ input TemporalWidgetInput {
   value: TemporalInput
 }
 
+"""
+A field whose value exists in the standard IANA Time Zone Database: https://www.iana.org/time-zones
+"""
 scalar TimeZone
 
 """
@@ -1224,6 +1257,53 @@ enum TimeZoneNameOptions {
   never
 }
 
+"""
+Identifies an Entity as being "trackable".
+What exactly this means depends on the type underlying said entity and is
+entirely user defined.
+"""
+interface Trackable implements Component {
+  id: ID!
+  """
+  Entrypoint into the "tracking system" for a given Entity. Note that while
+  many types admit to being trackable, this does not mean that all entities
+  of those types will be trackable. For example, `Location`s admit to being
+  trackable, but are only trackable (in practice) when the user has
+  explicitly configured them to be so.
+  """
+  trackable: TrackingSystem
+}
+
+type TrackableConnection {
+  edges: [TrackableEdge!] @semanticNonNull
+  pageInfo: PageInfo @semanticNonNull
+  totalCount: Int @semanticNonNull
+}
+
+type TrackableEdge {
+  cursor: String @semanticNonNull
+  node: Trackable @semanticNonNull
+}
+
+"""
+Identifies the current (or "active") state of a trackable Entity, as well as
+the various legal state transitions that one can perform on said Entity.
+"""
+type TrackingSystem {
+  """
+  The current (or "active") state of the trackable Entity.
+  It is perfectly valid for a trackable Entity to not be in *any* state, in
+  which case it is entirely implementation defined as to the semantic meaning
+  of such an "unknown" state. For example, this might indicate to an
+  application that the Entity is "idle".
+  """
+  active: String
+  transitions: [String!] @semanticNonNull
+}
+
+"""
+A field whose value conforms to the standard URL format as specified in RFC3986: https://www.ietf.org/rfc/rfc3986.txt.
+"""
 scalar URL
 
 type UnassignmentPayload {
