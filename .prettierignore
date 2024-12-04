@@ -2,6 +2,10 @@
 *
 
 # except for:
+# - graphql
+# - markdown
+# - yaml
+!*.graphql
 !*.md
 !*.yaml
 !*.yml

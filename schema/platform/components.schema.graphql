@@ -49,13 +49,13 @@ interface Assignable implements Component {
   id: ID!
 }
 
-type AssignableConnection {
+type AssignableConnection implements Connection {
   edges: [AssignableEdge!]!
   pageInfo: PageInfo!
   totalCount: Int!
 }
 
-type AssignableEdge {
+type AssignableEdge implements Edge {
   cursor: String!
   node: Assignable!
 }
@@ -122,13 +122,13 @@ input AssigneeInput {
   assignAt: TemporalInput!
 }
 
-type AssigneeConnection {
+type AssigneeConnection implements Connection {
   edges: [AssigneeEdge!]!
   pageInfo: PageInfo!
   totalCount: Int!
 }
 
-type AssigneeEdge {
+type AssigneeEdge implements Edge {
   cursor: String!
   node: Assignee!
 }
@@ -143,13 +143,13 @@ type Attachment implements Component & Node {
   attachedOn: Temporal @semanticNonNull
 }
 
-type AttachmentConnection {
+type AttachmentConnection implements Connection {
   edges: [AttachmentEdge!]!
   pageInfo: PageInfo!
   totalCount: Int!
 }
 
-type AttachmentEdge {
+type AttachmentEdge implements Edge {
   cursor: String!
   node: Attachment!
 }

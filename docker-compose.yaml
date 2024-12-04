@@ -1,0 +1,41 @@
+services:
+  graphql:
+    image: tendrel-graphql-dev
+    build:
+      context: .
+      args:
+        NODE_ENV: development
+    depends_on:
+      - postgresql
+      - jaeger
+    environment:
+      DATABASE_URL: postgresql://postgres:password@postgresql:5432/postgres
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://jaeger:4318
+    env_file:
+      - .env.local
+    ports:
+      - 4000:4000
+    pull_policy: build
+  jaeger:
+    image: jaegertracing/all-in-one
+    command:
+      - "--collector.otlp.http.cors.allowed-headers=*"
+      - "--collector.otlp.http.cors.allowed-origins=*"
+    ports:
+      - 4317:4317 # grpc
+      - 4318:4318 # http
+      - 16686:16686 # serve frontend
+    restart: always
+  postgresql:
+    image: postgres:latest
+    command: -c 'config_file=/etc/postgresql/postgresql.conf'
+    environment:
+      POSTGRES_PASSWORD: password
+    ports:
+      - 5432:5432
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./postgresql.conf:/etc/postgresql/postgresql.conf
+
+volumes:
+  pgdata: # so you have to syncdb less often

@@ -130,7 +130,7 @@
 
               src = pkgs.fetchurl {
                 url = "https://github.com/biomejs/biome/releases/download/cli%2F${version}/biome-linux-x64";
-                hash = "sha256-ziR/tkSZnvUuURHdb9bkcQGWafycSkS1aZch45twMsM=";
+                hash = "sha256-VJXy9p7dlOnybtGtue2AI9fBQ8PMbydfkKvd7WEiF+Q=";
               };
 
               nativeBuildInputs = [pkgs.autoPatchelfHook];
@@ -152,11 +152,10 @@
             biome = {
               enable = true;
               package = config.packages.biome;
-              includes = ["*.graphql" "*.json" "*.ts"];
             };
             prettier = {
               enable = true;
-              includes = ["*.md" "*.yaml" "*.yml"];
+              includes = ["*.graphql" "*.md" "*.yaml" "*.yml"];
             };
           };
         };

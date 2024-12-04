@@ -4,18 +4,19 @@
   "module": "schema/index.ts",
   "type": "module",
   "scripts": {
-    "check": "tsc --pretty && biome check --write",
+    "check": "tsc --pretty",
     "clean": "rimraf **/__generated__/** **/*.generated.ts node_modules out",
     "compile": "bun build.ts",
     "dev": "bun --inspect ./bin/app.ts",
-    "generate": "bunx grats && bun ./scripts/generate-legacy-schema.ts && bun ./scripts/print-schema.ts",
+    "format": "biome format --write && prettier --write '**/*.graphql'",
+    "generate": "bun generate.ts",
     "explore": "bunx ruru@beta -Pe http://localhost:4000",
     "start": "bun ./bin/app.ts",
     "start+tracing": "bun -r ./lib/instrument.ts ./bin/app.ts",
     "postinstall": "bun generate"
   },
   "devDependencies": {
-    "@biomejs/biome": "^1.9.4",
+    "@biomejs/biome": "^1.8.3",
     "@clerk/types": "^4.6.1",
     "@eddeee888/gcg-typescript-resolver-files": "^0.8.1",
     "@graphql-codegen/cli": "^5.0.2",
@@ -34,9 +35,8 @@
     "@types/negotiator": "^0.6.3",
     "@vtsls/language-server": "^0.2.5",
     "graphql-language-service-cli": "^3.4.1",
-    "grats": "^0.0.29",
     "merge-anything": "^6.0.2",
-    "prettier": "^3.4.1",
+    "prettier": "^3.3.3",
     "rimraf": "^5.0.7",
     "typescript-language-server": "^4.3.3"
   },

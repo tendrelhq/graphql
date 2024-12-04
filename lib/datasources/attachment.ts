@@ -1,11 +1,11 @@
 import type { Attachment } from "@/schema";
-import { decodeGlobalId } from "@/schema/system";
 import { GetObjectCommand, S3Client } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import Dataloader from "dataloader";
 import type { Request } from "express";
-import { GraphQLError } from "graphql";
 import { sql } from "./postgres";
+import { decodeGlobalId } from "@/schema/system";
+import { GraphQLError } from "graphql";
 
 async function createPresignedUrl(client: S3Client, uri: URL) {
   const command = new GetObjectCommand({

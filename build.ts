@@ -5,7 +5,7 @@ import pattycake from "pattycake";
 await $`rimraf lib/schema/__generated__ out`;
 
 // codegen
-await $`bun generate`;
+await $`bun generate.ts`;
 
 // typecheck
 await $`tsc`;

@@ -1,19 +1,11 @@
 # vim: ft=bash
 # shellcheck disable=2148
 
-if has nix; then
-  use flake . --impure
-fi
-
 layout node
 
-# https://www.postgresql.org/docs/current/libpq-envars.html
-export PGDATABASE=postgres
-# note that the following are not necessary when using the devenv:
-export PGHOST=
-export PGPORT=
-export PGUSERNAME=
-export PGPASSWORD=
+if has nix; then
+	use flake . --impure
+fi
 
 # see ./copilot/environments/dev/manifest.yml
 # check the aws console for these ids

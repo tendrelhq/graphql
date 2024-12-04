@@ -118,7 +118,7 @@ type Geofence {
   radius: Float!
 }
 
-type Location implements Component & Node & Referenceable & Trackable {
+type Location implements Component & Referenceable {
   id: ID!
   active: ActivationStatus!
   children(options: LocationsQueryOptions): [Location!]!
@@ -132,7 +132,6 @@ type Location implements Component & Node & Referenceable & Trackable {
   siteId: ID!
   tags: [Tag!]!
   timeZone: String!
-  trackable: TrackingSystem
 }
 
 input LocationSearchOptions {
@@ -186,6 +185,13 @@ type OrganizationConnection {
 
 type OrganizationEdge {
   node: Organization!
+}
+
+type PageInfo {
+  hasNextPage: Boolean!
+  hasPreviousPage: Boolean!
+  startCursor: String
+  endCursor: String
 }
 
 type Worker implements Component & Assignable & Identity & Referenceable {

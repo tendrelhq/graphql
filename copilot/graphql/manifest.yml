@@ -42,15 +42,15 @@ variables:
 environments:
   dev:
     secrets:
-      PGUSERNAME:
+      DB_USERNAME:
         secretsmanager: "/database/role/admin:username::"
-      PGPASSWORD:
+      DB_PASSWORD:
         secretsmanager: "/database/role/admin:password::"
-      PGHOST:
+      DB_HOST:
         secretsmanager: "/database/role/admin:host::"
-      PGPORT:
+      DB_PORT:
         secretsmanager: "/database/role/admin:port::"
-      PGDATABASE:
+      DB_NAME:
         secretsmanager: "/database/role/admin:dbname::"
     variables:
       LOG_LEVEL: debug
@@ -59,15 +59,15 @@ environments:
     nlb:
       alias: test.graphql.tendrel.io
     secrets:
-      PGUSERNAME:
+      DB_USERNAME:
         secretsmanager: "/database/service/graphql:username::"
-      PGPASSWORD:
+      DB_PASSWORD:
         secretsmanager: "/database/service/graphql:password::"
-      PGHOST:
+      DB_HOST:
         secretsmanager: "/database/service/graphql:host::"
-      PGPORT:
+      DB_PORT:
         secretsmanager: "/database/service/graphql:port::"
-      PGDATABASE:
+      DB_NAME:
         secretsmanager: "/database/service/graphql:dbname::"
     variables:
       ATTACHMENT_BUCKET: test-lambdastack-photostoragebucketcc7aea4f-1cnysolqfj44u
@@ -76,15 +76,15 @@ environments:
     nlb:
       alias: beta.graphql.tendrel.io
     secrets:
-      PGUSERNAME:
+      DB_USERNAME:
         secretsmanager: "/database/service/graphql:username::"
-      PGPASSWORD:
+      DB_PASSWORD:
         secretsmanager: "/database/service/graphql:password::"
-      PGHOST:
+      DB_HOST:
         secretsmanager: "/database/service/graphql:host::"
-      PGPORT:
+      DB_PORT:
         secretsmanager: "/database/service/graphql:port::"
-      PGDATABASE:
+      DB_NAME:
         secretsmanager: "/database/service/graphql:dbname::"
     variables:
       ATTACHMENT_BUCKET: beta-lambdastack-photostoragebucketcc7aea4f-1ang3xq3j0cqv
