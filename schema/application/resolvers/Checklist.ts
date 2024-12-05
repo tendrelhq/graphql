@@ -166,7 +166,7 @@ export const Checklist: ChecklistResolvers = {
       LIMIT ${limit + 1};
     `;
 
-    const n1 = rows.length >= limit + 1 ? rows.pop() : undefined;
+    const n1 = rows.length > limit ? rows.pop() : undefined;
     const hasNext = direction === "forward" && !!n1;
     const hasPrev = direction === "backward" && !!n1;
 
@@ -262,10 +262,8 @@ export const Checklist: ChecklistResolvers = {
     const { type: parentType, id: parentId } = decodeGlobalId(parent.id);
 
     const { cursor, direction, limit } = buildPaginationArgs(args, {
-      defaultLimit: Number(
-        process.env.DEFAULT_ATTACHMENT_PAGINATION_LIMIT ?? 20,
-      ),
-      maxLimit: Number(process.env.MAX_ATTACHMENT_PAGINATION_LIMIT ?? 20),
+      defaultLimit: Number(process.env.DEFAULT_ITEMS_PAGINATION_LIMIT ?? 20),
+      maxLimit: Number(process.env.MAX_ITEMS_PAGINATION_LIMIT ?? 50),
     });
 
     // Our (default) order clause specifies:
@@ -331,40 +329,60 @@ export const Checklist: ChecklistResolvers = {
       .with(
         "worktemplate",
         () => sql<{ __typename: "ChecklistResult"; id: string }[]>`
+            ${
+              cursor
+                ? sql`
+            WITH cursor AS (
+                SELECT
+                    workresultorder AS order,
+                    workresultid AS id
+                FROM public.workresult
+                WHERE id = ${cursor.id}
+            )
+                `
+                : sql``
+            }
             SELECT
                 'ChecklistResult' AS "__typename",
                 encode(('workresult:' || wr.id)::bytea, 'base64') AS id
-            FROM public.workresult AS wr
-            INNER JOIN public.worktemplate AS wt
-                ON
-                    wr.workresultworktemplateid = wt.worktemplateid
-                    AND wt.id = ${parentId}
-            WHERE
-                wr.workresultisprimary = false
-                ${match(args.withActive)
-                  .with(
-                    true,
-                    () => sql`AND (
+            FROM public.worktemplate AS wt
+            ${cursor ? sql`INNER JOIN cursor ON true` : sql``}
+            INNER JOIN public.workresult AS wr
+                ON wt.worktemplateid = wr.workresultworktemplateid
+            WHERE ${join(
+              [
+                sql`wt.id = ${parentId}`,
+                sql`wr.workresultisprimary = false`,
+                ...(cursor
+                  ? [
+                      sql`(wr.workresultorder, wr.workresultid) ${cmp} (cursor.order, cursor.id)`,
+                    ]
+                  : []),
+                ...match(args.withActive)
+                  .with(true, () => [
+                    sql`(
                         wr.workresultenddate IS null
                         OR wr.workresultenddate > now()
                     )`,
-                  )
-                  .with(
-                    false,
-                    () => sql`AND (
+                  ])
+                  .with(false, () => [
+                    sql`(
                         wr.workresultenddate IS NOT null
                         AND wr.workresultenddate < now()
                     )`,
-                  )
-                  .otherwise(() => sql``)}
-            ORDER BY wr.workresultorder ${direction === "forward" ? sql`DESC` : sql`ASC`},
-                     wr.workresultid ${direction === "forward" ? sql`DESC` : sql`ASC`}
+                  ])
+                  .otherwise(() => []),
+              ],
+              sql`AND`,
+            )}
+            ORDER BY wr.workresultorder ${direction === "forward" ? sql`ASC` : sql`DESC`},
+                     wr.workresultid ${direction === "forward" ? sql`ASC` : sql`DESC`}
             LIMIT ${limit + 1};
         `,
       )
       .otherwise(() => Promise.reject("invariant violated"));
 
-    const n1 = rows.length >= limit + 1 ? rows.pop() : undefined;
+    const n1 = rows.length > limit ? rows.pop() : undefined;
     const hasNext = direction === "forward" && !!n1;
     const hasPrev = direction === "backward" && !!n1;
 
