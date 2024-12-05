@@ -262,7 +262,7 @@ export const Checklist: ChecklistResolvers = {
     const { type: parentType, id: parentId } = decodeGlobalId(parent.id);
 
     const { cursor, direction, limit } = buildPaginationArgs(args, {
-      defaultLimit: Number(process.env.DEFAULT_ITEMS_PAGINATION_LIMIT ?? 20),
+      defaultLimit: Number(process.env.DEFAULT_ITEMS_PAGINATION_LIMIT ?? 50),
       maxLimit: Number(process.env.MAX_ITEMS_PAGINATION_LIMIT ?? 50),
     });
 
