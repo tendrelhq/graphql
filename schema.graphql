@@ -1034,7 +1034,21 @@ type Query {
   languages: [Language!]!
   node(id: ID!): Node!
   roles: [Tag!]!
-  trackables: TrackableConnection @semanticNonNull
+  """
+  Query for Trackable entities in the given `parent` hierarchy.
+  """
+  trackables(
+    """
+    Identifies the root of the hierarchy in which to search for Trackable
+    entities.
+
+    Valid parent types are currently:
+    - Customer
+
+    All other parent types will be gracefully ignored.
+    """
+    parent: ID!
+  ): TrackableConnection @semanticNonNull
   user: User!
 }
 
@@ -1386,22 +1400,6 @@ type TrackableConnection {
 type TrackableEdge {
   cursor: String @semanticNonNull
   node: Trackable @semanticNonNull
-}
-
-"""
-Identifies the current (or "active") state of a trackable Entity, as well as
-the various legal state transitions that one can perform on said Entity.
-"""
-type TrackingSystem {
-  """
-  The current (or "active") state of the trackable Entity.
-  It is perfectly valid for a trackable Entity to not be in *any* state, in
-  which case it is entirely implementation defined as to the semantic meaning
-  of such an "unknown" state. For example, this might indicate to an
-  application that the Entity is "idle".
-  """
-  active: Task
-  transitions: [Task!] @semanticNonNull
 }
 
 input TransitionInput {

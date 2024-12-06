@@ -157,10 +157,22 @@ export function getSchema(): GraphQLSchema {
     fields() {
       return {
         trackables: {
+          description:
+            "Query for Trackable entities in the given `parent` hierarchy.",
           name: "trackables",
           type: TrackableConnectionType,
-          resolve(source, _args, context) {
-            return assertNonNull(queryTrackablesResolver(source, context));
+          args: {
+            parent: {
+              description:
+                "Identifies the root of the hierarchy in which to search for Trackable\nentities.\n\nValid parent types are currently:\n- Customer\n\nAll other parent types will be gracefully ignored.",
+              name: "parent",
+              type: new GraphQLNonNull(GraphQLID),
+            },
+          },
+          resolve(source, args, context) {
+            return assertNonNull(
+              queryTrackablesResolver(source, context, args.parent),
+            );
           },
         },
       };
@@ -641,30 +653,6 @@ export function getSchema(): GraphQLSchema {
       return [ComponentType, TrackableType];
     },
   });
-  const TrackingSystemType: GraphQLObjectType = new GraphQLObjectType({
-    name: "TrackingSystem",
-    description:
-      'Identifies the current (or "active") state of a trackable Entity, as well as\nthe various legal state transitions that one can perform on said Entity.',
-    fields() {
-      return {
-        active: {
-          description:
-            'The current (or "active") state of the trackable Entity.\nIt is perfectly valid for a trackable Entity to not be in *any* state, in\nwhich case it is entirely implementation defined as to the semantic meaning\nof such an "unknown" state. For example, this might indicate to an\napplication that the Entity is "idle".',
-          name: "active",
-          type: TaskType,
-        },
-        transitions: {
-          name: "transitions",
-          type: new GraphQLList(new GraphQLNonNull(TaskType)),
-          resolve(source, args, context, info) {
-            return assertNonNull(
-              defaultFieldResolver(source, args, context, info),
-            );
-          },
-        },
-      };
-    },
-  });
   return new GraphQLSchema({
     query: QueryType,
     mutation: MutationType,
@@ -694,7 +682,6 @@ export function getSchema(): GraphQLSchema {
       TimestampOverrideType,
       TrackableConnectionType,
       TrackableEdgeType,
-      TrackingSystemType,
       TransitionResultType,
     ],
   });
