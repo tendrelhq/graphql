@@ -1269,7 +1269,7 @@ type Task implements Component & Trackable {
   """
   fsm: TaskStateMachine
   id: ID!
-  state: TaskState
+  state: TaskState @semanticNonNull
   """
   Entrypoint into the "tracking system(s)" for the given Task.
   At the moment, sub-task tracking is not supported and therefore `null` will

@@ -47,8 +47,8 @@ export class Task implements Component, Named, Trackable {
   }
 
   /** @gqlField */
-  async state(): Promise<TaskState | null> {
-    return null;
+  async state(): Promise<TaskState> {
+    return Promise.reject("not yet implemented");
   }
 
   /**

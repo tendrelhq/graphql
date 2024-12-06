@@ -640,6 +640,11 @@ export function getSchema(): GraphQLSchema {
         state: {
           name: "state",
           type: TaskStateType,
+          resolve(source, args, context, info) {
+            return assertNonNull(
+              defaultFieldResolver(source, args, context, info),
+            );
+          },
         },
         tracking: {
           description:
