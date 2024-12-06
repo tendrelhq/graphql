@@ -15,8 +15,6 @@ import {
 } from "graphql";
 import { trackables as queryTrackablesResolver } from "./platform/tracking";
 import { transition as mutationTransitionResolver } from "./platform/tracking";
-import { displayName as taskDisplayNameResolver } from "./system/component/task";
-import { state as taskStateResolver } from "./system/component/task";
 import { fsm as taskFsmResolver } from "./system/component/task_fsm";
 import { id as displayNameIdResolver } from "./system/node";
 import { id as locationIdResolver } from "./system/node";
@@ -608,8 +606,10 @@ export function getSchema(): GraphQLSchema {
         displayName: {
           name: "displayName",
           type: DisplayNameType,
-          resolve(source, _args, context) {
-            return assertNonNull(taskDisplayNameResolver(source, context));
+          resolve(source, args, context, info) {
+            return assertNonNull(
+              defaultFieldResolver(source, args, context, info),
+            );
           },
         },
         fsm: {
@@ -628,9 +628,6 @@ export function getSchema(): GraphQLSchema {
         state: {
           name: "state",
           type: TaskStateType,
-          resolve(source, _args, context) {
-            return taskStateResolver(source, context);
-          },
         },
         tracking: {
           description:

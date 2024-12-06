@@ -32,40 +32,12 @@ export interface Trackable extends Component {
   tracking(): Promise<Connection<Trackable> | null>;
 }
 
-// TODO: it may be that there is some level of genericism that can be abstracted
-// here. For example, I can imagine that each Trackable implementation simply
-// provides a sql.Fragment which is used to construct a CTE that the generic
-// tracking system code then operates on.
-// export async function tracking(
-//   t: Trackable,
-//   ctx: Context,
-// ): Promise<Connection<TrackingSystem>> {
-//   return Promise.reject();
-// }
-
-/**
- * Identifies the current (or "active") state of a trackable Entity, as well as
- * the various legal state transitions that one can perform on said Entity.
- *
- * @gqlType
- */
-export type TrackingSystem = {
-  /**
-   * The current (or "active") state of the trackable Entity.
-   * It is perfectly valid for a trackable Entity to not be in *any* state, in
-   * which case it is entirely implementation defined as to the semantic meaning
-   * of such an "unknown" state. For example, this might indicate to an
-   * application that the Entity is "idle".
-   *
-   * @gqlField
-   */
-  active?: Task;
-
-  /** @gqlField */
-  transitions: Task[];
-};
-
-// TODO: Add pagination arguments.
+// TODO:
+// - add a "parent" argument to identify the root
+// - add filter arguments to narrow down the underlying type of the trackables
+//   that we return, e.g. withArchetype: ["Location"]
+// - add pagination arguments
+// - utilize `info` for optimizations
 /** @gqlField */
 export async function trackables(
   _: Query,
@@ -91,7 +63,7 @@ export async function trackables(
   return {
     edges: nodes.map(node => ({
       cursor: node.id,
-      node: new Location(node.id),
+      node: new Location(node.id, ctx),
     })),
     pageInfo: {
       hasNextPage: false,

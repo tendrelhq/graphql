@@ -1,11 +1,12 @@
 import { sql } from "@/datasources/postgres";
 import { decodeGlobalId } from "@/schema/system";
 import type { Component } from "@/schema/system/component";
-import type { Task } from "@/schema/system/component/task";
+import { Task, type TaskConstructorArgs } from "@/schema/system/component/task";
 import type { Refetchable } from "@/schema/system/node";
 import type { Connection } from "@/schema/system/pagination";
+import type { Context } from "@/schema/types";
 import type { ID } from "grats";
-import type { Trackable, TrackingSystem } from "../tracking";
+import type { Trackable } from "../tracking";
 
 /** @gqlType */
 export class Location implements Component, Refetchable, Trackable {
@@ -13,7 +14,10 @@ export class Location implements Component, Refetchable, Trackable {
   _type: string;
   _id: string;
 
-  constructor(public id: ID) {
+  constructor(
+    public id: ID,
+    private ctx: Context,
+  ) {
     const { type, ...identifier } = decodeGlobalId(id);
     this._type = type;
     this._id = identifier.id;
@@ -49,9 +53,8 @@ export class Location implements Component, Refetchable, Trackable {
     //
     // [^1]: we really need to break this 1:1 relationship!
     // [^2]: in the future we can match on system-defined children as well
-    const nodes = await sql<Task[]>`
+    const nodes = await sql<TaskConstructorArgs[]>`
         SELECT
-            'Task' AS "__typename",
             encode(('worktemplate:' || wt.id)::bytea, 'base64') AS id,
             encode(('name:' || lm.languagemasteruuid)::bytea, 'base64') AS "nameId"
         FROM public.location AS l
@@ -76,7 +79,10 @@ export class Location implements Component, Refetchable, Trackable {
     console.debug("Location.tracking:", JSON.stringify(nodes, null, 2));
 
     return {
-      edges: nodes.map(node => ({ cursor: node.id, node })),
+      edges: nodes.map(node => ({
+        cursor: node.id,
+        node: new Task(node, this.ctx),
+      })),
       pageInfo: {
         hasNextPage: false,
         hasPreviousPage: false,
