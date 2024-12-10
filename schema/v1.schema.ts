@@ -16,8 +16,10 @@ import {
 import { trackables as queryTrackablesResolver } from "./platform/tracking";
 import { transition as mutationTransitionResolver } from "./platform/tracking";
 import { fsm as taskFsmResolver } from "./system/component/task_fsm";
+import { node as queryNodeResolver } from "./system/node";
 import { id as displayNameIdResolver } from "./system/node";
 import { id as locationIdResolver } from "./system/node";
+import { id as taskIdResolver } from "./system/node";
 async function assertNonNull<T>(value: T | Promise<T>): Promise<T> {
   const awaited = await value;
   if (awaited == null)
@@ -25,6 +27,19 @@ async function assertNonNull<T>(value: T | Promise<T>): Promise<T> {
   return awaited;
 }
 export function getSchema(): GraphQLSchema {
+  const NodeType: GraphQLInterfaceType = new GraphQLInterfaceType({
+    description: 'Indicates an object that is "refetchable".',
+    name: "Node",
+    fields() {
+      return {
+        id: {
+          description: "A globally unique opaque identifier for a node.",
+          name: "id",
+          type: new GraphQLNonNull(GraphQLID),
+        },
+      };
+    },
+  });
   const ComponentType: GraphQLInterfaceType = new GraphQLInterfaceType({
     description:
       "Components characterize Entities as possessing a particular trait.\nThey are just simple structs, holding all data necessary to model that trait.",
@@ -156,6 +171,19 @@ export function getSchema(): GraphQLSchema {
     name: "Query",
     fields() {
       return {
+        node: {
+          name: "node",
+          type: new GraphQLNonNull(NodeType),
+          args: {
+            id: {
+              name: "id",
+              type: new GraphQLNonNull(GraphQLID),
+            },
+          },
+          resolve(source, args, context) {
+            return queryNodeResolver(source, args, context);
+          },
+        },
         trackables: {
           description:
             "Query for Trackable entities in the given `parent` hierarchy.",
@@ -380,11 +408,6 @@ export function getSchema(): GraphQLSchema {
         override: {
           name: "override",
           type: TimestampOverrideType,
-          resolve(source, args, context, info) {
-            return assertNonNull(
-              defaultFieldResolver(source, args, context, info),
-            );
-          },
         },
         value: {
           name: "value",
@@ -426,19 +449,6 @@ export function getSchema(): GraphQLSchema {
     name: "TaskState",
     types() {
       return [ClosedType, InProgressType, OpenType];
-    },
-  });
-  const NodeType: GraphQLInterfaceType = new GraphQLInterfaceType({
-    description: 'Indicates an object that is "refetchable".',
-    name: "Node",
-    fields() {
-      return {
-        id: {
-          description: "A globally unique opaque identifier for a node.",
-          name: "id",
-          type: new GraphQLNonNull(GraphQLID),
-        },
-      };
     },
   });
   const DynamicStringInputType: GraphQLInputObjectType =
@@ -634,8 +644,12 @@ export function getSchema(): GraphQLSchema {
           },
         },
         id: {
+          description: "A globally unique opaque identifier for a node.",
           name: "id",
           type: new GraphQLNonNull(GraphQLID),
+          resolve(source) {
+            return taskIdResolver(source);
+          },
         },
         state: {
           name: "state",
@@ -655,7 +669,7 @@ export function getSchema(): GraphQLSchema {
       };
     },
     interfaces() {
-      return [ComponentType, TrackableType];
+      return [ComponentType, NodeType, TrackableType];
     },
   });
   return new GraphQLSchema({

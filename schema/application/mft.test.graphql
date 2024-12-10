@@ -1,0 +1,73 @@
+query TestMftEntrypoint($root: ID!) {
+  trackables(parent: $root) {
+    edges {
+      node {
+        ... on Location {
+          name {
+            value
+          }
+        }
+        ...Trackables_fragment
+      }
+    }
+  }
+}
+
+query TestMftRefetchQuery($node: ID!) {
+  node(id: $node) {
+    ... on Location {
+      name {
+        value
+      }
+      ...Trackables_fragment
+    }
+    ... on Task {
+      displayName {
+        name {
+          value
+        }
+      }
+      ...TaskFSM_fragment
+    }
+  }
+}
+
+fragment Trackables_fragment on Trackable {
+  tracking {
+    edges {
+      node {
+        ... on Task {
+          displayName {
+            name {
+              value
+            }
+          }
+          ...TaskFSM_fragment
+        }
+      }
+    }
+  }
+}
+
+fragment TaskFSM_fragment on Task {
+  fsm {
+    active {
+      displayName {
+        name {
+          value
+        }
+      }
+    }
+    transitions {
+      edges {
+        node {
+          displayName {
+            name {
+              value
+            }
+          }
+        }
+      }
+    }
+  }
+}

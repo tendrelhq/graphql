@@ -232,7 +232,6 @@ type Query {
   roles: [Tag!]!
 
   # v2
-  node(id: ID!): Node!
   user: User!
 }
 

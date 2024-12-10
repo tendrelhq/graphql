@@ -1,4 +1,5 @@
 import type { Trackable } from "@/schema/platform/tracking";
+import type { Mutation } from "@/schema/root";
 import type { Component } from "@/schema/system/component";
 import type { Overridable } from "@/schema/system/overridable";
 import type { Timestamp } from "@/schema/system/temporal";
@@ -9,7 +10,9 @@ import type { Refetchable } from "../node";
 import type { Connection } from "../pagination";
 import type { DisplayName, Named } from "./name";
 
-export type TaskConstructorArgs = { id: ID };
+export type TaskConstructorArgs = {
+  id: ID;
+};
 
 /**
  * A system-level component that identifies an Entity as being applicable to
@@ -26,6 +29,7 @@ export class Task implements Component, Named, Refetchable, Trackable {
   readonly __typename = "Task" as const;
   readonly _type: string;
   readonly _id: string;
+  readonly id: ID;
 
   constructor(
     args: TaskConstructorArgs,
@@ -37,12 +41,6 @@ export class Task implements Component, Named, Refetchable, Trackable {
     this._type = type;
     this._id = id;
   }
-
-  /**
-   * @gqlField
-   * @killsParentOnException
-   */
-  readonly id: ID;
 
   /** @gqlField */
   async displayName(): Promise<DisplayName> {
@@ -128,3 +126,16 @@ export type Closed = {
   /** @gqlField */
   closedBy?: string;
 };
+
+// FIXME: I don't know if this is right. What is crucial here is that the
+// payload that we return after successfully performing this mutation is enough
+// to trigger a re-render in a client. In the MFT case, this is the top-level
+// trackable Task (template). It follows then that the mutation should be given
+// an `id` that points to this top-level Trackable, such that we can refetch the
+// necessary data after performing a transition. `startTask` - I think - makes
+// sense as a low-level api (similar to setStatus). However, it is too low level
+// for our usecase right now as it would force the client to perform the
+// mutation *and then* refetch the top-level Trackable (synchronously!). Bad.
+export async function startTask(_: Mutation, id: ID, ctx: Context) {
+  return Promise.reject();
+}

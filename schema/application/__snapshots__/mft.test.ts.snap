@@ -1,0 +1,278 @@
+// Bun Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`MFT refetch query with Location as node 1`] = `
+{
+  "node": {
+    "__typename": "Location",
+    "name": {
+      "__typename": "Name",
+      "value": "Mixing Line",
+    },
+    "tracking": {
+      "edges": [
+        {
+          "node": {
+            "displayName": {
+              "name": {
+                "value": "Production",
+              },
+            },
+            "fsm": {
+              "active": null,
+              "transitions": {
+                "edges": [
+                  {
+                    "node": {
+                      "displayName": {
+                        "name": {
+                          "value": "Production",
+                        },
+                      },
+                    },
+                  },
+                ],
+              },
+            },
+          },
+        },
+      ],
+    },
+  },
+}
+`;
+
+exports[`MFT refetch query with Task as node 1`] = `
+{
+  "node": {
+    "__typename": "Task",
+    "displayName": {
+      "__typename": "DisplayName",
+      "name": {
+        "__typename": "DynamicString",
+        "value": "Production",
+      },
+    },
+    "fsm": {
+      "active": null,
+      "transitions": {
+        "edges": [
+          {
+            "node": {
+              "displayName": {
+                "name": {
+                  "value": "Production",
+                },
+              },
+            },
+          },
+        ],
+      },
+    },
+  },
+}
+`;
+
+exports[`MFT entrypoint query 1`] = `
+{
+  "trackables": {
+    "__typename": "TrackableConnection",
+    "edges": [
+      {
+        "__typename": "TrackableEdge",
+        "node": {
+          "__typename": "Location",
+          "name": {
+            "__typename": "Name",
+            "value": "Mixing Line",
+          },
+          "tracking": {
+            "edges": [
+              {
+                "node": {
+                  "displayName": {
+                    "name": {
+                      "value": "Production",
+                    },
+                  },
+                  "fsm": {
+                    "active": null,
+                    "transitions": {
+                      "edges": [
+                        {
+                          "node": {
+                            "displayName": {
+                              "name": {
+                                "value": "Production",
+                              },
+                            },
+                          },
+                        },
+                      ],
+                    },
+                  },
+                },
+              },
+            ],
+          },
+        },
+      },
+      {
+        "__typename": "TrackableEdge",
+        "node": {
+          "__typename": "Location",
+          "name": {
+            "__typename": "Name",
+            "value": "Fill Line",
+          },
+          "tracking": {
+            "edges": [
+              {
+                "node": {
+                  "displayName": {
+                    "name": {
+                      "value": "Production",
+                    },
+                  },
+                  "fsm": {
+                    "active": null,
+                    "transitions": {
+                      "edges": [
+                        {
+                          "node": {
+                            "displayName": {
+                              "name": {
+                                "value": "Production",
+                              },
+                            },
+                          },
+                        },
+                      ],
+                    },
+                  },
+                },
+              },
+            ],
+          },
+        },
+      },
+      {
+        "__typename": "TrackableEdge",
+        "node": {
+          "__typename": "Location",
+          "name": {
+            "__typename": "Name",
+            "value": "Assembly Line",
+          },
+          "tracking": {
+            "edges": [
+              {
+                "node": {
+                  "displayName": {
+                    "name": {
+                      "value": "Production",
+                    },
+                  },
+                  "fsm": {
+                    "active": null,
+                    "transitions": {
+                      "edges": [
+                        {
+                          "node": {
+                            "displayName": {
+                              "name": {
+                                "value": "Production",
+                              },
+                            },
+                          },
+                        },
+                      ],
+                    },
+                  },
+                },
+              },
+            ],
+          },
+        },
+      },
+      {
+        "__typename": "TrackableEdge",
+        "node": {
+          "__typename": "Location",
+          "name": {
+            "__typename": "Name",
+            "value": "Cartoning Line",
+          },
+          "tracking": {
+            "edges": [
+              {
+                "node": {
+                  "displayName": {
+                    "name": {
+                      "value": "Production",
+                    },
+                  },
+                  "fsm": {
+                    "active": null,
+                    "transitions": {
+                      "edges": [
+                        {
+                          "node": {
+                            "displayName": {
+                              "name": {
+                                "value": "Production",
+                              },
+                            },
+                          },
+                        },
+                      ],
+                    },
+                  },
+                },
+              },
+            ],
+          },
+        },
+      },
+      {
+        "__typename": "TrackableEdge",
+        "node": {
+          "__typename": "Location",
+          "name": {
+            "__typename": "Name",
+            "value": "Packaging Line",
+          },
+          "tracking": {
+            "edges": [
+              {
+                "node": {
+                  "displayName": {
+                    "name": {
+                      "value": "Production",
+                    },
+                  },
+                  "fsm": {
+                    "active": null,
+                    "transitions": {
+                      "edges": [
+                        {
+                          "node": {
+                            "displayName": {
+                              "name": {
+                                "value": "Production",
+                              },
+                            },
+                          },
+                        },
+                      ],
+                    },
+                  },
+                },
+              },
+            ],
+          },
+        },
+      },
+    ],
+  },
+}
+`;

@@ -147,6 +147,7 @@ type PageInfo {
 }
 
 type Query {
+  node(id: ID!): Node!
   """
   Query for Trackable entities in the given `parent` hierarchy.
   """
@@ -173,13 +174,16 @@ case.
 Technically speaking, a Task represents a (1) *named asynchronous process*
 that (2) exists in one of three states: open, in progress, or closed.
 """
-type Task implements Component & Trackable {
+type Task implements Component & Node & Trackable {
   displayName: DisplayName @semanticNonNull
   """
   Tasks can have an associated StateMachine, which defines a finite set of
   states that the given Task can be in at any given time.
   """
   fsm: TaskStateMachine
+  """
+  A globally unique opaque identifier for a node.
+  """
   id: ID!
   state: TaskState @semanticNonNull
   """
@@ -220,7 +224,7 @@ type Timestamp {
 }
 
 type TimestampOverridable {
-  override: TimestampOverride @semanticNonNull
+  override: TimestampOverride
   value: Timestamp @semanticNonNull
 }
 
