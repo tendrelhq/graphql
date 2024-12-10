@@ -54,26 +54,29 @@ export class Location implements Component, Refetchable, Trackable {
     // [^1]: we really need to break this 1:1 relationship!
     // [^2]: in the future we can match on system-defined children as well
     const nodes = await sql<TaskConstructorArgs[]>`
-        SELECT
-            encode(('worktemplate:' || wt.id)::bytea, 'base64') AS id,
-            encode(('name:' || lm.languagemasteruuid)::bytea, 'base64') AS "nameId"
-        FROM public.location AS l
-        INNER JOIN public.custag AS lc
-            ON l.locationcategoryid = lc.custagid
-        INNER JOIN public.systag AS lcs
-            ON lc.custagsystagid = lcs.systagid
+        WITH location_type AS (
+            SELECT
+                c.custaguuid AS category,
+                s.systaguuid AS parent
+            FROM public.location AS l
+            INNER JOIN public.custag AS c
+                ON l.locationcategoryid = c.custagid
+            INNER JOIN public.systag AS s
+                ON c.custagsystagid = s.systagid
+            WHERE
+                l.locationuuid = ${this._id}
+                AND s.systagtype = 'Trackable'
+        )
+
+        SELECT encode(('worktemplate:' || wt.id)::bytea, 'base64') AS id
+        FROM location_type AS lt
         INNER JOIN public.worktemplateconstraint AS wtc
             ON
-                lc.custaguuid = wtc.worktemplateconstraintconstraintid
-                AND lcs.systaguuid = wtc.worktemplateconstraintconstrainedtypeid
+                lt.category = wtc.worktemplateconstraintconstraintid
+                AND lt.parent = wtc.worktemplateconstraintconstrainedtypeid
         INNER JOIN public.worktemplate AS wt
             ON wtc.worktemplateconstrainttemplateid = wt.id
-        INNER JOIN public.languagemaster AS lm
-            ON wt.worktemplatenameid = lm.languagemasterid
-        WHERE
-            l.locationuuid = ${this._id}
-            AND lcs.systagtype = 'Trackable'
-            AND wtc.worktemplateconstraintresultid IS null;
+        WHERE wtc.worktemplateconstraintresultid IS null;
     `;
 
     console.debug("Location.tracking:", JSON.stringify(nodes, null, 2));

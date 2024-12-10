@@ -4,13 +4,12 @@ import type { Overridable } from "@/schema/system/overridable";
 import type { Timestamp } from "@/schema/system/temporal";
 import type { Context } from "@/schema/types";
 import type { ID } from "grats";
+import { decodeGlobalId } from "..";
+import type { Refetchable } from "../node";
 import type { Connection } from "../pagination";
-import { DisplayName, type Named } from "./name";
+import type { DisplayName, Named } from "./name";
 
-export type TaskConstructorArgs = {
-  id: ID;
-  nameId: ID;
-};
+export type TaskConstructorArgs = { id: ID };
 
 /**
  * A system-level component that identifies an Entity as being applicable to
@@ -23,32 +22,44 @@ export type TaskConstructorArgs = {
  *
  * @gqlType
  */
-export class Task implements Component, Named, Trackable {
+export class Task implements Component, Named, Refetchable, Trackable {
   readonly __typename = "Task" as const;
-
-  /**
-   * @gqlField
-   * @killsParentOnException
-   */
-  readonly id: ID;
-  readonly nameId: ID;
+  readonly _type: string;
+  readonly _id: string;
 
   constructor(
     args: TaskConstructorArgs,
     private ctx: Context,
   ) {
     this.id = args.id;
-    this.nameId = args.nameId;
+    // Private.
+    const { type, id } = decodeGlobalId(args.id);
+    this._type = type;
+    this._id = id;
   }
 
+  /**
+   * @gqlField
+   * @killsParentOnException
+   */
+  readonly id: ID;
+
   /** @gqlField */
-  displayName(): DisplayName {
-    return new DisplayName(this.nameId);
+  async displayName(): Promise<DisplayName> {
+    return await this.ctx.orm.displayName.load(this.id);
   }
 
   /** @gqlField */
   async state(): Promise<TaskState> {
-    return Promise.reject("not yet implemented");
+    return {
+      __typename: "Open",
+      openedAt: {
+        override: null,
+        value: {
+          value: new Date().toLocaleString(),
+        },
+      },
+    };
   }
 
   /**
@@ -63,6 +74,8 @@ export class Task implements Component, Named, Trackable {
   }
 }
 
+// FIXME: this might be a confusing name in combination with TaskStateMachine...
+// Probably should just name it TaskStatus?
 /** @gqlUnion */
 export type TaskState = Open | InProgress | Closed;
 

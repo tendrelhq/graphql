@@ -1,7 +1,7 @@
 /** @gqlType */
 export type Overridable<T> = {
   /** @gqlField */
-  override: Override<T>;
+  override: Override<T> | null;
   /** @gqlField */
   value: T;
 };

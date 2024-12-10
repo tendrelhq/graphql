@@ -24,6 +24,5 @@ export class DisplayName implements Component, Refetchable {
 }
 
 export interface Named {
-  readonly nameId: string;
-  displayName(): DisplayName;
+  displayName(): Promise<DisplayName>;
 }

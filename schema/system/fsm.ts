@@ -13,7 +13,7 @@ import type { Connection } from "./pagination";
  */
 export type StateMachine<T> = {
   /** @gqlField */
-  active?: T;
+  active: T | null;
   /** @gqlField */
-  transitions?: Connection<T>;
+  transitions: Connection<T> | null;
 };
