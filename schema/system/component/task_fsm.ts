@@ -139,62 +139,86 @@ export async function fsm(
   };
 }
 
-// As opposed to this, which I think makes more sense based on what we want to
-// do with MFT...
 /** @gqlField */
-export async function transition(
+export async function advance(
   _: Mutation,
-  /**
-   * The `id` of the root AST node. This is the node that defines the FSM for
-   * the given Task chain.
-   */
-  id: ID,
-  /**
-   * The `id` of the "next Task" in the given Task chain. This must be a valid
-   * transition for the given Task chain (as defined by the root's FSM).
-   */
-  into: ID,
   ctx: Context,
+  args: {
+    /**
+     * The unique identifier of the FSM on which you are operating. Wherever you
+     * access the `fsm` field of a `Task`, that task's id should go here.
+     */
+    fsm: ID;
+    /**
+     * The unique identifier of a `Task` _within_ the aforementioned FSM. These
+     * are the tasks available as the `active` and/or `transitions` fields within
+     * a task's `fsm` field. Advancing a FSM by way of this argument works as
+     * follows:
+     * - if the given `task` is Open, move it to In Progress and make it the
+     *   active task in the given `fsm`.
+     * - if the given `task` is In Progress, move it to Closed and transition the
+     *   overall `fsm` as determined by the rules that define it. Note that there
+     *   are by default no "on close" rules, and thus the result of this operation
+     *   is effectively to revert the `fsm` to the state it was in _prior to_
+     *   advancing into its current state. Note that this might imply putting the
+     *   `fsm` back into its initial (typically "idle") state.
+     * - if the given `task` is Closed, this operation is a no-op.
+     */
+    task: ID;
+  },
 ): Promise<Task> {
-  const task = new Task({ id }, ctx);
+  const r = new Task({ id: args.fsm }, ctx);
+  console.log(`Root (fsm): ${r}`);
 
-  const f = await fsm(task, ctx);
+  const f = await fsm(r, ctx);
   if (!f) {
-    throw new GraphQLError(`Task '${task.id}' has no associated FSM`, {
+    throw new GraphQLError(`Task ${r} has no associated FSM`, {
       extensions: {
         code: "T_INVALID_TRANSITION",
       },
     });
   }
 
-  // FIXME: Not quite right. Task.root will always be null with the way we've
-  // (kinda confusingly) set things up right now. This is because it is always a
-  // worktemplate! What we want here is to actually work off of the fsm.
-  // Meaning: fsm.active. Our operation is thus something along the lines of:
-  //  `f.active.into(next)`
-  // If there is no active, then what? Such cases should probably be an error.
-  // We can _force_ the existence of an underlying workinstance by saying that
-  // if you have no fsm, your only option is to call `startTask`. This returns
-  // a new Task whose underlying type is a workinstance. We might want an
-  // intermediate screen on the client side, e.g. in the MFT case, to handle
-  // this swapping of refs. This would be similar to what we do in the Checklist
-  // app with the initial "preview" screen. I don't like this though as it
-  // essentially forces the client to make TWO network calls just to get their
-  // into the "In Progress" state... (1) mutation, (2) refetch... bleh.
-  const root = await task.root();
-  const next = new Task({ id: into }, ctx);
+  const t = new Task({ id: args.task }, ctx);
+  // TODO: ensure f ^ t, else throw T_INVALID_TRANSITION
+
+  // This is where we need to switch. If the given `task` *is the active task*
+  // then we must take the appropriate action, e.g. 'in progress' if 'open',
+  // 'close' if 'in progress'.
+  if (f.active?.id === t.id) {
+    // For now, we will assume that this is happening via a "stop task" flow,
+    // e.g. in MFT where we are either "End xxx Downtime" or "End Production".
+    // Our job here is simply to close out the given task.
+    await sql`
+      UPDATE public.workinstance
+      SET workinstancestatusid = 710
+      WHERE id = ${t._id};
+    `;
+    // et voilá!
+    return r;
+  }
+
   // For now, we are going to assume that `next` is always a worktemplate. This
   // means our job is to simply instantiate the `next` template 'In Progress'.
   await sql.begin(async tx =>
-    copyFromWorkTemplate(tx, next._id, {
-      originator: root?._id,
+    // FIXME: copyFrom does not correctly handle deduplication. Sigh.
+    // This really shouldn't be part of its job anyways. However, I do think
+    // this might suggest that we are using too low-level of an api in this
+    // spot because at this level of abstraction we DO want to engage the rules
+    // engine. Regardless, we can fix this later. CopyFrom is fine for now,
+    // albeit rather overpowered and lacking proper guardrails :)
+    copyFromWorkTemplate(tx, t._id, {
+      // FIXME: missing originator, and so every transition task will have its
+      // originator set to itself. This is not right, but will not hurt anything
+      // since we only look at previous (via a RECURSIVE cte) when building the
+      // chain that forms the basis of the FSM.
       previous: f.active?._id,
       withStatus: "inProgress",
     }),
   );
 
-  // Note that we *always* return the same Task as it was given to us. This
+  // Note that we *always* return the FSM that was given to us originally. This
   // facilitates a better client experience by not requiring that they refetch
   // after they mutate.
-  return new Task({ id }, ctx);
+  return r;
 }

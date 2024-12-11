@@ -1,24 +1,35 @@
 import { sql } from "@/datasources/postgres";
 import { decodeGlobalId } from "@/schema/system";
 import type { Component } from "@/schema/system/component";
-import { Task, type TaskConstructorArgs } from "@/schema/system/component/task";
+import {
+  Task,
+  type ConstructorArgs as TaskConstructorArgs,
+} from "@/schema/system/component/task";
 import type { Refetchable } from "@/schema/system/node";
 import type { Connection } from "@/schema/system/pagination";
 import type { Context } from "@/schema/types";
 import type { ID } from "grats";
 import type { Trackable } from "../tracking";
 
+export type ConstructorArgs = {
+  id: ID;
+};
+
 /** @gqlType */
 export class Location implements Component, Refetchable, Trackable {
-  __typename = "Location" as const;
-  _type: string;
-  _id: string;
+  readonly __typename = "Location" as const;
+  readonly _type: string;
+  readonly _id: string;
+  readonly id: ID;
 
   constructor(
-    public id: ID,
+    args: ConstructorArgs,
     private ctx: Context,
   ) {
-    const { type, ...identifier } = decodeGlobalId(id);
+    // Note that Postgres will sometimes add newlines when we `encode(...)`.
+    this.id = args.id.replace(/\n/g, "");
+
+    const { type, ...identifier } = decodeGlobalId(this.id);
     this._type = type;
     this._id = identifier.id;
   }
@@ -78,8 +89,6 @@ export class Location implements Component, Refetchable, Trackable {
             ON wtc.worktemplateconstrainttemplateid = wt.id
         WHERE wtc.worktemplateconstraintresultid IS null;
     `;
-
-    console.debug("Location.tracking:", JSON.stringify(nodes, null, 2));
 
     return {
       edges: nodes.map(node => ({

@@ -125,18 +125,38 @@ type Location implements Component & Node & Trackable {
 }
 
 type Mutation {
-  transition(
+  advance(
     """
-    The `id` of the root AST node. This is the node that defines the FSM for
-    the given Task chain.
+    The unique identifier of the FSM on which you are operating. Wherever you
+    access the `fsm` field of a `Task`, that task's id should go here.
     """
-    id: ID!
+    fsm: ID!
     """
-    The `id` of the "next Task" in the given Task chain. This must be a valid
-    transition for the given Task chain (as defined by the root's FSM).
+    The unique identifier of a `Task` _within_ the aforementioned FSM. These
+    are the tasks available as the `active` and/or `transitions` fields within
+    a task's `fsm` field. Advancing a FSM by way of this argument works as
+    follows:
+    - if the given `task` is Open, move it to In Progress and make it the
+      active task in the given `fsm`.
+    - if the given `task` is In Progress, move it to Closed and transition the
+      overall `fsm` as determined by the rules that define it. Note that there
+      are by default no "on close" rules, and thus the result of this operation
+      is effectively to revert the `fsm` to the state it was in _prior to_
+      advancing into its current state. Note that this might imply putting the
+      `fsm` back into its initial (typically "idle") state.
+    - if the given `task` is Closed, this operation is a no-op.
     """
-    into: ID!
+    task: ID!
   ): Task @semanticNonNull
+  """
+  Start the given Task, identified by the `task` argument.
+  Optionally, a `parent` argument may also be provided to this function. The
+  purpose of this argument is to avoid necessitating *two* network calls where
+  the first is this mutation and the second would be another query to refetch
+  data only transitively related to this Task.
+  """
+  startTask(parent: ID, task: ID!): TaskActionResult @semanticNonNull
+  stopTask(parent: ID, task: ID!): TaskActionResult @semanticNonNull
 }
 
 type Open {
@@ -198,6 +218,11 @@ type Task implements Component & Node & Trackable {
   always be returned for this field.
   """
   tracking: TrackableConnection
+}
+
+type TaskActionResult {
+  parent: Node
+  task: Task @semanticNonNull
 }
 
 type TaskConnection {

@@ -72,9 +72,9 @@ exports[`MFT refetch query with Task as node 1`] = `
 }
 `;
 
-exports[`MFT transition mutations lazy instantiation of the root 1`] = `
+exports[`MFT transition mutations from idle to active 1`] = `
 {
-  "transition": {
+  "advance": {
     "__typename": "Task",
     "displayName": {
       "__typename": "DisplayName",
@@ -120,7 +120,239 @@ exports[`MFT transition mutations lazy instantiation of the root 1`] = `
 
 exports[`MFT transition mutations between active states 1`] = `
 {
-  "transition": {
+  "advance": {
+    "__typename": "Task",
+    "displayName": {
+      "__typename": "DisplayName",
+      "name": {
+        "__typename": "DynamicString",
+        "value": "Production",
+      },
+    },
+    "fsm": {
+      "active": {
+        "displayName": {
+          "name": {
+            "value": "Planned Downtime",
+          },
+        },
+      },
+      "transitions": {
+        "edges": [],
+      },
+    },
+  },
+}
+`;
+
+exports[`MFT entrypoint query 1`] = `
+{
+  "trackables": {
+    "__typename": "TrackableConnection",
+    "edges": [
+      {
+        "__typename": "TrackableEdge",
+        "node": {
+          "__typename": "Location",
+          "name": {
+            "__typename": "Name",
+            "value": "Mixing Line",
+          },
+          "tracking": {
+            "edges": [
+              {
+                "node": {
+                  "displayName": {
+                    "name": {
+                      "value": "Production",
+                    },
+                  },
+                  "fsm": {
+                    "active": null,
+                    "transitions": {
+                      "edges": [
+                        {
+                          "node": {
+                            "displayName": {
+                              "name": {
+                                "value": "Production",
+                              },
+                            },
+                          },
+                        },
+                      ],
+                    },
+                  },
+                },
+              },
+            ],
+          },
+        },
+      },
+      {
+        "__typename": "TrackableEdge",
+        "node": {
+          "__typename": "Location",
+          "name": {
+            "__typename": "Name",
+            "value": "Fill Line",
+          },
+          "tracking": {
+            "edges": [
+              {
+                "node": {
+                  "displayName": {
+                    "name": {
+                      "value": "Production",
+                    },
+                  },
+                  "fsm": {
+                    "active": null,
+                    "transitions": {
+                      "edges": [
+                        {
+                          "node": {
+                            "displayName": {
+                              "name": {
+                                "value": "Production",
+                              },
+                            },
+                          },
+                        },
+                      ],
+                    },
+                  },
+                },
+              },
+            ],
+          },
+        },
+      },
+      {
+        "__typename": "TrackableEdge",
+        "node": {
+          "__typename": "Location",
+          "name": {
+            "__typename": "Name",
+            "value": "Assembly Line",
+          },
+          "tracking": {
+            "edges": [
+              {
+                "node": {
+                  "displayName": {
+                    "name": {
+                      "value": "Production",
+                    },
+                  },
+                  "fsm": {
+                    "active": null,
+                    "transitions": {
+                      "edges": [
+                        {
+                          "node": {
+                            "displayName": {
+                              "name": {
+                                "value": "Production",
+                              },
+                            },
+                          },
+                        },
+                      ],
+                    },
+                  },
+                },
+              },
+            ],
+          },
+        },
+      },
+      {
+        "__typename": "TrackableEdge",
+        "node": {
+          "__typename": "Location",
+          "name": {
+            "__typename": "Name",
+            "value": "Cartoning Line",
+          },
+          "tracking": {
+            "edges": [
+              {
+                "node": {
+                  "displayName": {
+                    "name": {
+                      "value": "Production",
+                    },
+                  },
+                  "fsm": {
+                    "active": null,
+                    "transitions": {
+                      "edges": [
+                        {
+                          "node": {
+                            "displayName": {
+                              "name": {
+                                "value": "Production",
+                              },
+                            },
+                          },
+                        },
+                      ],
+                    },
+                  },
+                },
+              },
+            ],
+          },
+        },
+      },
+      {
+        "__typename": "TrackableEdge",
+        "node": {
+          "__typename": "Location",
+          "name": {
+            "__typename": "Name",
+            "value": "Packaging Line",
+          },
+          "tracking": {
+            "edges": [
+              {
+                "node": {
+                  "displayName": {
+                    "name": {
+                      "value": "Production",
+                    },
+                  },
+                  "fsm": {
+                    "active": null,
+                    "transitions": {
+                      "edges": [
+                        {
+                          "node": {
+                            "displayName": {
+                              "name": {
+                                "value": "Production",
+                              },
+                            },
+                          },
+                        },
+                      ],
+                    },
+                  },
+                },
+              },
+            ],
+          },
+        },
+      },
+    ],
+  },
+}
+`;
+
+exports[`MFT transition mutations reverting an intermediate transition 1`] = `
+{
+  "advance": {
     "__typename": "Task",
     "displayName": {
       "__typename": "DisplayName",
@@ -153,6 +385,37 @@ exports[`MFT transition mutations between active states 1`] = `
               "displayName": {
                 "name": {
                   "value": "Planned Downtime",
+                },
+              },
+            },
+          },
+        ],
+      },
+    },
+  },
+}
+`;
+
+exports[`MFT transition mutations back to idle 1`] = `
+{
+  "advance": {
+    "__typename": "Task",
+    "displayName": {
+      "__typename": "DisplayName",
+      "name": {
+        "__typename": "DynamicString",
+        "value": "Production",
+      },
+    },
+    "fsm": {
+      "active": null,
+      "transitions": {
+        "edges": [
+          {
+            "node": {
+              "displayName": {
+                "name": {
+                  "value": "Production",
                 },
               },
             },

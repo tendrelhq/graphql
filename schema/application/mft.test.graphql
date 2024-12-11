@@ -32,8 +32,8 @@ query TestMftRefetchQuery($node: ID!) {
   }
 }
 
-mutation TestMftTransitionMutation($root: ID!, $next: ID!) {
-  transition(id: $root, into: $next) {
+mutation TestMftTransitionMutation($fsm: ID!, $task: ID!) {
+  advance(fsm: $fsm, task: $task) {
     displayName {
       name {
         value

@@ -11,7 +11,7 @@ import type { Refetchable } from "../node";
 import type { Connection } from "../pagination";
 import type { DisplayName, Named } from "./name";
 
-export type TaskConstructorArgs = {
+export type ConstructorArgs = {
   id: ID;
 };
 
@@ -33,12 +33,13 @@ export class Task implements Component, Named, Refetchable, Trackable {
   readonly id: ID;
 
   constructor(
-    args: TaskConstructorArgs,
+    args: ConstructorArgs,
     private ctx: Context,
   ) {
-    this.id = args.id;
+    // Note that Postgres will sometimes add newlines when we `encode(...)`.
+    this.id = args.id.replace(/\n/g, "");
     // Private.
-    const { type, id } = decodeGlobalId(args.id);
+    const { type, id } = decodeGlobalId(this.id);
     this._type = type;
     this._id = id;
   }
@@ -63,7 +64,7 @@ export class Task implements Component, Named, Refetchable, Trackable {
 
     // If there is no row, there is no originator. This implies that this Task
     // is the root of the chain, i.e. the originator.
-    if (!row) return null;
+    if (!row) return this;
 
     return new Task({ id: row.id }, this.ctx);
   }
@@ -90,6 +91,10 @@ export class Task implements Component, Named, Refetchable, Trackable {
    */
   async tracking(): Promise<Connection<Trackable> | null> {
     return null;
+  }
+
+  toString() {
+    return `'${this.id}' (${this._type}:${this._id})`;
   }
 }
 
@@ -148,15 +153,44 @@ export type Closed = {
   closedBy?: string;
 };
 
-// FIXME: I don't know if this is right. What is crucial here is that the
-// payload that we return after successfully performing this mutation is enough
-// to trigger a re-render in a client. In the MFT case, this is the top-level
-// trackable Task (template). It follows then that the mutation should be given
-// an `id` that points to this top-level Trackable, such that we can refetch the
-// necessary data after performing a transition. `startTask` - I think - makes
-// sense as a low-level api (similar to setStatus). However, it is too low level
-// for our usecase right now as it would force the client to perform the
-// mutation *and then* refetch the top-level Trackable (synchronously!). Bad.
-export async function startTask(_: Mutation, id: ID, ctx: Context) {
-  return Promise.reject();
+/** @gqlType */
+export type TaskActionResult = {
+  /** @gqlField */
+  task: Task;
+  /** @gqlField */
+  parent: Refetchable | null;
+};
+
+/**
+ * Start the given Task, identified by the `task` argument.
+ * Optionally, a `parent` argument may also be provided to this function. The
+ * purpose of this argument is to avoid necessitating *two* network calls where
+ * the first is this mutation and the second would be another query to refetch
+ * data only transitively related to this Task.
+ *
+ * @gqlField
+ */
+export async function startTask(
+  _: Mutation,
+  task: ID,
+  parent: ID | null,
+  ctx: Context,
+): Promise<TaskActionResult> {
+  return {
+    task: new Task({ id: task }, ctx),
+    parent: parent ? new Task({ id: parent }, ctx) : null,
+  };
+}
+
+/** @gqlField */
+export async function stopTask(
+  _: Mutation,
+  task: ID,
+  parent: ID | null,
+  ctx: Context,
+): Promise<TaskActionResult> {
+  return {
+    task: new Task({ id: task }, ctx),
+    parent: parent ? new Task({ id: parent }, ctx) : null,
+  };
 }

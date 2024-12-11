@@ -86,7 +86,7 @@ export async function trackables(
     edges: nodes.map(node => ({
       cursor: node.id,
       node: match(node.__typename)
-        .with("Location", () => new Location(node.id, ctx))
+        .with("Location", () => new Location(node, ctx))
         .otherwise(() => {
           console.warn(`Unknown implementing type '${node.__typename}'`);
           throw "invariant violated";

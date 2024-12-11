@@ -14,8 +14,10 @@ import {
   defaultFieldResolver,
 } from "graphql";
 import { trackables as queryTrackablesResolver } from "./platform/tracking";
+import { startTask as mutationStartTaskResolver } from "./system/component/task";
+import { stopTask as mutationStopTaskResolver } from "./system/component/task";
 import { fsm as taskFsmResolver } from "./system/component/task_fsm";
-import { transition as mutationTransitionResolver } from "./system/component/task_fsm";
+import { advance as mutationAdvanceResolver } from "./system/component/task_fsm";
 import { node as queryNodeResolver } from "./system/node";
 import { id as displayNameIdResolver } from "./system/node";
 import { id as taskIdResolver } from "./system/node";
@@ -578,30 +580,95 @@ export function getSchema(): GraphQLSchema {
       return [ComponentType, NodeType, TrackableType];
     },
   });
+  const TaskActionResultType: GraphQLObjectType = new GraphQLObjectType({
+    name: "TaskActionResult",
+    fields() {
+      return {
+        parent: {
+          name: "parent",
+          type: NodeType,
+        },
+        task: {
+          name: "task",
+          type: TaskType,
+          resolve(source, args, context, info) {
+            return assertNonNull(
+              defaultFieldResolver(source, args, context, info),
+            );
+          },
+        },
+      };
+    },
+  });
   const MutationType: GraphQLObjectType = new GraphQLObjectType({
     name: "Mutation",
     fields() {
       return {
-        transition: {
-          name: "transition",
+        advance: {
+          name: "advance",
           type: TaskType,
           args: {
-            id: {
+            fsm: {
               description:
-                "The `id` of the root AST node. This is the node that defines the FSM for\nthe given Task chain.",
-              name: "id",
+                "The unique identifier of the FSM on which you are operating. Wherever you\naccess the `fsm` field of a `Task`, that task's id should go here.",
+              name: "fsm",
               type: new GraphQLNonNull(GraphQLID),
             },
-            into: {
+            task: {
               description:
-                'The `id` of the "next Task" in the given Task chain. This must be a valid\ntransition for the given Task chain (as defined by the root\'s FSM).',
-              name: "into",
+                'The unique identifier of a `Task` _within_ the aforementioned FSM. These\nare the tasks available as the `active` and/or `transitions` fields within\na task\'s `fsm` field. Advancing a FSM by way of this argument works as\nfollows:\n- if the given `task` is Open, move it to In Progress and make it the\n  active task in the given `fsm`.\n- if the given `task` is In Progress, move it to Closed and transition the\n  overall `fsm` as determined by the rules that define it. Note that there\n  are by default no "on close" rules, and thus the result of this operation\n  is effectively to revert the `fsm` to the state it was in _prior to_\n  advancing into its current state. Note that this might imply putting the\n  `fsm` back into its initial (typically "idle") state.\n- if the given `task` is Closed, this operation is a no-op.',
+              name: "task",
               type: new GraphQLNonNull(GraphQLID),
             },
           },
           resolve(source, args, context) {
             return assertNonNull(
-              mutationTransitionResolver(source, args.id, args.into, context),
+              mutationAdvanceResolver(source, context, args),
+            );
+          },
+        },
+        startTask: {
+          description:
+            "Start the given Task, identified by the `task` argument.\nOptionally, a `parent` argument may also be provided to this function. The\npurpose of this argument is to avoid necessitating *two* network calls where\nthe first is this mutation and the second would be another query to refetch\ndata only transitively related to this Task.",
+          name: "startTask",
+          type: TaskActionResultType,
+          args: {
+            parent: {
+              name: "parent",
+              type: GraphQLID,
+            },
+            task: {
+              name: "task",
+              type: new GraphQLNonNull(GraphQLID),
+            },
+          },
+          resolve(source, args, context) {
+            return assertNonNull(
+              mutationStartTaskResolver(
+                source,
+                args.task,
+                args.parent,
+                context,
+              ),
+            );
+          },
+        },
+        stopTask: {
+          name: "stopTask",
+          type: TaskActionResultType,
+          args: {
+            parent: {
+              name: "parent",
+              type: GraphQLID,
+            },
+            task: {
+              name: "task",
+              type: new GraphQLNonNull(GraphQLID),
+            },
+          },
+          resolve(source, args, context) {
+            return assertNonNull(
+              mutationStopTaskResolver(source, args.task, args.parent, context),
             );
           },
         },
@@ -668,6 +735,7 @@ export function getSchema(): GraphQLSchema {
       PageInfoType,
       QueryType,
       TaskType,
+      TaskActionResultType,
       TaskConnectionType,
       TaskEdgeType,
       TaskStateMachineType,

@@ -55,7 +55,7 @@ export async function node(
   const { type, id } = decodeGlobalId(args.id);
   switch (type) {
     case "location":
-      return new Location(args.id, ctx);
+      return new Location(args, ctx);
     case "name":
       return {
         __typename: "Name",
