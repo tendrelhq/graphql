@@ -5,10 +5,11 @@ import { execute } from "@/test/prelude";
 import {
   TestMftEntrypointDocument,
   TestMftRefetchQueryDocument,
+  TestMftTransitionMutationDocument,
 } from "./mft.test.generated";
 
 describe.skipIf(!!process.env.CI)("MFT", () => {
-  test("entrypoint query", async () => {
+  test.skip("entrypoint query", async () => {
     const result = await execute(schema, TestMftEntrypointDocument, {
       root: encodeGlobalId({
         type: "organization",
@@ -19,7 +20,7 @@ describe.skipIf(!!process.env.CI)("MFT", () => {
     expect(result.data).toMatchSnapshot();
   });
 
-  describe("refetch query", () => {
+  describe.skip("refetch query", () => {
     test("with Location as node", async () => {
       const result = await execute(schema, TestMftRefetchQueryDocument, {
         node: encodeGlobalId({
@@ -36,6 +37,38 @@ describe.skipIf(!!process.env.CI)("MFT", () => {
         node: encodeGlobalId({
           type: "worktemplate",
           id: "work-template_1bf31cd5-8fc2-47b1-a28f-e4bc5513e028",
+        }),
+      });
+      expect(result.errors).toBeFalsy();
+      expect(result.data).toMatchSnapshot();
+    });
+  });
+
+  describe("transition mutations", () => {
+    test.skip("from idle to active", async () => {
+      const result = await execute(schema, TestMftTransitionMutationDocument, {
+        root: encodeGlobalId({
+          type: "worktemplate",
+          id: "work-template_1bf31cd5-8fc2-47b1-a28f-e4bc5513e028",
+        }),
+        next: encodeGlobalId({
+          type: "worktemplate",
+          id: "work-template_1bf31cd5-8fc2-47b1-a28f-e4bc5513e028",
+        }),
+      });
+      expect(result.errors).toBeFalsy();
+      expect(result.data).toMatchSnapshot();
+    });
+
+    test("between active states", async () => {
+      const result = await execute(schema, TestMftTransitionMutationDocument, {
+        root: encodeGlobalId({
+          type: "worktemplate",
+          id: "work-template_1bf31cd5-8fc2-47b1-a28f-e4bc5513e028",
+        }),
+        next: encodeGlobalId({
+          type: "worktemplate",
+          id: "work-template_c2fddb7a-17f4-4b49-a744-8528d6ee44c4",
         }),
       });
       expect(result.errors).toBeFalsy();

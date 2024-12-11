@@ -32,6 +32,17 @@ query TestMftRefetchQuery($node: ID!) {
   }
 }
 
+mutation TestMftTransitionMutation($root: ID!, $next: ID!) {
+  transition(id: $root, into: $next) {
+    displayName {
+      name {
+        value
+      }
+    }
+    ...TaskFSM_fragment
+  }
+}
+
 fragment Trackables_fragment on Trackable {
   tracking {
     edges {

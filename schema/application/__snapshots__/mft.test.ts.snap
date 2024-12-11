@@ -72,207 +72,94 @@ exports[`MFT refetch query with Task as node 1`] = `
 }
 `;
 
-exports[`MFT entrypoint query 1`] = `
+exports[`MFT transition mutations lazy instantiation of the root 1`] = `
 {
-  "trackables": {
-    "__typename": "TrackableConnection",
-    "edges": [
-      {
-        "__typename": "TrackableEdge",
-        "node": {
-          "__typename": "Location",
+  "transition": {
+    "__typename": "Task",
+    "displayName": {
+      "__typename": "DisplayName",
+      "name": {
+        "__typename": "DynamicString",
+        "value": "Production",
+      },
+    },
+    "fsm": {
+      "active": {
+        "displayName": {
           "name": {
-            "__typename": "Name",
-            "value": "Mixing Line",
-          },
-          "tracking": {
-            "edges": [
-              {
-                "node": {
-                  "displayName": {
-                    "name": {
-                      "value": "Production",
-                    },
-                  },
-                  "fsm": {
-                    "active": null,
-                    "transitions": {
-                      "edges": [
-                        {
-                          "node": {
-                            "displayName": {
-                              "name": {
-                                "value": "Production",
-                              },
-                            },
-                          },
-                        },
-                      ],
-                    },
-                  },
-                },
-              },
-            ],
+            "value": "Production",
           },
         },
       },
-      {
-        "__typename": "TrackableEdge",
-        "node": {
-          "__typename": "Location",
-          "name": {
-            "__typename": "Name",
-            "value": "Fill Line",
-          },
-          "tracking": {
-            "edges": [
-              {
-                "node": {
-                  "displayName": {
-                    "name": {
-                      "value": "Production",
-                    },
-                  },
-                  "fsm": {
-                    "active": null,
-                    "transitions": {
-                      "edges": [
-                        {
-                          "node": {
-                            "displayName": {
-                              "name": {
-                                "value": "Production",
-                              },
-                            },
-                          },
-                        },
-                      ],
-                    },
-                  },
+      "transitions": {
+        "edges": [
+          {
+            "node": {
+              "displayName": {
+                "name": {
+                  "value": "Unplanned Downtime",
                 },
               },
-            ],
+            },
+          },
+          {
+            "node": {
+              "displayName": {
+                "name": {
+                  "value": "Planned Downtime",
+                },
+              },
+            },
+          },
+        ],
+      },
+    },
+  },
+}
+`;
+
+exports[`MFT transition mutations between active states 1`] = `
+{
+  "transition": {
+    "__typename": "Task",
+    "displayName": {
+      "__typename": "DisplayName",
+      "name": {
+        "__typename": "DynamicString",
+        "value": "Production",
+      },
+    },
+    "fsm": {
+      "active": {
+        "displayName": {
+          "name": {
+            "value": "Production",
           },
         },
       },
-      {
-        "__typename": "TrackableEdge",
-        "node": {
-          "__typename": "Location",
-          "name": {
-            "__typename": "Name",
-            "value": "Assembly Line",
-          },
-          "tracking": {
-            "edges": [
-              {
-                "node": {
-                  "displayName": {
-                    "name": {
-                      "value": "Production",
-                    },
-                  },
-                  "fsm": {
-                    "active": null,
-                    "transitions": {
-                      "edges": [
-                        {
-                          "node": {
-                            "displayName": {
-                              "name": {
-                                "value": "Production",
-                              },
-                            },
-                          },
-                        },
-                      ],
-                    },
-                  },
+      "transitions": {
+        "edges": [
+          {
+            "node": {
+              "displayName": {
+                "name": {
+                  "value": "Unplanned Downtime",
                 },
               },
-            ],
+            },
           },
-        },
-      },
-      {
-        "__typename": "TrackableEdge",
-        "node": {
-          "__typename": "Location",
-          "name": {
-            "__typename": "Name",
-            "value": "Cartoning Line",
-          },
-          "tracking": {
-            "edges": [
-              {
-                "node": {
-                  "displayName": {
-                    "name": {
-                      "value": "Production",
-                    },
-                  },
-                  "fsm": {
-                    "active": null,
-                    "transitions": {
-                      "edges": [
-                        {
-                          "node": {
-                            "displayName": {
-                              "name": {
-                                "value": "Production",
-                              },
-                            },
-                          },
-                        },
-                      ],
-                    },
-                  },
+          {
+            "node": {
+              "displayName": {
+                "name": {
+                  "value": "Planned Downtime",
                 },
               },
-            ],
+            },
           },
-        },
+        ],
       },
-      {
-        "__typename": "TrackableEdge",
-        "node": {
-          "__typename": "Location",
-          "name": {
-            "__typename": "Name",
-            "value": "Packaging Line",
-          },
-          "tracking": {
-            "edges": [
-              {
-                "node": {
-                  "displayName": {
-                    "name": {
-                      "value": "Production",
-                    },
-                  },
-                  "fsm": {
-                    "active": null,
-                    "transitions": {
-                      "edges": [
-                        {
-                          "node": {
-                            "displayName": {
-                              "name": {
-                                "value": "Production",
-                              },
-                            },
-                          },
-                        },
-                      ],
-                    },
-                  },
-                },
-              },
-            ],
-          },
-        },
-      },
-    ],
+    },
   },
 }
 `;

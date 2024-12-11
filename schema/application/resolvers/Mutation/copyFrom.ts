@@ -65,11 +65,15 @@ export async function copyFromWorkInstance(
   >`
       SELECT
           wt.id,
-          wi.workinstanceoriginatorworkinstanceid AS originator,
-          wi.workinstanceid AS previous
+          og.id AS originator,
+          prev.id AS previous
       FROM public.workinstance AS wi
       INNER JOIN public.worktemplate AS wt
           ON wi.workinstanceworktemplateid = wt.worktemplateid
+      LEFT JOIN public.workinstance AS og
+          ON wi.workinstanceoriginatorworkinstanceid = og.workinstanceid
+      LEFT JOIN public.workinstance AS prev
+          ON wi.workinstancepreviousid = prev.workinstanceid
       WHERE wi.id = ${id};
   `;
   // For now, we just do a template-based copy:
@@ -80,14 +84,10 @@ export async function copyFromWorkInstance(
   });
 }
 
-type TemplateChainOptions =
-  | {
-      originator?: string;
-    }
-  | {
-      originator: string;
-      previous: string;
-    };
+type TemplateChainOptions = {
+  originator?: string;
+  previous?: string;
+};
 
 /**
  * Creates a new workinstance from a worktemplate. This is a "full
@@ -122,8 +122,16 @@ export async function copyFromWorkTemplate(
       SELECT
           worktemplatecustomerid,
           worktemplatesiteid,
-          ${options.originator ?? null}::bigint,
-          ${"previous" in options && options.previous ? options.previous : null}::bigint,
+          (
+              SELECT workinstanceid
+              FROM public.workinstance
+              WHERE id = ${options.originator ?? null}
+          ),
+          (
+              SELECT workinstanceid
+              FROM public.workinstance
+              WHERE id = ${options.previous ?? null}
+          ),
           worktemplatesoplink,
           ${match(options.withStatus)
             .with("open", () => null)

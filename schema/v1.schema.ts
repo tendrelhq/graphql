@@ -14,12 +14,12 @@ import {
   defaultFieldResolver,
 } from "graphql";
 import { trackables as queryTrackablesResolver } from "./platform/tracking";
-import { transition as mutationTransitionResolver } from "./platform/tracking";
 import { fsm as taskFsmResolver } from "./system/component/task_fsm";
+import { transition as mutationTransitionResolver } from "./system/component/task_fsm";
 import { node as queryNodeResolver } from "./system/node";
 import { id as displayNameIdResolver } from "./system/node";
-import { id as locationIdResolver } from "./system/node";
 import { id as taskIdResolver } from "./system/node";
+import { id as locationIdResolver } from "./system/node";
 async function assertNonNull<T>(value: T | Promise<T>): Promise<T> {
   const awaited = await value;
   if (awaited == null)
@@ -206,13 +206,29 @@ export function getSchema(): GraphQLSchema {
       };
     },
   });
-  const TransitionResultType: GraphQLObjectType = new GraphQLObjectType({
-    name: "TransitionResult",
+  const LocaleType: GraphQLScalarType = new GraphQLScalarType({
+    description:
+      "A language tag in the format of a BCP 47 (RFC 5646) standard string.",
+    name: "Locale",
+  });
+  const DynamicStringType: GraphQLObjectType = new GraphQLObjectType({
+    name: "DynamicString",
+    description:
+      "Plain text content that has been (potentially) translated into different\nlanguages as specified by the user's configuration.",
     fields() {
       return {
-        trackable: {
-          name: "trackable",
-          type: TrackableType,
+        locale: {
+          name: "locale",
+          type: LocaleType,
+          resolve(source, args, context, info) {
+            return assertNonNull(
+              defaultFieldResolver(source, args, context, info),
+            );
+          },
+        },
+        value: {
+          name: "value",
+          type: GraphQLString,
           resolve(source, args, context, info) {
             return assertNonNull(
               defaultFieldResolver(source, args, context, info),
@@ -222,48 +238,106 @@ export function getSchema(): GraphQLSchema {
       };
     },
   });
-  const TransitionInputType: GraphQLInputObjectType =
-    new GraphQLInputObjectType({
-      name: "TransitionInput",
-      fields() {
-        return {
-          into: {
-            name: "into",
-            type: new GraphQLNonNull(GraphQLID),
-          },
-          payload: {
-            name: "payload",
-            type: GraphQLString,
-          },
-        };
-      },
-    });
-  const MutationType: GraphQLObjectType = new GraphQLObjectType({
-    name: "Mutation",
+  const DisplayNameType: GraphQLObjectType = new GraphQLObjectType({
+    name: "DisplayName",
     fields() {
       return {
-        transition: {
-          name: "transition",
-          type: TransitionResultType,
-          args: {
-            input: {
-              name: "input",
-              type: new GraphQLNonNull(TransitionInputType),
-            },
+        id: {
+          description: "A globally unique opaque identifier for a node.",
+          name: "id",
+          type: new GraphQLNonNull(GraphQLID),
+          resolve(source) {
+            return displayNameIdResolver(source);
           },
-          resolve(source, args, context) {
+        },
+        name: {
+          name: "name",
+          type: DynamicStringType,
+          resolve(source, _args, context) {
+            return assertNonNull(source.name(context));
+          },
+        },
+      };
+    },
+    interfaces() {
+      return [ComponentType, NodeType];
+    },
+  });
+  const TaskEdgeType: GraphQLObjectType = new GraphQLObjectType({
+    name: "TaskEdge",
+    fields() {
+      return {
+        cursor: {
+          name: "cursor",
+          type: GraphQLString,
+          resolve(source, args, context, info) {
             return assertNonNull(
-              mutationTransitionResolver(source, args.input, context),
+              defaultFieldResolver(source, args, context, info),
+            );
+          },
+        },
+        node: {
+          name: "node",
+          type: TaskType,
+          resolve(source, args, context, info) {
+            return assertNonNull(
+              defaultFieldResolver(source, args, context, info),
             );
           },
         },
       };
     },
   });
-  const LocaleType: GraphQLScalarType = new GraphQLScalarType({
+  const TaskConnectionType: GraphQLObjectType = new GraphQLObjectType({
+    name: "TaskConnection",
+    fields() {
+      return {
+        edges: {
+          name: "edges",
+          type: new GraphQLList(new GraphQLNonNull(TaskEdgeType)),
+          resolve(source, args, context, info) {
+            return assertNonNull(
+              defaultFieldResolver(source, args, context, info),
+            );
+          },
+        },
+        pageInfo: {
+          name: "pageInfo",
+          type: PageInfoType,
+          resolve(source, args, context, info) {
+            return assertNonNull(
+              defaultFieldResolver(source, args, context, info),
+            );
+          },
+        },
+        totalCount: {
+          name: "totalCount",
+          type: GraphQLInt,
+          resolve(source, args, context, info) {
+            return assertNonNull(
+              defaultFieldResolver(source, args, context, info),
+            );
+          },
+        },
+      };
+    },
+  });
+  const TaskStateMachineType: GraphQLObjectType = new GraphQLObjectType({
+    name: "TaskStateMachine",
     description:
-      "A language tag in the format of a BCP 47 (RFC 5646) standard string.",
-    name: "Locale",
+      'Where applicable, Entities can have an associated StateMachine that defines\ntheir current ("active") state in addition to possible next states that they\ncan "transition into". Typically, an end user does not need to be aware of\nthis state machine as Tendrel\'s internal engine maintains the machine and\nassociated states for a given Entity. However, in some cases it can be useful\nto surface this information in userland such that a user can interact\ndirectly with the underlying state machine.',
+    fields() {
+      return {
+        active: {
+          name: "active",
+          type: TaskType,
+        },
+        transitions: {
+          name: "transitions",
+          type: TaskConnectionType,
+        },
+      };
+    },
   });
   const ClosedType: GraphQLObjectType = new GraphQLObjectType({
     name: "Closed",
@@ -451,174 +525,6 @@ export function getSchema(): GraphQLSchema {
       return [ClosedType, InProgressType, OpenType];
     },
   });
-  const DynamicStringInputType: GraphQLInputObjectType =
-    new GraphQLInputObjectType({
-      name: "DynamicStringInput",
-      fields() {
-        return {
-          locale: {
-            name: "locale",
-            type: new GraphQLNonNull(LocaleType),
-          },
-          value: {
-            name: "value",
-            type: new GraphQLNonNull(GraphQLString),
-          },
-        };
-      },
-    });
-  const DynamicStringType: GraphQLObjectType = new GraphQLObjectType({
-    name: "DynamicString",
-    description:
-      "Plain text content that has been (potentially) translated into different\nlanguages as specified by the user's configuration.",
-    fields() {
-      return {
-        locale: {
-          name: "locale",
-          type: LocaleType,
-          resolve(source, args, context, info) {
-            return assertNonNull(
-              defaultFieldResolver(source, args, context, info),
-            );
-          },
-        },
-        value: {
-          name: "value",
-          type: GraphQLString,
-          resolve(source, args, context, info) {
-            return assertNonNull(
-              defaultFieldResolver(source, args, context, info),
-            );
-          },
-        },
-      };
-    },
-  });
-  const DisplayNameType: GraphQLObjectType = new GraphQLObjectType({
-    name: "DisplayName",
-    fields() {
-      return {
-        id: {
-          description: "A globally unique opaque identifier for a node.",
-          name: "id",
-          type: new GraphQLNonNull(GraphQLID),
-          resolve(source) {
-            return displayNameIdResolver(source);
-          },
-        },
-        name: {
-          name: "name",
-          type: DynamicStringType,
-          resolve(source, _args, context) {
-            return assertNonNull(source.name(context));
-          },
-        },
-      };
-    },
-    interfaces() {
-      return [ComponentType, NodeType];
-    },
-  });
-  const LocationType: GraphQLObjectType = new GraphQLObjectType({
-    name: "Location",
-    fields() {
-      return {
-        id: {
-          description: "A globally unique opaque identifier for a node.",
-          name: "id",
-          type: new GraphQLNonNull(GraphQLID),
-          resolve(source) {
-            return locationIdResolver(source);
-          },
-        },
-        tracking: {
-          description:
-            'Entrypoint into the "tracking system(s)" for the given Location.',
-          name: "tracking",
-          type: TrackableConnectionType,
-        },
-      };
-    },
-    interfaces() {
-      return [ComponentType, NodeType, TrackableType];
-    },
-  });
-  const TaskEdgeType: GraphQLObjectType = new GraphQLObjectType({
-    name: "TaskEdge",
-    fields() {
-      return {
-        cursor: {
-          name: "cursor",
-          type: GraphQLString,
-          resolve(source, args, context, info) {
-            return assertNonNull(
-              defaultFieldResolver(source, args, context, info),
-            );
-          },
-        },
-        node: {
-          name: "node",
-          type: TaskType,
-          resolve(source, args, context, info) {
-            return assertNonNull(
-              defaultFieldResolver(source, args, context, info),
-            );
-          },
-        },
-      };
-    },
-  });
-  const TaskConnectionType: GraphQLObjectType = new GraphQLObjectType({
-    name: "TaskConnection",
-    fields() {
-      return {
-        edges: {
-          name: "edges",
-          type: new GraphQLList(new GraphQLNonNull(TaskEdgeType)),
-          resolve(source, args, context, info) {
-            return assertNonNull(
-              defaultFieldResolver(source, args, context, info),
-            );
-          },
-        },
-        pageInfo: {
-          name: "pageInfo",
-          type: PageInfoType,
-          resolve(source, args, context, info) {
-            return assertNonNull(
-              defaultFieldResolver(source, args, context, info),
-            );
-          },
-        },
-        totalCount: {
-          name: "totalCount",
-          type: GraphQLInt,
-          resolve(source, args, context, info) {
-            return assertNonNull(
-              defaultFieldResolver(source, args, context, info),
-            );
-          },
-        },
-      };
-    },
-  });
-  const TaskStateMachineType: GraphQLObjectType = new GraphQLObjectType({
-    name: "TaskStateMachine",
-    description:
-      'Where applicable, Entities can have an associated StateMachine that defines\ntheir current ("active") state in addition to possible next states that they\ncan "transition into". Typically, an end user does not need to be aware of\nthis state machine as Tendrel\'s internal engine maintains the machine and\nassociated states for a given Entity. However, in some cases it can be useful\nto surface this information in userland such that a user can interact\ndirectly with the underlying state machine.',
-    fields() {
-      return {
-        active: {
-          name: "active",
-          type: TaskType,
-        },
-        transitions: {
-          name: "transitions",
-          type: TaskConnectionType,
-        },
-      };
-    },
-  });
   const TaskType: GraphQLObjectType = new GraphQLObjectType({
     name: "Task",
     description:
@@ -672,6 +578,76 @@ export function getSchema(): GraphQLSchema {
       return [ComponentType, NodeType, TrackableType];
     },
   });
+  const MutationType: GraphQLObjectType = new GraphQLObjectType({
+    name: "Mutation",
+    fields() {
+      return {
+        transition: {
+          name: "transition",
+          type: TaskType,
+          args: {
+            id: {
+              description:
+                "The `id` of the root AST node. This is the node that defines the FSM for\nthe given Task chain.",
+              name: "id",
+              type: new GraphQLNonNull(GraphQLID),
+            },
+            into: {
+              description:
+                'The `id` of the "next Task" in the given Task chain. This must be a valid\ntransition for the given Task chain (as defined by the root\'s FSM).',
+              name: "into",
+              type: new GraphQLNonNull(GraphQLID),
+            },
+          },
+          resolve(source, args, context) {
+            return assertNonNull(
+              mutationTransitionResolver(source, args.id, args.into, context),
+            );
+          },
+        },
+      };
+    },
+  });
+  const DynamicStringInputType: GraphQLInputObjectType =
+    new GraphQLInputObjectType({
+      name: "DynamicStringInput",
+      fields() {
+        return {
+          locale: {
+            name: "locale",
+            type: new GraphQLNonNull(LocaleType),
+          },
+          value: {
+            name: "value",
+            type: new GraphQLNonNull(GraphQLString),
+          },
+        };
+      },
+    });
+  const LocationType: GraphQLObjectType = new GraphQLObjectType({
+    name: "Location",
+    fields() {
+      return {
+        id: {
+          description: "A globally unique opaque identifier for a node.",
+          name: "id",
+          type: new GraphQLNonNull(GraphQLID),
+          resolve(source) {
+            return locationIdResolver(source);
+          },
+        },
+        tracking: {
+          description:
+            'Entrypoint into the "tracking system(s)" for the given Location.',
+          name: "tracking",
+          type: TrackableConnectionType,
+        },
+      };
+    },
+    interfaces() {
+      return [ComponentType, NodeType, TrackableType];
+    },
+  });
   return new GraphQLSchema({
     query: QueryType,
     mutation: MutationType,
@@ -682,7 +658,6 @@ export function getSchema(): GraphQLSchema {
       NodeType,
       TrackableType,
       DynamicStringInputType,
-      TransitionInputType,
       ClosedType,
       DisplayNameType,
       DynamicStringType,
@@ -701,7 +676,6 @@ export function getSchema(): GraphQLSchema {
       TimestampOverrideType,
       TrackableConnectionType,
       TrackableEdgeType,
-      TransitionResultType,
     ],
   });
 }

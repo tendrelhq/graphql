@@ -99,24 +99,3 @@ export async function trackables(
     totalCount: nodes.length,
   };
 }
-
-/** @gqlInput */
-export type TransitionInput = {
-  into: ID;
-  payload?: string;
-};
-
-/** @gqlType */
-export type TransitionResult = {
-  /** @gqlField */
-  trackable: Trackable;
-};
-
-/** @gqlField */
-export async function transition(
-  _: Mutation,
-  input: TransitionInput,
-  ctx: Context,
-): Promise<TransitionResult> {
-  return Promise.reject();
-}

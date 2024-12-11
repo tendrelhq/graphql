@@ -1,6 +1,8 @@
 import { sql } from "@/datasources/postgres";
+import { copyFromWorkTemplate } from "@/schema/application/resolvers/Mutation/copyFrom";
 import type { Mutation } from "@/schema/root";
 import type { Context } from "@/schema/types";
+import { GraphQLError } from "graphql";
 import type { ID } from "grats";
 import type { StateMachine } from "../fsm";
 import { Task } from "./task";
@@ -70,13 +72,12 @@ export async function fsm(
     active AS (
         SELECT
             encode(('workinstance:' || chain.id)::bytea, 'base64') AS id,
-            wt.worktemplateid AS _template
+            chain.workinstanceworktemplateid AS _template
         FROM chain
         INNER JOIN public.systag
             ON chain.workinstancestatusid = systag.systagid
-        INNER JOIN public.worktemplate AS wt
-            ON chain.workinstanceworktemplateid = wt.worktemplateid
         WHERE systag.systagtype = 'In Progress'
+        ORDER BY workinstancepreviousid DESC NULLS LAST
         LIMIT 1
     ),
 
@@ -95,8 +96,9 @@ export async function fsm(
 
     SELECT
         active.id AS "active",
-        array_agg(transition.id) AS "transitions"
-    FROM active, transition
+        array_remove(array_agg(transition.id), null) AS "transitions"
+    FROM active
+    LEFT JOIN transition ON true
     GROUP BY active.id;
   `;
 
@@ -139,12 +141,58 @@ export async function fsm(
 
 // As opposed to this, which I think makes more sense based on what we want to
 // do with MFT...
+/** @gqlField */
 export async function transition(
   _: Mutation,
+  /**
+   * The `id` of the root AST node. This is the node that defines the FSM for
+   * the given Task chain.
+   */
   id: ID,
+  /**
+   * The `id` of the "next Task" in the given Task chain. This must be a valid
+   * transition for the given Task chain (as defined by the root's FSM).
+   */
   into: ID,
   ctx: Context,
 ): Promise<Task> {
+  const task = new Task({ id }, ctx);
+
+  const f = await fsm(task, ctx);
+  if (!f) {
+    throw new GraphQLError(`Task '${task.id}' has no associated FSM`, {
+      extensions: {
+        code: "T_INVALID_TRANSITION",
+      },
+    });
+  }
+
+  // FIXME: Not quite right. Task.root will always be null with the way we've
+  // (kinda confusingly) set things up right now. This is because it is always a
+  // worktemplate! What we want here is to actually work off of the fsm.
+  // Meaning: fsm.active. Our operation is thus something along the lines of:
+  //  `f.active.into(next)`
+  // If there is no active, then what? Such cases should probably be an error.
+  // We can _force_ the existence of an underlying workinstance by saying that
+  // if you have no fsm, your only option is to call `startTask`. This returns
+  // a new Task whose underlying type is a workinstance. We might want an
+  // intermediate screen on the client side, e.g. in the MFT case, to handle
+  // this swapping of refs. This would be similar to what we do in the Checklist
+  // app with the initial "preview" screen. I don't like this though as it
+  // essentially forces the client to make TWO network calls just to get their
+  // into the "In Progress" state... (1) mutation, (2) refetch... bleh.
+  const root = await task.root();
+  const next = new Task({ id: into }, ctx);
+  // For now, we are going to assume that `next` is always a worktemplate. This
+  // means our job is to simply instantiate the `next` template 'In Progress'.
+  await sql.begin(async tx =>
+    copyFromWorkTemplate(tx, next._id, {
+      originator: root?._id,
+      previous: f.active?._id,
+      withStatus: "inProgress",
+    }),
+  );
+
   // Note that we *always* return the same Task as it was given to us. This
   // facilitates a better client experience by not requiring that they refetch
   // after they mutate.

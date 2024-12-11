@@ -874,7 +874,18 @@ type Mutation {
     parent: ID
   ): SetStatusPayload!
   setValue(entity: ID!, input: WidgetInput!, parent: ID!): SetValuePayload!
-  transition(input: TransitionInput!): TransitionResult @semanticNonNull
+  transition(
+    """
+    The `id` of the root AST node. This is the node that defines the FSM for
+    the given Task chain.
+    """
+    id: ID!
+    """
+    The `id` of the "next Task" in the given Task chain. This must be a valid
+    transition for the given Task chain (as defined by the root's FSM).
+    """
+    into: ID!
+  ): Task @semanticNonNull
   """
   Unssign an entity from another entity. If the entity is already unassigned,
   this operation is a no-op.
@@ -1403,15 +1414,6 @@ type TrackableConnection {
 type TrackableEdge {
   cursor: String @semanticNonNull
   node: Trackable @semanticNonNull
-}
-
-input TransitionInput {
-  into: ID!
-  payload: String
-}
-
-type TransitionResult {
-  trackable: Trackable @semanticNonNull
 }
 
 """

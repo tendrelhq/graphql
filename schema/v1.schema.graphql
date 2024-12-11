@@ -77,11 +77,6 @@ input DynamicStringInput {
   value: String!
 }
 
-input TransitionInput {
-  into: ID!
-  payload: String
-}
-
 type Closed {
   closedAt: String @semanticNonNull
   closedBecause: String
@@ -130,7 +125,18 @@ type Location implements Component & Node & Trackable {
 }
 
 type Mutation {
-  transition(input: TransitionInput!): TransitionResult @semanticNonNull
+  transition(
+    """
+    The `id` of the root AST node. This is the node that defines the FSM for
+    the given Task chain.
+    """
+    id: ID!
+    """
+    The `id` of the "next Task" in the given Task chain. This must be a valid
+    transition for the given Task chain (as defined by the root's FSM).
+    """
+    into: ID!
+  ): Task @semanticNonNull
 }
 
 type Open {
@@ -243,8 +249,4 @@ type TrackableConnection {
 type TrackableEdge {
   cursor: String @semanticNonNull
   node: Trackable @semanticNonNull
-}
-
-type TransitionResult {
-  trackable: Trackable @semanticNonNull
 }

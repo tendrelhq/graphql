@@ -1,3 +1,4 @@
+import { sql } from "@/datasources/postgres";
 import type { Trackable } from "@/schema/platform/tracking";
 import type { Mutation } from "@/schema/root";
 import type { Component } from "@/schema/system/component";
@@ -45,6 +46,26 @@ export class Task implements Component, Named, Refetchable, Trackable {
   /** @gqlField */
   async displayName(): Promise<DisplayName> {
     return await this.ctx.orm.displayName.load(this.id);
+  }
+
+  async root(): Promise<Task | null> {
+    if (this._type !== "workinstance") return null;
+
+    const [row] = await sql<[{ id: ID }?]>`
+      SELECT encode(('workinstance:' || og.id)::bytea, 'base64') AS id
+      FROM public.workinstance AS wi
+      INNER JOIN public.workinstance AS og
+          ON wi.workinstanceoriginatorid = og.workinstanceid
+      WHERE
+          wi.id = ${this._id}
+          AND wi.workinstanceid IS DISTINCT FROM wi.workinstanceoriginatorid;
+    `;
+
+    // If there is no row, there is no originator. This implies that this Task
+    // is the root of the chain, i.e. the originator.
+    if (!row) return null;
+
+    return new Task({ id: row.id }, this.ctx);
   }
 
   /** @gqlField */
