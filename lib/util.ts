@@ -15,6 +15,16 @@ export function nullish<T>(t: T | null | undefined): t is null | undefined {
   return typeof t === "undefined" || t === null;
 }
 
+export function assertNonNull<T>(
+  value: T | null | undefined,
+  message = "Cannot return null for semantically non-nullable field.",
+): T {
+  if (nullish(value)) {
+    throw new Error(message);
+  }
+  return value;
+}
+
 export type WithKey<T> = T & { _key: string };
 
 export type PaginationArgs = {

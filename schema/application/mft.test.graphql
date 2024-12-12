@@ -68,6 +68,9 @@ fragment TaskFSM_fragment on TaskStateMachine {
         value
       }
     }
+    state {
+      __typename
+    }
   }
   transitions {
     edges {

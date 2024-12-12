@@ -458,13 +458,13 @@ input ClickerWidgetInput {
 }
 
 type Closed {
-  closedAt: String @semanticNonNull
+  closedAt: TimestampOverridable @semanticNonNull
   closedBecause: String
   closedBy: String
-  dueAt: String
-  inProgressAt: String
+  dueAt: TimestampOverridable
+  inProgressAt: TimestampOverridable
   inProgressBy: String
-  openedAt: String @semanticNonNull
+  openedAt: TimestampOverridable @semanticNonNull
   openedBy: String
 }
 
@@ -697,10 +697,10 @@ interface Identity implements Component {
 }
 
 type InProgress {
-  dueAt: String
-  inProgressAt: String @semanticNonNull
+  dueAt: TimestampOverridable
+  inProgressAt: TimestampOverridable @semanticNonNull
   inProgressBy: String
-  openedAt: String @semanticNonNull
+  openedAt: TimestampOverridable @semanticNonNull
   openedBy: String
 }
 
@@ -963,7 +963,7 @@ type OnceSchedule {
 }
 
 type Open {
-  dueAt: String
+  dueAt: TimestampOverridable
   openedAt: TimestampOverridable @semanticNonNull
   openedBy: String
 }
@@ -1282,7 +1282,7 @@ type Task implements Component & Node & Trackable {
   A globally unique opaque identifier for a node.
   """
   id: ID!
-  state: TaskState @semanticNonNull
+  state: TaskState
   """
   Entrypoint into the "tracking system(s)" for the given Task.
   At the moment, sub-task tracking is not supported and therefore `null` will
@@ -1374,7 +1374,8 @@ enum TimeZoneNameOptions {
 }
 
 type Timestamp {
-  value: String @semanticNonNull
+  epochMilliseconds: String @semanticNonNull
+  timeZone: String @semanticNonNull
 }
 
 type TimestampOverridable {
@@ -1383,8 +1384,8 @@ type TimestampOverridable {
 }
 
 type TimestampOverride {
-  overriddenAt: String @semanticNonNull
-  overriddenBy: String @semanticNonNull
+  overriddenAt: String
+  overriddenBy: String
   previousValue: Timestamp @semanticNonNull
 }
 

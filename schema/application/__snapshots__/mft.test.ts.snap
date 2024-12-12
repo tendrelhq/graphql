@@ -85,6 +85,9 @@ exports[`MFT transition mutations start production 1`] = `
             "value": "Production",
           },
         },
+        "state": {
+          "__typename": "InProgress",
+        },
       },
       "transitions": {
         "edges": [
@@ -125,6 +128,9 @@ exports[`MFT transition mutations production -> planned downtime 1`] = `
             "value": "Planned Downtime",
           },
         },
+        "state": {
+          "__typename": "InProgress",
+        },
       },
       "transitions": {
         "edges": [],
@@ -145,6 +151,9 @@ exports[`MFT transition mutations end planned downtime -> in production 1`] = `
           "name": {
             "value": "Production",
           },
+        },
+        "state": {
+          "__typename": "InProgress",
         },
       },
       "transitions": {
@@ -186,6 +195,9 @@ exports[`MFT transition mutations start unplanned downtime 1`] = `
             "value": "Unplanned Downtime",
           },
         },
+        "state": {
+          "__typename": "InProgress",
+        },
       },
       "transitions": {
         "edges": [],
@@ -212,6 +224,9 @@ exports[`MFT transition mutations end unplanned downtime -> in production 1`] = 
           "name": {
             "value": "Production",
           },
+        },
+        "state": {
+          "__typename": "InProgress",
         },
       },
       "transitions": {

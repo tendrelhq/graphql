@@ -10,6 +10,17 @@ import {
   TestMftTransitionMutationDocument,
 } from "./mft.test.generated";
 
+/*
+ * MFT todos.
+ *
+ * - [x] TaskState
+ * - [ ] Assignees
+ * - [ ] Time at Task
+ * - [ ] Transition payloads (overrides, notes, etc)
+ * - [ ] History
+ * - [ ] Task detail
+ */
+
 describe.skipIf(!!process.env.CI)("MFT", () => {
   test("entrypoint query", async () => {
     const result = await execute(schema, TestMftEntrypointDocument, {

@@ -1,5 +1,7 @@
 /** @gqlType */
 export type Timestamp = {
   /** @gqlField */
-  value: string;
+  epochMilliseconds: string;
+  /** @gqlField */
+  timeZone: string;
 };

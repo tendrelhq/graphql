@@ -339,98 +339,21 @@ export function getSchema(): GraphQLSchema {
       };
     },
   });
-  const ClosedType: GraphQLObjectType = new GraphQLObjectType({
-    name: "Closed",
-    fields() {
-      return {
-        closedAt: {
-          name: "closedAt",
-          type: GraphQLString,
-          resolve(source, args, context, info) {
-            return assertNonNull(
-              defaultFieldResolver(source, args, context, info),
-            );
-          },
-        },
-        closedBecause: {
-          name: "closedBecause",
-          type: GraphQLString,
-        },
-        closedBy: {
-          name: "closedBy",
-          type: GraphQLString,
-        },
-        dueAt: {
-          name: "dueAt",
-          type: GraphQLString,
-        },
-        inProgressAt: {
-          name: "inProgressAt",
-          type: GraphQLString,
-        },
-        inProgressBy: {
-          name: "inProgressBy",
-          type: GraphQLString,
-        },
-        openedAt: {
-          name: "openedAt",
-          type: GraphQLString,
-          resolve(source, args, context, info) {
-            return assertNonNull(
-              defaultFieldResolver(source, args, context, info),
-            );
-          },
-        },
-        openedBy: {
-          name: "openedBy",
-          type: GraphQLString,
-        },
-      };
-    },
-  });
-  const InProgressType: GraphQLObjectType = new GraphQLObjectType({
-    name: "InProgress",
-    fields() {
-      return {
-        dueAt: {
-          name: "dueAt",
-          type: GraphQLString,
-        },
-        inProgressAt: {
-          name: "inProgressAt",
-          type: GraphQLString,
-          resolve(source, args, context, info) {
-            return assertNonNull(
-              defaultFieldResolver(source, args, context, info),
-            );
-          },
-        },
-        inProgressBy: {
-          name: "inProgressBy",
-          type: GraphQLString,
-        },
-        openedAt: {
-          name: "openedAt",
-          type: GraphQLString,
-          resolve(source, args, context, info) {
-            return assertNonNull(
-              defaultFieldResolver(source, args, context, info),
-            );
-          },
-        },
-        openedBy: {
-          name: "openedBy",
-          type: GraphQLString,
-        },
-      };
-    },
-  });
   const TimestampType: GraphQLObjectType = new GraphQLObjectType({
     name: "Timestamp",
     fields() {
       return {
-        value: {
-          name: "value",
+        epochMilliseconds: {
+          name: "epochMilliseconds",
+          type: GraphQLString,
+          resolve(source, args, context, info) {
+            return assertNonNull(
+              defaultFieldResolver(source, args, context, info),
+            );
+          },
+        },
+        timeZone: {
+          name: "timeZone",
           type: GraphQLString,
           resolve(source, args, context, info) {
             return assertNonNull(
@@ -448,20 +371,10 @@ export function getSchema(): GraphQLSchema {
         overriddenAt: {
           name: "overriddenAt",
           type: GraphQLString,
-          resolve(source, args, context, info) {
-            return assertNonNull(
-              defaultFieldResolver(source, args, context, info),
-            );
-          },
         },
         overriddenBy: {
           name: "overriddenBy",
           type: GraphQLString,
-          resolve(source, args, context, info) {
-            return assertNonNull(
-              defaultFieldResolver(source, args, context, info),
-            );
-          },
         },
         previousValue: {
           name: "previousValue",
@@ -495,13 +408,99 @@ export function getSchema(): GraphQLSchema {
       };
     },
   });
+  const ClosedType: GraphQLObjectType = new GraphQLObjectType({
+    name: "Closed",
+    fields() {
+      return {
+        closedAt: {
+          name: "closedAt",
+          type: TimestampOverridableType,
+          resolve(source, args, context, info) {
+            return assertNonNull(
+              defaultFieldResolver(source, args, context, info),
+            );
+          },
+        },
+        closedBecause: {
+          name: "closedBecause",
+          type: GraphQLString,
+        },
+        closedBy: {
+          name: "closedBy",
+          type: GraphQLString,
+        },
+        dueAt: {
+          name: "dueAt",
+          type: TimestampOverridableType,
+        },
+        inProgressAt: {
+          name: "inProgressAt",
+          type: TimestampOverridableType,
+        },
+        inProgressBy: {
+          name: "inProgressBy",
+          type: GraphQLString,
+        },
+        openedAt: {
+          name: "openedAt",
+          type: TimestampOverridableType,
+          resolve(source, args, context, info) {
+            return assertNonNull(
+              defaultFieldResolver(source, args, context, info),
+            );
+          },
+        },
+        openedBy: {
+          name: "openedBy",
+          type: GraphQLString,
+        },
+      };
+    },
+  });
+  const InProgressType: GraphQLObjectType = new GraphQLObjectType({
+    name: "InProgress",
+    fields() {
+      return {
+        dueAt: {
+          name: "dueAt",
+          type: TimestampOverridableType,
+        },
+        inProgressAt: {
+          name: "inProgressAt",
+          type: TimestampOverridableType,
+          resolve(source, args, context, info) {
+            return assertNonNull(
+              defaultFieldResolver(source, args, context, info),
+            );
+          },
+        },
+        inProgressBy: {
+          name: "inProgressBy",
+          type: GraphQLString,
+        },
+        openedAt: {
+          name: "openedAt",
+          type: TimestampOverridableType,
+          resolve(source, args, context, info) {
+            return assertNonNull(
+              defaultFieldResolver(source, args, context, info),
+            );
+          },
+        },
+        openedBy: {
+          name: "openedBy",
+          type: GraphQLString,
+        },
+      };
+    },
+  });
   const OpenType: GraphQLObjectType = new GraphQLObjectType({
     name: "Open",
     fields() {
       return {
         dueAt: {
           name: "dueAt",
-          type: GraphQLString,
+          type: TimestampOverridableType,
         },
         openedAt: {
           name: "openedAt",
@@ -560,11 +559,6 @@ export function getSchema(): GraphQLSchema {
         state: {
           name: "state",
           type: TaskStateType,
-          resolve(source, args, context, info) {
-            return assertNonNull(
-              defaultFieldResolver(source, args, context, info),
-            );
-          },
         },
         tracking: {
           description:
