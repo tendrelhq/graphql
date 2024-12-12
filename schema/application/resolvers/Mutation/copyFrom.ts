@@ -60,32 +60,22 @@ export async function copyFromWorkInstance(
   id: string,
   options: CopyFromOptions & { chain?: "branch" | "continue" },
 ): Promise<CopyFromPayload> {
-  const [row] = await tx<
-    [{ id: string; originator: string; previous: string }]
-  >`
-      SELECT
-          wt.id,
-          og.id AS originator,
-          prev.id AS previous
+  const [row] = await tx<[{ id: string }]>`
+      SELECT wt.id
       FROM public.workinstance AS wi
       INNER JOIN public.worktemplate AS wt
           ON wi.workinstanceworktemplateid = wt.worktemplateid
-      LEFT JOIN public.workinstance AS og
-          ON wi.workinstanceoriginatorworkinstanceid = og.workinstanceid
-      LEFT JOIN public.workinstance AS prev
-          ON wi.workinstancepreviousid = prev.workinstanceid
       WHERE wi.id = ${id};
   `;
   // For now, we just do a template-based copy:
   return copyFromWorkTemplate(tx, row.id, {
     ...options,
-    originator: options.chain ? row.originator : undefined,
-    previous: options.chain === "continue" ? row.previous : undefined,
+    previous: id,
   });
 }
 
 type TemplateChainOptions = {
-  originator?: string;
+  chain?: "branch" | "continue";
   previous?: string;
 };
 
@@ -122,16 +112,8 @@ export async function copyFromWorkTemplate(
       SELECT
           worktemplatecustomerid,
           worktemplatesiteid,
-          (
-              SELECT workinstanceid
-              FROM public.workinstance
-              WHERE id = ${options.originator ?? null}
-          ),
-          (
-              SELECT workinstanceid
-              FROM public.workinstance
-              WHERE id = ${options.previous ?? null}
-          ),
+          ${options.chain ? sql`previous.workinstanceoriginatorworkinstanceid` : null},
+          previous.workinstanceid,
           worktemplatesoplink,
           ${match(options.withStatus)
             .with("open", () => null)
@@ -162,8 +144,10 @@ export async function copyFromWorkTemplate(
           worktemplateid,
           locationtimezone
       FROM public.worktemplate
-      INNER JOIN public.location ON
-          worktemplatesiteid = locationid
+      INNER JOIN public.location
+          ON worktemplatesiteid = locationid
+      LEFT JOIN public.workinstance AS previous
+          ON previous.id = ${options.previous ?? null}
       WHERE
           worktemplate.id = ${id}
           AND (

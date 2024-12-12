@@ -53,6 +53,7 @@ exports[`MFT refetch query with Task as node 1`] = `
       },
     },
     "fsm": {
+      "__typename": "TaskStateMachine",
       "active": null,
       "transitions": {
         "edges": [
@@ -72,18 +73,12 @@ exports[`MFT refetch query with Task as node 1`] = `
 }
 `;
 
-exports[`MFT transition mutations from idle to active 1`] = `
+exports[`MFT transition mutations start production 1`] = `
 {
   "advance": {
     "__typename": "Task",
-    "displayName": {
-      "__typename": "DisplayName",
-      "name": {
-        "__typename": "DynamicString",
-        "value": "Production",
-      },
-    },
     "fsm": {
+      "__typename": "TaskStateMachine",
       "active": {
         "displayName": {
           "name": {
@@ -118,18 +113,12 @@ exports[`MFT transition mutations from idle to active 1`] = `
 }
 `;
 
-exports[`MFT transition mutations between active states 1`] = `
+exports[`MFT transition mutations production -> planned downtime 1`] = `
 {
   "advance": {
     "__typename": "Task",
-    "displayName": {
-      "__typename": "DisplayName",
-      "name": {
-        "__typename": "DynamicString",
-        "value": "Production",
-      },
-    },
     "fsm": {
+      "__typename": "TaskStateMachine",
       "active": {
         "displayName": {
           "name": {
@@ -139,6 +128,138 @@ exports[`MFT transition mutations between active states 1`] = `
       },
       "transitions": {
         "edges": [],
+      },
+    },
+  },
+}
+`;
+
+exports[`MFT transition mutations end planned downtime -> in production 1`] = `
+{
+  "advance": {
+    "__typename": "Task",
+    "fsm": {
+      "__typename": "TaskStateMachine",
+      "active": {
+        "displayName": {
+          "name": {
+            "value": "Production",
+          },
+        },
+      },
+      "transitions": {
+        "edges": [
+          {
+            "node": {
+              "displayName": {
+                "name": {
+                  "value": "Unplanned Downtime",
+                },
+              },
+            },
+          },
+          {
+            "node": {
+              "displayName": {
+                "name": {
+                  "value": "Planned Downtime",
+                },
+              },
+            },
+          },
+        ],
+      },
+    },
+  },
+}
+`;
+
+exports[`MFT transition mutations start unplanned downtime 1`] = `
+{
+  "advance": {
+    "__typename": "Task",
+    "fsm": {
+      "__typename": "TaskStateMachine",
+      "active": {
+        "displayName": {
+          "name": {
+            "value": "Unplanned Downtime",
+          },
+        },
+      },
+      "transitions": {
+        "edges": [],
+      },
+    },
+  },
+}
+`;
+
+exports[`MFT transition mutations (invalid) start planned downtime 1`] = `
+[
+  [GraphQLError: Task 'd29ya3RlbXBsYXRlOndvcmstdGVtcGxhdGVfYzJmZGRiN2EtMTdmNC00YjQ5LWE3NDQtODUyOGQ2ZWU0NGM0' (worktemplate:work-template_c2fddb7a-17f4-4b49-a744-8528d6ee44c4) is not a valid advancement of FSM 'd29ya3RlbXBsYXRlOndvcmstdGVtcGxhdGVfMWJmMzFjZDUtOGZjMi00N2IxLWEyOGYtZTRiYzU1MTNlMDI4' (worktemplate:work-template_1bf31cd5-8fc2-47b1-a28f-e4bc5513e028)],
+]
+`;
+
+exports[`MFT transition mutations end unplanned downtime -> in production 1`] = `
+{
+  "advance": {
+    "__typename": "Task",
+    "fsm": {
+      "__typename": "TaskStateMachine",
+      "active": {
+        "displayName": {
+          "name": {
+            "value": "Production",
+          },
+        },
+      },
+      "transitions": {
+        "edges": [
+          {
+            "node": {
+              "displayName": {
+                "name": {
+                  "value": "Unplanned Downtime",
+                },
+              },
+            },
+          },
+          {
+            "node": {
+              "displayName": {
+                "name": {
+                  "value": "Planned Downtime",
+                },
+              },
+            },
+          },
+        ],
+      },
+    },
+  },
+}
+`;
+
+exports[`MFT transition mutations stop production -> idle 1`] = `
+{
+  "advance": {
+    "__typename": "Task",
+    "fsm": {
+      "__typename": "TaskStateMachine",
+      "active": null,
+      "transitions": {
+        "edges": [
+          {
+            "node": {
+              "displayName": {
+                "name": {
+                  "value": "Production",
+                },
+              },
+            },
+          },
+        ],
       },
     },
   },
@@ -346,83 +467,6 @@ exports[`MFT entrypoint query 1`] = `
         },
       },
     ],
-  },
-}
-`;
-
-exports[`MFT transition mutations reverting an intermediate transition 1`] = `
-{
-  "advance": {
-    "__typename": "Task",
-    "displayName": {
-      "__typename": "DisplayName",
-      "name": {
-        "__typename": "DynamicString",
-        "value": "Production",
-      },
-    },
-    "fsm": {
-      "active": {
-        "displayName": {
-          "name": {
-            "value": "Production",
-          },
-        },
-      },
-      "transitions": {
-        "edges": [
-          {
-            "node": {
-              "displayName": {
-                "name": {
-                  "value": "Unplanned Downtime",
-                },
-              },
-            },
-          },
-          {
-            "node": {
-              "displayName": {
-                "name": {
-                  "value": "Planned Downtime",
-                },
-              },
-            },
-          },
-        ],
-      },
-    },
-  },
-}
-`;
-
-exports[`MFT transition mutations back to idle 1`] = `
-{
-  "advance": {
-    "__typename": "Task",
-    "displayName": {
-      "__typename": "DisplayName",
-      "name": {
-        "__typename": "DynamicString",
-        "value": "Production",
-      },
-    },
-    "fsm": {
-      "active": null,
-      "transitions": {
-        "edges": [
-          {
-            "node": {
-              "displayName": {
-                "name": {
-                  "value": "Production",
-                },
-              },
-            },
-          },
-        ],
-      },
-    },
   },
 }
 `;

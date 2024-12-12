@@ -27,19 +27,18 @@ query TestMftRefetchQuery($node: ID!) {
           value
         }
       }
-      ...TaskFSM_fragment
+      fsm {
+        ...TaskFSM_fragment
+      }
     }
   }
 }
 
 mutation TestMftTransitionMutation($fsm: ID!, $task: ID!) {
   advance(fsm: $fsm, task: $task) {
-    displayName {
-      name {
-        value
-      }
+    fsm {
+      ...TaskFSM_fragment
     }
-    ...TaskFSM_fragment
   }
 }
 
@@ -53,29 +52,29 @@ fragment Trackables_fragment on Trackable {
               value
             }
           }
-          ...TaskFSM_fragment
+          fsm {
+            ...TaskFSM_fragment
+          }
         }
       }
     }
   }
 }
 
-fragment TaskFSM_fragment on Task {
-  fsm {
-    active {
-      displayName {
-        name {
-          value
-        }
+fragment TaskFSM_fragment on TaskStateMachine {
+  active {
+    displayName {
+      name {
+        value
       }
     }
-    transitions {
-      edges {
-        node {
-          displayName {
-            name {
-              value
-            }
+  }
+  transitions {
+    edges {
+      node {
+        displayName {
+          name {
+            value
           }
         }
       }

@@ -52,7 +52,7 @@ describe.skipIf(!!process.env.CI)("MFT", () => {
   });
 
   describe("transition mutations", () => {
-    test("from idle to active", async () => {
+    test("start production", async () => {
       const result = await execute(schema, TestMftTransitionMutationDocument, {
         fsm: FSM,
         task: encodeGlobalId({
@@ -64,7 +64,7 @@ describe.skipIf(!!process.env.CI)("MFT", () => {
       expect(result.data).toMatchSnapshot();
     });
 
-    test("between active states", async () => {
+    test("production -> planned downtime", async () => {
       const result = await execute(schema, TestMftTransitionMutationDocument, {
         fsm: FSM,
         task: encodeGlobalId({
@@ -76,41 +76,55 @@ describe.skipIf(!!process.env.CI)("MFT", () => {
       expect(result.data).toMatchSnapshot();
     });
 
-    test("reverting an intermediate transition", async () => {
-      // HACK: grab the "most recently in progress" workinstance.
-      const [{ task }] = await sql`
-        SELECT encode(('workinstance:' || id)::bytea, 'base64') AS task
-        FROM public.workinstance
-        WHERE
-            workinstancecustomerid = 99
-            AND workinstancestatusid = 707
-        ORDER BY workinstanceid DESC
-        LIMIT 1;
-      `;
-
+    test("end planned downtime -> in production", async () => {
       const result = await execute(schema, TestMftTransitionMutationDocument, {
         fsm: FSM,
-        task: task,
+        // HACK: grab the "most recently in progress" workinstance.
+        task: await mostRecentlyInProgress(),
       });
       expect(result.errors).toBeFalsy();
       expect(result.data).toMatchSnapshot();
     });
 
-    test("back to idle", async () => {
-      // HACK: grab the "most recently in progress" workinstance.
-      const [{ task }] = await sql`
-        SELECT encode(('workinstance:' || id)::bytea, 'base64') AS task
-        FROM public.workinstance
-        WHERE
-            workinstancecustomerid = 99
-            AND workinstancestatusid = 707
-        ORDER BY workinstanceid DESC
-        LIMIT 1;
-      `;
-
+    test("start unplanned downtime", async () => {
       const result = await execute(schema, TestMftTransitionMutationDocument, {
         fsm: FSM,
-        task: task,
+        task: encodeGlobalId({
+          type: "worktemplate",
+          id: "work-template_0bd74deb-edcb-4c86-bfd7-404bce5013b6",
+        }),
+      });
+      expect(result.errors).toBeFalsy();
+      expect(result.data).toMatchSnapshot();
+    });
+
+    test("(invalid) start planned downtime", async () => {
+      const result = await execute(schema, TestMftTransitionMutationDocument, {
+        fsm: FSM,
+        task: encodeGlobalId({
+          type: "worktemplate",
+          id: "work-template_c2fddb7a-17f4-4b49-a744-8528d6ee44c4",
+        }),
+      });
+      expect(result.data?.advance).toBeNull();
+      expect(result.errors).toMatchSnapshot();
+    });
+
+    test("end unplanned downtime -> in production", async () => {
+      const result = await execute(schema, TestMftTransitionMutationDocument, {
+        fsm: FSM,
+        // HACK: grab the "most recently in progress" workinstance.
+        task: await mostRecentlyInProgress(),
+      });
+      expect(result.errors).toBeFalsy();
+      expect(result.data).toMatchSnapshot();
+    });
+
+    test("stop production -> idle", async () => {
+      const result = await execute(schema, TestMftTransitionMutationDocument, {
+        fsm: FSM,
+        // HACK: grab the "most recently in progress" workinstance.
+        task: await mostRecentlyInProgress(),
       });
       expect(result.errors).toBeFalsy();
       expect(result.data).toMatchSnapshot();
@@ -143,3 +157,16 @@ describe.skipIf(!!process.env.CI)("MFT", () => {
     });
   });
 });
+
+async function mostRecentlyInProgress(): Promise<string> {
+  const [{ task }] = await sql`
+    SELECT encode(('workinstance:' || id)::bytea, 'base64') AS task
+    FROM public.workinstance
+    WHERE
+        workinstancecustomerid = 99
+        AND workinstancestatusid = 707
+    ORDER BY workinstanceid DESC
+    LIMIT 1;
+  `;
+  return task;
+}

@@ -5,6 +5,7 @@ import type { Component } from "@/schema/system/component";
 import type { Overridable } from "@/schema/system/overridable";
 import type { Timestamp } from "@/schema/system/temporal";
 import type { Context } from "@/schema/types";
+import { GraphQLError } from "graphql";
 import type { ID } from "grats";
 import { decodeGlobalId } from "..";
 import type { Refetchable } from "../node";
@@ -153,44 +154,28 @@ export type Closed = {
   closedBy?: string;
 };
 
-/** @gqlType */
-export type TaskActionResult = {
-  /** @gqlField */
-  task: Task;
-  /** @gqlField */
-  parent: Refetchable | null;
-};
-
 /**
- * Start the given Task, identified by the `task` argument.
- * Optionally, a `parent` argument may also be provided to this function. The
- * purpose of this argument is to avoid necessitating *two* network calls where
- * the first is this mutation and the second would be another query to refetch
- * data only transitively related to this Task.
- *
- * @gqlField
+ * Similar to task_fsm's advance method, this method advances a Task through its
+ * internal state machine. A Task's state machine has its finite set defined by
+ * the variants of the {@link TaskState} union, with a dag of the form:
+ * ```
+ * Open -> InProgress -> Closed
+ * ```
  */
-export async function startTask(
-  _: Mutation,
-  task: ID,
-  parent: ID | null,
-  ctx: Context,
-): Promise<TaskActionResult> {
-  return {
-    task: new Task({ id: task }, ctx),
-    parent: parent ? new Task({ id: parent }, ctx) : null,
-  };
-}
+export async function advance(t: Task): Promise<Task> {
+  if (t._type !== "workinstance") {
+    // Punt on this for now. We can come back to it.
+    // This is, at least at present, used solely by the `advance` implementation
+    // for StateMachine<Task>.
+    throw "not yet implemented - lazy instantiation of a Task";
+  }
 
-/** @gqlField */
-export async function stopTask(
-  _: Mutation,
-  task: ID,
-  parent: ID | null,
-  ctx: Context,
-): Promise<TaskActionResult> {
-  return {
-    task: new Task({ id: task }, ctx),
-    parent: parent ? new Task({ id: parent }, ctx) : null,
-  };
+  // As before, we assume this is the "stop task" flow.
+  await sql`
+    UPDATE public.workinstance
+    SET workinstancestatusid = 710
+    WHERE id = ${t._id};
+  `;
+
+  return t;
 }

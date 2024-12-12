@@ -5,7 +5,7 @@ import type { Context } from "@/schema/types";
 import { GraphQLError } from "graphql";
 import type { ID } from "grats";
 import type { StateMachine } from "../fsm";
-import { Task } from "./task";
+import { Task, advance as advance_active } from "./task";
 
 /**
  * Tasks can have an associated StateMachine, which defines a finite set of
@@ -36,16 +36,8 @@ export async function fsm(
   // knowing what Location constitutes the parent of our (workinstance) chain.
   // We don't have that information here. We "just have a worktemplate", which
   // can potentially exist (in its instance form) at several Locations :P
-  // For now we will cheat by using worktemplatesiteid. Note that this really
-  // throws a wrench in the Refetchable concept because it implies that Task
-  // cannot be refetched! Perhaps we can allow for it by way of `parent` though,
-  // i.e. when a Task (worktemplate underlying) is refetched, its fsm is
-  // actually a connection that represents *all active chains*, regardless of
-  // location. We can add an argument to the connection that would allow us to
-  // filter these chains based on their parent (e.g. Location). This is ends up
-  // being rather ergonomically awkward since, in practice, you will be
-  // accessing Task.fsm within some other "trackable hierarchy", e.g. Location.
-  // Perhaps we can model this in ctx...?
+  // For now we make the assumption that we are always in MFT world and work
+  // templates map 1:1 to locations.
   const [fsm] = await sql<[{ active: ID; transitions: ID[] }?]>`
     WITH RECURSIVE chain AS (
         SELECT *
@@ -154,21 +146,16 @@ export async function advance(
      * are the tasks available as the `active` and/or `transitions` fields within
      * a task's `fsm` field. Advancing a FSM by way of this argument works as
      * follows:
-     * - if the given `task` is Open, move it to In Progress and make it the
-     *   active task in the given `fsm`.
-     * - if the given `task` is In Progress, move it to Closed and transition the
-     *   overall `fsm` as determined by the rules that define it. Note that there
-     *   are by default no "on close" rules, and thus the result of this operation
-     *   is effectively to revert the `fsm` to the state it was in _prior to_
-     *   advancing into its current state. Note that this might imply putting the
-     *   `fsm` back into its initial (typically "idle") state.
-     * - if the given `task` is Closed, this operation is a no-op.
+     * - if the active task === the given task, advance the task according to
+     *   its own internal state machine as defined by {@link advance_active}
+     * - otherwise, advance the fsm using the given task as the intended next
+     *   state
      */
     task: ID;
   },
 ): Promise<Task> {
   const r = new Task({ id: args.fsm }, ctx);
-  console.log(`Root (fsm): ${r}`);
+  console.log(`fsm: ${r}`);
 
   const f = await fsm(r, ctx);
   if (!f) {
@@ -180,45 +167,71 @@ export async function advance(
   }
 
   const t = new Task({ id: args.task }, ctx);
-  // TODO: ensure f ^ t, else throw T_INVALID_TRANSITION
-
-  // This is where we need to switch. If the given `task` *is the active task*
-  // then we must take the appropriate action, e.g. 'in progress' if 'open',
-  // 'close' if 'in progress'.
-  if (f.active?.id === t.id) {
-    // For now, we will assume that this is happening via a "stop task" flow,
-    // e.g. in MFT where we are either "End xxx Downtime" or "End Production".
-    // Our job here is simply to close out the given task.
-    await sql`
-      UPDATE public.workinstance
-      SET workinstancestatusid = 710
-      WHERE id = ${t._id};
-    `;
-    // et voilá!
-    return r;
+  // Note that this is a potential source of conflict in the face of
+  // concurrency and/or stale (client) data.
+  if (is_valid_advancement(f, t) === false) {
+    throw new GraphQLError(`Task ${t} is not a valid advancement of FSM ${r}`, {
+      extensions: {
+        code: "T_INVALID_TRANSITION",
+      },
+    });
   }
 
-  // For now, we are going to assume that `next` is always a worktemplate. This
-  // means our job is to simply instantiate the `next` template 'In Progress'.
-  await sql.begin(async tx =>
-    // FIXME: copyFrom does not correctly handle deduplication. Sigh.
-    // This really shouldn't be part of its job anyways. However, I do think
-    // this might suggest that we are using too low-level of an api in this
-    // spot because at this level of abstraction we DO want to engage the rules
-    // engine. Regardless, we can fix this later. CopyFrom is fine for now,
-    // albeit rather overpowered and lacking proper guardrails :)
-    copyFromWorkTemplate(tx, t._id, {
-      // FIXME: missing originator, and so every transition task will have its
-      // originator set to itself. This is not right, but will not hurt anything
-      // since we only look at previous (via a RECURSIVE cte) when building the
-      // chain that forms the basis of the FSM.
-      previous: f.active?._id,
-      withStatus: "inProgress",
-    }),
-  );
+  // When the "choice" is the active task, we advance that task's internal state
+  // machine as defined by its own advance implementation.
+  if (f.active?.id === t.id) {
+    await advance_active(t);
+  } else {
+    // Else the "choice" identifies a transition in the fsm.
+    // For now, we are going to assume that it is always a worktemplate.
+    if (t._type !== "worktemplate") {
+      // Note that this is not currently possible as the underlying type of a
+      // `transitions` node will always be worktemplate. The one case I can
+      // think of in which this would come into play is a sort of escape hatch
+      // rule that would allow transitioning from a (potentially deeply) nested
+      // state back to some high-level state. For example, in the MFT case it
+      // might be desirable to transition back into production directly from a
+      // nested downtime state, e.g. you started planned downtime but then were
+      // derailed into unplanned downtime, and now you'd like jump back into
+      // production without otherwise have to re-enter - only to exit - planned
+      // downtime, which would be the default "backing out" behavior that exists
+      // now. This would be rather simple to implement, I think. It is just a
+      // matter of closing out the active task along with all intermediate
+      // ancestors on the way up to the "choice". However, the question is
+      // whether this is a valid plan in the generic case. We could just as
+      // easily declare the fsm (really: worktemplatenexttemplate) to be acyclic
+      // and thus never have this problem (excluding concurrency).
+      throw "not supported - re-entrant transitions, i.e. whose underlying type is workinstance";
+    }
 
-  // Note that we *always* return the FSM that was given to us originally. This
-  // facilitates a better client experience by not requiring that they refetch
-  // after they mutate.
+    // et voilá
+    await sql.begin(tx =>
+      // FIXME: copyFrom does not correctly handle deduplication. Sigh.
+      // This really shouldn't be part of its job anyways. However, I do think
+      // this might suggest that we are using too low-level of an api in this
+      // spot because at this level of abstraction we DO want to engage the rules
+      // engine. Regardless, we can fix this later. CopyFrom is fine for now,
+      // albeit rather overpowered and lacking proper guardrails :)
+      copyFromWorkTemplate(tx, t._id, {
+        chain: "continue",
+        previous: f.active?._id,
+        withStatus: "inProgress",
+      }),
+    );
+  }
+
+  // We always return a fresh copy of the fsm back to the client. This allows
+  // for single-roundtrip state transitions which in turn enable highly
+  // responsive ux.
   return r;
+}
+
+/**
+ * Checks whether a Task is a valid advancement of an FSM.
+ * A "valid advancement" means that it is _either_ the active task for the
+ * given FSM _or_ it is one of the available transitions.
+ */
+export function is_valid_advancement(fsm: StateMachine<Task>, t: Task) {
+  if (fsm.active?.id === t.id) return true;
+  return fsm.transitions?.edges.some(({ node }) => node.id === t.id);
 }
