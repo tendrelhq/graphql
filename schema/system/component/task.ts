@@ -54,11 +54,18 @@ export class Task
     return await this.ctx.orm.displayName.load(this.id);
   }
 
+  // TODO: We should probably implement this as a StateMachine<TaskState>?
   /** @gqlField */
   async state(): Promise<TaskState | null> {
     // Only workinstances have statuses.
     if (this._type !== "workinstance") return null;
 
+    // NOTE: the following sql supports start/end date overrides as per the
+    // mocks. It does NOT do any bullshit name matching, but requires that you
+    // set up the workresults correctly.
+    // - workresulttypeid must point at 'Date'
+    // - workresultisprimary must be true
+    // - workresultorder should be 0 for 'start' and 1 for 'end'
     const [row] = await sql<
       [
         {
