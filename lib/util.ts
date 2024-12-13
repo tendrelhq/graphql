@@ -25,6 +25,22 @@ export function assertNonNull<T>(
   return value;
 }
 
+export function assertUnderlyingType(
+  expected: string | string[],
+  received: string,
+) {
+  const valid =
+    typeof expected === "string"
+      ? expected === received
+      : expected.some(e => e === received);
+  if (!valid) {
+    throw new Error(
+      `Invalid typename; expected: ${expected}, received: ${received}`,
+    );
+  }
+  return received;
+}
+
 export type WithKey<T> = T & { _key: string };
 
 export type PaginationArgs = {

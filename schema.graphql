@@ -77,8 +77,7 @@ enum ApplicationType {
 }
 
 """
-Identifies an entity being assignable to another entity.
-Assignable entities have two operations: assign and unassign.
+Identifies an Entity as being assignable to another Entity.
 """
 interface Assignable implements Component {
   id: ID!
@@ -122,6 +121,40 @@ input AssigneeInput {
   assignAt: TemporalInput!
   assignTo: ID!
   id: ID!
+}
+
+"""
+Encapsulates the "who" and "when" associated with the act of "assignment".
+For example, both Tasks and Workers implement Assignable and therefore a Task
+can be assigned to a Worker and vice versa ("assignment" is commutative). In
+this example, the "who" will always be the Worker and the "when" will be the
+timestamp when these two Entities were assigned.
+"""
+type Assignment implements Node {
+  """
+  NOT YET IMPLEMENTED - will always return null!
+  """
+  assignedAt: TimestampOverridable
+  assignedTo: Assignable
+  """
+  A globally unique opaque identifier for a node.
+  """
+  id: ID!
+}
+
+type AssignmentConnection {
+  edges: [AssignmentEdge!] @semanticNonNull
+  pageInfo: PageInfo @semanticNonNull
+  totalCount: Int @semanticNonNull
+}
+
+type AssignmentEdge {
+  cursor: String @semanticNonNull
+  node: Assignment @semanticNonNull
+}
+
+input AssignmentInput {
+  assignedTo: ID!
 }
 
 type AssignmentPayload {
@@ -461,7 +494,6 @@ type Closed {
   closedAt: TimestampOverridable @semanticNonNull
   closedBecause: String
   closedBy: String
-  dueAt: TimestampOverridable
   inProgressAt: TimestampOverridable
   inProgressBy: String
   openedAt: TimestampOverridable @semanticNonNull
@@ -667,6 +699,11 @@ type EntityConnection {
   entity: ID!
 }
 
+input FieldInput {
+  field: ID!
+  value: ValueInput
+}
+
 """
 Data type for tracking Boolean-like values in the form of "enabled" or
 "disabled".
@@ -674,6 +711,18 @@ Flags only support two operations: enable and disable.
 """
 type Flag {
   enabled: Boolean
+}
+
+input FsmOptions {
+  """
+  The unique identifier of the FSM on which you are operating. Wherever you
+  access the `fsm` field of a `Task`, that task's id should go here.
+  """
+  fsm: ID!
+  """
+  [object Object],[object Object],[object Object]
+  """
+  task: TaskInput!
 }
 
 type Geofence {
@@ -697,7 +746,6 @@ interface Identity implements Component {
 }
 
 type InProgress {
-  dueAt: TimestampOverridable
   inProgressAt: TimestampOverridable @semanticNonNull
   inProgressBy: String
   openedAt: TimestampOverridable @semanticNonNull
@@ -842,17 +890,7 @@ type Mutation {
   """
   activate(entity: ID!): Activatable!
   activateWorker(id: ID!): Worker!
-  advance(
-    """
-    The unique identifier of the FSM on which you are operating. Wherever you
-    access the `fsm` field of a `Task`, that task's id should go here.
-    """
-    fsm: ID!
-    """
-    [object Object],[object Object],[object Object]
-    """
-    task: ID!
-  ): Task @semanticNonNull
+  advance(opts: FsmOptions!): Task @semanticNonNull
   """
   Assign an entity to another entity. If the entity is already assigned to the
   same entity, this operation is a no-op.
@@ -963,7 +1001,6 @@ type OnceSchedule {
 }
 
 type Open {
-  dueAt: TimestampOverridable
   openedAt: TimestampOverridable @semanticNonNull
   openedBy: String
 }
@@ -1271,7 +1308,11 @@ case.
 Technically speaking, a Task represents a (1) *named asynchronous process*
 that (2) exists in one of three states: open, in progress, or closed.
 """
-type Task implements Component & Node & Trackable {
+type Task implements Assignable & Component & Node & Trackable {
+  """
+  [object Object],[object Object],[object Object]
+  """
+  assignees: AssignmentConnection
   displayName: DisplayName @semanticNonNull
   """
   Tasks can have an associated StateMachine, which defines a finite set of
@@ -1300,6 +1341,11 @@ type TaskConnection {
 type TaskEdge {
   cursor: String @semanticNonNull
   node: Task @semanticNonNull
+}
+
+input TaskInput {
+  id: ID!
+  overrides: [FieldInput!]
 }
 
 union TaskState = Closed | InProgress | Open
@@ -1376,6 +1422,11 @@ enum TimeZoneNameOptions {
 type Timestamp {
   epochMilliseconds: String @semanticNonNull
   timeZone: String @semanticNonNull
+}
+
+input TimestampInput {
+  epochMilliseconds: String!
+  timeZone: String
 }
 
 type TimestampOverridable {
@@ -1488,6 +1539,22 @@ type User implements Node {
 
 input UserSearchOptions {
   displayName: String
+}
+
+input ValueInput @oneOf {
+  boolean: Boolean
+  decimal: Float
+  """
+  Duration in either ISO or millisecond format.
+  """
+  duration: String
+  id: ID
+  integer: Int
+  string: String
+  """
+  Timestamp in either ISO or epoch millisecond format.
+  """
+  timestamp: String
 }
 
 """

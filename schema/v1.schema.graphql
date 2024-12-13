@@ -39,6 +39,13 @@ scalar Locale @specifiedBy(url: "https://www.rfc-editor.org/rfc/rfc5646.html")
 union TaskState = Closed | InProgress | Open
 
 """
+Identifies an Entity as being assignable to another Entity.
+"""
+interface Assignable implements Component {
+  id: ID!
+}
+
+"""
 Components characterize Entities as possessing a particular trait.
 They are just simple structs, holding all data necessary to model that trait.
 """
@@ -72,16 +79,92 @@ interface Trackable implements Component {
   tracking: TrackableConnection
 }
 
+input AssignmentInput {
+  assignedTo: ID!
+}
+
 input DynamicStringInput {
   locale: Locale!
   value: String!
+}
+
+input FieldInput {
+  field: ID!
+  value: ValueInput
+}
+
+input FsmOptions {
+  """
+  The unique identifier of the FSM on which you are operating. Wherever you
+  access the `fsm` field of a `Task`, that task's id should go here.
+  """
+  fsm: ID!
+  """
+  [object Object],[object Object],[object Object]
+  """
+  task: TaskInput!
+}
+
+input TaskInput {
+  id: ID!
+  overrides: [FieldInput!]
+}
+
+input TimestampInput {
+  epochMilliseconds: String!
+  timeZone: String
+}
+
+input ValueInput @oneOf {
+  boolean: Boolean
+  decimal: Float
+  """
+  Duration in either ISO or millisecond format.
+  """
+  duration: String
+  id: ID
+  integer: Int
+  string: String
+  """
+  Timestamp in either ISO or epoch millisecond format.
+  """
+  timestamp: String
+}
+
+"""
+Encapsulates the "who" and "when" associated with the act of "assignment".
+For example, both Tasks and Workers implement Assignable and therefore a Task
+can be assigned to a Worker and vice versa ("assignment" is commutative). In
+this example, the "who" will always be the Worker and the "when" will be the
+timestamp when these two Entities were assigned.
+"""
+type Assignment implements Node {
+  """
+  NOT YET IMPLEMENTED - will always return null!
+  """
+  assignedAt: TimestampOverridable
+  assignedTo: Assignable
+  """
+  A globally unique opaque identifier for a node.
+  """
+  id: ID!
+}
+
+type AssignmentConnection {
+  edges: [AssignmentEdge!] @semanticNonNull
+  pageInfo: PageInfo @semanticNonNull
+  totalCount: Int @semanticNonNull
+}
+
+type AssignmentEdge {
+  cursor: String @semanticNonNull
+  node: Assignment @semanticNonNull
 }
 
 type Closed {
   closedAt: TimestampOverridable @semanticNonNull
   closedBecause: String
   closedBy: String
-  dueAt: TimestampOverridable
   inProgressAt: TimestampOverridable
   inProgressBy: String
   openedAt: TimestampOverridable @semanticNonNull
@@ -106,7 +189,6 @@ type DynamicString {
 }
 
 type InProgress {
-  dueAt: TimestampOverridable
   inProgressAt: TimestampOverridable @semanticNonNull
   inProgressBy: String
   openedAt: TimestampOverridable @semanticNonNull
@@ -125,21 +207,10 @@ type Location implements Component & Node & Trackable {
 }
 
 type Mutation {
-  advance(
-    """
-    The unique identifier of the FSM on which you are operating. Wherever you
-    access the `fsm` field of a `Task`, that task's id should go here.
-    """
-    fsm: ID!
-    """
-    [object Object],[object Object],[object Object]
-    """
-    task: ID!
-  ): Task @semanticNonNull
+  advance(opts: FsmOptions!): Task @semanticNonNull
 }
 
 type Open {
-  dueAt: TimestampOverridable
   openedAt: TimestampOverridable @semanticNonNull
   openedBy: String
 }
@@ -179,7 +250,11 @@ case.
 Technically speaking, a Task represents a (1) *named asynchronous process*
 that (2) exists in one of three states: open, in progress, or closed.
 """
-type Task implements Component & Node & Trackable {
+type Task implements Assignable & Component & Node & Trackable {
+  """
+  [object Object],[object Object],[object Object]
+  """
+  assignees: AssignmentConnection
   displayName: DisplayName @semanticNonNull
   """
   Tasks can have an associated StateMachine, which defines a finite set of

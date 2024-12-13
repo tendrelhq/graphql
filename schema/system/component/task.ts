@@ -1,17 +1,17 @@
 import { sql } from "@/datasources/postgres";
 import type { Trackable } from "@/schema/platform/tracking";
-import type { Mutation } from "@/schema/root";
 import type { Component } from "@/schema/system/component";
 import type { Overridable } from "@/schema/system/overridable";
 import type { Timestamp } from "@/schema/system/temporal";
 import type { Context } from "@/schema/types";
 import { assertNonNull } from "@/util";
-import { GraphQLError } from "graphql";
-import type { ID } from "grats";
+import type { Float, ID, Int } from "grats";
+import type { Fragment } from "postgres";
 import { match } from "ts-pattern";
 import { decodeGlobalId } from "..";
 import type { Refetchable } from "../node";
 import type { Connection } from "../pagination";
+import { type Assignable, Assignment } from "./assignee";
 import type { DisplayName, Named } from "./name";
 
 export type ConstructorArgs = {
@@ -29,7 +29,9 @@ export type ConstructorArgs = {
  *
  * @gqlType
  */
-export class Task implements Component, Named, Refetchable, Trackable {
+export class Task
+  implements Assignable, Component, Named, Refetchable, Trackable
+{
   readonly __typename = "Task" as const;
   readonly _type: string;
   readonly _id: string;
@@ -42,34 +44,14 @@ export class Task implements Component, Named, Refetchable, Trackable {
     // Note that Postgres will sometimes add newlines when we `encode(...)`.
     this.id = args.id.replace(/\n/g, "");
     // Private.
-    const { type, id } = decodeGlobalId(this.id);
-    this._type = type;
-    this._id = id;
+    const g = decodeGlobalId(this.id);
+    this._type = g.type;
+    this._id = g.id;
   }
 
   /** @gqlField */
   async displayName(): Promise<DisplayName> {
     return await this.ctx.orm.displayName.load(this.id);
-  }
-
-  async root(): Promise<Task | null> {
-    if (this._type !== "workinstance") return null;
-
-    const [row] = await sql<[{ id: ID }?]>`
-      SELECT encode(('workinstance:' || og.id)::bytea, 'base64') AS id
-      FROM public.workinstance AS wi
-      INNER JOIN public.workinstance AS og
-          ON wi.workinstanceoriginatorid = og.workinstanceid
-      WHERE
-          wi.id = ${this._id}
-          AND wi.workinstanceid IS DISTINCT FROM wi.workinstanceoriginatorid;
-    `;
-
-    // If there is no row, there is no originator. This implies that this Task
-    // is the root of the chain, i.e. the originator.
-    if (!row) return this;
-
-    return new Task({ id: row.id }, this.ctx);
   }
 
   /** @gqlField */
@@ -82,8 +64,6 @@ export class Task implements Component, Named, Refetchable, Trackable {
         {
           status: string;
           create_date: string;
-          target_start_date?: string;
-          ov_target_start_date?: string;
           start_date?: string;
           ov_start_date?: string;
           close_date?: string;
@@ -95,8 +75,6 @@ export class Task implements Component, Named, Refetchable, Trackable {
       SELECT
           wis.systagtype AS status,
           wi.workinstancecreateddate AS create_date,
-          wi.workinstancetargetstartdate AS target_start_date,
-          nullif(ov_target.workresultinstancevalue, '')::timestamptz AS ov_target_start_date,
           wi.workinstancestartdate AS start_date,
           nullif(ov_start.workresultinstancevalue, '')::timestamptz AS ov_start_date,
           wi.workinstancecompleteddate AS close_date,
@@ -105,19 +83,6 @@ export class Task implements Component, Named, Refetchable, Trackable {
       FROM public.workinstance AS wi
       INNER JOIN public.systag AS wis
           ON wi.workinstancestatusid = wis.systagid
-      LEFT JOIN public.workresult AS ov_target_f
-          ON
-              wi.workinstanceworktemplateid = ov_target_f.workresultworktemplateid
-              AND ov_target_f.workresultisprimary = true
-              AND ov_target_f.workresulttypeid IN (
-                  SELECT systagid
-                  FROM public.systag
-                  WHERE systagtype = 'Override Target Start Time'
-              )
-      LEFT JOIN public.workresultinstance AS ov_target
-          ON
-              wi.workinstanceid = ov_target.workresultinstanceworkinstanceid
-              AND ov_target_f.workresultid = ov_target.workresultinstanceworkresultid
       LEFT JOIN public.workresult AS ov_start_f
           ON
               wi.workinstanceworktemplateid = ov_start_f.workresultworktemplateid
@@ -125,8 +90,9 @@ export class Task implements Component, Named, Refetchable, Trackable {
               AND ov_start_f.workresulttypeid IN (
                   SELECT systagid
                   FROM public.systag
-                  WHERE systagtype = 'Override Start Time'
+                  WHERE systagtype = 'Date'
               )
+              AND ov_start_f.workresultorder = 0
       LEFT JOIN public.workresultinstance AS ov_start
           ON
               wi.workinstanceid = ov_start.workresultinstanceworkinstanceid
@@ -138,8 +104,9 @@ export class Task implements Component, Named, Refetchable, Trackable {
               AND ov_close_f.workresulttypeid IN (
                   SELECT systagid
                   FROM public.systag
-                  WHERE systagtype = 'Override Start Time'
+                  WHERE systagtype = 'Date'
               )
+              AND ov_close_f.workresultorder = 1
       LEFT JOIN public.workresultinstance AS ov_close
           ON
               wi.workinstanceid = ov_close.workresultinstanceworkinstanceid
@@ -317,6 +284,51 @@ export class Task implements Component, Named, Refetchable, Trackable {
   }
 }
 
+/**
+ * {@link Assignment} connection for the given Task.
+ * There is no limit on the number of assignments per task.
+ *
+ * @gqlField
+ */
+export async function assignees(
+  t: Task,
+  ctx: Context,
+): Promise<Connection<Assignment> | null> {
+  // Only workinstances can be assigned.
+  if (t._type !== "workinstance") return null;
+
+  const rows = await sql<{ id: string; entity: string }[]>`
+    SELECT encode(('workresultinstance:' || wi.id || ':' || wr.id)::bytea, 'base64') AS id
+    FROM public.workinstance AS wi
+    INNER JOIN public.workresultinstance AS wri
+        ON wi.workinstanceid = wri.workresultinstanceworkinstanceid
+    INNER JOIN public.workresult AS wr
+        ON
+            wri.workresultinstanceworkresultid = wr.workresultid
+            AND wr.workresultisprimary = true
+            AND wr.workresulttypeid = 848
+            AND wr.workresultentitytypeid = 850
+    WHERE wi.id = ${t._id}
+  `;
+
+  return {
+    edges: rows.map(row => ({
+      cursor: row.id,
+      // FIXME: this may not be ideal as it introduces a chance for interleaving
+      // to put us an illegal state, i.e. the above query runs and it finds a
+      // match then another session unassigns (the same row) _and then_ the
+      // resolver in Assigment runs and finds that the row that we told it would
+      // be there is no longer there!
+      node: new Assignment(row, ctx),
+    })),
+    pageInfo: {
+      hasNextPage: false,
+      hasPreviousPage: false,
+    },
+    totalCount: rows.count,
+  };
+}
+
 // FIXME: this might be a confusing name in combination with TaskStateMachine...
 // Probably should just name it TaskStatus?
 /** @gqlUnion */
@@ -327,8 +339,6 @@ export type Open = {
   __typename: "Open";
 
   /** @gqlField */
-  dueAt?: Overridable<Timestamp> | null;
-  /** @gqlField */
   openedAt: Overridable<Timestamp>;
   /** @gqlField */
   openedBy?: string;
@@ -338,8 +348,6 @@ export type Open = {
 export type InProgress = {
   __typename: "InProgress";
 
-  /** @gqlField */
-  dueAt?: Overridable<Timestamp> | null;
   /** @gqlField */
   openedAt: Overridable<Timestamp>;
   /** @gqlField */
@@ -354,8 +362,6 @@ export type InProgress = {
 export type Closed = {
   __typename: "Closed";
 
-  /** @gqlField */
-  dueAt?: Overridable<Timestamp> | null;
   /** @gqlField */
   openedAt: Overridable<Timestamp>;
   /** @gqlField */
@@ -372,6 +378,58 @@ export type Closed = {
   closedBy?: string;
 };
 
+/** @gqlInput */
+export type TaskInput = {
+  id: ID;
+  overrides?: FieldInput[] | null;
+  // TODO: for photos
+  // attachments?: Attachment[] | null;
+};
+
+/** @gqlInput */
+export type FieldInput = {
+  field: ID;
+  value?: ValueInput | null;
+};
+
+/**
+ * @gqlInput
+ * @oneOf
+ */
+export type ValueInput =
+  // Boolean
+  | {
+      boolean: boolean;
+    }
+  // Entity
+  | {
+      id: ID;
+    }
+  // Number
+  | {
+      integer: Int;
+    }
+  | {
+      decimal: Float;
+    }
+  // String
+  | {
+      string: string;
+    }
+  // Temporal
+  | {
+      /**
+       * Duration in either ISO or millisecond format.
+       */
+      duration: string;
+    }
+  | {
+      /**
+       * Timestamp in either ISO or epoch millisecond format.
+       */
+      timestamp: string;
+    };
+
 /**
  * Similar to task_fsm's advance method, this method advances a Task through its
  * internal state machine. A Task's state machine has its finite set defined by
@@ -380,13 +438,18 @@ export type Closed = {
  * Open -> InProgress -> Closed
  * ```
  */
-export async function advance(t: Task): Promise<Task> {
+export async function advance(
+  t: Task,
+  opts?: Omit<TaskInput, "id"> | null,
+): Promise<Task> {
   if (t._type !== "workinstance") {
     // Punt on this for now. We can come back to it.
     // This is, at least at present, used solely by the `advance` implementation
     // for StateMachine<Task>.
     throw "not yet implemented - lazy instantiation of a Task";
   }
+
+  console.log("advance_task overrides", opts?.overrides);
 
   // As before, we assume this is the "stop task" flow.
   await sql`
@@ -401,3 +464,157 @@ export async function advance(t: Task): Promise<Task> {
 
   return t;
 }
+
+/**
+ * The purpose of this function is to abstract the process of applying
+ * field-level edits to a Task (i.e. a workinstance's workresultinstances).
+ *
+ * - This is an UPSERT operation; it will create workresultinstances if necessary.
+ * - This operation does not affect field-level status.
+ */
+export function applyEdits$fragment(
+  t: Task,
+  edits: FieldInput[],
+): Fragment | undefined {
+  if (t._type !== "workinstance") {
+    console.warn(`WARNING: cannot applyEdits to a '${t._type}'`);
+    return;
+  }
+
+  if (!edits.length) return;
+
+  const edits_ = edits.flatMap(e => {
+    const { type, id, suffix } = decodeGlobalId(e.field);
+    switch (type) {
+      case "workresult": {
+        return [[id, valueInputToSql(e.value), valueInputTypeToSql(e.value)]];
+      }
+      case "workresultinstance": {
+        return [
+          [
+            assertNonNull(suffix?.at(0)),
+            valueInputToSql(e.value),
+            valueInputTypeToSql(e.value),
+          ],
+        ];
+      }
+      default: {
+        console.warn(`Underlying type '${type}' not expected in this context.`);
+        return [];
+      }
+    }
+  });
+
+  // console.log("edits", edits_);
+
+  return sql`
+    WITH edits (field, value, type) AS (
+        VALUES ${sql(edits_ as string[][])}
+    )
+
+    INSERT INTO public.workresultinstance AS t (
+        workresultinstancecustomerid,
+        workresultinstanceworkinstanceid,
+        workresultinstanceworkresultid,
+        workresultinstancetimezone,
+        workresultinstancevalue
+    )
+    SELECT
+        wi.workinstancecustomerid,
+        wi.workinstanceid,
+        wr.workresultid,
+        wi.workinstancetimezone,
+        coalesce(
+          nullif(edits.value, ''),
+          wr.workresultdefaultvalue
+        )
+    FROM edits
+    INNER JOIN public.workinstance AS wi
+        ON wi.id = ${t._id}
+    INNER JOIN public.workresult AS wr
+        ON edits.field = wr.id
+           AND wi.workinstanceworktemplateid = wr.workresultworktemplateid
+    INNER JOIN public.systag AS wrt
+        ON edits.type = wrt.systagtype
+           AND wrt.systagparentid = 699
+    ON CONFLICT
+        (workresultinstanceworkinstanceid, workresultinstanceworkresultid)
+    DO UPDATE
+        SET workresultinstancevalue = EXCLUDED.workresultinstancevalue,
+            workresultinstancemodifieddate = now()
+        WHERE
+            t.workresultinstancevalue IS DISTINCT FROM EXCLUDED.workresultinstancevalue
+    RETURNING 1
+  `;
+}
+
+export function valueInputToSql(value?: FieldInput["value"]): string | null {
+  if (!value) return null;
+  switch (true) {
+    case "boolean" in value:
+      return value.boolean ? "true" : "false";
+    case "id" in value:
+      return value.id;
+    case "integer" in value:
+      return value.integer.toString();
+    case "decimal" in value:
+      return value.decimal.toString();
+    case "string" in value:
+      return value.string;
+    case "duration" in value:
+      return value.duration;
+    case "timestamp" in value: {
+      const t = Date.parse(value.timestamp);
+      if (Number.isNaN(t)) {
+        console.warn(
+          `Discarding invalid ValueInput timestamp '${value.timestamp}'`,
+        );
+        return null;
+      }
+      return new Date(t).toISOString();
+    }
+    default: {
+      const _: never = value;
+      console.warn(`Unhandled input variant: ${JSON.stringify(value)}`);
+      return null;
+    }
+  }
+}
+
+export function valueInputTypeToSql(
+  value?: FieldInput["value"],
+): string | null {
+  if (!value) return null;
+  switch (true) {
+    case "boolean" in value:
+      return "Boolean";
+    case "id" in value:
+      return value.id;
+    case "integer" in value:
+      return "Number";
+    case "decimal" in value:
+      return "Number";
+    case "string" in value:
+      return "String";
+    case "duration" in value:
+      return "Duration";
+    case "timestamp" in value:
+      return "Date";
+    default: {
+      const _: never = value;
+      console.warn(`Unhandled input variant: ${JSON.stringify(value)}`);
+      return null;
+    }
+  }
+}
+
+// shortmess=ctaOToClF
+//   c - don't give ins-completion-menu messages
+//   t - truncate file message if too long
+//   a - all of the shorthands (l,m,r,w)
+//   O - message for reading overwrites any previous message
+//   T - truncate other messages if too long
+//   o - overwrite message for writing a file
+//   C - don't give messages while scanning for ins-completion items
+//   l - "999L" instead of "999 lines"
+//   F - don't give the file info when editing a file

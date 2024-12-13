@@ -14,9 +14,9 @@ import {
  * MFT todos.
  *
  * - [x] TaskState
- * - [ ] Assignees
- * - [ ] Time at Task
- * - [ ] Transition payloads (overrides, notes, etc)
+ * - [x] Assignees
+ * - [~] Time at Task (NOTE: can be calculated)
+ * - [x] Transition payloads (overrides, notes, etc)
  * - [ ] History
  * - [ ] Task detail
  */
@@ -65,11 +65,15 @@ describe.skipIf(!!process.env.CI)("MFT", () => {
   describe("transition mutations", () => {
     test("start production", async () => {
       const result = await execute(schema, TestMftTransitionMutationDocument, {
-        fsm: FSM,
-        task: encodeGlobalId({
-          type: "worktemplate",
-          id: "work-template_1bf31cd5-8fc2-47b1-a28f-e4bc5513e028",
-        }),
+        opts: {
+          fsm: FSM,
+          task: {
+            id: encodeGlobalId({
+              type: "worktemplate",
+              id: "work-template_1bf31cd5-8fc2-47b1-a28f-e4bc5513e028",
+            }),
+          },
+        },
       });
       expect(result.errors).toBeFalsy();
       expect(result.data).toMatchSnapshot();
@@ -77,11 +81,15 @@ describe.skipIf(!!process.env.CI)("MFT", () => {
 
     test("production -> planned downtime", async () => {
       const result = await execute(schema, TestMftTransitionMutationDocument, {
-        fsm: FSM,
-        task: encodeGlobalId({
-          type: "worktemplate",
-          id: "work-template_c2fddb7a-17f4-4b49-a744-8528d6ee44c4",
-        }),
+        opts: {
+          fsm: FSM,
+          task: {
+            id: encodeGlobalId({
+              type: "worktemplate",
+              id: "work-template_c2fddb7a-17f4-4b49-a744-8528d6ee44c4",
+            }),
+          },
+        },
       });
       expect(result.errors).toBeFalsy();
       expect(result.data).toMatchSnapshot();
@@ -89,9 +97,12 @@ describe.skipIf(!!process.env.CI)("MFT", () => {
 
     test("end planned downtime -> in production", async () => {
       const result = await execute(schema, TestMftTransitionMutationDocument, {
-        fsm: FSM,
-        // HACK: grab the "most recently in progress" workinstance.
-        task: await mostRecentlyInProgress(),
+        opts: {
+          fsm: FSM,
+          task: {
+            id: await mostRecentlyInProgress(),
+          },
+        },
       });
       expect(result.errors).toBeFalsy();
       expect(result.data).toMatchSnapshot();
@@ -99,11 +110,39 @@ describe.skipIf(!!process.env.CI)("MFT", () => {
 
     test("start unplanned downtime", async () => {
       const result = await execute(schema, TestMftTransitionMutationDocument, {
-        fsm: FSM,
-        task: encodeGlobalId({
-          type: "worktemplate",
-          id: "work-template_0bd74deb-edcb-4c86-bfd7-404bce5013b6",
-        }),
+        opts: {
+          fsm: FSM,
+          task: {
+            id: encodeGlobalId({
+              type: "worktemplate",
+              id: "work-template_0bd74deb-edcb-4c86-bfd7-404bce5013b6",
+            }),
+            overrides: [
+              {
+                // 'Override Start Time'
+                field: encodeGlobalId({
+                  type: "workresult",
+                  id: "work-result_2c316d44-74ea-457d-af07-f0863e552b1a",
+                }),
+                value: {
+                  // '5 minutes ago'
+                  timestamp: new Date(Date.now() - 5 * 60 * 1000).toISOString(),
+                },
+              },
+              {
+                // 'Comments'
+                field: encodeGlobalId({
+                  type: "workresult",
+                  id: "work-result_8b5c1f2d-5553-4809-8c9c-66bd2b111def",
+                }),
+                value: {
+                  string:
+                    "The unplanned nature of this downtime event took us by surprise!",
+                },
+              },
+            ],
+          },
+        },
       });
       expect(result.errors).toBeFalsy();
       expect(result.data).toMatchSnapshot();
@@ -111,11 +150,15 @@ describe.skipIf(!!process.env.CI)("MFT", () => {
 
     test("(invalid) start planned downtime", async () => {
       const result = await execute(schema, TestMftTransitionMutationDocument, {
-        fsm: FSM,
-        task: encodeGlobalId({
-          type: "worktemplate",
-          id: "work-template_c2fddb7a-17f4-4b49-a744-8528d6ee44c4",
-        }),
+        opts: {
+          fsm: FSM,
+          task: {
+            id: encodeGlobalId({
+              type: "worktemplate",
+              id: "work-template_c2fddb7a-17f4-4b49-a744-8528d6ee44c4",
+            }),
+          },
+        },
       });
       expect(result.data?.advance).toBeNull();
       expect(result.errors).toMatchSnapshot();
@@ -123,9 +166,12 @@ describe.skipIf(!!process.env.CI)("MFT", () => {
 
     test("end unplanned downtime -> in production", async () => {
       const result = await execute(schema, TestMftTransitionMutationDocument, {
-        fsm: FSM,
-        // HACK: grab the "most recently in progress" workinstance.
-        task: await mostRecentlyInProgress(),
+        opts: {
+          fsm: FSM,
+          task: {
+            id: await mostRecentlyInProgress(),
+          },
+        },
       });
       expect(result.errors).toBeFalsy();
       expect(result.data).toMatchSnapshot();
@@ -133,9 +179,12 @@ describe.skipIf(!!process.env.CI)("MFT", () => {
 
     test("stop production -> idle", async () => {
       const result = await execute(schema, TestMftTransitionMutationDocument, {
-        fsm: FSM,
-        // HACK: grab the "most recently in progress" workinstance.
-        task: await mostRecentlyInProgress(),
+        opts: {
+          fsm: FSM,
+          task: {
+            id: await mostRecentlyInProgress(),
+          },
+        },
       });
       expect(result.errors).toBeFalsy();
       expect(result.data).toMatchSnapshot();
@@ -169,6 +218,10 @@ describe.skipIf(!!process.env.CI)("MFT", () => {
   });
 });
 
+/**
+ * HACK! Grabs the "most recently in progress" workinstance for this test suite.
+ * Temporary utility function while we are in the implementation phase of MFT.
+ */
 async function mostRecentlyInProgress(): Promise<string> {
   const [{ task }] = await sql`
     SELECT encode(('workinstance:' || id)::bytea, 'base64') AS task

@@ -1,5 +1,6 @@
 import {
   GraphQLBoolean,
+  GraphQLFloat,
   GraphQLID,
   GraphQLInputObjectType,
   GraphQLInt,
@@ -14,9 +15,11 @@ import {
   defaultFieldResolver,
 } from "graphql";
 import { trackables as queryTrackablesResolver } from "./platform/tracking";
+import { assignees as taskAssigneesResolver } from "./system/component/task";
 import { fsm as taskFsmResolver } from "./system/component/task_fsm";
 import { advance as mutationAdvanceResolver } from "./system/component/task_fsm";
 import { node as queryNodeResolver } from "./system/node";
+import { id as assignmentIdResolver } from "./system/node";
 import { id as displayNameIdResolver } from "./system/node";
 import { id as taskIdResolver } from "./system/node";
 import { id as locationIdResolver } from "./system/node";
@@ -206,6 +209,178 @@ export function getSchema(): GraphQLSchema {
       };
     },
   });
+  const TimestampType: GraphQLObjectType = new GraphQLObjectType({
+    name: "Timestamp",
+    fields() {
+      return {
+        epochMilliseconds: {
+          name: "epochMilliseconds",
+          type: GraphQLString,
+          resolve(source, args, context, info) {
+            return assertNonNull(
+              defaultFieldResolver(source, args, context, info),
+            );
+          },
+        },
+        timeZone: {
+          name: "timeZone",
+          type: GraphQLString,
+          resolve(source, args, context, info) {
+            return assertNonNull(
+              defaultFieldResolver(source, args, context, info),
+            );
+          },
+        },
+      };
+    },
+  });
+  const TimestampOverrideType: GraphQLObjectType = new GraphQLObjectType({
+    name: "TimestampOverride",
+    fields() {
+      return {
+        overriddenAt: {
+          name: "overriddenAt",
+          type: GraphQLString,
+        },
+        overriddenBy: {
+          name: "overriddenBy",
+          type: GraphQLString,
+        },
+        previousValue: {
+          name: "previousValue",
+          type: TimestampType,
+          resolve(source, args, context, info) {
+            return assertNonNull(
+              defaultFieldResolver(source, args, context, info),
+            );
+          },
+        },
+      };
+    },
+  });
+  const TimestampOverridableType: GraphQLObjectType = new GraphQLObjectType({
+    name: "TimestampOverridable",
+    fields() {
+      return {
+        override: {
+          name: "override",
+          type: TimestampOverrideType,
+        },
+        value: {
+          name: "value",
+          type: TimestampType,
+          resolve(source, args, context, info) {
+            return assertNonNull(
+              defaultFieldResolver(source, args, context, info),
+            );
+          },
+        },
+      };
+    },
+  });
+  const AssignableType: GraphQLInterfaceType = new GraphQLInterfaceType({
+    description: "Identifies an Entity as being assignable to another Entity.",
+    name: "Assignable",
+    fields() {
+      return {
+        id: {
+          name: "id",
+          type: new GraphQLNonNull(GraphQLID),
+        },
+      };
+    },
+    interfaces() {
+      return [ComponentType];
+    },
+  });
+  const AssignmentType: GraphQLObjectType = new GraphQLObjectType({
+    name: "Assignment",
+    description:
+      'Encapsulates the "who" and "when" associated with the act of "assignment".\nFor example, both Tasks and Workers implement Assignable and therefore a Task\ncan be assigned to a Worker and vice versa ("assignment" is commutative). In\nthis example, the "who" will always be the Worker and the "when" will be the\ntimestamp when these two Entities were assigned.',
+    fields() {
+      return {
+        assignedAt: {
+          description: "NOT YET IMPLEMENTED - will always return null!",
+          name: "assignedAt",
+          type: TimestampOverridableType,
+        },
+        assignedTo: {
+          name: "assignedTo",
+          type: AssignableType,
+        },
+        id: {
+          description: "A globally unique opaque identifier for a node.",
+          name: "id",
+          type: new GraphQLNonNull(GraphQLID),
+          resolve(source) {
+            return assignmentIdResolver(source);
+          },
+        },
+      };
+    },
+    interfaces() {
+      return [NodeType];
+    },
+  });
+  const AssignmentEdgeType: GraphQLObjectType = new GraphQLObjectType({
+    name: "AssignmentEdge",
+    fields() {
+      return {
+        cursor: {
+          name: "cursor",
+          type: GraphQLString,
+          resolve(source, args, context, info) {
+            return assertNonNull(
+              defaultFieldResolver(source, args, context, info),
+            );
+          },
+        },
+        node: {
+          name: "node",
+          type: AssignmentType,
+          resolve(source, args, context, info) {
+            return assertNonNull(
+              defaultFieldResolver(source, args, context, info),
+            );
+          },
+        },
+      };
+    },
+  });
+  const AssignmentConnectionType: GraphQLObjectType = new GraphQLObjectType({
+    name: "AssignmentConnection",
+    fields() {
+      return {
+        edges: {
+          name: "edges",
+          type: new GraphQLList(new GraphQLNonNull(AssignmentEdgeType)),
+          resolve(source, args, context, info) {
+            return assertNonNull(
+              defaultFieldResolver(source, args, context, info),
+            );
+          },
+        },
+        pageInfo: {
+          name: "pageInfo",
+          type: PageInfoType,
+          resolve(source, args, context, info) {
+            return assertNonNull(
+              defaultFieldResolver(source, args, context, info),
+            );
+          },
+        },
+        totalCount: {
+          name: "totalCount",
+          type: GraphQLInt,
+          resolve(source, args, context, info) {
+            return assertNonNull(
+              defaultFieldResolver(source, args, context, info),
+            );
+          },
+        },
+      };
+    },
+  });
   const LocaleType: GraphQLScalarType = new GraphQLScalarType({
     description:
       "A language tag in the format of a BCP 47 (RFC 5646) standard string.",
@@ -339,75 +514,6 @@ export function getSchema(): GraphQLSchema {
       };
     },
   });
-  const TimestampType: GraphQLObjectType = new GraphQLObjectType({
-    name: "Timestamp",
-    fields() {
-      return {
-        epochMilliseconds: {
-          name: "epochMilliseconds",
-          type: GraphQLString,
-          resolve(source, args, context, info) {
-            return assertNonNull(
-              defaultFieldResolver(source, args, context, info),
-            );
-          },
-        },
-        timeZone: {
-          name: "timeZone",
-          type: GraphQLString,
-          resolve(source, args, context, info) {
-            return assertNonNull(
-              defaultFieldResolver(source, args, context, info),
-            );
-          },
-        },
-      };
-    },
-  });
-  const TimestampOverrideType: GraphQLObjectType = new GraphQLObjectType({
-    name: "TimestampOverride",
-    fields() {
-      return {
-        overriddenAt: {
-          name: "overriddenAt",
-          type: GraphQLString,
-        },
-        overriddenBy: {
-          name: "overriddenBy",
-          type: GraphQLString,
-        },
-        previousValue: {
-          name: "previousValue",
-          type: TimestampType,
-          resolve(source, args, context, info) {
-            return assertNonNull(
-              defaultFieldResolver(source, args, context, info),
-            );
-          },
-        },
-      };
-    },
-  });
-  const TimestampOverridableType: GraphQLObjectType = new GraphQLObjectType({
-    name: "TimestampOverridable",
-    fields() {
-      return {
-        override: {
-          name: "override",
-          type: TimestampOverrideType,
-        },
-        value: {
-          name: "value",
-          type: TimestampType,
-          resolve(source, args, context, info) {
-            return assertNonNull(
-              defaultFieldResolver(source, args, context, info),
-            );
-          },
-        },
-      };
-    },
-  });
   const ClosedType: GraphQLObjectType = new GraphQLObjectType({
     name: "Closed",
     fields() {
@@ -428,10 +534,6 @@ export function getSchema(): GraphQLSchema {
         closedBy: {
           name: "closedBy",
           type: GraphQLString,
-        },
-        dueAt: {
-          name: "dueAt",
-          type: TimestampOverridableType,
         },
         inProgressAt: {
           name: "inProgressAt",
@@ -461,10 +563,6 @@ export function getSchema(): GraphQLSchema {
     name: "InProgress",
     fields() {
       return {
-        dueAt: {
-          name: "dueAt",
-          type: TimestampOverridableType,
-        },
         inProgressAt: {
           name: "inProgressAt",
           type: TimestampOverridableType,
@@ -498,10 +596,6 @@ export function getSchema(): GraphQLSchema {
     name: "Open",
     fields() {
       return {
-        dueAt: {
-          name: "dueAt",
-          type: TimestampOverridableType,
-        },
         openedAt: {
           name: "openedAt",
           type: TimestampOverridableType,
@@ -530,6 +624,14 @@ export function getSchema(): GraphQLSchema {
       'A system-level component that identifies an Entity as being applicable to\ntendrel\'s internal "task processing pipeline". In practice, Tasks most often\nrepresent "jobs" performed by humans. However, this need not always be the\ncase.\n\nTechnically speaking, a Task represents a (1) *named asynchronous process*\nthat (2) exists in one of three states: open, in progress, or closed.',
     fields() {
       return {
+        assignees: {
+          description: "[object Object],[object Object],[object Object]",
+          name: "assignees",
+          type: AssignmentConnectionType,
+          resolve(source, _args, context) {
+            return taskAssigneesResolver(source, context);
+          },
+        },
         displayName: {
           name: "displayName",
           type: DisplayNameType,
@@ -569,7 +671,93 @@ export function getSchema(): GraphQLSchema {
       };
     },
     interfaces() {
-      return [ComponentType, NodeType, TrackableType];
+      return [AssignableType, ComponentType, NodeType, TrackableType];
+    },
+  });
+  const ValueInputType: GraphQLInputObjectType = new GraphQLInputObjectType({
+    name: "ValueInput",
+    fields() {
+      return {
+        boolean: {
+          name: "boolean",
+          type: GraphQLBoolean,
+        },
+        decimal: {
+          name: "decimal",
+          type: GraphQLFloat,
+        },
+        duration: {
+          description: "Duration in either ISO or millisecond format.",
+          name: "duration",
+          type: GraphQLString,
+        },
+        id: {
+          name: "id",
+          type: GraphQLID,
+        },
+        integer: {
+          name: "integer",
+          type: GraphQLInt,
+        },
+        string: {
+          name: "string",
+          type: GraphQLString,
+        },
+        timestamp: {
+          description: "Timestamp in either ISO or epoch millisecond format.",
+          name: "timestamp",
+          type: GraphQLString,
+        },
+      };
+    },
+    isOneOf: true,
+  });
+  const FieldInputType: GraphQLInputObjectType = new GraphQLInputObjectType({
+    name: "FieldInput",
+    fields() {
+      return {
+        field: {
+          name: "field",
+          type: new GraphQLNonNull(GraphQLID),
+        },
+        value: {
+          name: "value",
+          type: ValueInputType,
+        },
+      };
+    },
+  });
+  const TaskInputType: GraphQLInputObjectType = new GraphQLInputObjectType({
+    name: "TaskInput",
+    fields() {
+      return {
+        id: {
+          name: "id",
+          type: new GraphQLNonNull(GraphQLID),
+        },
+        overrides: {
+          name: "overrides",
+          type: new GraphQLList(new GraphQLNonNull(FieldInputType)),
+        },
+      };
+    },
+  });
+  const FsmOptionsType: GraphQLInputObjectType = new GraphQLInputObjectType({
+    name: "FsmOptions",
+    fields() {
+      return {
+        fsm: {
+          description:
+            "The unique identifier of the FSM on which you are operating. Wherever you\naccess the `fsm` field of a `Task`, that task's id should go here.",
+          name: "fsm",
+          type: new GraphQLNonNull(GraphQLID),
+        },
+        task: {
+          description: "[object Object],[object Object],[object Object]",
+          name: "task",
+          type: new GraphQLNonNull(TaskInputType),
+        },
+      };
     },
   });
   const MutationType: GraphQLObjectType = new GraphQLObjectType({
@@ -580,27 +768,32 @@ export function getSchema(): GraphQLSchema {
           name: "advance",
           type: TaskType,
           args: {
-            fsm: {
-              description:
-                "The unique identifier of the FSM on which you are operating. Wherever you\naccess the `fsm` field of a `Task`, that task's id should go here.",
-              name: "fsm",
-              type: new GraphQLNonNull(GraphQLID),
-            },
-            task: {
-              description: "[object Object],[object Object],[object Object]",
-              name: "task",
-              type: new GraphQLNonNull(GraphQLID),
+            opts: {
+              name: "opts",
+              type: new GraphQLNonNull(FsmOptionsType),
             },
           },
           resolve(source, args, context) {
             return assertNonNull(
-              mutationAdvanceResolver(source, context, args),
+              mutationAdvanceResolver(source, context, args.opts),
             );
           },
         },
       };
     },
   });
+  const AssignmentInputType: GraphQLInputObjectType =
+    new GraphQLInputObjectType({
+      name: "AssignmentInput",
+      fields() {
+        return {
+          assignedTo: {
+            name: "assignedTo",
+            type: new GraphQLNonNull(GraphQLID),
+          },
+        };
+      },
+    });
   const DynamicStringInputType: GraphQLInputObjectType =
     new GraphQLInputObjectType({
       name: "DynamicStringInput",
@@ -617,6 +810,23 @@ export function getSchema(): GraphQLSchema {
         };
       },
     });
+  const TimestampInputType: GraphQLInputObjectType = new GraphQLInputObjectType(
+    {
+      name: "TimestampInput",
+      fields() {
+        return {
+          epochMilliseconds: {
+            name: "epochMilliseconds",
+            type: new GraphQLNonNull(GraphQLString),
+          },
+          timeZone: {
+            name: "timeZone",
+            type: GraphQLString,
+          },
+        };
+      },
+    },
+  );
   const LocationType: GraphQLObjectType = new GraphQLObjectType({
     name: "Location",
     fields() {
@@ -647,10 +857,20 @@ export function getSchema(): GraphQLSchema {
     types: [
       LocaleType,
       TaskStateType,
+      AssignableType,
       ComponentType,
       NodeType,
       TrackableType,
+      AssignmentInputType,
       DynamicStringInputType,
+      FieldInputType,
+      FsmOptionsType,
+      TaskInputType,
+      TimestampInputType,
+      ValueInputType,
+      AssignmentType,
+      AssignmentConnectionType,
+      AssignmentEdgeType,
       ClosedType,
       DisplayNameType,
       DynamicStringType,

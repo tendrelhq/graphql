@@ -80,6 +80,9 @@ exports[`MFT transition mutations start production 1`] = `
     "fsm": {
       "__typename": "TaskStateMachine",
       "active": {
+        "assignees": {
+          "edges": [],
+        },
         "displayName": {
           "name": {
             "value": "Production",
@@ -123,6 +126,9 @@ exports[`MFT transition mutations production -> planned downtime 1`] = `
     "fsm": {
       "__typename": "TaskStateMachine",
       "active": {
+        "assignees": {
+          "edges": [],
+        },
         "displayName": {
           "name": {
             "value": "Planned Downtime",
@@ -147,6 +153,9 @@ exports[`MFT transition mutations end planned downtime -> in production 1`] = `
     "fsm": {
       "__typename": "TaskStateMachine",
       "active": {
+        "assignees": {
+          "edges": [],
+        },
         "displayName": {
           "name": {
             "value": "Production",
@@ -190,6 +199,9 @@ exports[`MFT transition mutations start unplanned downtime 1`] = `
     "fsm": {
       "__typename": "TaskStateMachine",
       "active": {
+        "assignees": {
+          "edges": [],
+        },
         "displayName": {
           "name": {
             "value": "Unplanned Downtime",
@@ -209,7 +221,7 @@ exports[`MFT transition mutations start unplanned downtime 1`] = `
 
 exports[`MFT transition mutations (invalid) start planned downtime 1`] = `
 [
-  [GraphQLError: Task 'd29ya3RlbXBsYXRlOndvcmstdGVtcGxhdGVfYzJmZGRiN2EtMTdmNC00YjQ5LWE3NDQtODUyOGQ2ZWU0NGM0' (worktemplate:work-template_c2fddb7a-17f4-4b49-a744-8528d6ee44c4) is not a valid advancement of FSM 'd29ya3RlbXBsYXRlOndvcmstdGVtcGxhdGVfMWJmMzFjZDUtOGZjMi00N2IxLWEyOGYtZTRiYzU1MTNlMDI4' (worktemplate:work-template_1bf31cd5-8fc2-47b1-a28f-e4bc5513e028)],
+  [GraphQLError: Task 'd29ya3RlbXBsYXRlOndvcmstdGVtcGxhdGVfYzJmZGRiN2EtMTdmNC00YjQ5LWE3NDQtODUyOGQ2ZWU0NGM0' (worktemplate:work-template_c2fddb7a-17f4-4b49-a744-8528d6ee44c4) is not a valid choice for FSM 'd29ya3RlbXBsYXRlOndvcmstdGVtcGxhdGVfMWJmMzFjZDUtOGZjMi00N2IxLWEyOGYtZTRiYzU1MTNlMDI4' (worktemplate:work-template_1bf31cd5-8fc2-47b1-a28f-e4bc5513e028)],
 ]
 `;
 
@@ -220,6 +232,9 @@ exports[`MFT transition mutations end unplanned downtime -> in production 1`] = 
     "fsm": {
       "__typename": "TaskStateMachine",
       "active": {
+        "assignees": {
+          "edges": [],
+        },
         "displayName": {
           "name": {
             "value": "Production",

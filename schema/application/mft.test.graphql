@@ -34,8 +34,8 @@ query TestMftRefetchQuery($node: ID!) {
   }
 }
 
-mutation TestMftTransitionMutation($fsm: ID!, $task: ID!) {
-  advance(fsm: $fsm, task: $task) {
+mutation TestMftTransitionMutation($opts: FsmOptions!) {
+  advance(opts: $opts) {
     fsm {
       ...TaskFSM_fragment
     }
@@ -63,6 +63,17 @@ fragment Trackables_fragment on Trackable {
 
 fragment TaskFSM_fragment on TaskStateMachine {
   active {
+    assignees {
+      edges {
+        node {
+          assignedTo {
+            ... on Worker {
+              displayName
+            }
+          }
+        }
+      }
+    }
     displayName {
       name {
         value

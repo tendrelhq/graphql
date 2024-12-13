@@ -1,12 +1,17 @@
 import { sql } from "@/datasources/postgres";
 import type {
   ChecklistEdge,
+  Context,
   CopyFromOptions,
-  CopyFromPayload,
   MutationResolvers,
 } from "@/schema";
 import { decodeGlobalId } from "@/schema/system";
-import { type WithKey, map } from "@/util";
+import {
+  type FieldInput,
+  Task,
+  applyEdits$fragment,
+} from "@/schema/system/component/task";
+import type { WithKey } from "@/util";
 import { GraphQLError } from "graphql";
 import type { TransactionSql } from "postgres";
 import { match } from "ts-pattern";
@@ -14,15 +19,17 @@ import { match } from "ts-pattern";
 export const copyFrom: NonNullable<MutationResolvers["copyFrom"]> = async (
   _,
   { entity, options },
+  ctx,
 ) => {
   const { type, id } = decodeGlobalId(entity);
-
-  switch (type) {
-    case "worktemplate":
-      return sql.begin(tx => copyFromWorkTemplate(tx, id, options));
-    case "workinstance":
-      return sql.begin(tx => copyFromWorkInstance(tx, id, options));
-    default: {
+  const result = await match(type)
+    .with("workinstance", () =>
+      sql.begin(tx => copyFromWorkInstance(tx, id, options, ctx)),
+    )
+    .with("worktemplate", () =>
+      sql.begin(tx => copyFromWorkTemplate(tx, id, options, ctx)),
+    )
+    .otherwise(() => {
       console.debug(
         `The type of the lhs of the copy operation is invalid. Got: '${type}'. Expected one of: ['worktemplate']`,
       );
@@ -31,8 +38,16 @@ export const copyFrom: NonNullable<MutationResolvers["copyFrom"]> = async (
           code: "E_NOT_COPYABLE",
         },
       });
-    }
-  }
+    });
+  return {
+    edge: {
+      cursor: result.id,
+      node: {
+        __typename: "Checklist",
+        id: result.id,
+      },
+    } as ChecklistEdge,
+  };
 };
 
 // TODO: We could extend the `options` here to include things like:
@@ -59,7 +74,8 @@ export async function copyFromWorkInstance(
   tx: TransactionSql,
   id: string,
   options: CopyFromOptions & { chain?: "branch" | "continue" },
-): Promise<CopyFromPayload> {
+  ctx: Context,
+): Promise<Task> {
   const [row] = await tx<[{ id: string }]>`
       SELECT wt.id
       FROM public.workinstance AS wi
@@ -68,15 +84,47 @@ export async function copyFromWorkInstance(
       WHERE wi.id = ${id};
   `;
   // For now, we just do a template-based copy:
-  return copyFromWorkTemplate(tx, row.id, {
-    ...options,
-    previous: id,
-  });
+  return copyFromWorkTemplate(
+    tx,
+    row.id,
+    {
+      ...options,
+      previous: id,
+    },
+    ctx,
+  );
 }
 
-type TemplateChainOptions = {
+type CopyFromWorkTemplateOptions = {
+  /**
+   * The chain strategy to use.
+   * - branch: create a new sub-chain beneath the originator
+   * - continue: create a new leaf node beneath the previous
+   * - default: create an entirely new chain, i.e. originator set to itself
+   */
   chain?: "branch" | "continue";
+  /**
+   * Specifies the "previous instance" for the newly instantiated. Canonically,
+   * previous is used in conjunction with originator to identify chains.
+   * Irrespective of chains, previous conveys a notion of causality i.e. this
+   * instance came about as a result of this instance. As such, it is not
+   * _theoretically_ incorrect to specify previous _without_ a chain strategy.
+   */
   previous?: string;
+  /**
+   * Instruct the engine to carry over any "assignments" from ancestors in the
+   * chain. By default, this carries over the previous's assignments (if it
+   * exists) else the originator's assignments (if it exists) else the default
+   * assignment strategy (which is the current identity).
+   */
+  carryOverAssignments?: boolean;
+  /**
+   * Override a field's initial value (i.e. workresultinstancevalue). By default
+   * initial values are inherited from workresultdefaultvalue. This allows for,
+   * e.g. in the MFT case, overriding the start or end time when transitioning
+   * between tasks.
+   */
+  fieldOverrides?: FieldInput[] | null;
 };
 
 /**
@@ -93,8 +141,15 @@ type TemplateChainOptions = {
 export async function copyFromWorkTemplate(
   tx: TransactionSql,
   id: string,
-  options: CopyFromOptions & TemplateChainOptions,
-): Promise<CopyFromPayload> {
+  options: CopyFromOptions & CopyFromWorkTemplateOptions,
+  ctx: Context,
+): Promise<Task> {
+  if (options.carryOverAssignments) {
+    console.warn(
+      "copyFrom: `carryOverAssignments` requested but not yet implemented",
+    );
+  }
+
   const [row] = await tx<[WithKey<{ _key_uuid: string; id: string }>?]>`
       INSERT INTO public.workinstance (
           workinstancecustomerid,
@@ -192,60 +247,16 @@ export async function copyFromWorkTemplate(
           workresultinstancevalue,
           workresultinstanceworkinstanceid,
           workresultinstanceworkresultid,
-          workresultinstancestatusid,
           workresultinstancetimezone
       )
       SELECT
           workinstancecompleteddate,
           worktemplatecustomerid,
           workinstancestartdate,
-          (
-              SELECT location.locationid::text AS value
-              WHERE entity_type.systagtype = 'Location' AND workresultisprimary
-              UNION ALL
-              SELECT ${
-                map(options.withAssignee?.at(0), a => {
-                  const { type, id } = decodeGlobalId(a);
-                  if (type !== "worker") {
-                    console.debug(
-                      `Only 'worker's can be assignees at the moment, but got '${type}'`,
-                    );
-                    throw new GraphQLError("Entity cannot be assigned", {
-                      extensions: {
-                        code: "E_NOT_ASSIGNABLE",
-                      },
-                    });
-                  }
-                  return sql`workerinstanceid
-                      FROM public.workerinstance
-                      WHERE workerinstanceuuid = ${id}`;
-                }) ?? null
-              }::text AS value
-              WHERE entity_type.systagtype = 'Worker' AND workresultisprimary
-              UNION ALL
-              SELECT workresultdefaultvalue AS value
-              WHERE
-                  entity_type IS null
-                  OR (
-                      entity_type IS NOT null
-                      AND workresultisprimary = false
-                  )
-          ) AS workresultinstancevalue,
+          workresultdefaultvalue,
           ${row._key}::bigint AS workresultinstanceworkinstanceid,
           workresultid,
-          (
-              SELECT systagid
-              FROM public.systag
-              WHERE
-                  systagparentid = 965
-                  AND systagtype = ${match(options.withStatus)
-                    .with("open", () => "Open")
-                    .with("inProgress", () => "Open")
-                    .with("closed", () => "Complete")
-                    .with(undefined, () => "Open")
-                    .exhaustive()}
-          ) AS workresultinstancestatusid,
-          locationtimezone
+          workinstancetimezone
       FROM public.worktemplate
       INNER JOIN public.workresult
           ON
@@ -254,24 +265,122 @@ export async function copyFromWorkTemplate(
                   workresultenddate IS null
                   OR workresultenddate < now()
               )
-      INNER JOIN public.location
-          ON worktemplatesiteid = locationid
       INNER JOIN public.workinstance
           ON workinstance.workinstanceid = ${row._key}
       LEFT JOIN public.systag AS entity_type
           ON workresultentitytypeid = systagid
       WHERE worktemplate.id = ${id};
   `;
-
   console.debug(`Created ${result.count} items.`);
 
-  return {
-    edge: {
-      cursor: row.id,
-      node: {
-        __typename: "Checklist",
-        id: row.id,
-      },
-    } as ChecklistEdge,
-  };
+  // Ensure any user-specified overrides are applied.
+  if (
+    !options.withAssignee?.length &&
+    options.carryOverAssignments &&
+    options.previous
+  ) {
+    const result = await tx`
+        WITH previous AS (
+            SELECT nullif(workresultinstancevalue, '') AS value
+            FROM public.workresultinstance
+            INNER JOIN public.workresult
+                ON workresultinstanceworkresultid = workresultid
+            WHERE
+                workresultinstanceworkinstanceid IN (
+                    SELECT workinstanceid
+                    FROM public.workinstance
+                    WHERE id = ${options.previous}
+                )
+                AND workresulttypeid = 848
+                AND workresultentitytypeid = 850
+                AND workresultisprimary = true
+            LIMIT 1
+        )
+
+        UPDATE public.workresultinstance AS t
+        SET workresultinstancevalue = previous.value
+        FROM previous
+        WHERE
+            previous.value IS NOT null
+            AND t.workresultinstanceworkinstanceid = ${row._key}
+            AND t.workresultinstanceworkresultid IN (
+                SELECT workresultid
+                FROM public.workresult
+                INNER JOIN public.worktemplate
+                    ON workresultworktemplateid = worktemplateid
+                WHERE
+                    worktemplate.id = ${id}
+                    AND workresulttypeid = 848
+                    AND workresultentitytypeid = 850
+                    AND workresultisprimary = true
+                LIMIT 1
+            )
+    `;
+
+    console.log(
+      `Carried over ${result.count} assignments from the previous instance`,
+    );
+  }
+
+  if (options.withAssignee) {
+    const result = await tx`
+        UPDATE public.workresultinstance AS t
+        SET workresultinstancevalue = s.value
+        FROM (
+            SELECT workerinstanceid::text
+            FROM public.workinstance
+            WHERE workerinstanceuuid IN ${sql(
+              options.withAssignee.map(e => {
+                const { type, id } = decodeGlobalId(e);
+                if (type !== "worker") {
+                  console.debug(
+                    `Only 'worker's can be assignees at the moment, but got '${type}'`,
+                  );
+                  throw new GraphQLError("Entity cannot be assigned", {
+                    extensions: {
+                      code: "E_NOT_ASSIGNABLE",
+                    },
+                  });
+                }
+                return id;
+              }),
+            )}
+        ) s
+        WHERE
+            t.workresultinstanceworkinstanceid = ${row._key}
+            AND t.workresultinstanceworkresultid IN (
+                SELECT workresultid
+                FROM public.workresult
+                INNER JOIN public.worktemplate
+                    ON workresultworktemplateid = worktemplateid
+                WHERE
+                    worktemplate.id = ${id}
+                    AND workresulttypeid = 848
+                    AND workresultentitytypeid = 850
+                    AND workresultisprimary = true
+                LIMIT 1
+            )
+    `;
+
+    console.log(`Created ${result.count} assignments for the new instance`);
+    if (options.carryOverAssignments) {
+      console.warn(
+        "WARNING: `carryOverAssignments` used along with `withAssignee`",
+        "Note that `withAssignee` takes precedence over that option.",
+        "You should expect that the carried over assignments have been overwritten.",
+      );
+    }
+  }
+
+  const t = new Task(row, ctx);
+
+  if (options.fieldOverrides?.length) {
+    const edits = applyEdits$fragment(t, options.fieldOverrides);
+    if (edits) {
+      const result = await tx`${edits}`;
+      console.log(`Applied ${result.count} field-level edits.`);
+    }
+  }
+
+  return new Task(row, ctx);
 }
