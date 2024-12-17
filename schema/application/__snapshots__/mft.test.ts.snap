@@ -28,6 +28,9 @@ exports[`MFT refetch query with Location as node 1`] = `
                           "value": "Production",
                         },
                       },
+                      "fields": {
+                        "edges": [],
+                      },
                     },
                   },
                 ],
@@ -64,6 +67,9 @@ exports[`MFT refetch query with Task as node 1`] = `
                   "value": "Production",
                 },
               },
+              "fields": {
+                "edges": [],
+              },
             },
           },
         ],
@@ -88,6 +94,9 @@ exports[`MFT transition mutations start production 1`] = `
             "value": "Production",
           },
         },
+        "fields": {
+          "edges": [],
+        },
         "state": {
           "__typename": "InProgress",
         },
@@ -101,6 +110,46 @@ exports[`MFT transition mutations start production 1`] = `
                   "value": "Unplanned Downtime",
                 },
               },
+              "fields": {
+                "edges": [
+                  {
+                    "node": {
+                      "name": {
+                        "name": {
+                          "value": "Override Start Time",
+                        },
+                      },
+                      "value": {
+                        "__typename": "TimestampValue",
+                      },
+                    },
+                  },
+                  {
+                    "node": {
+                      "name": {
+                        "name": {
+                          "value": "Override End Time",
+                        },
+                      },
+                      "value": {
+                        "__typename": "TimestampValue",
+                      },
+                    },
+                  },
+                  {
+                    "node": {
+                      "name": {
+                        "name": {
+                          "value": "Comments",
+                        },
+                      },
+                      "value": {
+                        "__typename": "StringValue",
+                      },
+                    },
+                  },
+                ],
+              },
             },
           },
           {
@@ -109,6 +158,9 @@ exports[`MFT transition mutations start production 1`] = `
                 "name": {
                   "value": "Planned Downtime",
                 },
+              },
+              "fields": {
+                "edges": [],
               },
             },
           },
@@ -133,6 +185,9 @@ exports[`MFT transition mutations production -> planned downtime 1`] = `
           "name": {
             "value": "Planned Downtime",
           },
+        },
+        "fields": {
+          "edges": [],
         },
         "state": {
           "__typename": "InProgress",
@@ -161,6 +216,9 @@ exports[`MFT transition mutations end planned downtime -> in production 1`] = `
             "value": "Production",
           },
         },
+        "fields": {
+          "edges": [],
+        },
         "state": {
           "__typename": "InProgress",
         },
@@ -174,6 +232,46 @@ exports[`MFT transition mutations end planned downtime -> in production 1`] = `
                   "value": "Unplanned Downtime",
                 },
               },
+              "fields": {
+                "edges": [
+                  {
+                    "node": {
+                      "name": {
+                        "name": {
+                          "value": "Override Start Time",
+                        },
+                      },
+                      "value": {
+                        "__typename": "TimestampValue",
+                      },
+                    },
+                  },
+                  {
+                    "node": {
+                      "name": {
+                        "name": {
+                          "value": "Override End Time",
+                        },
+                      },
+                      "value": {
+                        "__typename": "TimestampValue",
+                      },
+                    },
+                  },
+                  {
+                    "node": {
+                      "name": {
+                        "name": {
+                          "value": "Comments",
+                        },
+                      },
+                      "value": {
+                        "__typename": "StringValue",
+                      },
+                    },
+                  },
+                ],
+              },
             },
           },
           {
@@ -182,6 +280,9 @@ exports[`MFT transition mutations end planned downtime -> in production 1`] = `
                 "name": {
                   "value": "Planned Downtime",
                 },
+              },
+              "fields": {
+                "edges": [],
               },
             },
           },
@@ -206,6 +307,46 @@ exports[`MFT transition mutations start unplanned downtime 1`] = `
           "name": {
             "value": "Unplanned Downtime",
           },
+        },
+        "fields": {
+          "edges": [
+            {
+              "node": {
+                "name": {
+                  "name": {
+                    "value": "Override Start Time",
+                  },
+                },
+                "value": {
+                  "__typename": "TimestampValue",
+                },
+              },
+            },
+            {
+              "node": {
+                "name": {
+                  "name": {
+                    "value": "Override End Time",
+                  },
+                },
+                "value": {
+                  "__typename": "TimestampValue",
+                },
+              },
+            },
+            {
+              "node": {
+                "name": {
+                  "name": {
+                    "value": "Comments",
+                  },
+                },
+                "value": {
+                  "__typename": "StringValue",
+                },
+              },
+            },
+          ],
         },
         "state": {
           "__typename": "InProgress",
@@ -240,6 +381,9 @@ exports[`MFT transition mutations end unplanned downtime -> in production 1`] = 
             "value": "Production",
           },
         },
+        "fields": {
+          "edges": [],
+        },
         "state": {
           "__typename": "InProgress",
         },
@@ -253,6 +397,46 @@ exports[`MFT transition mutations end unplanned downtime -> in production 1`] = 
                   "value": "Unplanned Downtime",
                 },
               },
+              "fields": {
+                "edges": [
+                  {
+                    "node": {
+                      "name": {
+                        "name": {
+                          "value": "Override Start Time",
+                        },
+                      },
+                      "value": {
+                        "__typename": "TimestampValue",
+                      },
+                    },
+                  },
+                  {
+                    "node": {
+                      "name": {
+                        "name": {
+                          "value": "Override End Time",
+                        },
+                      },
+                      "value": {
+                        "__typename": "TimestampValue",
+                      },
+                    },
+                  },
+                  {
+                    "node": {
+                      "name": {
+                        "name": {
+                          "value": "Comments",
+                        },
+                      },
+                      "value": {
+                        "__typename": "StringValue",
+                      },
+                    },
+                  },
+                ],
+              },
             },
           },
           {
@@ -261,6 +445,9 @@ exports[`MFT transition mutations end unplanned downtime -> in production 1`] = 
                 "name": {
                   "value": "Planned Downtime",
                 },
+              },
+              "fields": {
+                "edges": [],
               },
             },
           },
@@ -287,6 +474,9 @@ exports[`MFT transition mutations stop production -> idle 1`] = `
                   "value": "Production",
                 },
               },
+              "fields": {
+                "edges": [],
+              },
             },
           },
         ],
@@ -309,6 +499,7 @@ exports[`MFT entrypoint query 1`] = `
             "__typename": "Name",
             "value": "Mixing Line",
           },
+          "timeZone": "America/Denver",
           "tracking": {
             "edges": [
               {
@@ -328,6 +519,9 @@ exports[`MFT entrypoint query 1`] = `
                               "name": {
                                 "value": "Production",
                               },
+                            },
+                            "fields": {
+                              "edges": [],
                             },
                           },
                         },
@@ -348,6 +542,7 @@ exports[`MFT entrypoint query 1`] = `
             "__typename": "Name",
             "value": "Fill Line",
           },
+          "timeZone": "America/Denver",
           "tracking": {
             "edges": [
               {
@@ -367,6 +562,9 @@ exports[`MFT entrypoint query 1`] = `
                               "name": {
                                 "value": "Production",
                               },
+                            },
+                            "fields": {
+                              "edges": [],
                             },
                           },
                         },
@@ -387,6 +585,7 @@ exports[`MFT entrypoint query 1`] = `
             "__typename": "Name",
             "value": "Assembly Line",
           },
+          "timeZone": "America/Denver",
           "tracking": {
             "edges": [
               {
@@ -406,6 +605,9 @@ exports[`MFT entrypoint query 1`] = `
                               "name": {
                                 "value": "Production",
                               },
+                            },
+                            "fields": {
+                              "edges": [],
                             },
                           },
                         },
@@ -426,6 +628,7 @@ exports[`MFT entrypoint query 1`] = `
             "__typename": "Name",
             "value": "Cartoning Line",
           },
+          "timeZone": "America/Denver",
           "tracking": {
             "edges": [
               {
@@ -446,6 +649,9 @@ exports[`MFT entrypoint query 1`] = `
                                 "value": "Production",
                               },
                             },
+                            "fields": {
+                              "edges": [],
+                            },
                           },
                         },
                       ],
@@ -465,6 +671,7 @@ exports[`MFT entrypoint query 1`] = `
             "__typename": "Name",
             "value": "Packaging Line",
           },
+          "timeZone": "America/Denver",
           "tracking": {
             "edges": [
               {
@@ -484,6 +691,9 @@ exports[`MFT entrypoint query 1`] = `
                               "name": {
                                 "value": "Production",
                               },
+                            },
+                            "fields": {
+                              "edges": [],
                             },
                           },
                         },

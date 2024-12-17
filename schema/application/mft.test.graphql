@@ -6,6 +6,7 @@ query TestMftEntrypoint($root: ID!) {
           name {
             value
           }
+          timeZone
         }
         ...Trackables_fragment
       }
@@ -79,6 +80,20 @@ fragment TaskFSM_fragment on TaskStateMachine {
         value
       }
     }
+    fields {
+      edges {
+        node {
+          name {
+            name {
+              value
+            }
+          }
+          value {
+            __typename
+          }
+        }
+      }
+    }
     state {
       __typename
     }
@@ -89,6 +104,20 @@ fragment TaskFSM_fragment on TaskStateMachine {
         displayName {
           name {
             value
+          }
+        }
+        fields {
+          edges {
+            node {
+              name {
+                name {
+                  value
+                }
+              }
+              value {
+                __typename
+              }
+            }
           }
         }
       }

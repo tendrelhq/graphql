@@ -205,6 +205,10 @@ type AuthenticationStatus {
   invitation: Invitation
 }
 
+type BooleanValue {
+  boolean: Boolean
+}
+
 type BooleanWidget implements Component {
   checked: Boolean
   id: ID!
@@ -699,9 +703,41 @@ type EntityConnection {
   entity: ID!
 }
 
+type EntityValue {
+  entity: Component
+}
+
+type Field {
+  """
+  Unique identifier for this Field.
+  """
+  id: ID @semanticNonNull
+  """
+  Display name for a Field.
+  """
+  name: DisplayName @semanticNonNull
+  """
+  The value for this Field, if any. This field will always be present (when
+  requested) for the given Field so as to convey the underlying data type of
+  the (raw data) value. The underlying (raw data) value can be `null`.
+  """
+  value: Value @semanticNonNull
+}
+
+type FieldConnection {
+  edges: [FieldEdge!] @semanticNonNull
+  pageInfo: PageInfo @semanticNonNull
+  totalCount: Int @semanticNonNull
+}
+
+type FieldEdge {
+  cursor: String @semanticNonNull
+  node: Field @semanticNonNull
+}
+
 input FieldInput {
   field: ID!
-  value: ValueInput
+  value: ValueInput!
 }
 
 """
@@ -829,7 +865,10 @@ type Location implements Component & Node & Referenceable & Trackable {
   site: Location!
   siteId: ID!
   tags: [Tag!]!
-  timeZone: String!
+  """
+  IANA time zone identifier for this Location.
+  """
+  timeZone: String! @semanticNonNull
   """
   Entrypoint into the "tracking system(s)" for the given Location.
   """
@@ -962,6 +1001,10 @@ interface Node {
   A globally unique opaque identifier for a node.
   """
   id: ID!
+}
+
+type NumberValue {
+  number: Int
 }
 
 """
@@ -1275,6 +1318,10 @@ interface State {
   tag: String
 }
 
+type StringValue {
+  string: String
+}
+
 """
 TODO
 """
@@ -1314,6 +1361,10 @@ type Task implements Assignable & Component & Node & Trackable {
   """
   assignees: AssignmentConnection
   displayName: DisplayName @semanticNonNull
+  """
+  TODO: description.
+  """
+  fields: FieldConnection @semanticNonNull
   """
   Tasks can have an associated StateMachine, which defines a finite set of
   states that the given Task can be in at any given time.
@@ -1419,15 +1470,11 @@ enum TimeZoneNameOptions {
   never
 }
 
-type Timestamp {
-  epochMilliseconds: String @semanticNonNull
-  timeZone: String @semanticNonNull
-}
-
-input TimestampInput {
-  epochMilliseconds: String!
-  timeZone: String
-}
+"""
+A date-time string in ISO 8601 format.
+"""
+scalar Timestamp
+  @specifiedBy(url: "https://www.rfc-editor.org/rfc/rfc3339.html#section-5.6")
 
 type TimestampOverridable {
   override: TimestampOverride
@@ -1438,6 +1485,10 @@ type TimestampOverride {
   overriddenAt: String
   overriddenBy: String
   previousValue: Timestamp @semanticNonNull
+}
+
+type TimestampValue {
+  timestamp: Timestamp
 }
 
 """
@@ -1541,18 +1592,20 @@ input UserSearchOptions {
   displayName: String
 }
 
+union Value =
+  | BooleanValue
+  | EntityValue
+  | NumberValue
+  | StringValue
+  | TimestampValue
+
 input ValueInput @oneOf {
   boolean: Boolean
-  decimal: Float
-  """
-  Duration in either ISO or millisecond format.
-  """
-  duration: String
   id: ID
-  integer: Int
+  number: Int
   string: String
   """
-  Timestamp in either ISO or epoch millisecond format.
+  Date in either ISO or epoch millisecond format.
   """
   timestamp: String
 }

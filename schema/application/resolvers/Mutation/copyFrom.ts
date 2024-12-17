@@ -6,11 +6,8 @@ import type {
   MutationResolvers,
 } from "@/schema";
 import { decodeGlobalId } from "@/schema/system";
-import {
-  type FieldInput,
-  Task,
-  applyEdits$fragment,
-} from "@/schema/system/component/task";
+import type { FieldInput } from "@/schema/system/component";
+import { Task, applyEdits$fragment } from "@/schema/system/component/task";
 import type { WithKey } from "@/util";
 import { GraphQLError } from "graphql";
 import type { TransactionSql } from "postgres";

@@ -34,7 +34,10 @@ const config: CodegenConfig = {
           // New schema queries
           "!schema.Query.*",
         ],
-        scalar: "*",
+        scalar: [
+          // New schema scalars
+          "!schema.*",
+        ],
         subscription: "*",
         union: "", // disabled
       },

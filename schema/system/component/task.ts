@@ -4,7 +4,7 @@ import type { Component, FieldInput } from "@/schema/system/component";
 import type { Overridable } from "@/schema/system/overridable";
 import type { Timestamp } from "@/schema/system/temporal";
 import type { Context } from "@/schema/types";
-import { assertNonNull } from "@/util";
+import { assertNonNull, map } from "@/util";
 import type { ID } from "grats";
 import type { Fragment } from "postgres";
 import { match } from "ts-pattern";
@@ -134,10 +134,7 @@ export class Task
             __typename: "Open" as const,
             openedAt: {
               override: null,
-              value: {
-                epochMilliseconds: row.create_date,
-                timeZone: row.time_zone,
-              },
+              value: row.create_date,
             },
           }) satisfies Open,
       )
@@ -148,28 +145,19 @@ export class Task
             __typename: "InProgress",
             openedAt: {
               override: null,
-              value: {
-                epochMilliseconds: row.create_date,
-                timeZone: row.time_zone,
-              },
+              value: row.create_date,
             },
             inProgressAt: {
               override:
                 row.start_date && row.ov_start_date
                   ? {
-                      previousValue: {
-                        epochMilliseconds: row.start_date,
-                        timeZone: row.time_zone,
-                      },
+                      previousValue: row.start_date,
                     }
                   : null,
-              value: {
-                epochMilliseconds: assertNonNull(
-                  row.ov_start_date ?? row.start_date,
-                  `Task ${this}, in state 'In Progress', has no start date`,
-                ),
-                timeZone: row.time_zone,
-              },
+              value: assertNonNull(
+                row.ov_start_date ?? row.start_date,
+                `Task ${this}, in state 'In Progress', has no start date`,
+              ),
             },
           }) satisfies InProgress,
       )
@@ -180,44 +168,29 @@ export class Task
             __typename: "Closed",
             openedAt: {
               override: null,
-              value: {
-                epochMilliseconds: row.create_date,
-                timeZone: row.time_zone,
-              },
+              value: row.create_date,
             },
             inProgressAt: row.start_date
               ? {
                   override: row.ov_start_date
                     ? {
-                        previousValue: {
-                          epochMilliseconds: row.start_date,
-                          timeZone: row.time_zone,
-                        },
+                        previousValue: row.start_date,
                       }
                     : null,
-                  value: {
-                    epochMilliseconds: row.ov_start_date ?? row.start_date,
-                    timeZone: row.time_zone,
-                  },
+                  value: row.ov_start_date ?? row.start_date,
                 }
               : null,
             closedAt: {
               override:
                 row.close_date && row.ov_close_date
                   ? {
-                      previousValue: {
-                        epochMilliseconds: row.close_date,
-                        timeZone: row.time_zone,
-                      },
+                      previousValue: row.close_date,
                     }
                   : null,
-              value: {
-                epochMilliseconds: assertNonNull(
-                  row.ov_close_date ?? row.close_date,
-                  `Task ${this}, in state 'Cancelled', has no close date`,
-                ),
-                timeZone: row.time_zone,
-              },
+              value: assertNonNull(
+                row.ov_close_date ?? row.close_date,
+                `Task ${this}, in state 'Cancelled', has no close date`,
+              ),
             },
           }) satisfies Closed,
       )
@@ -228,44 +201,29 @@ export class Task
             __typename: "Closed",
             openedAt: {
               override: null,
-              value: {
-                epochMilliseconds: row.create_date,
-                timeZone: row.time_zone,
-              },
+              value: row.create_date,
             },
             inProgressAt: row.start_date
               ? {
                   override: row.ov_start_date
                     ? {
-                        previousValue: {
-                          epochMilliseconds: row.start_date,
-                          timeZone: row.time_zone,
-                        },
+                        previousValue: row.start_date,
                       }
                     : null,
-                  value: {
-                    epochMilliseconds: row.ov_start_date ?? row.start_date,
-                    timeZone: row.time_zone,
-                  },
+                  value: row.ov_start_date ?? row.start_date,
                 }
               : null,
             closedAt: {
               override:
                 row.close_date && row.ov_close_date
                   ? {
-                      previousValue: {
-                        epochMilliseconds: row.close_date,
-                        timeZone: row.time_zone,
-                      },
+                      previousValue: row.close_date,
                     }
                   : null,
-              value: {
-                epochMilliseconds: assertNonNull(
-                  row.ov_close_date ?? row.close_date,
-                  `Task ${this}, in state 'Closed', has no close date`,
-                ),
-                timeZone: row.time_zone,
-              },
+              value: assertNonNull(
+                row.ov_close_date ?? row.close_date,
+                `Task ${this}, in state 'Closed', has no close date`,
+              ),
             },
           }) satisfies Closed,
       )
@@ -450,14 +408,20 @@ export function applyEdits$fragment(
     const { type, id, suffix } = decodeGlobalId(e.field);
     switch (type) {
       case "workresult": {
-        return [[id, valueInputToSql(e.value), valueInputTypeToSql(e.value)]];
+        return [
+          [
+            id,
+            valueInputToSql(e.value) ?? null,
+            valueInputTypeToSql(e.value) ?? null,
+          ],
+        ];
       }
       case "workresultinstance": {
         return [
           [
             assertNonNull(suffix?.at(0)),
-            valueInputToSql(e.value),
-            valueInputTypeToSql(e.value),
+            valueInputToSql(e.value) ?? null,
+            valueInputTypeToSql(e.value) ?? null,
           ],
         ];
       }
@@ -509,56 +473,54 @@ export function applyEdits$fragment(
   `;
 }
 
-export function valueInputToSql(value?: FieldInput["value"]): string | null {
+export function valueInputToSql(value?: FieldInput["value"]) {
   if (!value) return null;
   switch (true) {
     case "boolean" in value:
-      return value.boolean ? "true" : "false";
+      return map(value.boolean, v => (v ? "true" : "false"));
+    // case "decimal" in value:
+    //   return value.decimal.toString();
+    // case "duration" in value:
+    //   return value.duration;
     case "id" in value:
       return value.id;
-    case "integer" in value:
-      return value.integer.toString();
-    case "decimal" in value:
-      return value.decimal.toString();
+    case "number" in value:
+      return value.number?.toString();
     case "string" in value:
       return value.string;
-    case "duration" in value:
-      return value.duration;
     case "timestamp" in value: {
-      const t = Date.parse(value.timestamp);
-      if (Number.isNaN(t)) {
-        console.warn(
-          `Discarding invalid ValueInput timestamp '${value.timestamp}'`,
-        );
-        return null;
-      }
-      return new Date(t).toISOString();
+      return map(value.timestamp, t => {
+        const ms = Date.parse(t);
+        if (Number.isNaN(ms)) {
+          console.warn(`Discarding invalid timestamp '${t}'`);
+          return null;
+        }
+        return new Date(t).toISOString();
+      });
     }
     default: {
       const _: never = value;
-      console.warn(`Unhandled input variant: ${JSON.stringify(value)}`);
+      console.warn(`Unhandled input variant '${JSON.stringify(value)}'`);
       return null;
     }
   }
 }
 
-export function valueInputTypeToSql(
-  value?: FieldInput["value"],
-): string | null {
+export function valueInputTypeToSql(value?: FieldInput["value"]) {
   if (!value) return null;
   switch (true) {
     case "boolean" in value:
       return "Boolean";
+    // case "decimal" in value:
+    //   return "Number";
+    // case "duration" in value:
+    //   return "Duration";
     case "id" in value:
       return value.id;
-    case "integer" in value:
-      return "Number";
-    case "decimal" in value:
+    case "number" in value:
       return "Number";
     case "string" in value:
       return "String";
-    case "duration" in value:
-      return "Duration";
     case "timestamp" in value:
       return "Date";
     default: {

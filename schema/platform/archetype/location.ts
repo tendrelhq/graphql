@@ -35,6 +35,18 @@ export class Location implements Component, Refetchable, Trackable {
   }
 
   /**
+   * IANA time zone identifier for this Location.
+   *
+   * @gqlField
+   */
+  async timeZone(): Promise<string> {
+    const [row] = await sql`
+      SELECT locationtimezone FROM public.location WHERE locationuuid = ${this._id}
+    `;
+    return row.locationtimezone;
+  }
+
+  /**
    * Entrypoint into the "tracking system(s)" for the given Location.
    *
    * @gqlField

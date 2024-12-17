@@ -19,6 +19,8 @@ import {
  * - [x] Transition payloads (overrides, notes, etc)
  * - [ ] History
  * - [ ] Task detail
+ * - [x] Location time zone
+ * - [ ] Task time zone?
  */
 
 describe.skipIf(!!process.env.CI)("MFT", () => {

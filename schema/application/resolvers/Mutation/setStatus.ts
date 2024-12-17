@@ -27,6 +27,7 @@ function temporalInputToTimestamptz(input: TemporalInput) {
 export const setStatus: NonNullable<MutationResolvers["setStatus"]> = async (
   _,
   { entity, parent, input },
+  ctx,
 ) => {
   const { type, id, suffix } = decodeGlobalId(entity);
 
@@ -160,15 +161,20 @@ export const setStatus: NonNullable<MutationResolvers["setStatus"]> = async (
           // TODO: This is what I think makes sense. The people may decide
           // otherwise. Regardless, uncomment the line corresponding to whatever
           // you decide.
-          await copyFromWorkInstance(tx, id, {
-            // If the people want to:
-            // (a) create a new branch beneath originator:
-            chain: "branch",
-            // (b) continue the current chain:
-            // chain: "continue",
-            // (c) create an entirely new chain:
-            // chain: undefined,
-          });
+          await copyFromWorkInstance(
+            tx,
+            id,
+            {
+              // If the people want to:
+              // (a) create a new branch beneath originator:
+              chain: "branch",
+              // (b) continue the current chain:
+              // chain: "continue",
+              // (c) create an entirely new chain:
+              // chain: undefined,
+            },
+            ctx,
+          );
         }
 
         return r;

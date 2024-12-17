@@ -36,14 +36,18 @@ A language tag in the format of a BCP 47 (RFC 5646) standard string.
 """
 scalar Locale @specifiedBy(url: "https://www.rfc-editor.org/rfc/rfc5646.html")
 
+"""
+A date-time string in ISO 8601 format.
+"""
+scalar Timestamp
+  @specifiedBy(url: "https://www.rfc-editor.org/rfc/rfc3339.html#section-5.6")
+
 union TaskState = Closed | InProgress | Open
 
 union Value =
   | BooleanValue
-  | DecimalValue
-  | DurationValue
   | EntityValue
-  | IntegerValue
+  | NumberValue
   | StringValue
   | TimestampValue
 
@@ -51,10 +55,6 @@ union Value =
 Identifies an Entity as being assignable to another Entity.
 """
 interface Assignable implements Component {
-  """
-  TODO: description.
-  """
-  fields: FieldConnection @semanticNonNull
   id: ID!
 }
 
@@ -63,10 +63,6 @@ Components characterize Entities as possessing a particular trait.
 They are just simple structs, holding all data necessary to model that trait.
 """
 interface Component {
-  """
-  TODO: description.
-  """
-  fields: FieldConnection @semanticNonNull
   id: ID!
 }
 
@@ -86,10 +82,6 @@ What exactly this means depends on the type underlying said entity and is
 entirely user defined.
 """
 interface Trackable implements Component {
-  """
-  TODO: description.
-  """
-  fields: FieldConnection @semanticNonNull
   id: ID!
   """
   Entrypoint into the "tracking system(s)" for a given Entity. Note that while
@@ -111,7 +103,7 @@ input DynamicStringInput {
 
 input FieldInput {
   field: ID!
-  value: ValueInput
+  value: ValueInput!
 }
 
 input FsmOptions {
@@ -131,23 +123,13 @@ input TaskInput {
   overrides: [FieldInput!]
 }
 
-input TimestampInput {
-  epochMilliseconds: String!
-  timeZone: String
-}
-
 input ValueInput @oneOf {
   boolean: Boolean
-  decimal: Float
-  """
-  Duration in either ISO or millisecond format.
-  """
-  duration: String
   id: ID
-  integer: Int
+  number: Int
   string: String
   """
-  Timestamp in either ISO or epoch millisecond format.
+  Date in either ISO or epoch millisecond format.
   """
   timestamp: String
 }
@@ -183,7 +165,7 @@ type AssignmentEdge {
 }
 
 type BooleanValue {
-  boolean: Boolean @semanticNonNull
+  boolean: Boolean
 }
 
 type Closed {
@@ -196,24 +178,12 @@ type Closed {
   openedBy: String
 }
 
-type DecimalValue {
-  decimal: Float @semanticNonNull
-}
-
 type DisplayName implements Component & Node {
-  """
-  TODO: description.
-  """
-  fields: FieldConnection @semanticNonNull
   """
   A globally unique opaque identifier for a node.
   """
   id: ID!
   name: DynamicString @semanticNonNull
-}
-
-type DurationValue {
-  duration: String @semanticNonNull
 }
 
 """
@@ -226,12 +196,24 @@ type DynamicString {
 }
 
 type EntityValue {
-  entity: Component @semanticNonNull
+  entity: Component
 }
 
 type Field {
+  """
+  Unique identifier for this Field.
+  """
   id: ID @semanticNonNull
-  value: Value
+  """
+  Display name for a Field.
+  """
+  name: DisplayName @semanticNonNull
+  """
+  The value for this Field, if any. This field will always be present (when
+  requested) for the given Field so as to convey the underlying data type of
+  the (raw data) value. The underlying (raw data) value can be `null`.
+  """
+  value: Value @semanticNonNull
 }
 
 type FieldConnection {
@@ -252,19 +234,15 @@ type InProgress {
   openedBy: String
 }
 
-type IntegerValue {
-  integer: Int @semanticNonNull
-}
-
 type Location implements Component & Node & Trackable {
-  """
-  TODO: description.
-  """
-  fields: FieldConnection @semanticNonNull
   """
   A globally unique opaque identifier for a node.
   """
   id: ID!
+  """
+  IANA time zone identifier for this Location.
+  """
+  timeZone: String @semanticNonNull
   """
   Entrypoint into the "tracking system(s)" for the given Location.
   """
@@ -273,6 +251,10 @@ type Location implements Component & Node & Trackable {
 
 type Mutation {
   advance(opts: FsmOptions!): Task @semanticNonNull
+}
+
+type NumberValue {
+  number: Int
 }
 
 type Open {
@@ -307,7 +289,7 @@ type Query {
 }
 
 type StringValue {
-  string: String @semanticNonNull
+  string: String
 }
 
 """
@@ -372,11 +354,6 @@ type TaskStateMachine {
   transitions: TaskConnection
 }
 
-type Timestamp {
-  epochMilliseconds: String @semanticNonNull
-  timeZone: String @semanticNonNull
-}
-
 type TimestampOverridable {
   override: TimestampOverride
   value: Timestamp @semanticNonNull
@@ -389,7 +366,7 @@ type TimestampOverride {
 }
 
 type TimestampValue {
-  timestamp: Timestamp @semanticNonNull
+  timestamp: Timestamp
 }
 
 type TrackableConnection {

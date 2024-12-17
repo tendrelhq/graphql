@@ -1,9 +1,10 @@
 import { sql } from "@/datasources/postgres";
-import { GraphQLError } from "graphql";
-import type { Float, ID, Int } from "grats";
+import type { ID, Int } from "grats";
 import { match } from "ts-pattern";
 import { decodeGlobalId } from ".";
 import type { Context } from "../types";
+import { DisplayName } from "./component/name";
+import type { Task } from "./component/task";
 import type { Connection } from "./pagination";
 import type { Timestamp } from "./temporal";
 
@@ -29,7 +30,7 @@ export interface Component {
  * @gqlField
  */
 export async function fields(
-  parent: Component,
+  parent: Task,
   ctx: Context,
 ): Promise<Connection<Field>> {
   const { type, id } = decodeGlobalId(parent.id);
@@ -49,34 +50,102 @@ export async function fields(
   const rows = await match(type)
     .with(
       "workinstance",
-      () => sql`
-        WITH fields AS (
+      () => sql<{ _name: string; id: string; value: object }[]>`
+        WITH field AS (
             SELECT
                 encode(('workresultinstance:' || wi.id || ':' || wr.id)::bytea, 'base64') AS id,
-                wi.id AS _id,
-                wr.id AS _field,
+                encode(('name:' || n.languagemasteruuid)::bytea, 'base64') AS "_name",
+                wi.workinstanceid AS _id,
+                wr.workresultid AS _field,
                 wr.workresultdefaultvalue AS default_value,
-                t.systagtype AS value_type
+                t.systagtype AS type
             FROM public.workinstance AS wi
             INNER JOIN public.workresult AS wr
                 ON wi.workinstanceworktemplateid = wr.workresultworktemplateid
                    AND (wr.workresultenddate IS null OR wr.workresultenddate > now())
+            INNER JOIN public.languagemaster AS n
+                ON wr.workresultlanguagemasterid = n.languagemasterid
             INNER JOIN public.systag AS t
-                ON wi.workresulttypeid = t.systagid
+                ON wr.workresulttypeid = t.systagid
             WHERE wi.id = ${id}
+            ORDER BY wr.workresultorder ASC
         )
 
         SELECT
+            f._name,
             f.id,
-            coalesce(wri.workresultinstancevalue, f.default_value) AS value
-        FROM fields AS f
+            CASE
+                WHEN f.type = 'Boolean' THEN jsonb_build_object(
+                    '__typename', 'BooleanValue',
+                    'boolean', coalesce(wri.workresultinstancevalue::boolean, f.default_value::boolean)
+                )
+                WHEN f.type = 'Date' THEN jsonb_build_object(
+                    '__typename', 'TimestampValue',
+                    'timestamp', coalesce(
+                        wri.workresultinstancevalue::timestamptz,
+                        f.default_value::timestamptz
+                    )
+                )
+                WHEN f.type = 'Number' THEN jsonb_build_object(
+                    '__typename', 'NumberValue',
+                    'number', coalesce(wri.workresultinstancevalue::numeric, f.default_value::numeric)
+                )
+                WHEN f.type = 'String' THEN jsonb_build_object(
+                    '__typename', 'StringValue',
+                    'string', coalesce(wri.workresultinstancevalue, f.default_value)
+                )
+                ELSE '{}'::jsonb
+            END AS value
+        FROM field AS f
         LEFT JOIN public.workresultinstance AS wri
             ON (f._id, f._field) = (wri.workresultinstanceworkinstanceid, wri.workresultinstanceworkresultid)
       `,
     )
     .with(
       "worktemplate",
-      () => sql`
+      () => sql<{ _name: string; id: string; value: object }[]>`
+        WITH field AS (
+            SELECT
+                encode(('workresult:' || wr.id)::bytea, 'base64') AS id,
+                encode(('name:' || n.languagemasteruuid)::bytea, 'base64') AS "_name",
+                wr.workresultid AS _field,
+                wr.workresultdefaultvalue AS default_value,
+                t.systagtype AS type
+            FROM public.worktemplate AS wt
+            INNER JOIN public.workresult AS wr
+                ON wt.worktemplateid = wr.workresultworktemplateid
+                   AND (wr.workresultenddate IS null OR wr.workresultenddate > now())
+            INNER JOIN public.languagemaster AS n
+                ON wr.workresultlanguagemasterid = n.languagemasterid
+            INNER JOIN public.systag AS t
+                ON wr.workresulttypeid = t.systagid
+            WHERE wt.id = ${id}
+            ORDER BY wr.workresultorder ASC
+        )
+
+        SELECT
+            f._name,
+            f.id,
+            CASE
+                WHEN f.type = 'Boolean' THEN jsonb_build_object(
+                    '__typename', 'BooleanValue',
+                    'boolean', f.default_value::boolean
+                )
+                WHEN f.type = 'Date' THEN jsonb_build_object(
+                    '__typename', 'TimestampValue',
+                    'timestamp', f.default_value::timestamptz
+                )
+                WHEN f.type = 'Number' THEN jsonb_build_object(
+                    '__typename', 'NumberValue',
+                    'number', f.default_value::numeric
+                )
+                WHEN f.type = 'String' THEN jsonb_build_object(
+                    '__typename', 'StringValue',
+                    'string', f.default_value::text
+                )
+                ELSE '{}'::jsonb
+            END AS value
+        FROM field AS f
       `,
     )
     //
@@ -94,97 +163,87 @@ export async function fields(
 
 /** @gqlType */
 export type Field = {
-  /** @gqlField */
+  _name: ID;
+
+  /**
+   * Unique identifier for this Field.
+   *
+   * @gqlField
+   */
   id: ID;
-  /** @gqlField */
-  value?: Value | null;
+
+  /**
+   * The value for this Field, if any. This field will always be present (when
+   * requested) for the given Field so as to convey the underlying data type of
+   * the (raw data) value. The underlying (raw data) value can be `null`.
+   *
+   * @gqlField
+   */
+  value: Value;
 };
+
+/**
+ * Display name for a Field.
+ *
+ * @gqlField
+ */
+export function name(field: Field): DisplayName {
+  return new DisplayName(field._name);
+}
 
 /** @gqlInput */
 export type FieldInput = {
   field: ID;
-  value?: ValueInput | null;
+  value: ValueInput;
 };
 
 /** @gqlUnion */
 export type Value =
   | BooleanValue
   | EntityValue
-  | IntegerValue
-  | DecimalValue
+  | NumberValue
   | StringValue
-  | DurationValue
   | TimestampValue;
 
 /** @gqlType */
-class BooleanValue {
-  __typename = "BooleanValue" as const;
+type BooleanValue = {
+  __typename: "BooleanValue";
 
-  constructor(
-    /** @gqlField boolean */
-    public readonly value: boolean,
-  ) {}
-}
+  /** @gqlField */
+  boolean: boolean | null;
+};
 
 /** @gqlType */
-class EntityValue {
-  __typename = "EntityValue" as const;
+type EntityValue = {
+  __typename: "EntityValue";
 
-  constructor(
-    /** @gqlField entity */
-    public readonly value: Component,
-  ) {}
-}
+  /** @gqlField */
+  entity: Component | null;
+};
 
 /** @gqlType */
-class IntegerValue {
-  __typename = "IntegerValue" as const;
+type NumberValue = {
+  __typename: "NumberValue";
 
-  constructor(
-    /** @gqlField integer */
-    public readonly value: Int,
-  ) {}
-}
+  /** @gqlField */
+  number: Int | null;
+};
 
 /** @gqlType */
-class DecimalValue {
-  __typename = "DecimalValue" as const;
+type StringValue = {
+  __typename: "StringValue";
 
-  constructor(
-    /** @gqlField decimal */
-    public readonly value: Float,
-  ) {}
-}
+  /** @gqlField */
+  string: string | null;
+};
 
 /** @gqlType */
-class StringValue {
-  __typename = "StringValue" as const;
+type TimestampValue = {
+  __typename: "TimestampValue";
 
-  constructor(
-    /** @gqlField string */
-    public readonly value: string,
-  ) {}
-}
-
-/** @gqlType */
-class DurationValue {
-  __typename = "DurationValue" as const;
-
-  constructor(
-    /** @gqlField duration */
-    public readonly value: string,
-  ) {}
-}
-
-/** @gqlType */
-class TimestampValue {
-  __typename = "TimestampValue" as const;
-
-  constructor(
-    /** @gqlField timestamp */
-    public readonly value: Timestamp,
-  ) {}
-}
+  /** @gqlField */
+  timestamp: Timestamp | null;
+};
 
 /**
  * @gqlInput
@@ -193,33 +252,24 @@ class TimestampValue {
 export type ValueInput =
   // Boolean
   | {
-      boolean: boolean;
+      boolean: boolean | null;
     }
   // Entity
   | {
-      id: ID;
+      id: ID | null;
     }
   // Number
   | {
-      integer: Int;
-    }
-  | {
-      decimal: Float;
+      number: Int | null;
     }
   // String
   | {
-      string: string;
+      string: string | null;
     }
   // Temporal
   | {
       /**
-       * Duration in either ISO or millisecond format.
+       * Date in either ISO or epoch millisecond format.
        */
-      duration: string;
-    }
-  | {
-      /**
-       * Timestamp in either ISO or epoch millisecond format.
-       */
-      timestamp: string;
+      timestamp: string | null;
     };
