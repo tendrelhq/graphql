@@ -1,11 +1,11 @@
 import { sql } from "@/datasources/postgres";
 import type { Trackable } from "@/schema/platform/tracking";
-import type { Component } from "@/schema/system/component";
+import type { Component, FieldInput } from "@/schema/system/component";
 import type { Overridable } from "@/schema/system/overridable";
 import type { Timestamp } from "@/schema/system/temporal";
 import type { Context } from "@/schema/types";
 import { assertNonNull } from "@/util";
-import type { Float, ID, Int } from "grats";
+import type { ID } from "grats";
 import type { Fragment } from "postgres";
 import { match } from "ts-pattern";
 import { decodeGlobalId } from "..";
@@ -393,50 +393,6 @@ export type TaskInput = {
   // attachments?: Attachment[] | null;
 };
 
-/** @gqlInput */
-export type FieldInput = {
-  field: ID;
-  value?: ValueInput | null;
-};
-
-/**
- * @gqlInput
- * @oneOf
- */
-export type ValueInput =
-  // Boolean
-  | {
-      boolean: boolean;
-    }
-  // Entity
-  | {
-      id: ID;
-    }
-  // Number
-  | {
-      integer: Int;
-    }
-  | {
-      decimal: Float;
-    }
-  // String
-  | {
-      string: string;
-    }
-  // Temporal
-  | {
-      /**
-       * Duration in either ISO or millisecond format.
-       */
-      duration: string;
-    }
-  | {
-      /**
-       * Timestamp in either ISO or epoch millisecond format.
-       */
-      timestamp: string;
-    };
-
 /**
  * Similar to task_fsm's advance method, this method advances a Task through its
  * internal state machine. A Task's state machine has its finite set defined by
@@ -511,8 +467,6 @@ export function applyEdits$fragment(
       }
     }
   });
-
-  // console.log("edits", edits_);
 
   return sql`
     WITH edits (field, value, type) AS (

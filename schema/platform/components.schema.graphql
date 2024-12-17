@@ -41,14 +41,6 @@ input ActiveInput {
   updatedAt: TemporalInput
 }
 
-"""
-Identifies an entity being assignable to another entity.
-Assignable entities have two operations: assign and unassign.
-"""
-interface Assignable implements Component {
-  id: ID!
-}
-
 type AssignableConnection {
   edges: [AssignableEdge!]!
   pageInfo: PageInfo!
