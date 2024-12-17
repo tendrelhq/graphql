@@ -38,10 +38,23 @@ scalar Locale @specifiedBy(url: "https://www.rfc-editor.org/rfc/rfc5646.html")
 
 union TaskState = Closed | InProgress | Open
 
+union Value =
+  | BooleanValue
+  | DecimalValue
+  | DurationValue
+  | EntityValue
+  | IntegerValue
+  | StringValue
+  | TimestampValue
+
 """
 Identifies an Entity as being assignable to another Entity.
 """
 interface Assignable implements Component {
+  """
+  TODO: description.
+  """
+  fields: FieldConnection @semanticNonNull
   id: ID!
 }
 
@@ -50,6 +63,10 @@ Components characterize Entities as possessing a particular trait.
 They are just simple structs, holding all data necessary to model that trait.
 """
 interface Component {
+  """
+  TODO: description.
+  """
+  fields: FieldConnection @semanticNonNull
   id: ID!
 }
 
@@ -69,6 +86,10 @@ What exactly this means depends on the type underlying said entity and is
 entirely user defined.
 """
 interface Trackable implements Component {
+  """
+  TODO: description.
+  """
+  fields: FieldConnection @semanticNonNull
   id: ID!
   """
   Entrypoint into the "tracking system(s)" for a given Entity. Note that while
@@ -161,6 +182,10 @@ type AssignmentEdge {
   node: Assignment @semanticNonNull
 }
 
+type BooleanValue {
+  boolean: Boolean @semanticNonNull
+}
+
 type Closed {
   closedAt: TimestampOverridable @semanticNonNull
   closedBecause: String
@@ -171,12 +196,24 @@ type Closed {
   openedBy: String
 }
 
+type DecimalValue {
+  decimal: Float @semanticNonNull
+}
+
 type DisplayName implements Component & Node {
+  """
+  TODO: description.
+  """
+  fields: FieldConnection @semanticNonNull
   """
   A globally unique opaque identifier for a node.
   """
   id: ID!
   name: DynamicString @semanticNonNull
+}
+
+type DurationValue {
+  duration: String @semanticNonNull
 }
 
 """
@@ -188,6 +225,26 @@ type DynamicString {
   value: String @semanticNonNull
 }
 
+type EntityValue {
+  entity: Component @semanticNonNull
+}
+
+type Field {
+  id: ID @semanticNonNull
+  value: Value
+}
+
+type FieldConnection {
+  edges: [FieldEdge!] @semanticNonNull
+  pageInfo: PageInfo @semanticNonNull
+  totalCount: Int @semanticNonNull
+}
+
+type FieldEdge {
+  cursor: String @semanticNonNull
+  node: Field @semanticNonNull
+}
+
 type InProgress {
   inProgressAt: TimestampOverridable @semanticNonNull
   inProgressBy: String
@@ -195,7 +252,15 @@ type InProgress {
   openedBy: String
 }
 
+type IntegerValue {
+  integer: Int @semanticNonNull
+}
+
 type Location implements Component & Node & Trackable {
+  """
+  TODO: description.
+  """
+  fields: FieldConnection @semanticNonNull
   """
   A globally unique opaque identifier for a node.
   """
@@ -241,6 +306,10 @@ type Query {
   ): TrackableConnection @semanticNonNull
 }
 
+type StringValue {
+  string: String @semanticNonNull
+}
+
 """
 A system-level component that identifies an Entity as being applicable to
 tendrel's internal "task processing pipeline". In practice, Tasks most often
@@ -256,6 +325,10 @@ type Task implements Assignable & Component & Node & Trackable {
   """
   assignees: AssignmentConnection
   displayName: DisplayName @semanticNonNull
+  """
+  TODO: description.
+  """
+  fields: FieldConnection @semanticNonNull
   """
   Tasks can have an associated StateMachine, which defines a finite set of
   states that the given Task can be in at any given time.
@@ -313,6 +386,10 @@ type TimestampOverride {
   overriddenAt: String
   overriddenBy: String
   previousValue: Timestamp @semanticNonNull
+}
+
+type TimestampValue {
+  timestamp: Timestamp @semanticNonNull
 }
 
 type TrackableConnection {
