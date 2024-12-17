@@ -94,7 +94,9 @@ export async function fields(
 
 /** @gqlType */
 export type Field = {
+  /** @gqlField */
   id: ID;
+  /** @gqlField */
   value?: Value | null;
 };
 
