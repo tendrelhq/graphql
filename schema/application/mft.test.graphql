@@ -40,6 +40,7 @@ mutation TestMftTransitionMutation($opts: FsmOptions!) {
     fsm {
       ...TaskFSM_fragment
     }
+    ...TrackableMatrix_fragment
   }
 }
 
@@ -56,9 +57,19 @@ fragment Trackables_fragment on Trackable {
           fsm {
             ...TaskFSM_fragment
           }
+          ...TrackableMatrix_fragment
         }
       }
     }
+  }
+}
+
+fragment TrackableMatrix_fragment on Trackable {
+  trackingAgg(
+    groupByTag: ["Production", "Planned Downtime", "Unplanned Downtime"]
+  ) {
+    group
+    value
   }
 }
 

@@ -1,7 +1,8 @@
 import { sql } from "@/datasources/postgres";
+import { GraphQLError } from "graphql";
 import type { ID } from "grats";
 import { match } from "ts-pattern";
-import type { Mutation, Query } from "../root";
+import type { Query } from "../root";
 import { decodeGlobalId } from "../system";
 import type { Component } from "../system/component";
 import type { Connection } from "../system/pagination";
@@ -98,4 +99,93 @@ export async function trackables(
     },
     totalCount: nodes.length,
   };
+}
+
+/** @gqlType */
+export type Aggregate = {
+  /**
+   * The group, or bucket, that uniquely identifies this aggregate.
+   * For example, this will be one of the `groupByTag`s passed to `trackingAgg`.
+   *
+   * @gqlField
+   */
+  group: string;
+
+  /**
+   * The computed aggregate value.
+   *
+   * Currently, this will always be a string value representing a duration in
+   * seconds, e.g. "360" -> 360 seconds. `null` will be returned when no such
+   * aggregate can be computed, e.g. "time in planned downtime" when no "planned
+   * downtime" events exist.
+   *
+   * @gqlField
+   */
+  value: string | null;
+};
+
+/**
+ * Construct an aggregate view of a Trackable whose constituents are grouped by
+ * an arbitrary collection of type tags.
+ *
+ * In the MFT case, an aggregate view for both a Location and a Task can be
+ * constructed using the three primary `worktemplatetype`s for the relevant MFT
+ * worktemplates: "Production", "Planned Downtime", and "Unplanned Downtime".
+ * Note that, in this case, "Production" implies "total time" and as such
+ * "uptime" can be computed by subtracting the sum of the two downtime types
+ * from the production time.
+ *
+ * @gqlField
+ */
+export async function trackingAgg(
+  t: Trackable,
+  ctx: Context,
+  groupByTag: string[],
+): Promise<Aggregate[]> {
+  if (!groupByTag.length) {
+    throw new GraphQLError("Must specify at least one tag to group by", {
+      extensions: {
+        code: "BAD_REQUEST",
+      },
+    });
+  }
+
+  const { type, id } = decodeGlobalId(t.id);
+
+  // TODO: implement agg for a specific worktemplate.
+  // First worktemplate, since that is the need on the "in progress" screen.
+  // We could also implement this for a location, but that will be less useful
+  // in the mft case, at least at first. This would be a useful dashboard metric
+  // though, if there were more than one "production" worktemplate at a
+  // location. To implement this for a specific worktemplate, we will need to
+  // consult the chain, and furthermore we will need to provide a second
+  // argument which provides the location (since we cannot infer the location
+  // from just the template). Sigh.
+  const rows = await match(type)
+    .with(
+      "worktemplate",
+      () => sql<Aggregate[]>`
+        select
+            wtts.systagtype as group,
+            sum(
+                extract(
+                    epoch from (wi.workinstancecompleteddate - wi.workinstancestartdate)
+                )
+            ) as value
+        from public.worktemplate as wt
+        inner join public.worktemplatetype as wtt
+            on wt.id = wtt.worktemplatetypeworktemplateuuid
+        inner join public.systag as wtts
+            on wtt.worktemplatetypesystaguuid = wtts.systaguuid
+        inner join public.workinstance as wi
+            on wt.worktemplateid = wi.workinstanceworktemplateid
+                and wi.workinstancestartdate is not null
+                and wi.workinstancecompleteddate is not null
+        where wtts.systagtype in ${sql(groupByTag)}
+        group by wtts.systagtype
+      `,
+    )
+    .otherwise(() => []);
+
+  return rows;
 }

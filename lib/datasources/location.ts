@@ -5,6 +5,7 @@ import type { Request } from "express";
 import { GraphQLError } from "graphql/error";
 import { sql } from "./postgres";
 
+// FIXME: comment the geolocation stuff back in!
 export default (_: Request) =>
   new Dataloader<string, Location & Geofence>(async keys => {
     const rows = await sql<WithKey<Location & Geofence>[]>`

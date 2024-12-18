@@ -17,6 +17,7 @@ import {
  * - [x] Assignees
  * - [~] Time at Task (NOTE: can be calculated)
  * - [x] Transition payloads (overrides, notes, etc)
+ * - [ ] Matrix
  * - [ ] History
  * - [ ] Task detail
  * - [x] Location time zone
