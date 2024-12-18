@@ -1,5 +1,5 @@
-query TestMftEntrypoint($root: ID!) {
-  trackables(parent: $root) {
+query TestMftEntrypoint($count: Int, $root: ID!, $impl: String) {
+  trackables(first: $count, parent: $root, withImplementation: $impl) {
     edges {
       node {
         ... on Location {
@@ -8,9 +8,20 @@ query TestMftEntrypoint($root: ID!) {
           }
           timeZone
         }
+        ... on Task {
+          displayName {
+            name {
+              value
+            }
+          }
+          state {
+            __typename
+          }
+        }
         ...Trackables_fragment
       }
     }
+    totalCount
   }
 }
 

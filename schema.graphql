@@ -1158,6 +1158,10 @@ type Query {
   """
   trackables(
     """
+    Pagination argument. Specifies a limit when performing forward pagination.
+    """
+    first: Int
+    """
     Identifies the root of the hierarchy in which to search for Trackable
     entities.
 
@@ -1167,6 +1171,15 @@ type Query {
     All other parent types will be gracefully ignored.
     """
     parent: ID!
+    """
+    Allows filtering the returned set of Trackables by the *implementing* type.
+
+    Currently this is only 'Location' (the default) or 'Task'. Note that
+    specifying the latter will return a connection of trackable Tasks that
+    represent the *chain roots* (i.e. originators). This is for you, Will
+    Twait, so you can get started on the history screen.
+    """
+    withImplementation: String
   ): TrackableConnection @semanticNonNull
   user: User!
 }

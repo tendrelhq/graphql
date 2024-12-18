@@ -234,16 +234,34 @@ export function getSchema(): GraphQLSchema {
           name: "trackables",
           type: TrackableConnectionType,
           args: {
+            first: {
+              description:
+                "Pagination argument. Specifies a limit when performing forward pagination.",
+              name: "first",
+              type: GraphQLInt,
+            },
             parent: {
               description:
                 "Identifies the root of the hierarchy in which to search for Trackable\nentities.\n\nValid parent types are currently:\n- Customer\n\nAll other parent types will be gracefully ignored.",
               name: "parent",
               type: new GraphQLNonNull(GraphQLID),
             },
+            withImplementation: {
+              description:
+                "Allows filtering the returned set of Trackables by the *implementing* type.\n\nCurrently this is only 'Location' (the default) or 'Task'. Note that\nspecifying the latter will return a connection of trackable Tasks that\nrepresent the *chain roots* (i.e. originators). This is for you, Will\nTwait, so you can get started on the history screen.",
+              name: "withImplementation",
+              type: GraphQLString,
+            },
           },
           resolve(source, args, context) {
             return assertNonNull(
-              queryTrackablesResolver(source, context, args.parent),
+              queryTrackablesResolver(
+                source,
+                context,
+                args.first,
+                args.parent,
+                args.withImplementation,
+              ),
             );
           },
         },

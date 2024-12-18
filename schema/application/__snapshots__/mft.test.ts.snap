@@ -707,6 +707,188 @@ exports[`MFT entrypoint query 1`] = `
         },
       },
     ],
+    "totalCount": 5,
+  },
+}
+`;
+
+exports[`MFT history query 1`] = `
+{
+  "trackables": {
+    "__typename": "TrackableConnection",
+    "edges": [
+      {
+        "__typename": "TrackableEdge",
+        "node": {
+          "__typename": "Task",
+          "displayName": {
+            "__typename": "DisplayName",
+            "name": {
+              "__typename": "DynamicString",
+              "value": "Production",
+            },
+          },
+          "state": {
+            "__typename": "Closed",
+          },
+          "tracking": null,
+        },
+      },
+      {
+        "__typename": "TrackableEdge",
+        "node": {
+          "__typename": "Task",
+          "displayName": {
+            "__typename": "DisplayName",
+            "name": {
+              "__typename": "DynamicString",
+              "value": "Production",
+            },
+          },
+          "state": {
+            "__typename": "Closed",
+          },
+          "tracking": null,
+        },
+      },
+      {
+        "__typename": "TrackableEdge",
+        "node": {
+          "__typename": "Task",
+          "displayName": {
+            "__typename": "DisplayName",
+            "name": {
+              "__typename": "DynamicString",
+              "value": "Production",
+            },
+          },
+          "state": {
+            "__typename": "Closed",
+          },
+          "tracking": null,
+        },
+      },
+      {
+        "__typename": "TrackableEdge",
+        "node": {
+          "__typename": "Task",
+          "displayName": {
+            "__typename": "DisplayName",
+            "name": {
+              "__typename": "DynamicString",
+              "value": "Production",
+            },
+          },
+          "state": {
+            "__typename": "Closed",
+          },
+          "tracking": null,
+        },
+      },
+      {
+        "__typename": "TrackableEdge",
+        "node": {
+          "__typename": "Task",
+          "displayName": {
+            "__typename": "DisplayName",
+            "name": {
+              "__typename": "DynamicString",
+              "value": "Production",
+            },
+          },
+          "state": {
+            "__typename": "Closed",
+          },
+          "tracking": null,
+        },
+      },
+      {
+        "__typename": "TrackableEdge",
+        "node": {
+          "__typename": "Task",
+          "displayName": {
+            "__typename": "DisplayName",
+            "name": {
+              "__typename": "DynamicString",
+              "value": "Production",
+            },
+          },
+          "state": {
+            "__typename": "Closed",
+          },
+          "tracking": null,
+        },
+      },
+      {
+        "__typename": "TrackableEdge",
+        "node": {
+          "__typename": "Task",
+          "displayName": {
+            "__typename": "DisplayName",
+            "name": {
+              "__typename": "DynamicString",
+              "value": "Production",
+            },
+          },
+          "state": {
+            "__typename": "Closed",
+          },
+          "tracking": null,
+        },
+      },
+      {
+        "__typename": "TrackableEdge",
+        "node": {
+          "__typename": "Task",
+          "displayName": {
+            "__typename": "DisplayName",
+            "name": {
+              "__typename": "DynamicString",
+              "value": "Production",
+            },
+          },
+          "state": {
+            "__typename": "Closed",
+          },
+          "tracking": null,
+        },
+      },
+      {
+        "__typename": "TrackableEdge",
+        "node": {
+          "__typename": "Task",
+          "displayName": {
+            "__typename": "DisplayName",
+            "name": {
+              "__typename": "DynamicString",
+              "value": "Production",
+            },
+          },
+          "state": {
+            "__typename": "Closed",
+          },
+          "tracking": null,
+        },
+      },
+      {
+        "__typename": "TrackableEdge",
+        "node": {
+          "__typename": "Task",
+          "displayName": {
+            "__typename": "DisplayName",
+            "name": {
+              "__typename": "DynamicString",
+              "value": "Production",
+            },
+          },
+          "state": {
+            "__typename": "Closed",
+          },
+          "tracking": null,
+        },
+      },
+    ],
+    "totalCount": 10,
   },
 }
 `;

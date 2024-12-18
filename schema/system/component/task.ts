@@ -538,14 +538,3 @@ export function valueInputTypeToSql(value?: FieldInput["value"]) {
     }
   }
 }
-
-// shortmess=ctaOToClF
-//   c - don't give ins-completion-menu messages
-//   t - truncate file message if too long
-//   a - all of the shorthands (l,m,r,w)
-//   O - message for reading overwrites any previous message
-//   T - truncate other messages if too long
-//   o - overwrite message for writing a file
-//   C - don't give messages while scanning for ins-completion items
-//   l - "999L" instead of "999 lines"
-//   F - don't give the file info when editing a file

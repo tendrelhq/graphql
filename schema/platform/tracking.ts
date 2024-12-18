@@ -1,10 +1,11 @@
 import { sql } from "@/datasources/postgres";
 import { GraphQLError } from "graphql";
-import type { ID } from "grats";
+import type { ID, Int } from "grats";
 import { match } from "ts-pattern";
 import type { Query } from "../root";
 import { decodeGlobalId } from "../system";
 import type { Component } from "../system/component";
+import { Task } from "../system/component/task";
 import type { Connection } from "../system/pagination";
 import type { Context } from "../types";
 import { Location } from "./archetype/location";
@@ -48,6 +49,10 @@ export async function trackables(
   _: Query,
   ctx: Context,
   /**
+   * Pagination argument. Specifies a limit when performing forward pagination.
+   */
+  first: Int | null,
+  /**
    * Identifies the root of the hierarchy in which to search for Trackable
    * entities.
    *
@@ -57,26 +62,64 @@ export async function trackables(
    * All other parent types will be gracefully ignored.
    */
   parent: ID,
+  /**
+   * Allows filtering the returned set of Trackables by the *implementing* type.
+   *
+   * Currently this is only 'Location' (the default) or 'Task'. Note that
+   * specifying the latter will return a connection of trackable Tasks that
+   * represent the *chain roots* (i.e. originators). This is for you, Will
+   * Twait, so you can get started on the history screen.
+   */
+  withImplementation: string | null,
 ): Promise<Connection<Trackable>> {
   const { type, id } = decodeGlobalId(parent);
   const nodes = await match(type)
-    .with(
-      "organization",
-      () => sql<Trackable[]>`
-        SELECT
-            'Location' AS "__typename",
-            encode(('location:' || l.locationuuid)::bytea, 'base64') AS id
-        FROM public.location AS l
-        INNER JOIN public.customer AS parent
-            ON l.locationcustomerid = parent.customerid
-        INNER JOIN public.custag AS c
-            ON l.locationcategoryid = c.custagid
-        INNER JOIN public.systag AS s
-            ON c.custagsystagid = s.systagid
-        WHERE
-            parent.customeruuid = ${id}
-            AND s.systagtype = 'Trackable'
-      `,
+    .with("organization", () =>
+      match(withImplementation)
+        .with(
+          "Task",
+          () => sql<Trackable[]>`
+            select
+                'Task' as "__typename",
+                encode(('workinstance:' || chain.id)::bytea, 'base64') as id
+            from public.worktemplate as parent
+            inner join
+                public.worktemplatetype as wtt on parent.id = wtt.worktemplatetypeworktemplateuuid
+            inner join public.systag as tag on wtt.worktemplatetypesystaguuid = tag.systaguuid
+            inner join
+                public.workinstance as chain
+                on parent.worktemplateid = chain.workinstanceworktemplateid
+                and chain.workinstanceid = chain.workinstanceoriginatorworkinstanceid
+            where
+                parent.worktemplatecustomerid = (
+                    select customerid
+                    from public.customer
+                    where customeruuid = ${id}
+                )
+                and tag.systagtype in ('Trackable')
+                and chain.workinstancecompleteddate is not null
+            order by chain.workinstancecompleteddate desc
+            limit ${first ?? null}
+          `,
+        )
+        .otherwise(
+          () => sql<Trackable[]>`
+            select
+                'Location' AS "__typename",
+                encode(('location:' || l.locationuuid)::bytea, 'base64') as id
+            from public.location as l
+            inner join public.customer as parent
+                on l.locationcustomerid = parent.customerid
+            inner join public.custag as c
+                on l.locationcategoryid = c.custagid
+            inner join public.systag as s
+                on c.custagsystagid = s.systagid
+            where
+                parent.customeruuid = ${id}
+                and s.systagtype = 'Trackable'
+            limit ${first ?? null}
+          `,
+        ),
     )
     .otherwise(() => {
       console.warn(`Unknown parent type '${type}'`);
@@ -88,6 +131,7 @@ export async function trackables(
       cursor: node.id,
       node: match(node.__typename)
         .with("Location", () => new Location(node, ctx))
+        .with("Task", () => new Task(node, ctx))
         .otherwise(() => {
           console.warn(`Unknown implementing type '${node.__typename}'`);
           throw "invariant violated";

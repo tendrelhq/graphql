@@ -276,6 +276,19 @@ export async function copyFromWorkTemplate(
     options.carryOverAssignments &&
     options.previous
   ) {
+    // This will only carry over the "primary" assignee, which is fine for now
+    // as we only really support a single assignee (even though the (graphql)
+    // data model allows for multiple). Note that the whole operation is a
+    // little tricky as we are potentially operating against two distinct
+    // worktemplates: "previous" can, in theory, be an instance of any
+    // worktemplate. This is another reason that we cannot blindly carry over
+    // all assignees as there could potentially be a mismatch between the two
+    // worktemplates and the number of assignees (i.e. workresults). This will
+    // eventually be a non-issue when we generalize the concept of "fields": we
+    // currently only support lazy *instantiation* of fields; in the future we
+    // will also support lazy *definition* (i.e. creating a new workresult on
+    // the fly). This is the so-called semi-structured entrypoint, or as I like
+    // to call it (which is, of course, completely made up) "structuralization".
     const result = await tx`
         WITH previous AS (
             SELECT nullif(workresultinstancevalue, '') AS value
@@ -358,8 +371,8 @@ export async function copyFromWorkTemplate(
                 LIMIT 1
             )
     `;
-
     console.log(`Created ${result.count} assignments for the new instance`);
+
     if (options.carryOverAssignments) {
       console.warn(
         "WARNING: `carryOverAssignments` used along with `withAssignee`",

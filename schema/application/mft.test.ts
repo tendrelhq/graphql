@@ -60,6 +60,19 @@ describe.skipIf(!!process.env.CI)("MFT", () => {
     });
   });
 
+  test("history query", async () => {
+    const result = await execute(schema, TestMftEntrypointDocument, {
+      count: 10,
+      root: encodeGlobalId({
+        type: "organization",
+        id: "customer_83f6f643-132c-4255-ad9e-f3c37dc84885",
+      }),
+      impl: "Task",
+    });
+    expect(result.errors).toBeFalsy();
+    expect(result.data).toMatchSnapshot();
+  });
+
   const FSM = encodeGlobalId({
     type: "worktemplate",
     id: "work-template_1bf31cd5-8fc2-47b1-a28f-e4bc5513e028",
