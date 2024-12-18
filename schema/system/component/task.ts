@@ -370,18 +370,26 @@ export async function advance(
     throw "not yet implemented - lazy instantiation of a Task";
   }
 
-  console.log("advance_task overrides", opts?.overrides);
+  await sql.begin(async tx => {
+    // As before, we assume this is the "stop task" flow.
+    await tx`
+      UPDATE public.workinstance
+      SET
+          workinstancestatusid = 710,
+          workinstancecompleteddate = now(),
+          workinstancemodifieddate = now()
+          -- TODO: workinstancemodifiedby
+      WHERE id = ${t._id};
+    `;
 
-  // As before, we assume this is the "stop task" flow.
-  await sql`
-    UPDATE public.workinstance
-    SET
-        workinstancestatusid = 710,
-        workinstancecompleteddate = now(),
-        workinstancemodifieddate = now()
-        -- TODO: workinstancemodifiedby
-    WHERE id = ${t._id};
-  `;
+    if (opts?.overrides?.length) {
+      const edits = applyEdits$fragment(t, opts.overrides);
+      if (edits) {
+        const r = await tx`${edits}`;
+        console.log(`Applied ${r.count} field-level edits.`);
+      }
+    }
+  });
 
   return t;
 }

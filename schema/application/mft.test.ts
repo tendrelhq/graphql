@@ -173,6 +173,19 @@ describe.skipIf(!!process.env.CI)("MFT", () => {
           fsm: FSM,
           task: {
             id: await mostRecentlyInProgress(),
+            overrides: [
+              {
+                // 'Override End Time'
+                field: encodeGlobalId({
+                  type: "workresult",
+                  id: "work-result_76e8c5e0-0de5-4ea7-9c28-f480daed4825",
+                }),
+                value: {
+                  // '2 minutes ago'
+                  timestamp: new Date(Date.now() - 2 * 60 * 1000).toISOString(),
+                },
+              },
+            ],
           },
         },
       });
