@@ -110,8 +110,7 @@ export const setStatus: NonNullable<MutationResolvers["setStatus"]> = async (
         `;
 
         if (targetStatus === "Complete") {
-          // FIXME: Since we are in a transaction, we will not see our updates
-          // to workresultinstancecompleteddate.
+          // Record Time at Task, if it exists.
           const result = await tx`
             INSERT INTO public.workresultinstance AS wri (
                 workresultinstancecustomerid,
@@ -151,17 +150,49 @@ export const setStatus: NonNullable<MutationResolvers["setStatus"]> = async (
                     workresultinstancecompleteddate = EXCLUDED.workresultinstancecompleteddate,
                     workresultinstancevalue = EXCLUDED.workresultinstancevalue
           `;
-          // TODO: Should we IS DISTINCT FROM above? I think we're probably ok...
           console.debug(`Wrote TAT? ${!!result.count}`);
+
+          // Ensure all results have been instantiated. This is currently a
+          // datawarehouse invariant. All hail!
+          // Note our usage of `on conflict do nothing` (last line) to "skip"
+          // workresultinstances that already exist. Note also that we do not
+          // set workresultinstancestatusid as this has semantic meaning. For
+          // example in the checklist case status indicates completion.
+          const results = await tx`
+            insert into public.workresultinstance (
+                workresultinstancecustomerid,
+                workresultinstanceworkresultid,
+                workresultinstanceworkinstanceid,
+                workresultinstancestartdate,
+                workresultinstancecompleteddate,
+                workresultinstancevalue
+            )
+            select
+                wr.workresultcustomerid,
+                wr.workresultid,
+                wi.workinstanceid,
+                now(),
+                now(),
+                wr.workresultdefaultvalue
+            from public.workinstance as wi
+            inner join public.workresult as wr
+                on wi.workinstanceworktemplateid = wr.workresultworktemplateid
+                    and (wr.workresultenddate is null or wr.workresultenddate > now())
+            where wi.id = ${id}
+            on conflict do nothing
+            ;
+          `;
+          if (results.count) {
+            console.debug(
+              `Lazily instantiated ${results.count} result(s) for ${entity} (${type}:${id})`,
+            );
+          }
         }
 
         if (targetStatus === "In Progress") {
           // HACK: this is "running the rules engine" for now lmao.
-          // TODO: This is what I think makes sense. The people may decide
-          // otherwise. Regardless, uncomment the line corresponding to whatever
-          // you decide.
           await copyFromWorkInstance(tx, id, {
-            // If the people want to:
+            // The options are:
             // (a) create a new branch beneath originator:
             chain: "branch",
             // (b) continue the current chain:
