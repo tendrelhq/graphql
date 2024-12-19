@@ -1,84 +1,5 @@
 // Bun Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`MFT refetch query with Location as node 1`] = `
-{
-  "node": {
-    "__typename": "Location",
-    "name": {
-      "__typename": "Name",
-      "value": "Mixing Line",
-    },
-    "tracking": {
-      "edges": [
-        {
-          "node": {
-            "displayName": {
-              "name": {
-                "value": "Production",
-              },
-            },
-            "fsm": {
-              "active": null,
-              "transitions": {
-                "edges": [
-                  {
-                    "node": {
-                      "displayName": {
-                        "name": {
-                          "value": "Production",
-                        },
-                      },
-                      "fields": {
-                        "edges": [],
-                      },
-                    },
-                  },
-                ],
-              },
-            },
-          },
-        },
-      ],
-    },
-  },
-}
-`;
-
-exports[`MFT refetch query with Task as node 1`] = `
-{
-  "node": {
-    "__typename": "Task",
-    "displayName": {
-      "__typename": "DisplayName",
-      "name": {
-        "__typename": "DynamicString",
-        "value": "Production",
-      },
-    },
-    "fsm": {
-      "__typename": "TaskStateMachine",
-      "active": null,
-      "transitions": {
-        "edges": [
-          {
-            "node": {
-              "displayName": {
-                "name": {
-                  "value": "Production",
-                },
-              },
-              "fields": {
-                "edges": [],
-              },
-            },
-          },
-        ],
-      },
-    },
-  },
-}
-`;
-
 exports[`MFT transition mutations start production 1`] = `
 {
   "advance": {
@@ -889,6 +810,80 @@ exports[`MFT history query 1`] = `
       },
     ],
     "totalCount": 10,
+  },
+}
+`;
+
+exports[`MFT detail query 1`] = `
+{
+  "node": {
+    "__typename": "Task",
+    "chain": {
+      "__typename": "TaskConnection",
+      "edges": [
+        {
+          "__typename": "TaskEdge",
+          "node": {
+            "__typename": "Task",
+            "displayName": {
+              "__typename": "DisplayName",
+              "name": {
+                "__typename": "DynamicString",
+                "value": "Production",
+              },
+            },
+          },
+        },
+        {
+          "__typename": "TaskEdge",
+          "node": {
+            "__typename": "Task",
+            "displayName": {
+              "__typename": "DisplayName",
+              "name": {
+                "__typename": "DynamicString",
+                "value": "Planned Downtime",
+              },
+            },
+          },
+        },
+        {
+          "__typename": "TaskEdge",
+          "node": {
+            "__typename": "Task",
+            "displayName": {
+              "__typename": "DisplayName",
+              "name": {
+                "__typename": "DynamicString",
+                "value": "Unplanned Downtime",
+              },
+            },
+          },
+        },
+      ],
+      "totalCount": 3,
+    },
+    "chainAgg": [
+      {
+        "__typename": "Aggregate",
+        "group": "Planned Downtime",
+        "value": "0.061000",
+      },
+      {
+        "__typename": "Aggregate",
+        "group": "Production",
+        "value": "0.212000",
+      },
+      {
+        "__typename": "Aggregate",
+        "group": "Unplanned Downtime",
+        "value": "0.026000",
+      },
+    ],
+    "fields": {
+      "__typename": "FieldConnection",
+      "edges": [],
+    },
   },
 }
 `;

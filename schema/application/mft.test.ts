@@ -5,8 +5,8 @@ import { encodeGlobalId } from "@/schema/system";
 import { execute } from "@/test/prelude";
 import dedent from "dedent";
 import {
+  TestMftDetailDocument,
   TestMftEntrypointDocument,
-  TestMftRefetchQueryDocument,
   TestMftTransitionMutationDocument,
 } from "./mft.test.generated";
 
@@ -15,13 +15,14 @@ import {
  *
  * - [x] TaskState
  * - [x] Assignees
- * - [~] Time at Task (NOTE: can be calculated)
+ * - [~] Time at Task (punted; can be calculated)
  * - [x] Transition payloads (overrides, notes, etc)
  * - [ ] Matrix
- * - [ ] History
+ * - [~] History (partial; can't filter)
  * - [ ] Task detail
  * - [x] Location time zone
  * - [ ] Task time zone?
+ * - [ ] Better nomenclature re. differentiating template vs instance
  */
 
 describe.skipIf(!!process.env.CI)("MFT", () => {
@@ -36,30 +37,6 @@ describe.skipIf(!!process.env.CI)("MFT", () => {
     expect(result.data).toMatchSnapshot();
   });
 
-  describe("refetch query", () => {
-    test("with Location as node", async () => {
-      const result = await execute(schema, TestMftRefetchQueryDocument, {
-        node: encodeGlobalId({
-          type: "location",
-          id: "location_a8bcb43b-d11c-4d05-855c-5d6586c2da35",
-        }),
-      });
-      expect(result.errors).toBeFalsy();
-      expect(result.data).toMatchSnapshot();
-    });
-
-    test("with Task as node", async () => {
-      const result = await execute(schema, TestMftRefetchQueryDocument, {
-        node: encodeGlobalId({
-          type: "worktemplate",
-          id: "work-template_1bf31cd5-8fc2-47b1-a28f-e4bc5513e028",
-        }),
-      });
-      expect(result.errors).toBeFalsy();
-      expect(result.data).toMatchSnapshot();
-    });
-  });
-
   test("history query", async () => {
     const result = await execute(schema, TestMftEntrypointDocument, {
       count: 10,
@@ -68,6 +45,17 @@ describe.skipIf(!!process.env.CI)("MFT", () => {
         id: "customer_83f6f643-132c-4255-ad9e-f3c37dc84885",
       }),
       impl: "Task",
+    });
+    expect(result.errors).toBeFalsy();
+    expect(result.data).toMatchSnapshot();
+  });
+
+  test("detail query", async () => {
+    const result = await execute(schema, TestMftDetailDocument, {
+      node: encodeGlobalId({
+        type: "workinstance",
+        id: "work-instance_2c4b1022-b46d-4c08-98ea-7167a2f2159e",
+      }),
     });
     expect(result.errors).toBeFalsy();
     expect(result.data).toMatchSnapshot();

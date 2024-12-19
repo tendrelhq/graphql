@@ -25,22 +25,42 @@ query TestMftEntrypoint($count: Int, $root: ID!, $impl: String) {
   }
 }
 
-query TestMftRefetchQuery($node: ID!) {
+query TestMftDetail($node: ID!) {
   node(id: $node) {
-    ... on Location {
-      name {
+    ... on Task {
+      # "matrix component" in the task detail screen
+      chainAgg(
+        overType: ["Production", "Planned Downtime", "Unplanned Downtime"]
+      ) {
+        group
         value
       }
-      ...Trackables_fragment
-    }
-    ... on Task {
-      displayName {
-        name {
-          value
+      # "run output" and "reject count" in the task detail screen
+      fields {
+        edges {
+          node {
+            name {
+              name {
+                value
+              }
+            }
+            value {
+              __typename
+            }
+          }
         }
       }
-      fsm {
-        ...TaskFSM_fragment
+      chain {
+        edges {
+          node {
+            displayName {
+              name {
+                value
+              }
+            }
+          }
+        }
+        totalCount
       }
     }
   }

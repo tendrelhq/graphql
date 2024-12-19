@@ -1,11 +1,12 @@
 import { sql } from "@/datasources/postgres";
-import type { Trackable } from "@/schema/platform/tracking";
+import type { Aggregate, Trackable } from "@/schema/platform/tracking";
 import type { Component, FieldInput } from "@/schema/system/component";
 import type { Overridable } from "@/schema/system/overridable";
 import type { Timestamp } from "@/schema/system/temporal";
 import type { Context } from "@/schema/types";
 import { assertNonNull, map } from "@/util";
-import type { ID } from "grats";
+import { GraphQLError } from "graphql/error";
+import type { ID, Int } from "grats";
 import type { Fragment } from "postgres";
 import { match } from "ts-pattern";
 import { decodeGlobalId } from "..";
@@ -251,7 +252,7 @@ export class Task
 
 /**
  * {@link Assignment} connection for the given Task.
- * There is no limit on the number of assignments per task.
+ * *Currently, tasks can only have a single assignment.*
  *
  * @gqlField
  */
@@ -292,6 +293,139 @@ export async function assignees(
     },
     totalCount: rows.count,
   };
+}
+
+/**
+ * Inspect the chain (if any) in which the given Task exists.
+ * As it stands, this can only be used to perform a downwards search of the
+ * chain, i.e. the given Task is used as the "root" of the search tree.
+ *
+ * @gqlField
+ */
+export async function chain(
+  t: Task,
+  ctx: Context,
+  /**
+   * For use in pagination. Specifies the limit for "forward pagination".
+   */
+  first?: Int | null,
+): Promise<Connection<Task>> {
+  // Only workinstances can participate in chains.
+  if (t._type !== "workinstance") {
+    console.warn(
+      `Task.chain is not supported for underlying type '${t._type}'.`,
+    );
+    return {
+      edges: [],
+      pageInfo: {
+        hasNextPage: false,
+        hasPreviousPage: false,
+      },
+      totalCount: 0,
+    };
+  }
+
+  const rows = await sql<{ id: ID }[]>`
+    with recursive chain as (
+        select *
+        from public.workinstance
+        where workinstance.id = ${t._id}
+        union all
+        select children.*
+        from chain, public.workinstance as children
+        where chain.workinstanceid = children.workinstancepreviousid
+    )
+    select encode(('workinstance:' || id)::bytea, 'base64') as id
+    from chain
+    order by workinstanceid asc
+    limit ${first ?? null};
+  `;
+
+  return {
+    edges: rows.map(row => ({
+      cursor: row.id,
+      node: new Task(row, ctx),
+    })),
+    pageInfo: {
+      hasNextPage: false,
+      hasPreviousPage: false,
+    },
+    totalCount: rows.length,
+  };
+}
+
+/**
+ * Given a Task identifying as a node in a chain, create an aggregate view of
+ * said chain over the type tags given in `overType`. The result is a set of
+ * aggregates representing the *sum total duration* of nodes tagged with any of
+ * the given `overType` tags, *including* the given Task (if it is so tagged).
+ *
+ * Colloquially: `chainAgg(overType: ["Foo", "Bar"])` will compute the total
+ * time spent in all "Foo" or "Bar" tasks in the given chain;
+ *
+ * ```json
+ * [
+ *   {
+ *     "group": "Foo",
+ *     "value": "26.47", // 26.47 seconds spent doing "Foo" tasks
+ *   },
+ *   {
+ *     "group": "Bar",
+ *     "value": "5.82", // 5.82 seconds spent doing "Bar" tasks
+ *   },
+ * ]
+ * ```
+ *
+ * @gqlField
+ */
+export async function chainAgg(
+  t: Task,
+  ctx: Context,
+  /**
+   * Which sub-type-hierarchies you are interested in aggregating over.
+   */
+  overType: string[],
+): Promise<Aggregate[]> {
+  if (!overType.length) {
+    throw new GraphQLError("Must specify at least one tag to group by", {
+      extensions: {
+        code: "BAD_REQUEST",
+      },
+    });
+  }
+
+  const rows = await match(t._type)
+    .with(
+      "workinstance",
+      () => sql<Aggregate[]>`
+        with recursive chain as (
+            select *
+            from public.workinstance
+            where workinstance.id = ${t._id}
+            union all
+            select children.*
+            from chain, public.workinstance as children
+            where chain.workinstanceid = children.workinstancepreviousid
+        )
+        select
+            s.systagtype as "group",
+            sum(
+                extract(
+                    epoch from (chain.workinstancecompleteddate - chain.workinstancestartdate)
+                )
+            ) as value
+        from chain
+        inner join public.worktemplatetype as t
+            on chain.workinstanceworktemplateid = t.worktemplatetypeworktemplateid
+        inner join public.systag as s
+            on t.worktemplatetypesystaguuid = s.systaguuid
+            and s.systagtype in ${sql(overType)}
+        group by s.systagtype
+      `,
+    )
+    .otherwise(() => []);
+
+  return rows;
 }
 
 // FIXME: this might be a confusing name in combination with TaskStateMachine...

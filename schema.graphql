@@ -1402,6 +1402,45 @@ type Task implements Assignable & Component & Node & Trackable {
   [object Object],[object Object],[object Object]
   """
   assignees: AssignmentConnection
+  """
+  Inspect the chain (if any) in which the given Task exists.
+  As it stands, this can only be used to perform a downwards search of the
+  chain, i.e. the given Task is used as the "root" of the search tree.
+  """
+  chain(
+    """
+    For use in pagination. Specifies the limit for "forward pagination".
+    """
+    first: Int
+  ): TaskConnection @semanticNonNull
+  """
+  Given a Task identifying as a node in a chain, create an aggregate view of
+  said chain over the type tags given in `overType`. The result is a set of
+  aggregates representing the *sum total duration* of nodes tagged with any of
+  the given `overType` tags, *including* the given Task (if it is so tagged).
+
+  Colloquially: `chainAgg(overType: ["Foo", "Bar"])` will compute the total
+  time spent in all "Foo" or "Bar" tasks in the given chain;
+
+  ```json
+  [
+    {
+      "group": "Foo",
+      "value": "26.47", // 26.47 seconds spent doing "Foo" tasks
+    },
+    {
+      "group": "Bar",
+      "value": "5.82", // 5.82 seconds spent doing "Bar" tasks
+    },
+  ]
+  ```
+  """
+  chainAgg(
+    """
+    Which sub-type-hierarchies you are interested in aggregating over.
+    """
+    overType: [String!]!
+  ): [Aggregate!] @semanticNonNull
   displayName: DisplayName @semanticNonNull
   """
   TODO: description.

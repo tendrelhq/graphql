@@ -19,6 +19,8 @@ import { trackingAgg as locationTrackingAggResolver } from "./platform/tracking"
 import { name as fieldNameResolver } from "./system/component";
 import { fields as taskFieldsResolver } from "./system/component";
 import { assignees as taskAssigneesResolver } from "./system/component/task";
+import { chain as taskChainResolver } from "./system/component/task";
+import { chainAgg as taskChainAggResolver } from "./system/component/task";
 import { fsm as taskFsmResolver } from "./system/component/task_fsm";
 import { advance as mutationAdvanceResolver } from "./system/component/task_fsm";
 import { node as queryNodeResolver } from "./system/node";
@@ -419,6 +421,65 @@ export function getSchema(): GraphQLSchema {
       };
     },
   });
+  const TaskEdgeType: GraphQLObjectType = new GraphQLObjectType({
+    name: "TaskEdge",
+    fields() {
+      return {
+        cursor: {
+          name: "cursor",
+          type: GraphQLString,
+          resolve(source, args, context, info) {
+            return assertNonNull(
+              defaultFieldResolver(source, args, context, info),
+            );
+          },
+        },
+        node: {
+          name: "node",
+          type: TaskType,
+          resolve(source, args, context, info) {
+            return assertNonNull(
+              defaultFieldResolver(source, args, context, info),
+            );
+          },
+        },
+      };
+    },
+  });
+  const TaskConnectionType: GraphQLObjectType = new GraphQLObjectType({
+    name: "TaskConnection",
+    fields() {
+      return {
+        edges: {
+          name: "edges",
+          type: new GraphQLList(new GraphQLNonNull(TaskEdgeType)),
+          resolve(source, args, context, info) {
+            return assertNonNull(
+              defaultFieldResolver(source, args, context, info),
+            );
+          },
+        },
+        pageInfo: {
+          name: "pageInfo",
+          type: PageInfoType,
+          resolve(source, args, context, info) {
+            return assertNonNull(
+              defaultFieldResolver(source, args, context, info),
+            );
+          },
+        },
+        totalCount: {
+          name: "totalCount",
+          type: GraphQLInt,
+          resolve(source, args, context, info) {
+            return assertNonNull(
+              defaultFieldResolver(source, args, context, info),
+            );
+          },
+        },
+      };
+    },
+  });
   const LocaleType: GraphQLScalarType = new GraphQLScalarType({
     description:
       "A language tag in the format of a BCP 47 (RFC 5646) standard string.",
@@ -638,65 +699,6 @@ export function getSchema(): GraphQLSchema {
       };
     },
   });
-  const TaskEdgeType: GraphQLObjectType = new GraphQLObjectType({
-    name: "TaskEdge",
-    fields() {
-      return {
-        cursor: {
-          name: "cursor",
-          type: GraphQLString,
-          resolve(source, args, context, info) {
-            return assertNonNull(
-              defaultFieldResolver(source, args, context, info),
-            );
-          },
-        },
-        node: {
-          name: "node",
-          type: TaskType,
-          resolve(source, args, context, info) {
-            return assertNonNull(
-              defaultFieldResolver(source, args, context, info),
-            );
-          },
-        },
-      };
-    },
-  });
-  const TaskConnectionType: GraphQLObjectType = new GraphQLObjectType({
-    name: "TaskConnection",
-    fields() {
-      return {
-        edges: {
-          name: "edges",
-          type: new GraphQLList(new GraphQLNonNull(TaskEdgeType)),
-          resolve(source, args, context, info) {
-            return assertNonNull(
-              defaultFieldResolver(source, args, context, info),
-            );
-          },
-        },
-        pageInfo: {
-          name: "pageInfo",
-          type: PageInfoType,
-          resolve(source, args, context, info) {
-            return assertNonNull(
-              defaultFieldResolver(source, args, context, info),
-            );
-          },
-        },
-        totalCount: {
-          name: "totalCount",
-          type: GraphQLInt,
-          resolve(source, args, context, info) {
-            return assertNonNull(
-              defaultFieldResolver(source, args, context, info),
-            );
-          },
-        },
-      };
-    },
-  });
   const TaskStateMachineType: GraphQLObjectType = new GraphQLObjectType({
     name: "TaskStateMachine",
     description:
@@ -830,6 +832,46 @@ export function getSchema(): GraphQLSchema {
           type: AssignmentConnectionType,
           resolve(source, _args, context) {
             return taskAssigneesResolver(source, context);
+          },
+        },
+        chain: {
+          description:
+            'Inspect the chain (if any) in which the given Task exists.\nAs it stands, this can only be used to perform a downwards search of the\nchain, i.e. the given Task is used as the "root" of the search tree.',
+          name: "chain",
+          type: TaskConnectionType,
+          args: {
+            first: {
+              description:
+                'For use in pagination. Specifies the limit for "forward pagination".',
+              name: "first",
+              type: GraphQLInt,
+            },
+          },
+          resolve(source, args, context) {
+            return assertNonNull(
+              taskChainResolver(source, context, args.first),
+            );
+          },
+        },
+        chainAgg: {
+          description:
+            'Given a Task identifying as a node in a chain, create an aggregate view of\nsaid chain over the type tags given in `overType`. The result is a set of\naggregates representing the *sum total duration* of nodes tagged with any of\nthe given `overType` tags, *including* the given Task (if it is so tagged).\n\nColloquially: `chainAgg(overType: ["Foo", "Bar"])` will compute the total\ntime spent in all "Foo" or "Bar" tasks in the given chain;\n\n```json\n[\n  {\n    "group": "Foo",\n    "value": "26.47", // 26.47 seconds spent doing "Foo" tasks\n  },\n  {\n    "group": "Bar",\n    "value": "5.82", // 5.82 seconds spent doing "Bar" tasks\n  },\n]\n```',
+          name: "chainAgg",
+          type: new GraphQLList(new GraphQLNonNull(AggregateType)),
+          args: {
+            overType: {
+              description:
+                "Which sub-type-hierarchies you are interested in aggregating over.",
+              name: "overType",
+              type: new GraphQLNonNull(
+                new GraphQLList(new GraphQLNonNull(GraphQLString)),
+              ),
+            },
+          },
+          resolve(source, args, context) {
+            return assertNonNull(
+              taskChainAggResolver(source, context, args.overType),
+            );
           },
         },
         displayName: {

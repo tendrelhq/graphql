@@ -70,7 +70,7 @@ export async function trackables(
    * represent the *chain roots* (i.e. originators). This is for you, Will
    * Twait, so you can get started on the history screen.
    */
-  withImplementation: string | null,
+  withImplementation?: string | null,
 ): Promise<Connection<Trackable>> {
   const { type, id } = decodeGlobalId(parent);
   const nodes = await match(type)
@@ -227,6 +227,35 @@ export async function trackingAgg(
                 and wi.workinstancecompleteddate is not null
         where wtts.systagtype in ${sql(groupByTag)}
         group by wtts.systagtype
+      `,
+    )
+    .with(
+      "workinstance",
+      () => sql<Aggregate[]>`
+        with recursive chain as (
+            select *
+            from public.workinstance
+            where workinstance.id = ${id}
+            union all
+            select w.*
+            from chain
+            inner join public.workinstance as w
+                on chain.workinstanceid = w.workinstancepreviousid
+        )
+        select
+            s.systagtype as "group",
+            sum(
+                extract(
+                    epoch from (chain.workinstancecompleteddate - chain.workinstancestartdate)
+                )
+            ) as value
+        from chain
+        inner join public.worktemplatetype as t
+            on chain.workinstanceworktemplateid = t.worktemplatetypeworktemplateid
+        inner join public.systag as s
+            on t.worktemplatetypesystaguuid = s.systaguuid
+            and s.systagtype in ${sql(groupByTag)}
+        group by s.systagtype
       `,
     )
     .otherwise(() => []);
