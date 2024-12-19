@@ -28,14 +28,14 @@ query TestMftEntrypoint($count: Int, $root: ID!, $impl: String) {
 query TestMftDetail($node: ID!) {
   node(id: $node) {
     ... on Task {
-      # "matrix component" in the task detail screen
+      # "matrix" component
       chainAgg(
         overType: ["Production", "Planned Downtime", "Unplanned Downtime"]
       ) {
         group
         value
       }
-      # "run output" and "reject count" in the task detail screen
+      # "run output" and "reject count" components
       fields {
         edges {
           node {
@@ -50,6 +50,7 @@ query TestMftDetail($node: ID!) {
           }
         }
       }
+      # "timeline" component
       chain {
         edges {
           node {
