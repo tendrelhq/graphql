@@ -17,9 +17,9 @@ import {
  * - [x] Assignees
  * - [~] Time at Task (punted; can be calculated)
  * - [x] Transition payloads (overrides, notes, etc)
- * - [ ] Matrix
+ * - [~] Matrix (first pass)
  * - [~] History (partial; can't filter)
- * - [ ] Task detail
+ * - [~] Task detail (first pass)
  * - [x] Location time zone
  * - [ ] Task time zone?
  * - [ ] Better nomenclature re. differentiating template vs instance
