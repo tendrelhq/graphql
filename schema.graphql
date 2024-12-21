@@ -562,6 +562,21 @@ input DisplayNameInput {
   value: DynamicStringInput!
 }
 
+type Downtime implements ProductionRecord {
+  chainId: ID!
+  duration: Int
+  id: ID!
+  note: String
+  parent: ProductionEntity!
+  timeline: Timeline!
+  type: DowntimeType
+}
+
+enum DowntimeType {
+  PLANNED
+  UNPLANNED
+}
+
 scalar Duration
 
 """
@@ -942,6 +957,38 @@ type PageInfo {
   startCursor: String
 }
 
+type Production implements ProductionRecord {
+  chainId: ID!
+  duration: Int
+  id: ID!
+  note: String
+  output: Int
+  parent: ProductionEntity!
+  timeline: Timeline!
+}
+
+union ProductionActivity = Downtime | Production
+
+interface ProductionEntity {
+  id: ID!
+  name: String!
+}
+
+type ProductionLine implements ProductionEntity {
+  activity: [ProductionActivity!]
+  id: ID!
+  name: String!
+}
+
+interface ProductionRecord {
+  chainId: ID!
+  duration: Int
+  id: ID!
+  note: String
+  parent: ProductionEntity!
+  timeline: Timeline!
+}
+
 type Query {
   """
   For the given Assignable `entity`, returns a connection representing the set
@@ -1222,6 +1269,17 @@ enum TimeZoneNameOptions {
   TODO
   """
   never
+}
+
+type Timeline {
+  end: Timestamp
+  start: Timestamp!
+}
+
+type Timestamp {
+  by: Worker
+  overriddenFrom: Temporal
+  value: Temporal!
 }
 
 scalar URL

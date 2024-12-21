@@ -1,0 +1,57 @@
+interface ProductionEntity {
+  id: ID!
+  name: String!
+}
+
+type ProductionLine implements ProductionEntity {
+  id: ID!
+  name: String!
+  activity: [ProductionActivity!]
+}
+
+interface ProductionRecord {
+  id: ID!
+  chainId: ID!
+  parent: ProductionEntity!
+  timeline: Timeline!
+  duration: Int
+  note: String
+}
+
+type Timeline {
+  start: Timestamp!
+  end: Timestamp
+}
+
+type Timestamp {
+  value: Temporal!
+  overriddenFrom: Temporal
+  by: Worker
+}
+
+type Production implements ProductionRecord {
+  id: ID!
+  chainId: ID!
+  parent: ProductionEntity!
+  timeline: Timeline!
+  duration: Int
+  note: String
+  output: Int
+}
+
+type Downtime implements ProductionRecord {
+  id: ID!
+  chainId: ID!
+  parent: ProductionEntity!
+  timeline: Timeline!
+  duration: Int
+  note: String
+  type: DowntimeType
+}
+
+union ProductionActivity = Production | Downtime
+
+enum DowntimeType {
+  PLANNED
+  UNPLANNED
+}
