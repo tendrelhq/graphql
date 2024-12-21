@@ -1,5 +1,5 @@
 [sqlfluff]
-exclude_rules = layout.end_of_file, layout.indent, layout.cte_bracket, layout.select_targets, layout.spacing
+exclude_rules = convention.terminator, layout.end_of_file, layout.indent, layout.cte_bracket, layout.select_targets, layout.spacing
 max_line_length = 88
 
 [sqlfluff:rules]
