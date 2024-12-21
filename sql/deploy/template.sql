@@ -67,38 +67,40 @@ strict
 ;
 
 create function
-    util.create_template_constraint_foreach_child_location(
-        template_id text, location_parent_id text
-    )
+    util.create_template_constraint_on_location(template_id text, location_id text)
 returns table(id text)
-as
-    $$
-  insert into public.worktemplateconstraint (
-      worktemplateconstraintcustomerid,
-      worktemplateconstrainttemplateid,
-      worktemplateconstraintconstrainedtypeid,
-      worktemplateconstraintconstraintid
-  )
-  select
-      t.worktemplatecustomerid,
-      t.id,
-      tt.worktemplatetypesystaguuid,
-      lt.custaguuid
-  from public.worktemplate as t
-  inner join public.worktemplatetype as tt on t.worktemplateid = tt.worktemplatetypeworktemplateid
-  inner join public.location as l
-      on t.worktemplatesiteid = l.locationsiteid
-      and l.locationparentid = (
-          select p.locationid
-          from public.location as p
-          where p.locationuuid = location_parent_id
-      )
-  inner join public.custag as lt on l.locationcategoryid = lt.custagid
-  where t.id = template_id
-  returning worktemplateconstraintid as id
+as $$
+begin
+  return query insert into public.worktemplateconstraint (
+                           worktemplateconstraintcustomerid,
+                           worktemplateconstrainttemplateid,
+                           worktemplateconstraintconstrainedtypeid,
+                           worktemplateconstraintconstraintid
+                       )
+                       select
+                           t.worktemplatecustomerid,
+                           t.id,
+                           tt.worktemplatetypesystaguuid,
+                           lt.custaguuid
+                       from public.worktemplate as t
+                       inner join public.worktemplatetype as tt
+                           on t.worktemplateid = tt.worktemplatetypeworktemplateid
+                       inner join public.location as l
+                           on t.worktemplatesiteid = l.locationsiteid
+                           and l.locationuuid = location_id
+                       inner join public.custag as lt
+                           on l.locationcategoryid = lt.custagid
+                       where t.id = template_id
+                       returning worktemplateconstraintid as id
   ;
-$$
-language sql
+
+  if not found then
+    raise exception 'failed to create template constraint on location';
+  end if;
+
+  return;
+end $$
+language plpgsql
 strict
 ;
 

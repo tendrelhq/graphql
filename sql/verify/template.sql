@@ -8,7 +8,7 @@ select
 
 select
     pg_catalog.has_function_privilege(
-        'util.create_template_constraint_foreach_child_location'::regproc, 'execute'
+        'util.create_template_constraint_on_location'::regproc, 'execute'
     )
 ;
 

@@ -887,3 +887,229 @@ exports[`MFT detail query 1`] = `
   },
 }
 `;
+
+exports[`MFT entrypoint query NEW 1`] = `
+{
+  "trackables": {
+    "__typename": "TrackableConnection",
+    "edges": [
+      {
+        "__typename": "TrackableEdge",
+        "node": {
+          "__typename": "Location",
+          "name": {
+            "__typename": "Name",
+            "value": "Mixing Line",
+          },
+          "timeZone": "GMT",
+          "tracking": {
+            "edges": [
+              {
+                "node": {
+                  "displayName": {
+                    "name": {
+                      "value": "Run",
+                    },
+                  },
+                  "fsm": {
+                    "active": null,
+                    "transitions": {
+                      "edges": [
+                        {
+                          "node": {
+                            "displayName": {
+                              "name": {
+                                "value": "Run",
+                              },
+                            },
+                            "fields": {
+                              "edges": [],
+                            },
+                          },
+                        },
+                      ],
+                    },
+                  },
+                },
+              },
+            ],
+          },
+        },
+      },
+      {
+        "__typename": "TrackableEdge",
+        "node": {
+          "__typename": "Location",
+          "name": {
+            "__typename": "Name",
+            "value": "Fill Line",
+          },
+          "timeZone": "GMT",
+          "tracking": {
+            "edges": [
+              {
+                "node": {
+                  "displayName": {
+                    "name": {
+                      "value": "Run",
+                    },
+                  },
+                  "fsm": {
+                    "active": null,
+                    "transitions": {
+                      "edges": [
+                        {
+                          "node": {
+                            "displayName": {
+                              "name": {
+                                "value": "Run",
+                              },
+                            },
+                            "fields": {
+                              "edges": [],
+                            },
+                          },
+                        },
+                      ],
+                    },
+                  },
+                },
+              },
+            ],
+          },
+        },
+      },
+      {
+        "__typename": "TrackableEdge",
+        "node": {
+          "__typename": "Location",
+          "name": {
+            "__typename": "Name",
+            "value": "Assembly Line",
+          },
+          "timeZone": "GMT",
+          "tracking": {
+            "edges": [
+              {
+                "node": {
+                  "displayName": {
+                    "name": {
+                      "value": "Run",
+                    },
+                  },
+                  "fsm": {
+                    "active": null,
+                    "transitions": {
+                      "edges": [
+                        {
+                          "node": {
+                            "displayName": {
+                              "name": {
+                                "value": "Run",
+                              },
+                            },
+                            "fields": {
+                              "edges": [],
+                            },
+                          },
+                        },
+                      ],
+                    },
+                  },
+                },
+              },
+            ],
+          },
+        },
+      },
+      {
+        "__typename": "TrackableEdge",
+        "node": {
+          "__typename": "Location",
+          "name": {
+            "__typename": "Name",
+            "value": "Cartoning Line",
+          },
+          "timeZone": "GMT",
+          "tracking": {
+            "edges": [
+              {
+                "node": {
+                  "displayName": {
+                    "name": {
+                      "value": "Run",
+                    },
+                  },
+                  "fsm": {
+                    "active": null,
+                    "transitions": {
+                      "edges": [
+                        {
+                          "node": {
+                            "displayName": {
+                              "name": {
+                                "value": "Run",
+                              },
+                            },
+                            "fields": {
+                              "edges": [],
+                            },
+                          },
+                        },
+                      ],
+                    },
+                  },
+                },
+              },
+            ],
+          },
+        },
+      },
+      {
+        "__typename": "TrackableEdge",
+        "node": {
+          "__typename": "Location",
+          "name": {
+            "__typename": "Name",
+            "value": "Packaging Line",
+          },
+          "timeZone": "GMT",
+          "tracking": {
+            "edges": [
+              {
+                "node": {
+                  "displayName": {
+                    "name": {
+                      "value": "Run",
+                    },
+                  },
+                  "fsm": {
+                    "active": null,
+                    "transitions": {
+                      "edges": [
+                        {
+                          "node": {
+                            "displayName": {
+                              "name": {
+                                "value": "Run",
+                              },
+                            },
+                            "fields": {
+                              "edges": [],
+                            },
+                          },
+                        },
+                      ],
+                    },
+                  },
+                },
+              },
+            ],
+          },
+        },
+      },
+    ],
+    "totalCount": 5,
+  },
+}
+`;

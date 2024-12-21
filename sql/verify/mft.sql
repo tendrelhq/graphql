@@ -11,11 +11,10 @@ select pg_catalog.has_function_privilege('mft.create_customer'::regproc, 'execut
 select pg_catalog.has_function_privilege('mft.create_location'::regproc, 'execute')
 ;
 
-select
-    pg_catalog.has_function_privilege('mft.create_tracking_system'::regproc, 'execute')
+select pg_catalog.has_function_privilege('mft.create_demo'::regproc, 'execute')
 ;
 
-select pg_catalog.has_function_privilege('mft.create_demo'::regproc, 'execute')
+select pg_catalog.has_function_privilege('mft.destroy_demo'::regproc, 'execute')
 ;
 
 rollback

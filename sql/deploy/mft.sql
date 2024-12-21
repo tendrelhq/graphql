@@ -14,20 +14,18 @@ begin
   -- create the customer
   with ins_name as (
     select * from util.create_name(
-        customer_id := 'customer_42cb94ee-ec07-4d33-88ed-9d49659e68be',
+        customer_id := 'customer_42cb94ee-ec07-4d33-88ed-9d49659e68be', -- 0
         source_language := language_type,
         source_text := customer_name
     )
   )
   insert into public.customer (
-      customeruuid,
       customername,
       customerlanguagetypeid,
       customerlanguagetypeuuid,
       customernamelanguagemasterid
   )
   select
-      'customer_a9d514cc-472d-47b6-875c-dccb51818f38',
       customer_name,
       s.systagid,
       s.systaguuid,
@@ -90,82 +88,8 @@ language plpgsql
 strict
 ;
 
-create function
-    mft.create_tracking_system(customer_id text, language_type text, location_id text)
-returns table(action text, id text)
-as $$
-declare
-  ins_root text;
-begin
-  select t.id into ins_root
-  from util.create_task_t(
-      customer_id := customer_id,
-      language_type := language_type,
-      task_name := 'Run',
-      task_parent_id := location_id
-  ) as t;
-  return query select '+task', ins_root;
-
-  -- opt this template into tracking
-  return query select '+tag', t.id
-               from public.systag as s
-               cross join lateral util.create_template_type(
-                   template_id := ins_root,
-                   systag_id := s.systaguuid
-               ) as t
-               where s.systagtype = 'Trackable'
-  ;
-
-  -- create a template constraint at each trackable location beneath
-  -- `location_id` for this template
-  return query select '+constraint', t.id
-               from util.create_template_constraint_foreach_child_location(
-                   template_id := ins_root,
-                   location_parent_id := location_id
-               ) as t
-  ;
-
-  if not found then
-    raise exception 'failed to create template constraints for child locations';
-  end if;
-
-  return;
-end $$
-language plpgsql
-strict
-;
-
-comment on function mft.create_tracking_system is $$
-
-# mft.create_tracking_system
-
-## usage
-
-```sql
-select *
-from mft.create_tracking_system(
-    customer_id := 'your customer uuid',
-    language_type := 'en',
-    task_name := 'some task i want to start tracking',
-    task_parent_id := 'my site uuid'
-);
-```
-
-## description
-
-Creates a "tracking system" at the given customer and site. The name of the root
-task in the tracking system is specified via the `task_name` argument. The
-`language_type` argument, as usual, indicates the source language for all
-localized content created as a result of this function call, most notably the
-`task_name` argument (which is destined for languagemaster).
-
-TOMORROW: pick up here!
-
-$$
-;
-
 create function mft.create_demo(customer_name text, admins text[])
-returns table(action text, id text)
+returns table(op text, id text)
 as $$
 declare
   default_language_type text := 'en';
@@ -177,7 +101,9 @@ declare
   ins_site text;
   ins_location text[];
   --
-  ins_root_task_t text;
+  ins_template text;
+  --
+  loop0_t text;
 begin
   select t.id into ins_customer
   from
@@ -200,7 +126,7 @@ begin
   where w.workeruuid = any(admins)
   ;
   --
-  return query select '+worker', w from unnest(ins_worker) as t(w);
+  return query select ' +worker', w from unnest(ins_worker) as t(w);
 
   select t.id into ins_site
   from
@@ -220,6 +146,44 @@ begin
   end if;
   --
   return query select '+site', ins_site;
+
+  select t.id into ins_template
+  from util.create_task_t(
+      customer_id := ins_customer,
+      language_type := default_language_type,
+      task_name := 'Run',
+      task_parent_id := ins_site
+  ) as t;
+  --
+  if not found then
+    raise exception 'failed to create template';
+  end if;
+  --
+  return query select ' +task', ins_template;
+
+  return query select '  +type', t.id
+               from public.systag as s
+               cross join lateral util.create_template_type(
+                   template_id := ins_template,
+                   systag_id := s.systaguuid
+               ) as t
+               where s.systagtype = 'Trackable'
+  ;
+  --
+  if not found then
+    raise exception 'failed to create template type';
+  end if;
+
+  -- return query select '+constraint', t.id
+  --              from util.create_template_constraint_foreach_child_location(
+  --                  template_id := ins_template,
+  --                  location_parent_id := location_id
+  --              ) as t
+  -- ;
+  --
+  -- if not found then
+  --   raise exception 'failed to create template constraints for child locations';
+  -- end if;
 
   with
       inputs(location_name, location_typename) as (
@@ -247,23 +211,62 @@ begin
     raise exception 'failed to create locations';
   end if;
   --
-  return query select ' +location', l from unnest(ins_location) as t(l);
 
-  return query select *
-               from mft.create_tracking_system(
-                   customer_id := ins_customer,
-                   language_type := default_language_type,
-                   location_id := ins_site
-               )
-  ;
-  if not found then
-    raise exception 'failed to create tracking system';
-  end if;
+  <<loop0>>
+  foreach loop0_t in array ins_location loop
+    return query
+      with
+          log as (
+              values (' +location', loop0_t)
+          ),
 
-  return
-  ;
+          ins_constraint as (
+              select '  +constraint', t.id
+              from util.create_template_constraint_on_location(
+                  template_id := ins_template,
+                  location_id := loop0_t
+              ) as t
+          )
+
+      select * from log
+      union all
+      select * from ins_constraint
+    ;
+  end loop loop0;
+
+  return;
 end $$
 language plpgsql
+;
+
+create function mft.destroy_demo(customer_id text)
+returns text
+as $$
+begin
+  -- FIXME: CASCADE deletes.
+  delete from public.worktemplateconstraint
+  where worktemplateconstraintcustomerid = (
+      select customerid
+      from public.customer
+      where customeruuid = customer_id
+  );
+
+  -- FIXME: CASCADE deletes.
+  delete from public.worktemplatetype
+  where worktemplatetypecustomerid = (
+      select customerid
+      from public.customer
+      where customeruuid = customer_id
+  );
+
+  delete from public.customer
+  where customeruuid = customer_id
+  ;
+
+  return 'ok';
+end $$
+language plpgsql
+strict
 ;
 
 commit

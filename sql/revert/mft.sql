@@ -2,10 +2,10 @@
 begin
 ;
 
-drop function mft.create_demo
+drop function mft.destroy_demo
 ;
 
-drop function mft.create_tracking_system
+drop function mft.create_demo
 ;
 
 drop function mft.create_location

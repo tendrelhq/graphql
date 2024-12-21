@@ -1,7 +1,7 @@
-import { afterAll, describe, expect, test } from "bun:test";
+import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 import { sql } from "@/datasources/postgres";
 import { schema } from "@/schema/final";
-import { encodeGlobalId } from "@/schema/system";
+import { decodeGlobalId, encodeGlobalId } from "@/schema/system";
 import { execute } from "@/test/prelude";
 import dedent from "dedent";
 import {
@@ -25,7 +25,55 @@ import {
  * - [ ] Better nomenclature re. differentiating template vs instance
  */
 
-describe.skipIf(!!process.env.CI)("MFT", () => {
+describe("MFT", () => {
+  let CUSTOMER: string;
+
+  beforeAll(async () => {
+    const logs = await sql<{ op: string; id: string }[]>`
+      select *
+      from
+          mft.create_demo(
+              customer_name := 'Frozen Tendy Factory',
+              admins := array[
+                  'worker_d3ebf472-606c-4d26-9a19-d99f187e9c92',
+                  'worker_a5d1d16f-4264-45e7-97c6-1ef534b8875f'
+              ]
+          )
+      ;
+    `;
+    // we get customer uuid back in the first row
+    const row0 = logs.at(0);
+    // but we can check the tag to be sure
+    if (row0?.op !== "+customer") {
+      console.warn(logs.join("\n"));
+      throw "setup failed";
+    }
+
+    CUSTOMER = encodeGlobalId({
+      type: "organization",
+      id: row0.id,
+    });
+  });
+
+  afterAll(async () => {
+    process.stdout.write("Cleaning up... ");
+    const { id } = decodeGlobalId(CUSTOMER);
+    const [row] = await sql<[{ ok: string }]>`
+      select mft.destroy_demo(${id}) as ok;
+    `;
+    console.log(row.ok);
+  });
+
+  test("entrypoint query NEW", async () => {
+    const result = await execute(schema, TestMftEntrypointDocument, {
+      root: CUSTOMER,
+    });
+    expect(result.errors).toBeFalsy();
+    expect(result.data).toMatchSnapshot();
+  });
+});
+
+describe.skipIf(true)("MFT", () => {
   test("entrypoint query", async () => {
     const result = await execute(schema, TestMftEntrypointDocument, {
       root: encodeGlobalId({
