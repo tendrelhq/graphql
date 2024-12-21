@@ -7,10 +7,8 @@
     "check": "tsc --pretty && biome check --write",
     "clean": "rimraf **/__generated__/** **/*.generated.ts node_modules out",
     "compile": "bun build.ts",
-    "dev": "bun --inspect ./bin/app.ts",
     "generate": "bunx grats && bun ./scripts/generate-legacy-schema.ts && bun ./scripts/print-schema.ts",
     "postgenerate": "treefmt",
-    "explore": "bunx ruru@beta -Pe http://localhost:4000",
     "start": "bun ./bin/app.ts",
     "start+tracing": "bun -r ./lib/instrument.ts ./bin/app.ts",
     "postinstall": "bun generate"

@@ -21,7 +21,7 @@ comment on function util.inspect is $$
 
 Log $1 and then return it.
 
-Usage:
+## usage
 
 ```sql
 select util.inspect(foo.id) as id from foo;
@@ -55,7 +55,7 @@ comment on function util.inspect_t is $$
 
 Log $1 and $2, then return $2. This is the tagged version of `util.inspect`.
 
-Usage:
+## usage
 
 ```sql
 select util.inspect_t('foo.id', foo.id)

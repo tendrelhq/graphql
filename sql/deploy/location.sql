@@ -19,6 +19,14 @@ as $$
 declare
   ins_location text;
 begin
+  perform 1
+  from public.location
+  where locationuuid = location_parent_id;
+
+  if location_parent_id is not null and not found then
+    raise exception 'given parent % does not exist', location_parent_id;
+  end if;
+
   with ins_name as (
     select *
     from util.create_name(
@@ -41,6 +49,7 @@ begin
   insert into public.location (
     locationcustomerid,
     locationsiteid,
+    locationparentid,
     locationistop,
     locationiscornerstone,
     locationcornerstoneorder,
@@ -50,11 +59,12 @@ begin
   )
   select
     c.customerid,
+    p.locationsiteid,
     p.locationid,
     location_parent_id is null,
     false,
     0,
-    util.inspect_t('location_type._id', location_type._id),
+    location_type._id,
     ins_name._id,
     location_timezone
   from public.customer as c, ins_name, location_type

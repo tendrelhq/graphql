@@ -68,7 +68,7 @@ strict
 
 create function
     util.create_template_constraint_foreach_child_location(
-        template_id text, location_id text
+        template_id text, location_parent_id text
     )
 returns table(id text)
 as
@@ -87,10 +87,11 @@ as
   from public.worktemplate as t
   inner join public.worktemplatetype as tt on t.worktemplateid = tt.worktemplatetypeworktemplateid
   inner join public.location as l
-      on l.locationparentid = (
+      on t.worktemplatesiteid = l.locationsiteid
+      and l.locationparentid = (
           select p.locationid
           from public.location as p
-          where p.locationuuid = location_id
+          where p.locationuuid = location_parent_id
       )
   inner join public.custag as lt on l.locationcategoryid = lt.custagid
   where t.id = template_id
