@@ -53,6 +53,8 @@
             just
             nodejs # required by biome's entrypoint
             postgres
+            sqitchPg
+            squawk
             vtsls
             config.treefmt.build.wrapper
           ];

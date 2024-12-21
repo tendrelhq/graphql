@@ -77,29 +77,23 @@ export class Location implements Component, Refetchable, Trackable {
     // [^1]: we really need to break this 1:1 relationship!
     // [^2]: in the future we can match on system-defined children as well
     const nodes = await sql<TaskConstructorArgs[]>`
-        WITH location_type AS (
-            SELECT
-                c.custaguuid AS category,
-                s.systaguuid AS parent
-            FROM public.location AS l
-            INNER JOIN public.custag AS c
-                ON l.locationcategoryid = c.custagid
-            INNER JOIN public.systag AS s
-                ON c.custagsystagid = s.systagid
-            WHERE
-                l.locationuuid = ${this._id}
-                AND s.systagtype = 'Trackable'
-        )
+      with
+          location_type as (
+              select c.custaguuid as category, s.systaguuid as parent
+              from public.location as l
+              inner join public.custag as c on l.locationcategoryid = c.custagid
+              inner join public.systag as s on c.custagsystagid = s.systagid
+              where l.locationuuid = ${this._id} and s.systagtype = 'Trackable'
+          )
 
-        SELECT encode(('worktemplate:' || wt.id)::bytea, 'base64') AS id
-        FROM location_type AS lt
-        INNER JOIN public.worktemplateconstraint AS wtc
-            ON
-                lt.category = wtc.worktemplateconstraintconstraintid
-                AND lt.parent = wtc.worktemplateconstraintconstrainedtypeid
-        INNER JOIN public.worktemplate AS wt
-            ON wtc.worktemplateconstrainttemplateid = wt.id
-        WHERE wtc.worktemplateconstraintresultid IS null;
+      select encode(('worktemplate:' || wt.id)::bytea, 'base64') AS id
+      from location_type as lt
+      inner join
+          public.worktemplateconstraint as wtc
+          on lt.category = wtc.worktemplateconstraintconstraintid
+          and lt.parent = wtc.worktemplateconstraintconstrainedtypeid
+      inner join public.worktemplate as wt on wtc.worktemplateconstrainttemplateid = wt.id
+      where wtc.worktemplateconstraintresultid is null
     `;
 
     // TODO: we can potentially put the aggregate on the edge, and pass in the

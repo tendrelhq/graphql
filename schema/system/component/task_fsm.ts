@@ -39,59 +39,55 @@ export async function fsm(
   // For now we make the assumption that we are always in MFT world and work
   // templates map 1:1 to locations.
   const [fsm] = await sql<[{ active: ID; transitions: ID[] }?]>`
-    WITH RECURSIVE chain AS (
-        SELECT *
-        FROM public.workinstance
-        WHERE
-            workinstanceworktemplateid IN (
-                SELECT worktemplateid
-                FROM public.worktemplate
-                WHERE worktemplate.id = ${t._id}
-            )
-            AND workinstancestatusid IN (
-                SELECT systagid
-                FROM public.systag
-                WHERE
-                    systagparentid = 705
-                    AND systagtype IN ('Open', 'In Progress')
-            )
-      UNION ALL
-        SELECT wi.*
-        FROM chain, public.workinstance AS wi
-        WHERE chain.workinstanceid = wi.workinstancepreviousid
-    ),
+    with recursive
+        chain as (
+            select *
+            from public.workinstance
+            where
+                workinstanceworktemplateid in (
+                    select wt.worktemplateid from public.worktemplate as wt where wt.id = ${t._id}
+                )
+                and workinstancestatusid in (
+                    select s.systagid
+                    from public.systag as s
+                    where s.systagparentid = 705 and s.systagtype in ('Open', 'In Progress')
+                )
+            union all
+            select wi.*
+            from chain, public.workinstance as wi
+            where chain.workinstanceid = wi.workinstancepreviousid
+        ),
 
-    active AS (
-        SELECT
-            encode(('workinstance:' || chain.id)::bytea, 'base64') AS id,
-            chain.workinstanceworktemplateid AS _template
-        FROM chain
-        INNER JOIN public.systag
-            ON chain.workinstancestatusid = systag.systagid
-        WHERE systag.systagtype = 'In Progress'
-        ORDER BY workinstancepreviousid DESC NULLS LAST
-        LIMIT 1
-    ),
+        active as (
+            select
+                chain.workinstanceworktemplateid as _template,
+                encode(('workinstance:' || chain.id)::bytea, 'base64') as id
+            from chain
+            inner join public.systag on chain.workinstancestatusid = systag.systagid
+            where systag.systagtype = 'In Progress'
+            order by chain.workinstancepreviousid desc nulls last
+            limit 1
+        ),
 
-    transition AS (
-        SELECT encode(('worktemplate:' || wt.id)::bytea, 'base64') AS id
-        FROM public.worktemplatenexttemplate AS nt
-        INNER JOIN public.worktemplate AS wt
-            ON nt.worktemplatenexttemplatenexttemplateid = wt.worktemplateid
-        WHERE
-            nt.worktemplatenexttemplateprevioustemplateid IN (
-                SELECT _template
-                FROM active
-            )
-            AND nt.worktemplatenexttemplateviaworkresultid IS null
-    )
+        transition as (
+            select encode(('worktemplate:' || wt.id)::bytea, 'base64') as id
+            from public.worktemplatenexttemplate as nt
+            inner join
+                public.worktemplate as wt
+                on nt.worktemplatenexttemplatenexttemplateid = wt.worktemplateid
+            where
+                exists (
+                    select 1
+                    from active
+                    where active._template = nt.worktemplatenexttemplateprevioustemplateid
+                )
+                and nt.worktemplatenexttemplateviaworkresultid is null
+        )
 
-    SELECT
-        active.id AS "active",
-        array_remove(array_agg(transition.id), null) AS "transitions"
-    FROM active
-    LEFT JOIN transition ON true
-    GROUP BY active.id;
+    select active.id as active, array_remove(array_agg(transition.id), null) as transitions
+    from active
+    left join transition on true
+    group by active.id
   `;
 
   if (!fsm) {

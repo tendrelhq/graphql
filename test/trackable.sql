@@ -5,218 +5,164 @@
 -- 1. a customer: Frozen Tendy Factory
 -- 2. five locations: Mixing, Fill, Assembly, Cartoning, Packaging (Line)
 -- 3. work template (for each location? yes, because location category 1:1)
+begin  -- Customer setup.
+;
 
-BEGIN; -- Customer setup.
+with
+    customer_name as (
+        insert into public.languagemaster(
+            languagemastercustomerid,
+            languagemastersourcelanguagetypeid,
+            languagemastersource
+        )
+        values (0, 20, 'Frozen Tendy Factory')
+        returning languagemasterid as _id
+    ),
 
-WITH customer_name AS (
-    INSERT INTO public.languagemaster (
-        languagemastercustomerid,
-        languagemastersourcelanguagetypeid,
-        languagemastersource
+    customer as (
+        insert into public.customer(
+            customername,
+            customerlanguagetypeid,
+            customerlanguagetypeuuid,
+            customernamelanguagemasterid
+        )
+        select
+            'Frozen Tendy Factory',
+            systag.systagid,
+            systag.systaguuid,
+            customer_name._id
+        from customer_name
+        inner join public.systag on systag.systagid = 20
+        returning customerid as _id, customeruuid as id
+    ),
+
+    users as (
+        select workerid as _id, workeruuid as id
+        from public.worker
+        where
+            workerid in (
+                354,  -- Will Twait
+                2859  -- Will Ruggiano
+            )
+    ),
+
+    workers as (
+        insert into public.workerinstance(
+            workerinstancecustomerid,
+            workerinstancecustomeruuid,
+            workerinstanceworkerid,
+            workerinstanceworkeruuid,
+            workerinstancelanguageid,
+            workerinstancelanguageuuid,
+            workerinstanceuserroleid,
+            workerinstanceuserroleuuid
+        )
+        select
+            c._id, c.id, u._id, u.id, l.systagid, l.systaguuid, r.systagid, r.systaguuid
+        from customer as c, users as u
+        inner join public.systag as l on l.systagid = 20  -- 'en'
+        inner join public.systag as r on r.systagid = 775  -- 'Admin'
+        returning workerinstanceid as _id, workerinstanceuuid as id
     )
-    VALUES (
-        0,
-        20,
-        'Frozen Tendy Factory'
-    )
-    RETURNING languagemasterid AS _id
-),
 
-customer AS (
-    INSERT INTO public.customer (
-        customername,
-        customerlanguagetypeid,
-        customerlanguagetypeuuid,
-        customernamelanguagemasterid
-    )
-    SELECT
-        'Frozen Tendy Factory',
-        systag.systagid,
-        systag.systaguuid,
-        customer_name._id
-    FROM customer_name
-    INNER JOIN public.systag
-        ON systag.systagid = 20
-    RETURNING customerid AS _id, customeruuid AS id
-),
+select 'customer' as "type", _id, id
+from customer
+union all
+select 'worker' as "type", _id, id
+from workers
+;
 
-users AS (
-    SELECT
-        workerid AS _id,
-        workeruuid AS id
-    FROM public.worker
-    WHERE workerid IN (
-        354, -- Will Twait
-        2859 -- Will Ruggiano
-    )
-),
-
-workers AS (
-    INSERT INTO public.workerinstance (
-        workerinstancecustomerid,
-        workerinstancecustomeruuid,
-        workerinstanceworkerid,
-        workerinstanceworkeruuid,
-        workerinstancelanguageid,
-        workerinstancelanguageuuid,
-        workerinstanceuserroleid,
-        workerinstanceuserroleuuid
-    )
-    SELECT
-        c._id,
-        c.id,
-        u._id,
-        u.id,
-        l.systagid,
-        l.systaguuid,
-        r.systagid,
-        r.systaguuid
-    FROM customer AS c, users AS u
-    INNER JOIN public.systag AS l
-        ON l.systagid = 20 -- 'en'
-    INNER JOIN public.systag AS r
-        ON r.systagid = 775 -- 'Admin'
-    RETURNING workerinstanceid AS _id, workerinstanceuuid AS id
-)
-
-SELECT
-    'customer' AS "type",
-    _id,
-    id
-FROM customer
-UNION ALL
-SELECT
-    'worker' AS "type",
-    _id,
-    id
-FROM workers;
-
-COMMIT; -- Customer setup.
---    type   | _id  |                          id                          
+commit  -- Customer setup.
+;
+-- type   | _id  |                          id                          
 -- ----------+------+------------------------------------------------------
---  customer |   99 | customer_83f6f643-132c-4255-ad9e-f3c37dc84885
---  worker   | 7640 | worker-instance_9c0a1f1b-7aa4-4de4-a352-ade204ade71a
---  worker   | 7641 | worker-instance_13b8e916-6796-4361-8274-13db950c1ff9
+-- customer |   99 | customer_83f6f643-132c-4255-ad9e-f3c37dc84885
+-- worker   | 7640 | worker-instance_9c0a1f1b-7aa4-4de4-a352-ade204ade71a
+-- worker   | 7641 | worker-instance_13b8e916-6796-4361-8274-13db950c1ff9
 -- (3 rows)
+begin  -- Location setup.
+;
 
-BEGIN; -- Location setup.
+with
+    customer as (
+        select customerid as _id, customeruuid as id
+        from public.customer
+        where customerid = 99  -- or whatever the output above is
+    ),
 
-WITH customer AS (
-    SELECT
-        customerid AS _id,
-        customeruuid AS id
-    FROM public.customer
-    WHERE customerid = 99 -- or whatever the output above is
-),
+    prefixes as (
+        select *
+        from
+            unnest(array['Mixing', 'Fill', 'Assembly', 'Cartoning', 'Packaging']) as t(
+                prefix
+            )
+    ),
 
-prefixes AS (
-    SELECT *
-    FROM unnest(ARRAY[
-        'Mixing',
-        'Fill',
-        'Assembly',
-        'Cartoning',
-        'Packaging'
-    ]) AS t (prefix)
-),
+    location_names as (
+        insert into public.languagemaster(
+            languagemastercustomerid,
+            languagemastersourcelanguagetypeid,
+            languagemastersource,
+            languagemasterrefuuid  -- but really just text
+        )
+        select c._id, 20, p.prefix || ' Line', p.prefix
+        from customer as c, prefixes as p
+        returning languagemasterid as _id, languagemasterrefuuid as "ref"
+    ),
 
-location_names AS (
-    INSERT INTO public.languagemaster (
-        languagemastercustomerid,
-        languagemastersourcelanguagetypeid,
-        languagemastersource,
-        languagemasterrefuuid -- but really just text
+    location_categories as (
+        insert into public.custag(custagcustomerid, custagsystagid, custagtype)
+        select c._id, s.systagid, p.prefix || ' Tracking'  -- e.g. "Assembly Tracking"
+        from customer as c, prefixes as p, public.systag as s
+        where s.systagtype = 'Trackable'
+        returning custagid as _id, split_part(custagtype, ' ', 1) as "ref"
+    ),
+
+    locations as (
+        insert into public.location(
+            locationcustomerid,
+            locationistop,
+            locationiscornerstone,
+            locationcornerstoneorder,
+            locationcategoryid,
+            locationnameid,
+            locationtimezone
+        )
+        select c._id, true, false, 0, lc._id, ln._id, 'America/Denver'
+        from customer as c, location_names as ln, location_categories as lc
+        where ln.ref = lc.ref
+        returning locationid as _id, locationuuid as id
     )
-    SELECT
-        c._id,
-        20,
-        p.prefix || ' Line',
-        p.prefix
-    FROM
-        customer AS c,
-        prefixes AS p
-    RETURNING languagemasterid AS _id, languagemasterrefuuid AS "ref"
-),
 
-location_categories AS (
-    INSERT INTO public.custag (
-        custagcustomerid,
-        custagsystagid,
-        custagtype
-    )
-    SELECT
-        c._id,
-        s.systagid,
-        p.prefix || ' Tracking' -- e.g. "Assembly Tracking"
-    FROM
-        customer AS c,
-        prefixes AS p,
-        public.systag AS s
-    WHERE s.systagtype = 'Trackable'
-    RETURNING custagid AS _id, split_part(custagtype, ' ', 1) AS "ref"
-),
-
-locations AS (
-    INSERT INTO public.location (
-        locationcustomerid,
-        locationistop,
-        locationiscornerstone,
-        locationcornerstoneorder,
-        locationcategoryid,
-        locationnameid,
-        locationtimezone
-    )
-    SELECT
-        c._id,
-        true,
-        false,
-        0,
-        lc._id,
-        ln._id,
-        'America/Denver'
-    FROM
-        customer AS c,
-        location_names AS ln,
-        location_categories AS lc
-    WHERE ln.ref = lc.ref
-    RETURNING locationid AS _id, locationuuid AS id
-)
-
-SELECT
-    'location' AS "type",
-    _id,
-    id
-FROM locations;
+select 'location' as "type", _id, id
+from locations
+;
 
 UPDATE public.location
 SET locationsiteid = locationid
 WHERE locationsiteid IS null AND locationcustomerid = 99;
 
-COMMIT; -- Location setup.
+commit  -- Location setup.
+;
 
-BEGIN; -- Template setup.
+begin  -- Template setup.
+;
 
-WITH
+with
     -- First things first, we need to create the "entrypoint"
     -- (or "root template") for this new trackable chain.
-    root_name AS (
-        INSERT INTO public.languagemaster (
+    root_name as (
+        insert into public.languagemaster(
             languagemastercustomerid,
             languagemastersourcelanguagetypeid,
             languagemastersource
         )
-        VALUES (
-            99,
-            20,
-            'Production'
-        )
-        RETURNING
-            languagemastercustomerid AS _parent,
-            languagemasterid AS _id
+        values (99, 20, 'Production')
+        returning languagemastercustomerid as _parent, languagemasterid as _id
     ),
 
-    root_template AS (
-        INSERT INTO public.worktemplate (
+    root_template as (
+        insert into public.worktemplate(
             worktemplatecustomerid,
             worktemplatesiteid,
             worktemplatenameid,
@@ -224,70 +170,49 @@ WITH
             worktemplateworkfrequencyid,
             worktemplateisauditable
         )
-        SELECT
-            l.locationcustomerid,
-            l.locationid,
-            n._id,
-            true,
-            1404,
-            false
-        FROM
-            public.location AS l,
-            root_name AS n
-        WHERE l.locationcustomerid = n._parent
-        RETURNING
-            id,
-            worktemplateid AS _id,
-            worktemplatesiteid AS _parent
+        select l.locationcustomerid, l.locationid, n._id, true, 1404, false
+        from public.location as l, root_name as n
+        where l.locationcustomerid = n._parent
+        returning id, worktemplateid as _id, worktemplatesiteid as _parent
     ),
 
-    tagged_entrypoint AS (
-        INSERT INTO public.worktemplateconstraint (
+    tagged_entrypoint as (
+        insert into public.worktemplateconstraint(
             worktemplateconstraintcustomerid,
             worktemplateconstrainttemplateid,
             worktemplateconstraintconstrainedtypeid,
             worktemplateconstraintconstraintid
         )
-        SELECT
+        select
             parent.locationcustomerid,
             root_template.id,
             root_type.systaguuid,
             user_type.custaguuid
-        FROM root_template
-        INNER JOIN public.systag AS root_type
-            ON root_type.systagtype = 'Trackable'
-        INNER JOIN public.location AS parent
-            ON root_template._parent = parent.locationid
-        INNER JOIN public.custag AS user_type
-            ON parent.locationcategoryid = user_type.custagid
-            AND user_type.custagsystagid = root_type.systagid
+        from root_template
+        inner join public.systag as root_type on root_type.systagtype = 'Trackable'
+        inner join
+            public.location as parent on root_template._parent = parent.locationid
+        inner join
+            public.custag as user_type
+            on parent.locationcategoryid = user_type.custagid
+            and user_type.custagsystagid = root_type.systagid
     ),
 
     -- Secondly we can create the "transition" templates. These templates
     -- represent the intermediate states that the overarching "tracking system"
     -- can be in at any given time (according to rules we have yet to define).
-    transition_name AS (
-        INSERT INTO public.languagemaster (
+    transition_name as (
+        insert into public.languagemaster(
             languagemastercustomerid,
             languagemastersourcelanguagetypeid,
             languagemastersource
         )
-        VALUES (
-            99,
-            20,
-            'Planned Downtime'
-        ), (
-            99,
-            20,
-            'Unplanned Downtime'
-        )
-        RETURNING
-            languagemastercustomerid AS _parent,
-            languagemasterid AS _id
+        values (99, 20, 'Planned Downtime'), (99, 20, 'Unplanned Downtime')
+        returning languagemastercustomerid as _parent, languagemasterid as _id
     ),
 
-    transition_template AS (
-        INSERT INTO public.worktemplate (
+    transition_template as (
+        insert into public.worktemplate(
             worktemplatecustomerid,
             worktemplatesiteid,
             worktemplatenameid,
@@ -295,27 +220,16 @@ WITH
             worktemplateworkfrequencyid,
             worktemplateisauditable
         )
-        SELECT
-            l.locationcustomerid,
-            l.locationid,
-            n._id,
-            true,
-            1404,
-            false
-        FROM
-            public.location AS l,
-            transition_name AS n
-        WHERE l.locationcustomerid = n._parent
-        RETURNING
-            id,
-            worktemplateid AS _id,
-            worktemplatesiteid AS _parent
+        select l.locationcustomerid, l.locationid, n._id, true, 1404, false
+        from public.location as l, transition_name as n
+        where l.locationcustomerid = n._parent
+        returning id, worktemplateid as _id, worktemplatesiteid as _parent
     ),
 
     -- Lastly, we must define the rules for our FSM. We only have the one set of
     -- rules that allow us to enter into the two "downtime" states.
-    next_template_rules AS (
-        INSERT INTO public.worktemplatenexttemplate (
+    next_template_rules as (
+        insert into public.worktemplatenexttemplate(
             worktemplatenexttemplatecustomerid,
             worktemplatenexttemplatesiteid,
             worktemplatenexttemplateprevioustemplateid,
@@ -324,7 +238,7 @@ WITH
             worktemplatenexttemplateviastatuschangeid,
             worktemplatenexttemplatetypeid
         )
-        SELECT
+        select
             parent.locationcustomerid,
             parent.locationid,
             root_template._id,
@@ -332,48 +246,49 @@ WITH
             true,
             s.systagid,
             t.systagid
-        FROM root_template
-        INNER JOIN transition_template ON true
-        INNER JOIN public.location AS parent
-            ON root_template._parent = parent.locationid
-        INNER JOIN public.systag AS s
-            ON (s.systagparentid, s.systagtype) = (705, 'In Progress')
-        INNER JOIN public.systag AS t
-            ON (t.systagparentid, t.systagtype) = (691, 'Task')
+        from root_template
+        inner join transition_template on true
+        inner join
+            public.location as parent on root_template._parent = parent.locationid
+        inner join
+            public.systag as s
+            on (s.systagparentid, s.systagtype) = (705, 'In Progress')
+        inner join
+            public.systag as t on (t.systagparentid, t.systagtype) = (691, 'Task')
     )
 
-    INSERT INTO public.worktemplatetype (
+    insert into public.worktemplatetype(
         worktemplatetypecustomerid,
         worktemplatetypeworktemplateuuid,
         worktemplatetypeworktemplateid,
         worktemplatetypesystaguuid,
         worktemplatetypesystagid
     )
-    SELECT
-        l.locationcustomerid,
-        t.id,
-        t._id,
-        s.systaguuid,
-        s.systagid
-    FROM (
-        SELECT *
-        FROM root_template
-        UNION ALL
-        SELECT *
-        FROM transition_template
+select l.locationcustomerid, t.id, t._id, s.systaguuid, s.systagid
+from
+    (
+        select *
+        from root_template
+        union all
+        select *
+        from transition_template
     ) t
-    INNER JOIN public.systag AS s
-        ON s.systagtype = 'Trackable'
-    INNER JOIN public.location AS l
-        ON t._parent = l.locationid;
+inner join public.systag as s on s.systagtype = 'Trackable'
+inner join public.location as l on t._parent = l.locationid
+;
 
--- DELETE FROM public.worktemplateconstraint
--- WHERE worktemplateconstraintcustomerid = ??;
---
--- DELETE FROM public.worktemplatetype
--- WHERE worktemplatetypecustomerid = ??;
---
--- DELETE FROM public.customer
--- WHERE customerid = ??;
+delete from public.worktemplateconstraint
+where worktemplateconstraintcustomerid > 99
+;
 
-COMMIT; -- Template setup.
+delete from public.worktemplatetype
+where worktemplatetypecustomerid > 99
+;
+
+delete from public.customer
+where customerid > 99
+;
+
+commit  -- Template setup.
+;
+
