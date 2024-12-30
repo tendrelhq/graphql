@@ -174,16 +174,30 @@ begin
     raise exception 'failed to create template type';
   end if;
 
-  -- return query select '+constraint', t.id
-  --              from util.create_template_constraint_foreach_child_location(
-  --                  template_id := ins_template,
-  --                  location_parent_id := location_id
-  --              ) as t
-  -- ;
+  return query
+    with field (f_name, f_type, f_is_primary, f_order) as (
+        values
+        ('Override Start Time'::text, 'Date'::text, true::boolean, 0::integer),
+        ('Override End Time', 'Date', true, 1),
+        ('Comments', 'String', false, 2)
+    )
+    select '  +field', t.id
+    from field
+    cross join
+        lateral util.create_field_t(
+            customer_id := ins_customer,
+            language_type := default_language_type,
+            template_id := ins_template,
+            field_name := field.f_name,
+            field_type := field.f_type,
+            field_is_primary := field.f_is_primary,
+            field_order := field.f_order
+        ) as t
+  ;
   --
-  -- if not found then
-  --   raise exception 'failed to create template constraints for child locations';
-  -- end if;
+  if not found then
+    raise exception 'failed to create template fields';
+  end if;
 
   with
       inputs(location_name, location_typename) as (

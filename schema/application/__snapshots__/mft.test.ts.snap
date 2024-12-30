@@ -1,412 +1,5 @@
 // Bun Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`MFT transition mutations start production 1`] = `
-{
-  "advance": {
-    "__typename": "Task",
-    "fsm": {
-      "__typename": "TaskStateMachine",
-      "active": {
-        "assignees": {
-          "edges": [],
-        },
-        "displayName": {
-          "name": {
-            "value": "Production",
-          },
-        },
-        "fields": {
-          "edges": [],
-        },
-        "state": {
-          "__typename": "InProgress",
-        },
-      },
-      "transitions": {
-        "edges": [
-          {
-            "node": {
-              "displayName": {
-                "name": {
-                  "value": "Unplanned Downtime",
-                },
-              },
-              "fields": {
-                "edges": [
-                  {
-                    "node": {
-                      "name": {
-                        "name": {
-                          "value": "Override Start Time",
-                        },
-                      },
-                      "value": {
-                        "__typename": "TimestampValue",
-                      },
-                    },
-                  },
-                  {
-                    "node": {
-                      "name": {
-                        "name": {
-                          "value": "Override End Time",
-                        },
-                      },
-                      "value": {
-                        "__typename": "TimestampValue",
-                      },
-                    },
-                  },
-                  {
-                    "node": {
-                      "name": {
-                        "name": {
-                          "value": "Comments",
-                        },
-                      },
-                      "value": {
-                        "__typename": "StringValue",
-                      },
-                    },
-                  },
-                ],
-              },
-            },
-          },
-          {
-            "node": {
-              "displayName": {
-                "name": {
-                  "value": "Planned Downtime",
-                },
-              },
-              "fields": {
-                "edges": [],
-              },
-            },
-          },
-        ],
-      },
-    },
-  },
-}
-`;
-
-exports[`MFT transition mutations production -> planned downtime 1`] = `
-{
-  "advance": {
-    "__typename": "Task",
-    "fsm": {
-      "__typename": "TaskStateMachine",
-      "active": {
-        "assignees": {
-          "edges": [],
-        },
-        "displayName": {
-          "name": {
-            "value": "Planned Downtime",
-          },
-        },
-        "fields": {
-          "edges": [],
-        },
-        "state": {
-          "__typename": "InProgress",
-        },
-      },
-      "transitions": {
-        "edges": [],
-      },
-    },
-  },
-}
-`;
-
-exports[`MFT transition mutations end planned downtime -> in production 1`] = `
-{
-  "advance": {
-    "__typename": "Task",
-    "fsm": {
-      "__typename": "TaskStateMachine",
-      "active": {
-        "assignees": {
-          "edges": [],
-        },
-        "displayName": {
-          "name": {
-            "value": "Production",
-          },
-        },
-        "fields": {
-          "edges": [],
-        },
-        "state": {
-          "__typename": "InProgress",
-        },
-      },
-      "transitions": {
-        "edges": [
-          {
-            "node": {
-              "displayName": {
-                "name": {
-                  "value": "Unplanned Downtime",
-                },
-              },
-              "fields": {
-                "edges": [
-                  {
-                    "node": {
-                      "name": {
-                        "name": {
-                          "value": "Override Start Time",
-                        },
-                      },
-                      "value": {
-                        "__typename": "TimestampValue",
-                      },
-                    },
-                  },
-                  {
-                    "node": {
-                      "name": {
-                        "name": {
-                          "value": "Override End Time",
-                        },
-                      },
-                      "value": {
-                        "__typename": "TimestampValue",
-                      },
-                    },
-                  },
-                  {
-                    "node": {
-                      "name": {
-                        "name": {
-                          "value": "Comments",
-                        },
-                      },
-                      "value": {
-                        "__typename": "StringValue",
-                      },
-                    },
-                  },
-                ],
-              },
-            },
-          },
-          {
-            "node": {
-              "displayName": {
-                "name": {
-                  "value": "Planned Downtime",
-                },
-              },
-              "fields": {
-                "edges": [],
-              },
-            },
-          },
-        ],
-      },
-    },
-  },
-}
-`;
-
-exports[`MFT transition mutations start unplanned downtime 1`] = `
-{
-  "advance": {
-    "__typename": "Task",
-    "fsm": {
-      "__typename": "TaskStateMachine",
-      "active": {
-        "assignees": {
-          "edges": [],
-        },
-        "displayName": {
-          "name": {
-            "value": "Unplanned Downtime",
-          },
-        },
-        "fields": {
-          "edges": [
-            {
-              "node": {
-                "name": {
-                  "name": {
-                    "value": "Override Start Time",
-                  },
-                },
-                "value": {
-                  "__typename": "TimestampValue",
-                },
-              },
-            },
-            {
-              "node": {
-                "name": {
-                  "name": {
-                    "value": "Override End Time",
-                  },
-                },
-                "value": {
-                  "__typename": "TimestampValue",
-                },
-              },
-            },
-            {
-              "node": {
-                "name": {
-                  "name": {
-                    "value": "Comments",
-                  },
-                },
-                "value": {
-                  "__typename": "StringValue",
-                },
-              },
-            },
-          ],
-        },
-        "state": {
-          "__typename": "InProgress",
-        },
-      },
-      "transitions": {
-        "edges": [],
-      },
-    },
-  },
-}
-`;
-
-exports[`MFT transition mutations (invalid) start planned downtime 1`] = `
-[
-  [GraphQLError: Task 'd29ya3RlbXBsYXRlOndvcmstdGVtcGxhdGVfYzJmZGRiN2EtMTdmNC00YjQ5LWE3NDQtODUyOGQ2ZWU0NGM0' (worktemplate:work-template_c2fddb7a-17f4-4b49-a744-8528d6ee44c4) is not a valid choice for FSM 'd29ya3RlbXBsYXRlOndvcmstdGVtcGxhdGVfMWJmMzFjZDUtOGZjMi00N2IxLWEyOGYtZTRiYzU1MTNlMDI4' (worktemplate:work-template_1bf31cd5-8fc2-47b1-a28f-e4bc5513e028)],
-]
-`;
-
-exports[`MFT transition mutations end unplanned downtime -> in production 1`] = `
-{
-  "advance": {
-    "__typename": "Task",
-    "fsm": {
-      "__typename": "TaskStateMachine",
-      "active": {
-        "assignees": {
-          "edges": [],
-        },
-        "displayName": {
-          "name": {
-            "value": "Production",
-          },
-        },
-        "fields": {
-          "edges": [],
-        },
-        "state": {
-          "__typename": "InProgress",
-        },
-      },
-      "transitions": {
-        "edges": [
-          {
-            "node": {
-              "displayName": {
-                "name": {
-                  "value": "Unplanned Downtime",
-                },
-              },
-              "fields": {
-                "edges": [
-                  {
-                    "node": {
-                      "name": {
-                        "name": {
-                          "value": "Override Start Time",
-                        },
-                      },
-                      "value": {
-                        "__typename": "TimestampValue",
-                      },
-                    },
-                  },
-                  {
-                    "node": {
-                      "name": {
-                        "name": {
-                          "value": "Override End Time",
-                        },
-                      },
-                      "value": {
-                        "__typename": "TimestampValue",
-                      },
-                    },
-                  },
-                  {
-                    "node": {
-                      "name": {
-                        "name": {
-                          "value": "Comments",
-                        },
-                      },
-                      "value": {
-                        "__typename": "StringValue",
-                      },
-                    },
-                  },
-                ],
-              },
-            },
-          },
-          {
-            "node": {
-              "displayName": {
-                "name": {
-                  "value": "Planned Downtime",
-                },
-              },
-              "fields": {
-                "edges": [],
-              },
-            },
-          },
-        ],
-      },
-    },
-  },
-}
-`;
-
-exports[`MFT transition mutations stop production -> idle 1`] = `
-{
-  "advance": {
-    "__typename": "Task",
-    "fsm": {
-      "__typename": "TaskStateMachine",
-      "active": null,
-      "transitions": {
-        "edges": [
-          {
-            "node": {
-              "displayName": {
-                "name": {
-                  "value": "Production",
-                },
-              },
-              "fields": {
-                "edges": [],
-              },
-            },
-          },
-        ],
-      },
-    },
-  },
-}
-`;
-
 exports[`MFT entrypoint query 1`] = `
 {
   "trackables": {
@@ -420,487 +13,6 @@ exports[`MFT entrypoint query 1`] = `
             "__typename": "Name",
             "value": "Mixing Line",
           },
-          "timeZone": "America/Denver",
-          "tracking": {
-            "edges": [
-              {
-                "node": {
-                  "displayName": {
-                    "name": {
-                      "value": "Production",
-                    },
-                  },
-                  "fsm": {
-                    "active": null,
-                    "transitions": {
-                      "edges": [
-                        {
-                          "node": {
-                            "displayName": {
-                              "name": {
-                                "value": "Production",
-                              },
-                            },
-                            "fields": {
-                              "edges": [],
-                            },
-                          },
-                        },
-                      ],
-                    },
-                  },
-                },
-              },
-            ],
-          },
-        },
-      },
-      {
-        "__typename": "TrackableEdge",
-        "node": {
-          "__typename": "Location",
-          "name": {
-            "__typename": "Name",
-            "value": "Fill Line",
-          },
-          "timeZone": "America/Denver",
-          "tracking": {
-            "edges": [
-              {
-                "node": {
-                  "displayName": {
-                    "name": {
-                      "value": "Production",
-                    },
-                  },
-                  "fsm": {
-                    "active": null,
-                    "transitions": {
-                      "edges": [
-                        {
-                          "node": {
-                            "displayName": {
-                              "name": {
-                                "value": "Production",
-                              },
-                            },
-                            "fields": {
-                              "edges": [],
-                            },
-                          },
-                        },
-                      ],
-                    },
-                  },
-                },
-              },
-            ],
-          },
-        },
-      },
-      {
-        "__typename": "TrackableEdge",
-        "node": {
-          "__typename": "Location",
-          "name": {
-            "__typename": "Name",
-            "value": "Assembly Line",
-          },
-          "timeZone": "America/Denver",
-          "tracking": {
-            "edges": [
-              {
-                "node": {
-                  "displayName": {
-                    "name": {
-                      "value": "Production",
-                    },
-                  },
-                  "fsm": {
-                    "active": null,
-                    "transitions": {
-                      "edges": [
-                        {
-                          "node": {
-                            "displayName": {
-                              "name": {
-                                "value": "Production",
-                              },
-                            },
-                            "fields": {
-                              "edges": [],
-                            },
-                          },
-                        },
-                      ],
-                    },
-                  },
-                },
-              },
-            ],
-          },
-        },
-      },
-      {
-        "__typename": "TrackableEdge",
-        "node": {
-          "__typename": "Location",
-          "name": {
-            "__typename": "Name",
-            "value": "Cartoning Line",
-          },
-          "timeZone": "America/Denver",
-          "tracking": {
-            "edges": [
-              {
-                "node": {
-                  "displayName": {
-                    "name": {
-                      "value": "Production",
-                    },
-                  },
-                  "fsm": {
-                    "active": null,
-                    "transitions": {
-                      "edges": [
-                        {
-                          "node": {
-                            "displayName": {
-                              "name": {
-                                "value": "Production",
-                              },
-                            },
-                            "fields": {
-                              "edges": [],
-                            },
-                          },
-                        },
-                      ],
-                    },
-                  },
-                },
-              },
-            ],
-          },
-        },
-      },
-      {
-        "__typename": "TrackableEdge",
-        "node": {
-          "__typename": "Location",
-          "name": {
-            "__typename": "Name",
-            "value": "Packaging Line",
-          },
-          "timeZone": "America/Denver",
-          "tracking": {
-            "edges": [
-              {
-                "node": {
-                  "displayName": {
-                    "name": {
-                      "value": "Production",
-                    },
-                  },
-                  "fsm": {
-                    "active": null,
-                    "transitions": {
-                      "edges": [
-                        {
-                          "node": {
-                            "displayName": {
-                              "name": {
-                                "value": "Production",
-                              },
-                            },
-                            "fields": {
-                              "edges": [],
-                            },
-                          },
-                        },
-                      ],
-                    },
-                  },
-                },
-              },
-            ],
-          },
-        },
-      },
-    ],
-    "totalCount": 5,
-  },
-}
-`;
-
-exports[`MFT history query 1`] = `
-{
-  "trackables": {
-    "__typename": "TrackableConnection",
-    "edges": [
-      {
-        "__typename": "TrackableEdge",
-        "node": {
-          "__typename": "Task",
-          "displayName": {
-            "__typename": "DisplayName",
-            "name": {
-              "__typename": "DynamicString",
-              "value": "Production",
-            },
-          },
-          "state": {
-            "__typename": "Closed",
-          },
-          "tracking": null,
-        },
-      },
-      {
-        "__typename": "TrackableEdge",
-        "node": {
-          "__typename": "Task",
-          "displayName": {
-            "__typename": "DisplayName",
-            "name": {
-              "__typename": "DynamicString",
-              "value": "Production",
-            },
-          },
-          "state": {
-            "__typename": "Closed",
-          },
-          "tracking": null,
-        },
-      },
-      {
-        "__typename": "TrackableEdge",
-        "node": {
-          "__typename": "Task",
-          "displayName": {
-            "__typename": "DisplayName",
-            "name": {
-              "__typename": "DynamicString",
-              "value": "Production",
-            },
-          },
-          "state": {
-            "__typename": "Closed",
-          },
-          "tracking": null,
-        },
-      },
-      {
-        "__typename": "TrackableEdge",
-        "node": {
-          "__typename": "Task",
-          "displayName": {
-            "__typename": "DisplayName",
-            "name": {
-              "__typename": "DynamicString",
-              "value": "Production",
-            },
-          },
-          "state": {
-            "__typename": "Closed",
-          },
-          "tracking": null,
-        },
-      },
-      {
-        "__typename": "TrackableEdge",
-        "node": {
-          "__typename": "Task",
-          "displayName": {
-            "__typename": "DisplayName",
-            "name": {
-              "__typename": "DynamicString",
-              "value": "Production",
-            },
-          },
-          "state": {
-            "__typename": "Closed",
-          },
-          "tracking": null,
-        },
-      },
-      {
-        "__typename": "TrackableEdge",
-        "node": {
-          "__typename": "Task",
-          "displayName": {
-            "__typename": "DisplayName",
-            "name": {
-              "__typename": "DynamicString",
-              "value": "Production",
-            },
-          },
-          "state": {
-            "__typename": "Closed",
-          },
-          "tracking": null,
-        },
-      },
-      {
-        "__typename": "TrackableEdge",
-        "node": {
-          "__typename": "Task",
-          "displayName": {
-            "__typename": "DisplayName",
-            "name": {
-              "__typename": "DynamicString",
-              "value": "Production",
-            },
-          },
-          "state": {
-            "__typename": "Closed",
-          },
-          "tracking": null,
-        },
-      },
-      {
-        "__typename": "TrackableEdge",
-        "node": {
-          "__typename": "Task",
-          "displayName": {
-            "__typename": "DisplayName",
-            "name": {
-              "__typename": "DynamicString",
-              "value": "Production",
-            },
-          },
-          "state": {
-            "__typename": "Closed",
-          },
-          "tracking": null,
-        },
-      },
-      {
-        "__typename": "TrackableEdge",
-        "node": {
-          "__typename": "Task",
-          "displayName": {
-            "__typename": "DisplayName",
-            "name": {
-              "__typename": "DynamicString",
-              "value": "Production",
-            },
-          },
-          "state": {
-            "__typename": "Closed",
-          },
-          "tracking": null,
-        },
-      },
-      {
-        "__typename": "TrackableEdge",
-        "node": {
-          "__typename": "Task",
-          "displayName": {
-            "__typename": "DisplayName",
-            "name": {
-              "__typename": "DynamicString",
-              "value": "Production",
-            },
-          },
-          "state": {
-            "__typename": "Closed",
-          },
-          "tracking": null,
-        },
-      },
-    ],
-    "totalCount": 10,
-  },
-}
-`;
-
-exports[`MFT detail query 1`] = `
-{
-  "node": {
-    "__typename": "Task",
-    "chain": {
-      "__typename": "TaskConnection",
-      "edges": [
-        {
-          "__typename": "TaskEdge",
-          "node": {
-            "__typename": "Task",
-            "displayName": {
-              "__typename": "DisplayName",
-              "name": {
-                "__typename": "DynamicString",
-                "value": "Production",
-              },
-            },
-          },
-        },
-        {
-          "__typename": "TaskEdge",
-          "node": {
-            "__typename": "Task",
-            "displayName": {
-              "__typename": "DisplayName",
-              "name": {
-                "__typename": "DynamicString",
-                "value": "Planned Downtime",
-              },
-            },
-          },
-        },
-        {
-          "__typename": "TaskEdge",
-          "node": {
-            "__typename": "Task",
-            "displayName": {
-              "__typename": "DisplayName",
-              "name": {
-                "__typename": "DynamicString",
-                "value": "Unplanned Downtime",
-              },
-            },
-          },
-        },
-      ],
-      "totalCount": 3,
-    },
-    "chainAgg": [
-      {
-        "__typename": "Aggregate",
-        "group": "Planned Downtime",
-        "value": "0.061000",
-      },
-      {
-        "__typename": "Aggregate",
-        "group": "Production",
-        "value": "0.212000",
-      },
-      {
-        "__typename": "Aggregate",
-        "group": "Unplanned Downtime",
-        "value": "0.026000",
-      },
-    ],
-    "fields": {
-      "__typename": "FieldConnection",
-      "edges": [],
-    },
-  },
-}
-`;
-
-exports[`MFT entrypoint query NEW 1`] = `
-{
-  "trackables": {
-    "__typename": "TrackableConnection",
-    "edges": [
-      {
-        "__typename": "TrackableEdge",
-        "node": {
-          "__typename": "Location",
-          "name": {
-            "__typename": "Name",
-            "value": "Mixing Line",
-          },
           "timeZone": "GMT",
           "tracking": {
             "edges": [
@@ -923,7 +35,44 @@ exports[`MFT entrypoint query NEW 1`] = `
                               },
                             },
                             "fields": {
-                              "edges": [],
+                              "edges": [
+                                {
+                                  "node": {
+                                    "name": {
+                                      "name": {
+                                        "value": "Override Start Time",
+                                      },
+                                    },
+                                    "value": {
+                                      "__typename": "TimestampValue",
+                                    },
+                                  },
+                                },
+                                {
+                                  "node": {
+                                    "name": {
+                                      "name": {
+                                        "value": "Override End Time",
+                                      },
+                                    },
+                                    "value": {
+                                      "__typename": "TimestampValue",
+                                    },
+                                  },
+                                },
+                                {
+                                  "node": {
+                                    "name": {
+                                      "name": {
+                                        "value": "Comments",
+                                      },
+                                    },
+                                    "value": {
+                                      "__typename": "StringValue",
+                                    },
+                                  },
+                                },
+                              ],
                             },
                           },
                         },
@@ -966,7 +115,44 @@ exports[`MFT entrypoint query NEW 1`] = `
                               },
                             },
                             "fields": {
-                              "edges": [],
+                              "edges": [
+                                {
+                                  "node": {
+                                    "name": {
+                                      "name": {
+                                        "value": "Override Start Time",
+                                      },
+                                    },
+                                    "value": {
+                                      "__typename": "TimestampValue",
+                                    },
+                                  },
+                                },
+                                {
+                                  "node": {
+                                    "name": {
+                                      "name": {
+                                        "value": "Override End Time",
+                                      },
+                                    },
+                                    "value": {
+                                      "__typename": "TimestampValue",
+                                    },
+                                  },
+                                },
+                                {
+                                  "node": {
+                                    "name": {
+                                      "name": {
+                                        "value": "Comments",
+                                      },
+                                    },
+                                    "value": {
+                                      "__typename": "StringValue",
+                                    },
+                                  },
+                                },
+                              ],
                             },
                           },
                         },
@@ -1009,7 +195,44 @@ exports[`MFT entrypoint query NEW 1`] = `
                               },
                             },
                             "fields": {
-                              "edges": [],
+                              "edges": [
+                                {
+                                  "node": {
+                                    "name": {
+                                      "name": {
+                                        "value": "Override Start Time",
+                                      },
+                                    },
+                                    "value": {
+                                      "__typename": "TimestampValue",
+                                    },
+                                  },
+                                },
+                                {
+                                  "node": {
+                                    "name": {
+                                      "name": {
+                                        "value": "Override End Time",
+                                      },
+                                    },
+                                    "value": {
+                                      "__typename": "TimestampValue",
+                                    },
+                                  },
+                                },
+                                {
+                                  "node": {
+                                    "name": {
+                                      "name": {
+                                        "value": "Comments",
+                                      },
+                                    },
+                                    "value": {
+                                      "__typename": "StringValue",
+                                    },
+                                  },
+                                },
+                              ],
                             },
                           },
                         },
@@ -1052,7 +275,44 @@ exports[`MFT entrypoint query NEW 1`] = `
                               },
                             },
                             "fields": {
-                              "edges": [],
+                              "edges": [
+                                {
+                                  "node": {
+                                    "name": {
+                                      "name": {
+                                        "value": "Override Start Time",
+                                      },
+                                    },
+                                    "value": {
+                                      "__typename": "TimestampValue",
+                                    },
+                                  },
+                                },
+                                {
+                                  "node": {
+                                    "name": {
+                                      "name": {
+                                        "value": "Override End Time",
+                                      },
+                                    },
+                                    "value": {
+                                      "__typename": "TimestampValue",
+                                    },
+                                  },
+                                },
+                                {
+                                  "node": {
+                                    "name": {
+                                      "name": {
+                                        "value": "Comments",
+                                      },
+                                    },
+                                    "value": {
+                                      "__typename": "StringValue",
+                                    },
+                                  },
+                                },
+                              ],
                             },
                           },
                         },
@@ -1095,7 +355,44 @@ exports[`MFT entrypoint query NEW 1`] = `
                               },
                             },
                             "fields": {
-                              "edges": [],
+                              "edges": [
+                                {
+                                  "node": {
+                                    "name": {
+                                      "name": {
+                                        "value": "Override Start Time",
+                                      },
+                                    },
+                                    "value": {
+                                      "__typename": "TimestampValue",
+                                    },
+                                  },
+                                },
+                                {
+                                  "node": {
+                                    "name": {
+                                      "name": {
+                                        "value": "Override End Time",
+                                      },
+                                    },
+                                    "value": {
+                                      "__typename": "TimestampValue",
+                                    },
+                                  },
+                                },
+                                {
+                                  "node": {
+                                    "name": {
+                                      "name": {
+                                        "value": "Comments",
+                                      },
+                                    },
+                                    "value": {
+                                      "__typename": "StringValue",
+                                    },
+                                  },
+                                },
+                              ],
                             },
                           },
                         },

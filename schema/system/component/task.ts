@@ -132,7 +132,7 @@ export class Task
         "Open",
         () =>
           ({
-            __typename: "Open" as const,
+            __typename: "Open",
             openedAt: {
               override: null,
               value: row.create_date,

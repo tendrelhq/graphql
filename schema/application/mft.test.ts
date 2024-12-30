@@ -64,7 +64,7 @@ describe("MFT", () => {
     console.log(row.ok);
   });
 
-  test("entrypoint query NEW", async () => {
+  test("entrypoint query", async () => {
     const result = await execute(schema, TestMftEntrypointDocument, {
       root: CUSTOMER,
     });

@@ -9,6 +9,9 @@ create function
     )
 returns table(_id bigint, id text)
 as $$
+declare
+  ins_template text;
+begin
   with ins_name as (
     select *
     from util.create_name (
@@ -35,10 +38,21 @@ as $$
     false
   from public.customer, public.location, ins_name
   where customer.customeruuid = customer_id and location.locationuuid = task_parent_id
-  returning worktemplate.worktemplateid as _id, worktemplate.id
+  returning worktemplate.id into ins_template
   ;
-$$
-language sql
+  --
+  if not found then
+    raise exception 'failed to create template';
+  end if;
+  --
+  return query select worktemplateid as _id, worktemplate.id
+               from public.worktemplate
+               where worktemplate.id = ins_template
+  ;
+
+  return;
+end $$
+language plpgsql
 strict
 ;
 
@@ -101,6 +115,78 @@ begin
   return;
 end $$
 language plpgsql
+strict
+;
+
+create function
+    util.create_field_t(
+        customer_id text,
+        language_type text,
+        template_id text,
+        field_name text,
+        field_type text,
+        field_is_primary boolean,
+        field_order integer
+    )
+returns table(id text)
+as $$
+  with
+      ins_name as (
+          select *
+          from util.create_name(
+              customer_id := customer_id,
+              source_language := language_type,
+              source_text := field_name
+          )
+      ),
+
+      ins_type as (
+          select systagid as _id, systaguuid as id
+          from public.systag
+          where
+              systagparentid = 699
+              and systagtype = field_type
+      )
+
+  insert into public.workresult (
+      workresultcustomerid,
+      workresultdefaultvalue,
+      workresultentitytypeid,
+      workresultforaudit,
+      workresultfortask,
+      workresultisprimary,
+      workresultisrequired,
+      workresultlanguagemasterid,
+      workresultorder,
+      workresultsiteid,
+      workresultsoplink,
+      workresulttypeid,
+      workresultwidgetid,
+      workresultworktemplateid
+  )
+  select
+      wt.worktemplatecustomerid,
+      null,
+      null,
+      false,
+      true,
+      field_is_primary,
+      false,
+      ins_name._id,
+      field_order,
+      wt.worktemplatesiteid,
+      null,
+      ins_type._id,
+      null,
+      wt.worktemplateid
+  from
+      public.worktemplate as wt,
+      ins_name,
+      ins_type
+  where wt.id = template_id
+  returning id;
+$$
+language sql
 strict
 ;
 
