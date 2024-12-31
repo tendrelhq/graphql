@@ -14,6 +14,9 @@ drop function util.create_template_constraint_on_location
 drop function util.create_field_t
 ;
 
+drop function util.create_morphism
+;
+
 commit
 ;
 

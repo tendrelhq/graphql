@@ -15,27 +15,28 @@ begin
   with ins_name as (
     select *
     from util.create_name (
-      customer_id := customer_id,
-      source_language := language_type,
-      source_text := task_name
+        customer_id := customer_id,
+        source_language := language_type,
+        source_text := task_name
     )
   )
   insert into public.worktemplate (
-    worktemplatecustomerid,
-    worktemplatesiteid,
-    worktemplatenameid,
-    worktemplateallowondemand,
-    worktemplateworkfrequencyid,
-    worktemplateisauditable
+      worktemplatecustomerid,
+      worktemplatesiteid,
+      worktemplatenameid,
+      worktemplateallowondemand,
+      worktemplateworkfrequencyid,
+      worktemplateisauditable
   )
   select
-    customer.customerid,
-    location.locationid,
-    ins_name._id,
-    -- FIXME: implement scheduling, auditing
-    true,
-    1404,
-    false
+      customer.customerid,
+      location.locationid,
+      ins_name._id,
+      -- FIXME: implement scheduling
+      true,
+      1404,
+      -- FIXME: implement audits
+      false
   from public.customer, public.location, ins_name
   where customer.customeruuid = customer_id and location.locationuuid = task_parent_id
   returning worktemplate.id into ins_template
@@ -187,6 +188,60 @@ as $$
   returning id;
 $$
 language sql
+strict
+;
+
+create function
+    util.create_morphism(prev_template_id text, next_template_id text, type_tag text)
+returns table(prev text, next text)
+as $$
+begin
+  return query
+    with cte as (
+        insert into public.worktemplatenexttemplate(
+            worktemplatenexttemplatecustomerid,
+            worktemplatenexttemplatesiteid,
+            worktemplatenexttemplateprevioustemplateid,
+            worktemplatenexttemplatenexttemplateid,
+            worktemplatenexttemplateviastatuschange,
+            worktemplatenexttemplateviastatuschangeid,
+            worktemplatenexttemplatetypeid
+        )
+        select
+            prev.worktemplatecustomerid,
+            prev.worktemplatesiteid,
+            prev.worktemplateid,
+            next.worktemplateid,
+            true,
+            s.systagid,
+            tt.systagid
+        from public.worktemplate as prev
+        inner join public.worktemplate as next on next.id = next_template_id
+        inner join public.systag as s
+            on s.systagparentid = 705 and s.systagtype = 'In Progress'
+        inner join public.systag as tt
+            on tt.systagparentid = 691 and tt.systagtype = type_tag
+        where prev.id = prev_template_id
+        returning
+            worktemplatenexttemplateprevioustemplateid as _prev,
+            worktemplatenexttemplatenexttemplateid as _next
+    )
+
+    select prev.id as prev, next.id as next
+    from cte
+    inner join public.worktemplate as prev
+        on cte._prev = prev.worktemplateid
+    inner join public.worktemplate as next
+        on cte._next = next.worktemplateid
+  ;
+
+  if not found then
+    raise exception 'failed to create morphism';
+  end if;
+
+  return;
+end $$
+language plpgsql
 strict
 ;
 

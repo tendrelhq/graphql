@@ -11,13 +11,16 @@ as $$
 declare
   ins_customer text;
 begin
-  -- create the customer
   with ins_name as (
-    select * from util.create_name(
-        customer_id := 'customer_42cb94ee-ec07-4d33-88ed-9d49659e68be', -- 0
-        source_language := language_type,
-        source_text := customer_name
-    )
+    select t.*
+    from public.customer as c
+    cross join
+        lateral util.create_name(
+            customer_id := c.customeruuid,
+            source_language := language_type,
+            source_text := customer_name
+        ) as t
+    where c.customerid = 0
   )
   insert into public.customer (
       customername,
@@ -97,7 +100,6 @@ declare
   default_timezone text := current_setting('timezone');
   --
   ins_customer text;
-  ins_worker text[];
   ins_site text;
   ins_location text[];
   --
@@ -115,18 +117,20 @@ begin
   --
   return query select '+customer', ins_customer;
 
-  select array_agg(t.id) into ins_worker
-  from public.worker as w
-  cross join
-      lateral util.create_worker(
-          customer_id := ins_customer,
-          user_id := w.workeruuid,
-          user_role := default_user_role
-      ) as t
-  where w.workeruuid = any(admins)
+  return query select ' +worker', t.id
+               from public.worker as w
+               cross join
+                   lateral util.create_worker(
+                       customer_id := ins_customer,
+                       user_id := w.workeruuid,
+                       user_role := default_user_role
+                   ) as t
+               where w.workeruuid = any(admins)
   ;
   --
-  return query select ' +worker', w from unnest(ins_worker) as t(w);
+  if not found and array_length(admins, 1) > 0 then
+    raise exception 'failed to create admin workers';
+  end if;
 
   select t.id into ins_site
   from
@@ -167,7 +171,7 @@ begin
                    template_id := ins_template,
                    systag_id := s.systaguuid
                ) as t
-               where s.systagtype = 'Trackable'
+               where s.systagtype in ('Trackable', 'Runtime')
   ;
   --
   if not found then
@@ -177,9 +181,11 @@ begin
   return query
     with field (f_name, f_type, f_is_primary, f_order) as (
         values
-        ('Override Start Time'::text, 'Date'::text, true::boolean, 0::integer),
-        ('Override End Time', 'Date', true, 1),
-        ('Comments', 'String', false, 2)
+            ('Override Start Time'::text, 'Date'::text, true::boolean, 0::integer),
+            ('Override End Time', 'Date', true, 1),
+            ('Run Output', 'Number', false, 2),
+            ('Reject Count', 'Number', false, 3),
+            ('Comments', 'String', false, 99)
     )
     select '  +field', t.id
     from field
@@ -197,6 +203,77 @@ begin
   --
   if not found then
     raise exception 'failed to create template fields';
+  end if;
+
+  -- create the state machine for our trackable task, which consists of two task
+  -- templates: 'Idle Time' and 'Downtime'.
+  return query
+    with
+        field (f_name, f_type, f_is_primary, f_order) as (
+            values
+                ('Override State Time'::text, 'Date'::text, true::boolean, 0::integer),
+                ('Override End Time', 'Date', true, 1),
+                ('Description', 'String', false, 2)
+        ),
+
+        ins_next as (
+            select t.*
+            from util.create_task_t(
+                customer_id := ins_customer,
+                language_type := default_language_type,
+                task_name := 'Idle Time',
+                task_parent_id := ins_site
+            ) as t
+        ),
+
+        ins_type as (
+            select t.*
+            from ins_next, public.systag as s
+            cross join lateral util.create_template_type(
+                template_id := ins_next.id,
+                systag_id := s.systaguuid
+            ) as t
+            where s.systagtype = 'Idle Time'
+        ),
+
+        ins_field as (
+            select t.*
+            from field, ins_next
+            cross join
+                lateral util.create_field_t(
+                    customer_id := ins_customer,
+                    language_type := default_language_type,
+                    template_id := ins_next.id,
+                    field_name := field.f_name,
+                    field_type := field.f_type,
+                    field_is_primary := field.f_is_primary,
+                    field_order := field.f_order
+                ) as t
+        ),
+
+        ins_nt_rule as (
+            select t.*
+            from ins_next
+            cross join
+                lateral util.create_morphism(
+                    prev_template_id := ins_template,
+                    next_template_id := ins_next.id,
+                    type_tag := 'Task'
+                ) as t
+        )
+
+        select '  +task', ins_nt_rule.next
+        from ins_nt_rule
+        union all
+        select '   +type', ins_type.id
+        from ins_type
+        union all
+        select '   +field', ins_field.id
+        from ins_field
+  ;
+  --
+  if not found then
+    raise exception 'failed to create next template';
   end if;
 
   with
@@ -251,6 +328,7 @@ begin
   return;
 end $$
 language plpgsql
+strict
 ;
 
 create function mft.destroy_demo(customer_id text)

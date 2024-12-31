@@ -97,7 +97,6 @@ export async function node(
             // biome-ignore lint/suspicious/noExplicitAny:
           } as any;
         default:
-          // FIXME: We don't know the parent here!
           return new Task({ id: args.id }, ctx);
       }
     }

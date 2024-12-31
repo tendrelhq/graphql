@@ -58,11 +58,17 @@ Log $1 and $2, then return $2. This is the tagged version of `util.inspect`.
 ## usage
 
 ```sql
-select util.inspect_t('foo.id', foo.id)
-from foo;
--- NOTICE:  inspect: foo.id := 1007
--- NOTICE:  inspect: foo.id := 1008
--- NOTICE:  inspect: foo.id := 1009
+select util.inspect_t('foo.id', foo.id) as id from foo;
+
+NOTICE:  inspect: foo.id := 1007
+NOTICE:  inspect: foo.id := 1008
+NOTICE:  inspect: foo.id := 1009
+  id
+------
+ 1007
+ 1008
+ 1009
+(3 rows)
 ```
 
 $$;

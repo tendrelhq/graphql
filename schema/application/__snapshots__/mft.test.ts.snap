@@ -1,5 +1,452 @@
 // Bun Snapshot v1, https://goo.gl/fbAQLP
 
+exports[`MFT state machine start run 1`] = `
+{
+  "advance": {
+    "__typename": "Task",
+    "fsm": {
+      "__typename": "TaskStateMachine",
+      "active": {
+        "assignees": {
+          "edges": [],
+        },
+        "displayName": {
+          "name": {
+            "value": "Run",
+          },
+        },
+        "fields": {
+          "edges": [
+            {
+              "node": {
+                "name": {
+                  "name": {
+                    "value": "Override Start Time",
+                  },
+                },
+                "value": {
+                  "__typename": "TimestampValue",
+                  "timestamp": "2024-09-08T19:31:45.364+00:00",
+                },
+              },
+            },
+            {
+              "node": {
+                "name": {
+                  "name": {
+                    "value": "Override End Time",
+                  },
+                },
+                "value": {
+                  "__typename": "TimestampValue",
+                  "timestamp": null,
+                },
+              },
+            },
+            {
+              "node": {
+                "name": {
+                  "name": {
+                    "value": "Run Output",
+                  },
+                },
+                "value": {
+                  "__typename": "NumberValue",
+                },
+              },
+            },
+            {
+              "node": {
+                "name": {
+                  "name": {
+                    "value": "Reject Count",
+                  },
+                },
+                "value": {
+                  "__typename": "NumberValue",
+                },
+              },
+            },
+            {
+              "node": {
+                "name": {
+                  "name": {
+                    "value": "Comments",
+                  },
+                },
+                "value": {
+                  "__typename": "StringValue",
+                  "string": "We got off to a late start, hence this comment and the overridden start time!",
+                },
+              },
+            },
+          ],
+        },
+        "state": {
+          "__typename": "InProgress",
+        },
+      },
+      "transitions": {
+        "edges": [
+          {
+            "node": {
+              "displayName": {
+                "name": {
+                  "value": "Idle Time",
+                },
+              },
+              "fields": {
+                "edges": [
+                  {
+                    "node": {
+                      "name": {
+                        "name": {
+                          "value": "Override State Time",
+                        },
+                      },
+                      "value": {
+                        "__typename": "TimestampValue",
+                      },
+                    },
+                  },
+                  {
+                    "node": {
+                      "name": {
+                        "name": {
+                          "value": "Override End Time",
+                        },
+                      },
+                      "value": {
+                        "__typename": "TimestampValue",
+                      },
+                    },
+                  },
+                  {
+                    "node": {
+                      "name": {
+                        "name": {
+                          "value": "Description",
+                        },
+                      },
+                      "value": {
+                        "__typename": "StringValue",
+                      },
+                    },
+                  },
+                ],
+              },
+            },
+          },
+        ],
+      },
+    },
+  },
+}
+`;
+
+exports[`MFT state machine production -> idle time 1`] = `
+{
+  "advance": {
+    "__typename": "Task",
+    "fsm": {
+      "__typename": "TaskStateMachine",
+      "active": {
+        "assignees": {
+          "edges": [],
+        },
+        "displayName": {
+          "name": {
+            "value": "Idle Time",
+          },
+        },
+        "fields": {
+          "edges": [
+            {
+              "node": {
+                "name": {
+                  "name": {
+                    "value": "Override State Time",
+                  },
+                },
+                "value": {
+                  "__typename": "TimestampValue",
+                  "timestamp": null,
+                },
+              },
+            },
+            {
+              "node": {
+                "name": {
+                  "name": {
+                    "value": "Override End Time",
+                  },
+                },
+                "value": {
+                  "__typename": "TimestampValue",
+                  "timestamp": null,
+                },
+              },
+            },
+            {
+              "node": {
+                "name": {
+                  "name": {
+                    "value": "Description",
+                  },
+                },
+                "value": {
+                  "__typename": "StringValue",
+                  "string": null,
+                },
+              },
+            },
+          ],
+        },
+        "state": {
+          "__typename": "InProgress",
+        },
+      },
+      "transitions": {
+        "edges": [],
+      },
+    },
+  },
+}
+`;
+
+exports[`MFT state machine end idle time 1`] = `
+{
+  "advance": {
+    "__typename": "Task",
+    "fsm": {
+      "__typename": "TaskStateMachine",
+      "active": {
+        "assignees": {
+          "edges": [],
+        },
+        "displayName": {
+          "name": {
+            "value": "Run",
+          },
+        },
+        "fields": {
+          "edges": [
+            {
+              "node": {
+                "name": {
+                  "name": {
+                    "value": "Override Start Time",
+                  },
+                },
+                "value": {
+                  "__typename": "TimestampValue",
+                  "timestamp": "2024-09-08T19:31:45.364+00:00",
+                },
+              },
+            },
+            {
+              "node": {
+                "name": {
+                  "name": {
+                    "value": "Override End Time",
+                  },
+                },
+                "value": {
+                  "__typename": "TimestampValue",
+                  "timestamp": null,
+                },
+              },
+            },
+            {
+              "node": {
+                "name": {
+                  "name": {
+                    "value": "Run Output",
+                  },
+                },
+                "value": {
+                  "__typename": "NumberValue",
+                },
+              },
+            },
+            {
+              "node": {
+                "name": {
+                  "name": {
+                    "value": "Reject Count",
+                  },
+                },
+                "value": {
+                  "__typename": "NumberValue",
+                },
+              },
+            },
+            {
+              "node": {
+                "name": {
+                  "name": {
+                    "value": "Comments",
+                  },
+                },
+                "value": {
+                  "__typename": "StringValue",
+                  "string": "We got off to a late start, hence this comment and the overridden start time!",
+                },
+              },
+            },
+          ],
+        },
+        "state": {
+          "__typename": "InProgress",
+        },
+      },
+      "transitions": {
+        "edges": [
+          {
+            "node": {
+              "displayName": {
+                "name": {
+                  "value": "Idle Time",
+                },
+              },
+              "fields": {
+                "edges": [
+                  {
+                    "node": {
+                      "name": {
+                        "name": {
+                          "value": "Override State Time",
+                        },
+                      },
+                      "value": {
+                        "__typename": "TimestampValue",
+                      },
+                    },
+                  },
+                  {
+                    "node": {
+                      "name": {
+                        "name": {
+                          "value": "Override End Time",
+                        },
+                      },
+                      "value": {
+                        "__typename": "TimestampValue",
+                      },
+                    },
+                  },
+                  {
+                    "node": {
+                      "name": {
+                        "name": {
+                          "value": "Description",
+                        },
+                      },
+                      "value": {
+                        "__typename": "StringValue",
+                      },
+                    },
+                  },
+                ],
+              },
+            },
+          },
+        ],
+      },
+    },
+  },
+}
+`;
+
+exports[`MFT state machine end run 1`] = `
+{
+  "advance": {
+    "__typename": "Task",
+    "fsm": {
+      "__typename": "TaskStateMachine",
+      "active": null,
+      "transitions": {
+        "edges": [
+          {
+            "node": {
+              "displayName": {
+                "name": {
+                  "value": "Run",
+                },
+              },
+              "fields": {
+                "edges": [
+                  {
+                    "node": {
+                      "name": {
+                        "name": {
+                          "value": "Override Start Time",
+                        },
+                      },
+                      "value": {
+                        "__typename": "TimestampValue",
+                      },
+                    },
+                  },
+                  {
+                    "node": {
+                      "name": {
+                        "name": {
+                          "value": "Override End Time",
+                        },
+                      },
+                      "value": {
+                        "__typename": "TimestampValue",
+                      },
+                    },
+                  },
+                  {
+                    "node": {
+                      "name": {
+                        "name": {
+                          "value": "Run Output",
+                        },
+                      },
+                      "value": {
+                        "__typename": "NumberValue",
+                      },
+                    },
+                  },
+                  {
+                    "node": {
+                      "name": {
+                        "name": {
+                          "value": "Reject Count",
+                        },
+                      },
+                      "value": {
+                        "__typename": "NumberValue",
+                      },
+                    },
+                  },
+                  {
+                    "node": {
+                      "name": {
+                        "name": {
+                          "value": "Comments",
+                        },
+                      },
+                      "value": {
+                        "__typename": "StringValue",
+                      },
+                    },
+                  },
+                ],
+              },
+            },
+          },
+        ],
+      },
+    },
+  },
+}
+`;
+
 exports[`MFT entrypoint query 1`] = `
 {
   "trackables": {
@@ -57,6 +504,30 @@ exports[`MFT entrypoint query 1`] = `
                                     },
                                     "value": {
                                       "__typename": "TimestampValue",
+                                    },
+                                  },
+                                },
+                                {
+                                  "node": {
+                                    "name": {
+                                      "name": {
+                                        "value": "Run Output",
+                                      },
+                                    },
+                                    "value": {
+                                      "__typename": "NumberValue",
+                                    },
+                                  },
+                                },
+                                {
+                                  "node": {
+                                    "name": {
+                                      "name": {
+                                        "value": "Reject Count",
+                                      },
+                                    },
+                                    "value": {
+                                      "__typename": "NumberValue",
                                     },
                                   },
                                 },
@@ -144,6 +615,30 @@ exports[`MFT entrypoint query 1`] = `
                                   "node": {
                                     "name": {
                                       "name": {
+                                        "value": "Run Output",
+                                      },
+                                    },
+                                    "value": {
+                                      "__typename": "NumberValue",
+                                    },
+                                  },
+                                },
+                                {
+                                  "node": {
+                                    "name": {
+                                      "name": {
+                                        "value": "Reject Count",
+                                      },
+                                    },
+                                    "value": {
+                                      "__typename": "NumberValue",
+                                    },
+                                  },
+                                },
+                                {
+                                  "node": {
+                                    "name": {
+                                      "name": {
                                         "value": "Comments",
                                       },
                                     },
@@ -217,6 +712,30 @@ exports[`MFT entrypoint query 1`] = `
                                     },
                                     "value": {
                                       "__typename": "TimestampValue",
+                                    },
+                                  },
+                                },
+                                {
+                                  "node": {
+                                    "name": {
+                                      "name": {
+                                        "value": "Run Output",
+                                      },
+                                    },
+                                    "value": {
+                                      "__typename": "NumberValue",
+                                    },
+                                  },
+                                },
+                                {
+                                  "node": {
+                                    "name": {
+                                      "name": {
+                                        "value": "Reject Count",
+                                      },
+                                    },
+                                    "value": {
+                                      "__typename": "NumberValue",
                                     },
                                   },
                                 },
@@ -304,6 +823,30 @@ exports[`MFT entrypoint query 1`] = `
                                   "node": {
                                     "name": {
                                       "name": {
+                                        "value": "Run Output",
+                                      },
+                                    },
+                                    "value": {
+                                      "__typename": "NumberValue",
+                                    },
+                                  },
+                                },
+                                {
+                                  "node": {
+                                    "name": {
+                                      "name": {
+                                        "value": "Reject Count",
+                                      },
+                                    },
+                                    "value": {
+                                      "__typename": "NumberValue",
+                                    },
+                                  },
+                                },
+                                {
+                                  "node": {
+                                    "name": {
+                                      "name": {
                                         "value": "Comments",
                                       },
                                     },
@@ -377,6 +920,30 @@ exports[`MFT entrypoint query 1`] = `
                                     },
                                     "value": {
                                       "__typename": "TimestampValue",
+                                    },
+                                  },
+                                },
+                                {
+                                  "node": {
+                                    "name": {
+                                      "name": {
+                                        "value": "Run Output",
+                                      },
+                                    },
+                                    "value": {
+                                      "__typename": "NumberValue",
+                                    },
+                                  },
+                                },
+                                {
+                                  "node": {
+                                    "name": {
+                                      "name": {
+                                        "value": "Reject Count",
+                                      },
+                                    },
+                                    "value": {
+                                      "__typename": "NumberValue",
                                     },
                                   },
                                 },

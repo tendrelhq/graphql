@@ -408,7 +408,7 @@ export async function chainAgg(
             where chain.workinstanceid = children.workinstancepreviousid
         )
         select
-            s.systagtype as "group",
+            tt.systagtype as "group",
             sum(
                 extract(
                     epoch from (chain.workinstancecompleteddate - chain.workinstancestartdate)
@@ -417,10 +417,10 @@ export async function chainAgg(
         from chain
         inner join public.worktemplatetype as t
             on chain.workinstanceworktemplateid = t.worktemplatetypeworktemplateid
-        inner join public.systag as s
-            on t.worktemplatetypesystaguuid = s.systaguuid
-            and s.systagtype in ${sql(overType)}
-        group by s.systagtype
+        inner join public.systag as tt
+            on t.worktemplatetypesystaguuid = tt.systaguuid
+        where tt.systagtype in ${sql(overType)}
+        group by tt.systagtype
       `,
     )
     .otherwise(() => []);
@@ -512,7 +512,6 @@ export async function advance(
           workinstancestatusid = 710,
           workinstancecompleteddate = now(),
           workinstancemodifieddate = now()
-          -- TODO: workinstancemodifiedby
       WHERE id = ${t._id};
     `;
 

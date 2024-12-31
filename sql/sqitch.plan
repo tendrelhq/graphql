@@ -1,7 +1,7 @@
 %syntax-version=1.0.0
 %project=graphql
 
-inspect 2024-12-21T01:02:41Z Will Ruggiano <ruggiano@tendrel.io> # util.inspect
+inspect 2024-12-21T01:02:41Z Will Ruggiano <ruggiano@tendrel.io> # general purpose utilities
 udt 2024-12-21T01:10:36Z Will Ruggiano <ruggiano@tendrel.io> # user defined types
 name 2024-12-21T01:13:40Z Will Ruggiano <ruggiano@tendrel.io> # name utilities
 location [udt name] 2024-12-21T01:16:21Z Will Ruggiano <ruggiano@tendrel.io> # location utilities

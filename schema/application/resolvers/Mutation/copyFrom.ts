@@ -223,7 +223,9 @@ export async function copyFromWorkTemplate(
     );
   }
 
-  console.debug(`Created Entity ${row.id} (workinstance:${row._key_uuid})`);
+  console.debug(
+    `Created Entity ${row.id.replace(/\n/g, "")} (workinstance:${row._key_uuid})`,
+  );
 
   // We must have an originator, even if it needlessly points right back at us.
   // All hail the datawarehouse :heavy sigh:
