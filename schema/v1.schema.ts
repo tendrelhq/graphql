@@ -908,6 +908,12 @@ export function getSchema(): GraphQLSchema {
             return taskIdResolver(source);
           },
         },
+        parent: {
+          description:
+            "Identifies the parent of the current Task.\n\nThis is different from previous. Previous models causality, parent models\nownership. In practice, the parent of a Task will always be a Location.\nNote that currently this only supports workinstances. Tasks whose underlying\ntype is a worktemplate will **always have a null parent**.",
+          name: "parent",
+          type: NodeType,
+        },
         state: {
           name: "state",
           type: TaskStateType,

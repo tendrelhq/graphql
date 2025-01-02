@@ -1,4 +1,8 @@
 import { sql } from "@/datasources/postgres";
+import {
+  Location,
+  type ConstructorArgs as LocationConstructorArgs,
+} from "@/schema/platform/archetype/location";
 import type { Aggregate, Trackable } from "@/schema/platform/tracking";
 import type { Component, FieldInput } from "@/schema/system/component";
 import type { Overridable } from "@/schema/system/overridable";
@@ -55,7 +59,62 @@ export class Task
     return await this.ctx.orm.displayName.load(this.id);
   }
 
-  // TODO: We should probably implement this as a StateMachine<TaskState>?
+  /**
+   * Identifies the parent of the current Task.
+   *
+   * This is different from previous. Previous models causality, parent models
+   * ownership. In practice, the parent of a Task will always be a Location.
+   * Note that currently this only supports workinstances. Tasks whose underlying
+   * type is a worktemplate will **always have a null parent**.
+   *
+   * @gqlField
+   */
+  async parent(): Promise<Refetchable | null> {
+    // We just punt on the worktemplate case for now.
+    if (this._type !== "workinstance") return null;
+
+    // We are primarily solving for the history screen at the moment anyways
+    // which operates solely on workinstances. As we know, instances are really
+    // just a template + a location (at least under our current world view).
+
+    const [row] = await sql<[LocationConstructorArgs?]>`
+      with parent as (
+          select wri.workresultinstancevalue::bigint as _id
+          from public.workresultinstance as wri
+          inner join public.workresult as wr
+              on wri.workresultinstanceworkresultid = wr.workresultid
+          where
+              wri.workresultinstanceworkinstanceid in (
+                  select wi.workinstanceid
+                  from public.workinstance as wi
+                  where wi.id = ${this._id}
+              )
+              and wr.workresulttypeid = (
+                  select systagid
+                  from public.systag
+                  where systagparentid = 699 and systagtype = 'Entity'
+              )
+              and wr.workresultentitytypeid = (
+                  select systagid
+                  from public.systag
+                  where systagparentid = 849 and systagtype = 'Location'
+              )
+              and wr.workresultisprimary = true
+      )
+      select encode(('location:' || l.locationuuid)::bytea, 'base64') as id
+      from parent
+      inner join public.location as l
+          on parent._id = l.locationid
+    `;
+
+    if (!row) return null;
+
+    return new Location(row, this.ctx);
+  }
+
+  // FIXME: We should probably implement this as a StateMachine<TaskState>?
+  // This would allow the frontend to disambiguate start vs end, i.e. not have
+  // to infer the valid action(s) based on the TaskState.
   /** @gqlField */
   async state(): Promise<TaskState | null> {
     // Only workinstances have statuses.

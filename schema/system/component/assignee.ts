@@ -66,23 +66,23 @@ export class Assignment implements Refetchable {
     const [row] = await sql<[{ id: string }?]>`
       WITH cte AS (
           SELECT wri.workresultinstancevalue::bigint AS id
-          FROM public.workresultinstance
+          FROM public.workresultinstance as wri
           WHERE
-              workresultinstanceworkinstanceid IN (
+              wri.workresultinstanceworkinstanceid IN (
                   SELECT workinstanceid
                   FROM public.workinstance
                   WHERE id = ${this._id}
               )
-              AND workresultinstanceworkresultid IN (
+              AND wri.workresultinstanceworkresultid IN (
                   SELECT workresultid
                   FROM public.workresult
                   WHERE id = ${this._field ?? null}
               )
-              AND nullif(workresultinstancevalue, '') IS NOT null
+              AND nullif(wri.workresultinstancevalue, '') IS NOT null
       )
       SELECT encode(('worker:' || w.workerinstanceuuid)::bytea, 'base64') AS id
       FROM cte, public.workerinstance AS w
-      WHERE cte.id = w.workerinstanceuuid
+      WHERE cte.id = w.workerinstanceid
     `;
 
     if (row) {

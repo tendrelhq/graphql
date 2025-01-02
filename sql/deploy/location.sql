@@ -83,7 +83,7 @@ begin
                where locationuuid = ins_location
   ;
 
-  -- the following is a datawarehouse invariant;
+  -- invariant: locationsiteid must not be null
   update public.location
   set locationsiteid = locationid
   where locationuuid = ins_location and location_parent_id is null

@@ -62,7 +62,14 @@ export async function fields(
             FROM public.workinstance AS wi
             INNER JOIN public.workresult AS wr
                 ON wi.workinstanceworktemplateid = wr.workresultworktemplateid
-                   AND (wr.workresultenddate IS null OR wr.workresultenddate > now())
+                   and (wr.workresultenddate is null or wr.workresultenddate > now())
+                   and (
+                      wr.workresultisprimary = false
+                      or (
+                          wr.workresultisprimary = true
+                          and wr.workresultentitytypeid is null
+                      )
+                   )
             INNER JOIN public.languagemaster AS n
                 ON wr.workresultlanguagemasterid = n.languagemasterid
             INNER JOIN public.systag AS t
@@ -114,7 +121,14 @@ export async function fields(
             FROM public.worktemplate AS wt
             INNER JOIN public.workresult AS wr
                 ON wt.worktemplateid = wr.workresultworktemplateid
-                   AND (wr.workresultenddate IS null OR wr.workresultenddate > now())
+                   and (wr.workresultenddate is null or wr.workresultenddate > now())
+                   and (
+                      wr.workresultisprimary = false
+                      or (
+                          wr.workresultisprimary = true
+                          and wr.workresultentitytypeid is null
+                      )
+                   )
             INNER JOIN public.languagemaster AS n
                 ON wr.workresultlanguagemasterid = n.languagemasterid
             INNER JOIN public.systag AS t

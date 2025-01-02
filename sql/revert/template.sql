@@ -17,6 +17,9 @@ drop function util.create_field_t
 drop function util.create_morphism
 ;
 
+drop function util.instantiate
+;
+
 commit
 ;
 

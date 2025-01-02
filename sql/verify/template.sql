@@ -18,6 +18,9 @@ select pg_catalog.has_function_privilege('util.create_field_t'::regproc, 'execut
 select pg_catalog.has_function_privilege('util.create_morphism'::regproc, 'execute')
 ;
 
+select pg_catalog.has_function_privilege('util.instantiate'::regproc, 'execute')
+;
+
 rollback
 ;
 

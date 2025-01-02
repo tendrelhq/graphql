@@ -29,25 +29,25 @@ query TestMftDetail($node: ID!) {
   node(id: $node) {
     ... on Task {
       # "matrix" component
-      chainAgg(overType: ["Run", "Idle Time", "Downtime"]) {
+      chainAgg(overType: ["Runtime", "Idle Time", "Downtime"]) {
         group
         value
       }
       # "run output" and "reject count" components
-      fields {
-        edges {
-          node {
-            name {
-              name {
-                value
-              }
-            }
-            value {
-              __typename
-            }
-          }
-        }
-      }
+      # fields {
+      #   edges {
+      #     node {
+      #       name {
+      #         name {
+      #           value
+      #         }
+      #       }
+      #       value {
+      #         __typename
+      #       }
+      #     }
+      #   }
+      # }
       # "timeline" component
       chain {
         edges {
@@ -57,9 +57,19 @@ query TestMftDetail($node: ID!) {
                 value
               }
             }
+            state {
+              __typename
+            }
           }
         }
         totalCount
+      }
+      parent {
+        ... on Location {
+          name {
+            value
+          }
+        }
       }
     }
   }

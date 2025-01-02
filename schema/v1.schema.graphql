@@ -413,6 +413,15 @@ type Task implements Assignable & Component & Node & Trackable {
   A globally unique opaque identifier for a node.
   """
   id: ID!
+  """
+  Identifies the parent of the current Task.
+
+  This is different from previous. Previous models causality, parent models
+  ownership. In practice, the parent of a Task will always be a Location.
+  Note that currently this only supports workinstances. Tasks whose underlying
+  type is a worktemplate will **always have a null parent**.
+  """
+  parent: Node
   state: TaskState
   """
   Entrypoint into the "tracking system(s)" for the given Task.

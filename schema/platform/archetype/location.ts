@@ -8,6 +8,7 @@ import {
 import type { Refetchable } from "@/schema/system/node";
 import type { Connection } from "@/schema/system/pagination";
 import type { Context } from "@/schema/types";
+import { assert } from "@/util";
 import type { ID } from "grats";
 import type { Trackable } from "../tracking";
 
@@ -86,15 +87,22 @@ export class Location implements Component, Refetchable, Trackable {
               where l.locationuuid = ${this._id} and s.systagtype = 'Trackable'
           )
 
-      select encode(('worktemplate:' || wt.id)::bytea, 'base64') AS id
+      select encode(('worktemplate:' || wt.id)::bytea, 'base64') as id
       from location_type as lt
       inner join
           public.worktemplateconstraint as wtc
           on lt.category = wtc.worktemplateconstraintconstraintid
-          and lt.parent = wtc.worktemplateconstraintconstrainedtypeid
+          and wtc.worktemplateconstraintconstrainedtypeid in (
+              select systaguuid
+              from public.systag
+              where systagparentid = 849 and systagtype = 'Location'
+          )
       inner join public.worktemplate as wt on wtc.worktemplateconstrainttemplateid = wt.id
       where wtc.worktemplateconstraintresultid is null
+;
     `;
+
+    assert(nodes.length !== 0, "no tracking set");
 
     // TODO: we can potentially put the aggregate on the edge, and pass in the
     // location when we construct the edge. This gives us knowledge of our
@@ -115,18 +123,3 @@ export class Location implements Component, Refetchable, Trackable {
     };
   }
 }
-
-// CREATE TABLE IF NOT EXISTS worktemplateconstraint (
-//     worktemplateconstraintid text NOT NULL,
-//     worktemplateconstraintcreateddate timestamp(3) without time zone NOT NULL,
-//     worktemplateconstraintmodifieddate timestamp(3) without time zone NOT NULL,
-//     worktemplateconstraintmodifiedby bigint,
-//     worktemplateconstraintrefid bigint,
-//     worktemplateconstraintrefuuid text,
-//     worktemplateconstraintconstrainedtypeid text NOT NULL,
-//     worktemplateconstraintconstraintid text NOT NULL,
-//     worktemplateconstrainttemplateid text NOT NULL,
-//     worktemplateconstraintresultid text,
-//     worktemplateconstraintcustomerid bigint NOT NULL,
-//     worktemplateconstraintcustomeruuid text
-// );

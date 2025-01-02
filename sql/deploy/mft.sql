@@ -196,6 +196,7 @@ begin
             template_id := ins_template,
             field_name := field.f_name,
             field_type := field.f_type,
+            field_reference_type := null,
             field_is_primary := field.f_is_primary,
             field_order := field.f_order
         ) as t
@@ -246,6 +247,7 @@ begin
                     template_id := ins_next.id,
                     field_name := field.f_name,
                     field_type := field.f_type,
+                    field_reference_type := null,
                     field_is_primary := field.f_is_primary,
                     field_order := field.f_order
                 ) as t
@@ -301,27 +303,40 @@ begin
   if not found then
     raise exception 'failed to create locations';
   end if;
-  --
 
   <<loop0>>
   foreach loop0_t in array ins_location loop
     return query
       with
-          log as (
-              values (' +location', loop0_t)
-          ),
-
           ins_constraint as (
-              select '  +constraint', t.id
+              select *
               from util.create_template_constraint_on_location(
                   template_id := ins_template,
                   location_id := loop0_t
               ) as t
           )
+          -- ),
+          --
+          -- ins_instance as (
+          --     select *
+          --     from util.instantiate(
+          --         template_id := ins_template,
+          --         location_id := loop0_t,
+          --         target_state := 'Open',
+          --         target_type := 'On Demand'
+          --     )
+          -- )
 
-      select * from log
+      select ' +location', loop0_t
       union all
-      select * from ins_constraint
+      select '  +constraint', t.id
+      from ins_constraint as t
+      -- union all
+      -- (
+      --   select '  +instance', t.instance
+      --   from ins_instance as t
+      --   group by t.instance
+      -- )
     ;
   end loop loop0;
 

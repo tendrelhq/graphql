@@ -162,13 +162,67 @@ describe("MFT", () => {
       expect(result.data).toMatchSnapshot();
     });
 
-    // test("detail query", async () => {
-    //   const result = await execute(schema, TestMftDetailDocument, {
-    //     node: await mostRecentlyInProgress(CUSTOMER),
-    //   });
-    //   expect(result.errors).toBeFalsy();
-    //   expect(result.data).toMatchSnapshot();
-    // });
+    test("detail query", async () => {
+      const result = await execute(schema, TestMftDetailDocument, {
+        node: await mostRecentlyInProgress(CUSTOMER),
+      });
+      expect(result.errors).toBeFalsy();
+      expect(result.data).toMatchObject({
+        node: {
+          chainAgg: [
+            {
+              group: "Idle Time",
+              value: expect.stringMatching(/[\d]+.[\d]+/),
+              __typename: "Aggregate",
+            },
+            {
+              group: "Runtime",
+              value: null,
+              __typename: "Aggregate",
+            },
+          ],
+          chain: {
+            edges: [
+              {
+                node: {
+                  displayName: {
+                    name: {
+                      value: "Run",
+                      __typename: "DynamicString",
+                    },
+                    __typename: "DisplayName",
+                  },
+                  state: {
+                    __typename: "InProgress",
+                  },
+                  __typename: "Task",
+                },
+                __typename: "TaskEdge",
+              },
+              {
+                node: {
+                  displayName: {
+                    name: {
+                      value: "Idle Time",
+                      __typename: "DynamicString",
+                    },
+                    __typename: "DisplayName",
+                  },
+                  state: {
+                    __typename: "Closed",
+                  },
+                  __typename: "Task",
+                },
+                __typename: "TaskEdge",
+              },
+            ],
+            totalCount: 2,
+            __typename: "TaskConnection",
+          },
+          __typename: "Task",
+        },
+      });
+    });
 
     test("end run", async () => {
       const result = await execute(schema, TestMftTransitionMutationDocument, {
