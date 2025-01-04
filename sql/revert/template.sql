@@ -20,6 +20,11 @@ drop function util.create_morphism
 drop function util.instantiate
 ;
 
+-- drop function util.chain_into
+-- ;
+--
+-- drop type chain_strategy;
+-- drop type field_input;
 commit
 ;
 

@@ -1,4 +1,4 @@
-## finishing off yield
+## finishing off Yield
 
 - [ ] in progress agg
 - [ ] instance parent (location)
@@ -113,10 +113,11 @@ that task_fsm's advance method takes an extra parameter to control this behavior
 
 So, to summarize:
 
-- [ ] demo procedures need to create initial instances
+- [x] demo procedures need to create initial instances
       (ideally via some generic instantiate procedure)
-- [ ] Location's `tracking()` needs to return chains, not templates
+- [x] Location's `tracking()` needs to return chains, not templates
       (and just rely on the rules engine to provide on-demand opens)
+      (this is actually _really_ annoying in conjunction with "flat chaining"[^2])
 - [ ] task_fsm's advance takes an extra parameter to affect the active task when
       transitioning
       (which allows for "close and start" behavior)
@@ -127,6 +128,18 @@ So, to summarize:
 The following should cover essentially all of our remaining TODOs for Yield.
 
 Yay!
+
+### design breakdown
+
+It starts with a StateMachine<Task>, representing the wtnt rules. We call this
+the "fsm". The fsm is a data structure that holds an "active" task as well as
+any number of "transitions". The user is free to operate on both the active
+and/or transitions. Operating on the active task is essentially the same thing
+as "doing a checklist" or "doing a task (in swk)" - it is the entrypoint into
+the task-specific state machine (i.e. a StateMachine<TaskStatus>) that abstracts
+the "rules engine". Operating on a transition is essentially just an
+instantiation operation. In particular, this is the _same operation_ that the
+"rules engine" might choose in the active case.
 
 # Appendix
 
@@ -142,3 +155,12 @@ the rule. It also takes a third optional parameter to control
 instantiation/chain behavior.
 
 [^1]: There are many ambiguities to deal with here.
+
+[^2]:
+    "flat chaining" describes the behavior inherent in the mocks for the
+    Runtime app where each transition marks the end of the previous task. The
+    alternative is "deep chaining" where the previous task is unaffected by the
+    transition, creating a tree-like hierarchy of tasks. Flat chaining is
+    annoying because we have to look for "active chains" rather than just
+    "active roots", which means we have to materialize the entire chain rather
+    than just look at a single node.

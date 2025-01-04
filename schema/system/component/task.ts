@@ -3,19 +3,20 @@ import {
   Location,
   type ConstructorArgs as LocationConstructorArgs,
 } from "@/schema/platform/archetype/location";
-import type { Aggregate, Trackable } from "@/schema/platform/tracking";
-import type { Component, FieldInput } from "@/schema/system/component";
-import type { Overridable } from "@/schema/system/overridable";
-import type { Timestamp } from "@/schema/system/temporal";
+import type { Trackable } from "@/schema/platform/tracking";
 import type { Context } from "@/schema/types";
-import { assertNonNull, map } from "@/util";
+import { assert, assertNonNull, map } from "@/util";
 import { GraphQLError } from "graphql/error";
 import type { ID, Int } from "grats";
 import type { Fragment } from "postgres";
 import { match } from "ts-pattern";
 import { decodeGlobalId } from "..";
+import type { Aggregate } from "../aggregation";
+import type { Component, FieldInput } from "../component";
 import type { Refetchable } from "../node";
+import type { Overridable } from "../overridable";
 import type { Connection } from "../pagination";
+import type { Timestamp } from "../temporal";
 import { type Assignable, Assignment } from "./assignee";
 import type { DisplayName, Named } from "./name";
 
@@ -78,7 +79,7 @@ export class Task
     // just a template + a location (at least under our current world view).
 
     const [row] = await sql<[LocationConstructorArgs?]>`
-      with parent as (
+      with parent as materialized (
           select wri.workresultinstancevalue::bigint as _id
           from public.workresultinstance as wri
           inner join public.workresult as wr
@@ -564,17 +565,33 @@ export async function advance(
   }
 
   await sql.begin(async tx => {
-    // As before, we assume this is the "stop task" flow.
-    await tx`
-      UPDATE public.workinstance
-      SET
-          workinstancestatusid = 710,
-          workinstancecompleteddate = now(),
-          workinstancemodifieddate = now()
-      WHERE id = ${t._id};
+    // TODO: move to a SQL procedure so we can pipeline.
+    const result = await tx`
+      merge into public.workinstance as t
+      using (
+        select *
+        from public.workinstance
+        where id = ${t._id}
+      ) as s on t.workinstanceid = s.workinstanceid
+      when matched and s.workinstancestatusid = 706 then
+        update set workinstancestatusid = 707,
+                   workinstancestartdate = now(),
+                   workinstancemodifieddate = now()
+      when matched and s.workinstancestatusid = 707 then
+        update set workinstancestatusid = 710,
+                   workinstancecompleteddate = now(),
+                   workinstancemodifieddate = now()
+      ;
     `;
 
+    if (!result.count) {
+      assert(false, "no merge action performed");
+    }
+
+    // TODO: auto-assign via SQL procedure so we can pipeline.
+
     if (opts?.overrides?.length) {
+      // TODO: move to a SQL procedure so we can pipeline.
       const edits = applyEdits$fragment(t, opts.overrides);
       if (edits) {
         const r = await tx`${edits}`;
@@ -598,7 +615,7 @@ export function applyEdits$fragment(
   edits: FieldInput[],
 ): Fragment | undefined {
   if (t._type !== "workinstance") {
-    console.warn(`WARNING: cannot applyEdits to a '${t._type}'`);
+    assert(t._type === "workinstance", `cannot apply edits to a '${t._type}'`);
     return;
   }
 
@@ -649,10 +666,7 @@ export function applyEdits$fragment(
         wi.workinstanceid,
         wr.workresultid,
         wi.workinstancetimezone,
-        coalesce(
-          nullif(edits.value, ''),
-          wr.workresultdefaultvalue
-        )
+        coalesce(nullif(edits.value, ''), wr.workresultdefaultvalue)
     FROM edits
     INNER JOIN public.workinstance AS wi
         ON wi.id = ${t._id}

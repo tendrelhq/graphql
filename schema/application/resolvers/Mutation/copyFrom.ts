@@ -8,7 +8,7 @@ import type {
 import { decodeGlobalId } from "@/schema/system";
 import type { FieldInput } from "@/schema/system/component";
 import { Task, applyEdits$fragment } from "@/schema/system/component/task";
-import type { WithKey } from "@/util";
+import { assert, type WithKey } from "@/util";
 import { GraphQLError } from "graphql";
 import type { TransactionSql } from "postgres";
 import { match } from "ts-pattern";
@@ -47,30 +47,41 @@ export const copyFrom: NonNullable<MutationResolvers["copyFrom"]> = async (
   };
 };
 
-// TODO: We could extend the `options` here to include things like:
-// - copying over result statuses, values
-// - ...?
+export type CopyFromInstanceOptions = {
+  /**
+   * Automatically assign the new instance to the calling identity.
+   */
+  autoAssign?: boolean;
+  /**
+   * The chain strategy to use.
+   * - branch: create a new sub-chain beneath the originator
+   * - continue: create a new leaf node beneath the previous
+   *
+   * When unspecified (the default), an entirely new chain will be created.
+   */
+  chain?: "branch" | "continue";
+  /**
+   * Instruct the engine to carry over any "assignments" from ancestors in the
+   * chain. By default, this carries over the previous's assignments (if it
+   * exists) else the originator's assignments (if it exists).
+   */
+  carryOverAssignments?: boolean;
+  /**
+   * Override a field's initial value (i.e. workresultinstancevalue). By default
+   * initial values are inherited from workresultdefaultvalue. This allows for,
+   * e.g. in the MFT case, overriding the start or end time when transitioning
+   * between tasks.
+   */
+  fieldOverrides?: FieldInput[] | null;
+};
+
 /**
- * Creates a new workinstance from an existing workinstance.
- * Currently, this is purely a templated-based copy.
- *
- * `options.chain` allows for controlling how the new instance is (potentially)
- * inserted into an existing chain. There are three options:
- * (1) `branch` creates a new branch beneath the originator, no previous is set
- * (2) `continue` effectively appends the new instance to the existing chain,
- *      meaning previous is set
- * (3) `undefined` creates a new chain, i.e. the new instance's originator is
- *      set to itself
- *
- * In practice, audits and remediations typically `continue` the chain, as their
- * existence is a result of some action (or insight) on the previous.
- * The "respawn" case typically creates a new `branch`, since there is no real
- * correlation between the previous and the new instance.
+ * Create a new workinstance from an existing workinstance.
  */
 export async function copyFromWorkInstance(
   tx: TransactionSql,
   id: string,
-  options: CopyFromOptions & { chain?: "branch" | "continue" },
+  options: CopyFromOptions & CopyFromInstanceOptions,
   ctx: Context,
 ): Promise<Task> {
   const [row] = await tx<[{ id: string }]>`
@@ -94,59 +105,30 @@ export async function copyFromWorkInstance(
 
 type CopyFromWorkTemplateOptions = {
   /**
-   * The chain strategy to use.
-   * - branch: create a new sub-chain beneath the originator
-   * - continue: create a new leaf node beneath the previous
-   * - default: create an entirely new chain, i.e. originator set to itself
-   */
-  chain?: "branch" | "continue";
-  /**
-   * Specifies the "previous instance" for the newly instantiated. Canonically,
-   * previous is used in conjunction with originator to identify chains.
+   * Specifies the "previous instance" for the new instance. Canonically,
+   * previous is used in conjunction with originator to build chains.
    * Irrespective of chains, previous conveys a notion of causality i.e. this
    * instance came about as a result of this instance. As such, it is not
    * _theoretically_ incorrect to specify previous _without_ a chain strategy.
    */
   previous?: string;
-  /**
-   * Instruct the engine to carry over any "assignments" from ancestors in the
-   * chain. By default, this carries over the previous's assignments (if it
-   * exists) else the originator's assignments (if it exists) else the default
-   * assignment strategy (which is the current identity).
-   */
-  carryOverAssignments?: boolean;
-  /**
-   * Override a field's initial value (i.e. workresultinstancevalue). By default
-   * initial values are inherited from workresultdefaultvalue. This allows for,
-   * e.g. in the MFT case, overriding the start or end time when transitioning
-   * between tasks.
-   */
-  fieldOverrides?: FieldInput[] | null;
 };
 
 /**
  * Creates a new workinstance from a worktemplate. This is a "full
  * instantiation", i.e. we create a workinstance AND all workresultinstances
  * as specified by the underlying workresults.
- *
- * `options.originator` and `options.previous` can be used to insert a
- * workinstance into an existing chain. When an originator is not specified, the
- * result is a brand new originator "token" (as Keller likes to call them).
  */
 
 // TODO: need to use real frequency for target start date
 export async function copyFromWorkTemplate(
   tx: TransactionSql,
   id: string,
-  options: CopyFromOptions & CopyFromWorkTemplateOptions,
+  options: CopyFromOptions &
+    CopyFromInstanceOptions &
+    CopyFromWorkTemplateOptions,
   ctx: Context,
 ): Promise<Task> {
-  if (options.carryOverAssignments) {
-    console.warn(
-      "copyFrom: `carryOverAssignments` requested but not yet implemented",
-    );
-  }
-
   const [row] = await tx<[WithKey<{ _key_uuid: string; id: string }>?]>`
       INSERT INTO public.workinstance (
           workinstancecustomerid,
@@ -165,7 +147,7 @@ export async function copyFromWorkTemplate(
           worktemplatecustomerid,
           worktemplatesiteid,
           ${options.chain ? sql`previous.workinstanceoriginatorworkinstanceid` : null},
-          previous.workinstanceid,
+          ${options.chain === "continue" ? sql`previous.workinstanceid` : null},
           worktemplatesoplink,
           ${match(options.withStatus)
             .with("open", () => null)
@@ -273,6 +255,39 @@ export async function copyFromWorkTemplate(
   console.debug(`Created ${result.count} items.`);
 
   // Ensure any user-specified overrides are applied.
+  if (options.autoAssign) {
+    const result = await tx`
+      update public.workresultinstance as t
+      set workresultinstancevalue = wi.workerinstanceid::text
+      from public.workerinstance as wi
+      where
+          wi.workerinstancecustomerid = t.workresultinstancecustomerid
+          and wi.workerinstanceworkerid in (
+              select workerid
+              from public.worker
+              where workeridentityid = ${ctx.auth.userId}
+          )
+          and t.workresultinstanceworkinstanceid = ${row._key}
+          and t.workresultinstanceworkresultid in (
+              select workresultid
+              from public.workresult
+              inner join public.worktemplate
+                  on workresultworktemplateid = worktemplateid
+              where
+                  worktemplate.id = ${id}
+                  and workresulttypeid = 848
+                  and workresultentitytypeid = 850
+                  and workresultisprimary = true
+              limit 1
+          )
+    `;
+
+    assert(result.count === 1, "auto-assign should always succeed");
+    console.debug(
+      "Auto-assigned new instance to currently authenticated user.",
+    );
+  }
+
   if (
     !options.withAssignee?.length &&
     options.carryOverAssignments &&
@@ -394,5 +409,5 @@ export async function copyFromWorkTemplate(
     }
   }
 
-  return new Task(row, ctx);
+  return t;
 }

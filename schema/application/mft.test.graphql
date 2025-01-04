@@ -77,10 +77,13 @@ query TestMftDetail($node: ID!) {
 
 mutation TestMftTransitionMutation($opts: FsmOptions!) {
   advance(opts: $opts) {
+    # chainAgg(overType: ["Runtime", "Idle Time", "Downtime"]) {
+    #   group
+    #   value
+    # }
     fsm {
       ...TaskFSM_fragment
     }
-    # ...TrackableMatrix_fragment
   }
 }
 
@@ -89,6 +92,10 @@ fragment Trackables_fragment on Trackable {
     edges {
       node {
         ... on Task {
+          # chainAgg(overType: ["Runtime", "Idle Time", "Downtime"]) {
+          #   group
+          #   value
+          # }
           displayName {
             name {
               value
@@ -97,19 +104,9 @@ fragment Trackables_fragment on Trackable {
           fsm {
             ...TaskFSM_fragment
           }
-          # ...TrackableMatrix_fragment
         }
       }
     }
-  }
-}
-
-fragment TrackableMatrix_fragment on Trackable {
-  trackingAgg(
-    groupByTag: ["Production", "Planned Downtime", "Unplanned Downtime"]
-  ) {
-    group
-    value
   }
 }
 

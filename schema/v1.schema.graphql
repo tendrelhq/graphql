@@ -90,18 +90,6 @@ interface Trackable implements Component {
   configured as such.
   """
   tracking: TrackableConnection
-  """
-  Construct an aggregate view of a Trackable whose constituents are grouped by
-  an arbitrary collection of type tags.
-
-  In the MFT case, an aggregate view for both a Location and a Task can be
-  constructed using the three primary `worktemplatetype`s for the relevant MFT
-  worktemplates: "Production", "Planned Downtime", and "Unplanned Downtime".
-  Note that, in this case, "Production" implies "total time" and as such
-  "uptime" can be computed by subtracting the sum of the two downtime types
-  from the production time.
-  """
-  trackingAgg(groupByTag: [String!]!): [Aggregate!] @semanticNonNull
 }
 
 input AssignmentInput {
@@ -276,18 +264,6 @@ type Location implements Component & Node & Trackable {
   Entrypoint into the "tracking system(s)" for the given Location.
   """
   tracking: TrackableConnection
-  """
-  Construct an aggregate view of a Trackable whose constituents are grouped by
-  an arbitrary collection of type tags.
-
-  In the MFT case, an aggregate view for both a Location and a Task can be
-  constructed using the three primary `worktemplatetype`s for the relevant MFT
-  worktemplates: "Production", "Planned Downtime", and "Unplanned Downtime".
-  Note that, in this case, "Production" implies "total time" and as such
-  "uptime" can be computed by subtracting the sum of the two downtime types
-  from the production time.
-  """
-  trackingAgg(groupByTag: [String!]!): [Aggregate!] @semanticNonNull
 }
 
 type Mutation {
@@ -429,18 +405,6 @@ type Task implements Assignable & Component & Node & Trackable {
   always be returned for this field.
   """
   tracking: TrackableConnection
-  """
-  Construct an aggregate view of a Trackable whose constituents are grouped by
-  an arbitrary collection of type tags.
-
-  In the MFT case, an aggregate view for both a Location and a Task can be
-  constructed using the three primary `worktemplatetype`s for the relevant MFT
-  worktemplates: "Production", "Planned Downtime", and "Unplanned Downtime".
-  Note that, in this case, "Production" implies "total time" and as such
-  "uptime" can be computed by subtracting the sum of the two downtime types
-  from the production time.
-  """
-  trackingAgg(groupByTag: [String!]!): [Aggregate!] @semanticNonNull
 }
 
 type TaskConnection {

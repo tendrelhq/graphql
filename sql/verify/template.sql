@@ -21,6 +21,8 @@ select pg_catalog.has_function_privilege('util.create_morphism'::regproc, 'execu
 select pg_catalog.has_function_privilege('util.instantiate'::regproc, 'execute')
 ;
 
+-- select pg_catalog.has_function_privilege('util.chain_into'::regproc, 'execute')
+-- ;
 rollback
 ;
 

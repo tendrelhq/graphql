@@ -283,7 +283,14 @@ strict
 -- worktemplateconstraint.
 create function
     util.instantiate(
-        template_id text, location_id text, target_state text, target_type text
+        -- fmt: off
+        template_id text,
+        location_id text,
+        target_state text,
+        target_type text,
+        chain_root_id text = null,
+        chain_prev_id text = null
+        -- fmt: on
     )
 returns table(instance text, field text, value text)
 as $$
@@ -307,8 +314,8 @@ begin
       task_t.worktemplatecustomerid,
       task_t.worktemplatesiteid,
       task_t.worktemplateid,
-      null, -- originator
-      null, -- previous
+      chain_root.workinstanceid,
+      chain_prev.workinstanceid,
       task_state_t.systagid,
       task_type_t.systagid,
       task_t.worktemplatesoplink,
@@ -320,6 +327,8 @@ begin
       public.location as location,
       public.systag as task_state_t,
       public.systag as task_type_t
+  left join public.workinstance as chain_root on chain_root.id = chain_root_id
+  left join public.workinstance as chain_prev on chain_prev.id = chain_prev_id
   where
       task_t.id = template_id
       and location.locationuuid = location_id
@@ -415,26 +424,84 @@ comment on function util.instantiate is $$
 # util.instantiate
 
 Instantiate a worktemplate at the given location and in the specified target state.
-Note that this procedure does NOT protect against duplicates nor does it handle chaining,
-in fact it will always create a brand new chain (i.e. originator = itself).
-
-You should handle duplicate constraints and chain configuration elsewhere. This
-procedure is a simple low level primitive that implements generic instantiation.
+Note that this procedure does NOT protect against duplicates, nor perform any
+validation aside from input validation. This procedure is a simple, low-level
+primitive that implements generic instantiation.
 
 ## usage
 
 ```sql
 select *
 from util.instantiate(
-    template_id := text,     -- worktemplate.id (uuid)
-    location_id := text,     -- location.id (uuid)
-    target_state := text,    -- 'Work Status' variant, e.g. 'Open'
-    target_type := text      -- 'Work Type' variant, e.g. 'On Demand'
+    template_id := $1,     -- worktemplate.id (uuid)
+    location_id := $2,     -- location.id (uuid)
+    target_state := $3,    -- 'Work Status' variant, e.g. 'Open'
+    target_type := $4,     -- 'Work Type' variant, e.g. 'On Demand'
+    chain_root_id := $5,   -- workinstance.id (uuid), i.e. originator
+    chain_prev_id := $6    -- workinstance.id (uuid), i.e. previous
 );
 ```
 
 $$;
 
+-- create type chain_strategy as enum (
+-- 'branch',
+-- 'continue'
+-- );
+--
+-- create type field_input as (
+-- field text,
+-- value text
+-- );
+--
+-- create function
+-- util.chain_into(
+-- -- fmt: off
+-- -- required
+-- from_instance text,
+-- into_instance_or_template text,
+-- strategy chain_strategy = 'continue',
+-- -- optional
+-- carry_over_assignments boolean = null,
+-- field_overrides field_input[] = null
+-- -- fmt: on
+-- )
+-- returns table(id text)
+-- as $$
+-- begin
+-- if from_instance is null then
+-- raise exception 'chain_into: from_instance is required';
+-- end if;
+-- if into_instance_or_template is null then
+-- raise exception 'chain_into: into_instance_or_template is required';
+-- end if;
+-- if strategy is null then
+-- raise exception 'chain_into: strategy is required';
+-- end if;
+--
+-- raise exception 'not yet implemented';
+-- end $$
+-- language plpgsql
+-- ;
+--
+-- comment on function util.chain_into is $$
+--
+-- # util.chain_into
+--
+-- ## Usage
+--
+-- ```sql
+-- select *
+-- from util.chain_into(
+-- from_instance := $1,
+-- into_instance_or_template := $2,
+-- strategy := $3,
+-- carry_over_assignments := $4,
+-- field_overrides := $5
+-- );
+-- ```
+--
+-- $$;
 commit
 ;
 

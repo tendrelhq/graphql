@@ -17,18 +17,23 @@ export function nullish<T>(t: T | null | undefined): t is null | undefined {
 
 export class AssertionError extends Error {}
 
+/**
+ * Raises an assertion error when the condition does not hold, except in
+ * production (and when DISABLE_ASSERTIONS is set) in which case we just log a
+ * message instead of throwing.
+ */
 export function assert(condition: boolean, message = "assertion failed") {
   if (!condition) {
     if (
-      // Only fire assertions when in dev/test environments when
-      // DISABLE_ASSERTIONS is not set.
+      // Only fire assertions when in dev/test environments,
+      // and only when DISABLE_ASSERTIONS is unset.
       process.env.NODE_ENV !== "production" &&
       typeof process.env.DISABLE_ASSERTIONS === "undefined"
     ) {
       throw new AssertionError(message);
     }
 
-    // Else just log a warning. We don't want assertions to go unnoticed.
+    // Else just log a warning. We don't want to wholly lose our assertions.
     console.debug(`invariant violated: ${message}`);
   }
 }

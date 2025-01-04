@@ -314,29 +314,28 @@ begin
                   template_id := ins_template,
                   location_id := loop0_t
               ) as t
+          ),
+
+          ins_instance as (
+              select *
+              from util.instantiate(
+                  template_id := ins_template,
+                  location_id := loop0_t,
+                  target_state := 'Open',
+                  target_type := 'On Demand'
+              )
           )
-          -- ),
-          --
-          -- ins_instance as (
-          --     select *
-          --     from util.instantiate(
-          --         template_id := ins_template,
-          --         location_id := loop0_t,
-          --         target_state := 'Open',
-          --         target_type := 'On Demand'
-          --     )
-          -- )
 
       select ' +location', loop0_t
       union all
       select '  +constraint', t.id
       from ins_constraint as t
-      -- union all
-      -- (
-      --   select '  +instance', t.instance
-      --   from ins_instance as t
-      --   group by t.instance
-      -- )
+      union all
+      (
+        select '  +instance', t.instance
+        from ins_instance as t
+        group by t.instance
+      )
     ;
   end loop loop0;
 

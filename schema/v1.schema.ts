@@ -14,8 +14,6 @@ import {
   defaultFieldResolver,
 } from "graphql";
 import { trackables as queryTrackablesResolver } from "./platform/tracking";
-import { trackingAgg as taskTrackingAggResolver } from "./platform/tracking";
-import { trackingAgg as locationTrackingAggResolver } from "./platform/tracking";
 import { name as fieldNameResolver } from "./system/component";
 import { fields as taskFieldsResolver } from "./system/component";
 import { assignees as taskAssigneesResolver } from "./system/component/task";
@@ -48,30 +46,6 @@ export function getSchema(): GraphQLSchema {
       };
     },
   });
-  const AggregateType: GraphQLObjectType = new GraphQLObjectType({
-    name: "Aggregate",
-    fields() {
-      return {
-        group: {
-          description:
-            "The group, or bucket, that uniquely identifies this aggregate.\nFor example, this will be one of the `groupByTag`s passed to `trackingAgg`.",
-          name: "group",
-          type: GraphQLString,
-          resolve(source, args, context, info) {
-            return assertNonNull(
-              defaultFieldResolver(source, args, context, info),
-            );
-          },
-        },
-        value: {
-          description:
-            'The computed aggregate value.\n\nCurrently, this will always be a string value representing a duration in\nseconds, e.g. "360" -> 360 seconds. `null` will be returned when no such\naggregate can be computed, e.g. "time in planned downtime" when no "planned\ndowntime" events exist.',
-          name: "value",
-          type: GraphQLString,
-        },
-      };
-    },
-  });
   const ComponentType: GraphQLInterfaceType = new GraphQLInterfaceType({
     description:
       "Components characterize Entities as possessing a particular trait.\nThey are just simple structs, holding all data necessary to model that trait.",
@@ -100,20 +74,6 @@ export function getSchema(): GraphQLSchema {
             'Entrypoint into the "tracking system(s)" for a given Entity. Note that while\nmany types admit to being trackable, this does not mean that all in fact are\nin practice. In order for an Entity to be trackable, it must be explicitly\nconfigured as such.',
           name: "tracking",
           type: TrackableConnectionType,
-        },
-        trackingAgg: {
-          description:
-            'Construct an aggregate view of a Trackable whose constituents are grouped by\nan arbitrary collection of type tags.\n\nIn the MFT case, an aggregate view for both a Location and a Task can be\nconstructed using the three primary `worktemplatetype`s for the relevant MFT\nworktemplates: "Production", "Planned Downtime", and "Unplanned Downtime".\nNote that, in this case, "Production" implies "total time" and as such\n"uptime" can be computed by subtracting the sum of the two downtime types\nfrom the production time.',
-          name: "trackingAgg",
-          type: new GraphQLList(new GraphQLNonNull(AggregateType)),
-          args: {
-            groupByTag: {
-              name: "groupByTag",
-              type: new GraphQLNonNull(
-                new GraphQLList(new GraphQLNonNull(GraphQLString)),
-              ),
-            },
-          },
         },
       };
     },
@@ -476,6 +436,30 @@ export function getSchema(): GraphQLSchema {
               defaultFieldResolver(source, args, context, info),
             );
           },
+        },
+      };
+    },
+  });
+  const AggregateType: GraphQLObjectType = new GraphQLObjectType({
+    name: "Aggregate",
+    fields() {
+      return {
+        group: {
+          description:
+            "The group, or bucket, that uniquely identifies this aggregate.\nFor example, this will be one of the `groupByTag`s passed to `trackingAgg`.",
+          name: "group",
+          type: GraphQLString,
+          resolve(source, args, context, info) {
+            return assertNonNull(
+              defaultFieldResolver(source, args, context, info),
+            );
+          },
+        },
+        value: {
+          description:
+            'The computed aggregate value.\n\nCurrently, this will always be a string value representing a duration in\nseconds, e.g. "360" -> 360 seconds. `null` will be returned when no such\naggregate can be computed, e.g. "time in planned downtime" when no "planned\ndowntime" events exist.',
+          name: "value",
+          type: GraphQLString,
         },
       };
     },
@@ -924,25 +908,6 @@ export function getSchema(): GraphQLSchema {
           name: "tracking",
           type: TrackableConnectionType,
         },
-        trackingAgg: {
-          description:
-            'Construct an aggregate view of a Trackable whose constituents are grouped by\nan arbitrary collection of type tags.\n\nIn the MFT case, an aggregate view for both a Location and a Task can be\nconstructed using the three primary `worktemplatetype`s for the relevant MFT\nworktemplates: "Production", "Planned Downtime", and "Unplanned Downtime".\nNote that, in this case, "Production" implies "total time" and as such\n"uptime" can be computed by subtracting the sum of the two downtime types\nfrom the production time.',
-          name: "trackingAgg",
-          type: new GraphQLList(new GraphQLNonNull(AggregateType)),
-          args: {
-            groupByTag: {
-              name: "groupByTag",
-              type: new GraphQLNonNull(
-                new GraphQLList(new GraphQLNonNull(GraphQLString)),
-              ),
-            },
-          },
-          resolve(source, args, context) {
-            return assertNonNull(
-              taskTrackingAggResolver(source, context, args.groupByTag),
-            );
-          },
-        },
       };
     },
     interfaces() {
@@ -1103,25 +1068,6 @@ export function getSchema(): GraphQLSchema {
             'Entrypoint into the "tracking system(s)" for the given Location.',
           name: "tracking",
           type: TrackableConnectionType,
-        },
-        trackingAgg: {
-          description:
-            'Construct an aggregate view of a Trackable whose constituents are grouped by\nan arbitrary collection of type tags.\n\nIn the MFT case, an aggregate view for both a Location and a Task can be\nconstructed using the three primary `worktemplatetype`s for the relevant MFT\nworktemplates: "Production", "Planned Downtime", and "Unplanned Downtime".\nNote that, in this case, "Production" implies "total time" and as such\n"uptime" can be computed by subtracting the sum of the two downtime types\nfrom the production time.',
-          name: "trackingAgg",
-          type: new GraphQLList(new GraphQLNonNull(AggregateType)),
-          args: {
-            groupByTag: {
-              name: "groupByTag",
-              type: new GraphQLNonNull(
-                new GraphQLList(new GraphQLNonNull(GraphQLString)),
-              ),
-            },
-          },
-          resolve(source, args, context) {
-            return assertNonNull(
-              locationTrackingAggResolver(source, context, args.groupByTag),
-            );
-          },
         },
       };
     },
