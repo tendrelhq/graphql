@@ -7,6 +7,8 @@ import { TestSetValueDocument } from "./setValue.test.generated";
 
 const schema = makeExecutableSchema({ resolvers, typeDefs });
 
+process.env.X_TENDREL_USER = "user_2iADtxE5UonU4KO5lphsG59bkR9";
+
 describe.skipIf(!!process.env.CI)("setValue", () => {
   test("no delta", async () => {
     const result = await execute(schema, TestSetValueDocument, {

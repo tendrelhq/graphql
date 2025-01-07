@@ -8,7 +8,7 @@ import { match } from "ts-pattern";
 export const setValue: NonNullable<MutationResolvers["setValue"]> = async (
   _,
   { entity, parent, input },
-  _ctx,
+  ctx,
 ) => {
   const { type, id, suffix } = decodeGlobalId(entity);
 
@@ -94,7 +94,18 @@ export const setValue: NonNullable<MutationResolvers["setValue"]> = async (
         UPDATE public.workresult
         SET
             workresultdefaultvalue = ${value ?? null},
-            workresultmodifieddate = now()
+            workresultmodifieddate = now(),
+            workresultmodifiedby = (
+                SELECT workerinstanceid
+                FROM public.workerinstance
+                WHERE
+                    workerinstancecustomerid = workresultcustomerid
+                    AND workerinstanceworkerid = (
+                        SELECT workerid
+                        FROM public.worker
+                        WHERE workeridentityid = ${ctx.auth.userId}
+                    )
+            )
         WHERE
             id = ${id}
             AND workresultdefaultvalue IS DISTINCT FROM ${value ?? null}
@@ -112,14 +123,26 @@ export const setValue: NonNullable<MutationResolvers["setValue"]> = async (
             workresultinstancecustomerid,
             workresultinstanceworkresultid,
             workresultinstanceworkinstanceid,
-            workresultinstancevalue
+            workresultinstancevalue,
+            workresultinstancemodifiedby
         )
         (
           SELECT
               wr.workresultcustomerid,
               wr.workresultid,
               wi.workinstanceid,
-              COALESCE(${value ?? null}::text, wr.workresultdefaultvalue)
+              COALESCE(${value ?? null}::text, wr.workresultdefaultvalue),
+              (
+                  SELECT workerinstanceid
+                  FROM public.workerinstance
+                  WHERE
+                      workerinstancecustomerid = wi.workinstancecustomerid
+                      AND workerinstanceworkerid = (
+                          SELECT workerid
+                          FROM public.worker
+                          WHERE workeridentityid = ${ctx.auth.userId}
+                      )
+              )
           FROM
               public.workinstance AS wi,
               public.workresult AS wr
@@ -131,7 +154,8 @@ export const setValue: NonNullable<MutationResolvers["setValue"]> = async (
         DO UPDATE
             SET
                 workresultinstancevalue = EXCLUDED.workresultinstancevalue,
-                workresultinstancemodifieddate = now()
+                workresultinstancemodifieddate = now(),
+                workresultinstancemodifiedby = EXCLUDED.workresultinstancemodifiedby
             WHERE
                 wri.workresultinstancevalue IS DISTINCT FROM EXCLUDED.workresultinstancevalue
       `;

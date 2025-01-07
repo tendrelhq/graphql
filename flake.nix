@@ -46,6 +46,7 @@
           containers = lib.mkForce {};
           env = {
             BIOME_BINARY = lib.getExe config.packages.biome;
+            DATABASE_URL = "postgresql://localhost:5432/postgres";
           };
           packages = with pkgs; [
             act
