@@ -566,11 +566,10 @@ export async function advance(
   }
 
   await sql.begin(async tx => {
+    // FIXME: use MERGE once we've upgraded to postgres >=15
     const [state] = await tx<[{ _id: number }?]>`
       select workinstancestatusid as _id from public.workinstance where id = ${t._id}
     `;
-
-    // TODO: move to a SQL procedure so we can pipeline.
     const result = await match(state?._id.toString())
       .with(
         "706",
