@@ -4,6 +4,17 @@ mutation TestSetStatus($entity: ID!, $input: ChecklistStatusInput!) {
       delta
       edge {
         node {
+          assignees {
+            edges {
+              node {
+                assignedTo {
+                  ... on Worker {
+                    displayName
+                  }
+                }
+              }
+            }
+          }
           status {
             __typename
           }

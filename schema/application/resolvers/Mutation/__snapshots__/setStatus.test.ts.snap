@@ -10,6 +10,21 @@ exports[`setStatus workinstance 1`] = `
         "__typename": "ChecklistEdge",
         "node": {
           "__typename": "Checklist",
+          "assignees": {
+            "__typename": "AssigneeConnection",
+            "edges": [
+              {
+                "__typename": "AssigneeEdge",
+                "node": {
+                  "__typename": "Assignee",
+                  "assignedTo": {
+                    "__typename": "Worker",
+                    "displayName": "Will Ruggiano",
+                  },
+                },
+              },
+            ],
+          },
           "status": {
             "__typename": "ChecklistOpen",
           },
