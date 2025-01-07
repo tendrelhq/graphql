@@ -42,6 +42,7 @@ describe("MFT", () => {
 
   test("start run", async () => {
     const result = await execute(schema, TestMftTransitionMutationDocument, {
+      includeChain: false,
       opts: {
         fsm: FSM,
         task: {
@@ -70,6 +71,7 @@ describe("MFT", () => {
 
   test("production -> idle time", async () => {
     const result = await execute(schema, TestMftTransitionMutationDocument, {
+      includeChain: false,
       opts: {
         fsm: FSM,
         task: {
@@ -84,6 +86,7 @@ describe("MFT", () => {
   test("end idle time", async () => {
     const t = await mostRecentlyInProgress(FSM);
     const result = await execute(schema, TestMftTransitionMutationDocument, {
+      includeChain: false,
       opts: {
         fsm: FSM,
         task: {
@@ -165,8 +168,67 @@ describe("MFT", () => {
     });
   });
 
+  test("production -> downtime", async () => {
+    const result = await execute(schema, TestMftTransitionMutationDocument, {
+      includeChain: false,
+      opts: {
+        fsm: FSM,
+        task: {
+          id: DOWNTIME,
+        },
+      },
+    });
+    expect(result.errors).toBeFalsy();
+    expect(result.data).toMatchSnapshot();
+  });
+
+  test("end downtime", async () => {
+    const t = await mostRecentlyInProgress(FSM);
+    const result = await execute(schema, TestMftTransitionMutationDocument, {
+      includeChain: false,
+      opts: {
+        fsm: FSM,
+        task: {
+          id: t,
+        },
+      },
+    });
+    expect(result.errors).toBeFalsy();
+    expect(result.data).toMatchSnapshot();
+  });
+
+  test("another idle run", async () => {
+    const start = await execute(schema, TestMftTransitionMutationDocument, {
+      includeChain: false,
+      opts: {
+        fsm: FSM,
+        task: {
+          id: IDLE_TIME,
+        },
+      },
+    });
+    expect(start.errors).toBeFalsy();
+
+    const end = await execute(schema, TestMftTransitionMutationDocument, {
+      includeChain: false,
+      opts: {
+        fsm: FSM,
+        task: {
+          id: await mostRecentlyInProgress(FSM),
+        },
+      },
+    });
+    expect(end.errors).toBeFalsy();
+
+    const result = await execute(schema, TestMftDetailDocument, {
+      node: await mostRecentlyInProgress(FSM),
+    });
+    expect(result.errors).toBeFalsy();
+  });
+
   test("end run", async () => {
     const result = await execute(schema, TestMftTransitionMutationDocument, {
+      includeChain: true,
       opts: {
         fsm: FSM,
         task: {
@@ -213,16 +275,16 @@ describe("MFT", () => {
       id: row1.id,
     });
 
-    // grab the first instance from the 20th row
-    const row20 = logs.at(20 - 1);
+    // grab the first instance from the 25th row
+    const row25 = logs.at(25 - 1);
     // but we can check the tag to be sure
-    if (row20?.op?.trim() !== "+instance") {
+    if (row25?.op?.trim() !== "+instance") {
       debugLogs();
-      throw "setup failed to find 'run' task";
+      throw "setup failed to find 'Run' task instance";
     }
     FSM = encodeGlobalId({
       type: "workinstance",
-      id: row20.id,
+      id: row25.id,
     });
 
     // we get 'Idle Time' in the 13th row
@@ -230,11 +292,23 @@ describe("MFT", () => {
     // but we can check the tag to be sure
     if (row13?.op?.trim() !== "+task") {
       debugLogs();
-      throw "setup failed to find 'idle time' task";
+      throw "setup failed to find 'Idle Time' task template";
     }
     IDLE_TIME = encodeGlobalId({
       type: "worktemplate",
       id: row13.id,
+    });
+
+    // we get 'Downtime' in the 18th row
+    const row18 = logs.at(18 - 1);
+    // but we can check the tag to be sure
+    if (row18?.op?.trim() !== "+task") {
+      debugLogs();
+      throw "setup failed to find 'Downtime' task template";
+    }
+    DOWNTIME = encodeGlobalId({
+      type: "worktemplate",
+      id: row18.id,
     });
   });
 
@@ -269,8 +343,17 @@ ${rows.map(r => ` - ${r.id}`).join("\n")}
       );
     }
 
-    process.stdout.write("Cleaning up... ");
     const { id } = decodeGlobalId(CUSTOMER);
+    // useful for debugging tests:
+    if (process.env.SKIP_MFT_CLEANUP) {
+      console.log(
+        "Skipping clean up... don't forget to cleanup after yourself!",
+      );
+      console.debug(`select mft.destroy_demo(${id})`);
+      return;
+    }
+
+    process.stdout.write("Cleaning up... ");
     const [row] = await sql<[{ ok: string }]>`
       select mft.destroy_demo(${id}) as ok;
     `;

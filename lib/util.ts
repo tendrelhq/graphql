@@ -1,6 +1,7 @@
 import type { SortOrder } from "@/schema";
 import { type GlobalId, decodeGlobalId } from "@/schema/system";
 import { GraphQLError } from "graphql";
+import type { Fragment } from "postgres";
 import { sql } from "./datasources/postgres";
 
 export function isError<T>(e: T | Error): e is Error {
@@ -141,4 +142,18 @@ export function map<T, R>(t: T | null | undefined, fn: (t: T) => R) {
 export function inspect<T>(t: T) {
   console.debug("t =:", t);
   return t;
+}
+
+export function modifiedBy(parent: Fragment, userId: string): Fragment {
+  return sql`
+    select workerinstanceid as _id
+    from public.workerinstance
+    where
+        workerinstancecustomerid = ${parent}
+        and workerinstanceworkerid = (
+            select workerid
+            from public.worker
+            where workeridentityid = ${userId}
+        )
+  `;
 }

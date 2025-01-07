@@ -1,11 +1,11 @@
-import { sql } from "@/datasources/postgres";
+import { join, sql } from "@/datasources/postgres";
 import {
   Location,
   type ConstructorArgs as LocationConstructorArgs,
 } from "@/schema/platform/archetype/location";
 import type { Trackable } from "@/schema/platform/tracking";
 import type { Context } from "@/schema/types";
-import { assert, assertNonNull, map } from "@/util";
+import { assert, assertNonNull, map, modifiedBy } from "@/util";
 import { GraphQLError } from "graphql/error";
 import type { ID, Int } from "grats";
 import type { Fragment } from "postgres";
@@ -554,6 +554,7 @@ export type TaskInput = {
  * ```
  */
 export async function advance(
+  ctx: Context,
   t: Task,
   opts?: Omit<TaskInput, "id"> | null,
 ): Promise<Task> {
@@ -565,42 +566,122 @@ export async function advance(
   }
 
   await sql.begin(async tx => {
-    // TODO: move to a SQL procedure so we can pipeline.
-    const result = await tx`
-      merge into public.workinstance as t
-      using (
-        select *
-        from public.workinstance
-        where id = ${t._id}
-      ) as s on t.workinstanceid = s.workinstanceid
-      when matched and s.workinstancestatusid = 706 then
-        update set workinstancestatusid = 707,
-                   workinstancestartdate = now(),
-                   workinstancemodifieddate = now()
-      when matched and s.workinstancestatusid = 707 then
-        update set workinstancestatusid = 710,
-                   workinstancecompleteddate = now(),
-                   workinstancemodifieddate = now()
-      ;
+    const [state] = await tx<[{ _id: number }?]>`
+      select workinstancestatusid as _id from public.workinstance where id = ${t._id}
     `;
 
+    // TODO: move to a SQL procedure so we can pipeline.
+    const result = await match(state?._id.toString())
+      .with(
+        "706",
+        () => tx`
+          update public.workinstance as t
+          set workinstancestatusid = 707,
+              workinstancestartdate = now(),
+              workinstancemodifieddate = now(),
+              workinstancemodifiedby = (${modifiedBy(sql`t.workinstancecustomerid`, ctx.auth.userId)})
+          where t.id = ${t._id} and t.workinstancestatusid = 706
+        `,
+      )
+      .with(
+        "707",
+        () => tx`
+          update public.workinstance as t
+          set workinstancestatusid = 710,
+              workinstancecompleteddate = now(),
+              workinstancemodifieddate = now(),
+              workinstancemodifiedby = (${modifiedBy(sql`t.workinstancecustomerid`, ctx.auth.userId)})
+          where t.id = ${t._id} and t.workinstancestatusid = 707
+        `,
+      )
+      .otherwise(() => ({ count: 0 }));
+
     if (!result.count) {
+      // FIXME: probably not a hard error. Leaving it for testing.
       assert(false, "no merge action performed");
     }
 
-    // TODO: auto-assign via SQL procedure so we can pipeline.
+    {
+      const ma = "replace";
+      // Check for and apply (if necessary) assignments.
+      const op = applyAssignments$fragment(ctx, t, ma);
+      if (op) {
+        const result = await tx`${op}`;
+        console.debug(
+          `advance: applied ${result.count} assignments (mergeAction: ${ma})`,
+        );
+      }
+    }
 
-    if (opts?.overrides?.length) {
-      // TODO: move to a SQL procedure so we can pipeline.
-      const edits = applyEdits$fragment(t, opts.overrides);
-      if (edits) {
-        const r = await tx`${edits}`;
-        console.log(`Applied ${r.count} field-level edits.`);
+    {
+      // Check for and apply (if necessary) field-level edits.
+      const op = applyEdits$fragment(t, opts?.overrides ?? []);
+      if (op) {
+        const result = await tx`${op}`;
+        console.debug(`advance: applied ${result.count} field-level edits`);
       }
     }
   });
 
   return t;
+}
+
+export function applyAssignments$fragment(
+  ctx: Context,
+  t: Task,
+  mergeAction: "keep" | "replace" = "replace",
+): Fragment | undefined {
+  const ma = match(mergeAction)
+    // When keeping, we only perform the update when the value is null.
+    .with("keep", () => sql`t.workresultinstancevalue is null`)
+    // When replacing, we only perform the update when the value is distinctly
+    // different from the existing value.
+    .with(
+      "replace",
+      () => sql`t.workresultinstancevalue is distinct from auth._id::text`,
+    )
+    .exhaustive();
+
+  return sql`
+    with
+        cte as (
+            select i.workinstancecustomerid as _parent, field.workresultinstanceid as _id
+            from public.workinstance as i
+            inner join public.systag as i_state
+                on i.workinstancestatusid = i_state.systagid
+            inner join public.workresultinstance as field
+                on i.workinstanceid = field.workresultinstanceworkinstanceid
+            inner join public.workresult as field_t
+                on field.workresultinstanceworkresultid = field_t.workresultid
+            where
+                i.id = ${t._id}
+                and i_state.systagtype in ('In Progress', 'Complete')
+                and field_t.workresulttypeid = 848
+                and field_t.workresultentitytypeid = 850
+                and field_t.workresultisprimary = true
+            limit 1
+        ),
+
+        auth as (
+            select w.workerinstanceid as _id
+            from cte, public.workerinstance as w
+            where
+                w.workerinstancecustomerid = cte._parent
+                and w.workerinstanceworkerid = (
+                    select workerid
+                    from public.worker
+                    where workeridentityid = ${ctx.auth.userId}
+                )
+        )
+
+
+    update public.workresultinstance as t
+    set workresultinstancevalue = auth._id::text,
+        workresultinstancemodifieddate = now(),
+        workresultinstancemodifiedby = auth._id
+    from cte, auth
+    where t.workresultinstanceid = cte._id and ${ma}
+  `;
 }
 
 /**
@@ -614,6 +695,10 @@ export function applyEdits$fragment(
   t: Task,
   edits: FieldInput[],
 ): Fragment | undefined {
+  return applyEdits(t, edits);
+}
+
+function applyEdits(t: Task, edits: FieldInput[]): Fragment | undefined {
   if (t._type !== "workinstance") {
     assert(t._type === "workinstance", `cannot apply edits to a '${t._type}'`);
     return;

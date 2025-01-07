@@ -75,12 +75,25 @@ query TestMftDetail($node: ID!) {
   }
 }
 
-mutation TestMftTransitionMutation($opts: FsmOptions!) {
+mutation TestMftTransitionMutation(
+  $opts: FsmOptions!
+  $includeChain: Boolean!
+) {
   advance(opts: $opts) {
-    # chainAgg(overType: ["Runtime", "Idle Time", "Downtime"]) {
-    #   group
-    #   value
-    # }
+    chain @include(if: $includeChain) {
+      edges {
+        node {
+          displayName {
+            name {
+              value
+            }
+          }
+          state {
+            __typename
+          }
+        }
+      }
+    }
     fsm {
       ...TaskFSM_fragment
     }

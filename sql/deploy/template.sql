@@ -444,64 +444,6 @@ from util.instantiate(
 
 $$;
 
--- create type chain_strategy as enum (
--- 'branch',
--- 'continue'
--- );
---
--- create type field_input as (
--- field text,
--- value text
--- );
---
--- create function
--- util.chain_into(
--- -- fmt: off
--- -- required
--- from_instance text,
--- into_instance_or_template text,
--- strategy chain_strategy = 'continue',
--- -- optional
--- carry_over_assignments boolean = null,
--- field_overrides field_input[] = null
--- -- fmt: on
--- )
--- returns table(id text)
--- as $$
--- begin
--- if from_instance is null then
--- raise exception 'chain_into: from_instance is required';
--- end if;
--- if into_instance_or_template is null then
--- raise exception 'chain_into: into_instance_or_template is required';
--- end if;
--- if strategy is null then
--- raise exception 'chain_into: strategy is required';
--- end if;
---
--- raise exception 'not yet implemented';
--- end $$
--- language plpgsql
--- ;
---
--- comment on function util.chain_into is $$
---
--- # util.chain_into
---
--- ## Usage
---
--- ```sql
--- select *
--- from util.chain_into(
--- from_instance := $1,
--- into_instance_or_template := $2,
--- strategy := $3,
--- carry_over_assignments := $4,
--- field_overrides := $5
--- );
--- ```
---
--- $$;
 commit
 ;
 

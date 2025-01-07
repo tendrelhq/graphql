@@ -206,8 +206,7 @@ begin
     raise exception 'failed to create template fields';
   end if;
 
-  -- create the state machine for our trackable task, which consists of two task
-  -- templates: 'Idle Time' and 'Downtime'.
+  -- Create the Idle Time template, which is a transition from Runtime.
   return query
     with
         field (f_name, f_type, f_is_primary, f_order) as (
@@ -275,7 +274,78 @@ begin
   ;
   --
   if not found then
-    raise exception 'failed to create next template';
+    raise exception 'failed to create next template (Idle Time)';
+  end if;
+
+  -- Create the Downtime template, which is a transition from Runtime.
+  return query
+    with
+        field (f_name, f_type, f_is_primary, f_order) as (
+            values
+                ('Override State Time'::text, 'Date'::text, true::boolean, 0::integer),
+                ('Override End Time', 'Date', true, 1),
+                ('Description', 'String', false, 2)
+        ),
+
+        ins_next as (
+            select t.*
+            from util.create_task_t(
+                customer_id := ins_customer,
+                language_type := default_language_type,
+                task_name := 'Downtime',
+                task_parent_id := ins_site
+            ) as t
+        ),
+
+        ins_type as (
+            select t.*
+            from ins_next, public.systag as s
+            cross join lateral util.create_template_type(
+                template_id := ins_next.id,
+                systag_id := s.systaguuid
+            ) as t
+            where s.systagtype = 'Downtime'
+        ),
+
+        ins_field as (
+            select t.*
+            from field, ins_next
+            cross join
+                lateral util.create_field_t(
+                    customer_id := ins_customer,
+                    language_type := default_language_type,
+                    template_id := ins_next.id,
+                    field_name := field.f_name,
+                    field_type := field.f_type,
+                    field_reference_type := null,
+                    field_is_primary := field.f_is_primary,
+                    field_order := field.f_order
+                ) as t
+        ),
+
+        ins_nt_rule as (
+            select t.*
+            from ins_next
+            cross join
+                lateral util.create_morphism(
+                    prev_template_id := ins_template,
+                    next_template_id := ins_next.id,
+                    type_tag := 'Task'
+                ) as t
+        )
+
+        select '  +task', ins_nt_rule.next
+        from ins_nt_rule
+        union all
+        select '   +type', ins_type.id
+        from ins_type
+        union all
+        select '   +field', ins_field.id
+        from ins_field
+  ;
+  --
+  if not found then
+    raise exception 'failed to create next template (Downtime)';
   end if;
 
   with

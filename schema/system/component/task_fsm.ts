@@ -150,7 +150,7 @@ export async function advance(
     console.debug("advance: operating on the active task");
     // When the "choice" is the active task, we advance that task's internal
     // state machine as defined by its own `advance` implementation.
-    await advance_active(choice, opts.task);
+    await advance_active(ctx, choice, opts.task);
   } else {
     console.debug("advance: operating on the fsm");
     // Otherwise, the "choice" identifies a transition in the fsm.
