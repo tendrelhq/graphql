@@ -2,7 +2,7 @@
 begin
 ;
 
-drop function util.create_location
+drop function if exists util.create_location
 ;
 
 commit

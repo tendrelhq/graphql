@@ -33,6 +33,7 @@
     "@types/negotiator": "^0.6.3",
     "@vtsls/language-server": "^0.2.5",
     "dedent": "^1.5.3",
+    "fast-check": "^3.23.2",
     "graphql-language-service-cli": "^3.4.1",
     "grats": "^0.0.29",
     "merge-anything": "^6.0.2",

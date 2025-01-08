@@ -2,29 +2,24 @@
 begin
 ;
 
-drop function util.create_task_t
+drop function if exists util.create_task_t
 ;
 
-drop function util.create_template_type
+drop function if exists util.create_template_type
 ;
 
-drop function util.create_template_constraint_on_location
+drop function if exists util.create_template_constraint_on_location
 ;
 
-drop function util.create_field_t
+drop function if exists util.create_field_t
 ;
 
-drop function util.create_morphism
+drop function if exists util.create_morphism
 ;
 
-drop function util.instantiate
+drop function if exists util.instantiate
 ;
 
--- drop function util.chain_into
--- ;
---
--- drop type chain_strategy;
--- drop type field_input;
 commit
 ;
 

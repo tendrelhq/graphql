@@ -238,6 +238,12 @@ describe("MFT", () => {
     });
     expect(result.errors).toBeFalsy();
     expect(result.data).toMatchSnapshot();
+
+    // const result2 = await execute(schema, TestMftDetailDocument, {
+    //   node: FSM,
+    // });
+    // expect(result2.errors).toBeFalsy();
+    // expect(result2.data).toMatchSnapshot();
   });
 
   beforeAll(async () => {

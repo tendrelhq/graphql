@@ -2,7 +2,7 @@
 begin
 ;
 
-drop function util.create_worker
+drop function if exists util.create_worker
 ;
 
 commit

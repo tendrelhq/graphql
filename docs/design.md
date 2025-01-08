@@ -1,10 +1,10 @@
 ## finishing off Yield
 
-- [ ] in progress agg
-- [ ] instance parent (location)
-- [ ] configurable chain behavior
-- [ ] auto assign
-- [ ] bug: double constraint in demo
+- [x] in progress agg
+- [x] instance parent (location)
+- [x] configurable chain behavior
+- [x] auto assign
+- [x] bug: double constraint in demo
 - [ ] export task type tags
 
 The main thing we need to rework is that we can only deal in instances to make
@@ -15,6 +15,69 @@ so-called chain roots.
 
 What this all boils down to is that we need to generically implement
 worktemplatenexttemplate. The question is how.
+
+- [x] implement respawn on in-progress
+- [x] demo rules should be on status = in-progress
+
+Let's think about the generic implementation. We have basically two modes of
+execution, related to instantiation: lazy and eager.
+
+**The eager case is really just an extension of the lazy case.**
+
+So we have two steps:
+
+1. create an instantiation plan
+2. (when mode = eager) execute the plan
+
+The instantiation plan is just some rows that encode the inputs to the
+`instantiate` operation?
+(template, location, state, type, chain root, chain prev)
+
+Debug logs:
+
+```
+building instantiation plan... ok.
+validating instantiation plan... ok.
+executing instantiation plan... ok.
+```
+
+Requirements:
+
+- we'd like each step to be independently verifiable, for testing purposes
+- maybe even a debug/dryrun mode?
+- the "mode of instantiation" depends on type tags, should be configurable
+
+SQL:
+
+```sql
+select * from engine.build_instantiation_plan(...);
+select * from engine.validate_instantiation_plan(...);
+select * from engine.exec_instantiation_plan(...);
+```
+
+The _output_ of executing the engine (regardless of instantiation mode) should
+include both the plan and the result. Depending on mode, the result might not
+contain anything! Even in the lazy instantiation case, the result _might_
+include _eager_ instantiations, e.g. in the "respawn" case (which is really
+about scheduling/frequency).
+
+Inputs:
+
+- template/location id (for ownership)
+- chain root/previous id (for causality)
+
+**Assumption: changes to the active task have already been committed!**
+
+So, user calls advance/setStatus/setValue which writes changes to disk.
+
+Then we trigger the rules engine, which will construct a plan based on the
+current state of the system (i.e. including what we just wrote).
+
+There might be two things to do here?
+
+1. construct a representation of the fsm from the perspective of the type
+   system
+2. map the current (instance) state onto the fsm to identify the "active state"
 
 # Design
 

@@ -2,7 +2,7 @@
 begin
 ;
 
-drop function util.create_name
+drop function if exists util.create_name
 ;
 
 commit

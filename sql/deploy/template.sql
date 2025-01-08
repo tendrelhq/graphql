@@ -226,7 +226,12 @@ language sql
 ;
 
 create function
-    util.create_morphism(prev_template_id text, next_template_id text, type_tag text)
+    util.create_morphism(
+        prev_template_id text,
+        next_template_id text,
+        state_condition text,
+        type_tag text
+    )
 returns table(prev text, next text)
 as $$
 begin
@@ -252,7 +257,7 @@ begin
         from public.worktemplate as prev
         inner join public.worktemplate as next on next.id = next_template_id
         inner join public.systag as s
-            on s.systagparentid = 705 and s.systagtype = 'In Progress'
+            on s.systagparentid = 705 and s.systagtype = state_condition
         inner join public.systag as tt
             on tt.systagparentid = 691 and tt.systagtype = type_tag
         where prev.id = prev_template_id
@@ -337,12 +342,12 @@ begin
   returning id into ins_instance
   ;
   --
-  return query select ins_instance as instance, null, null
-  ;
-  --
   if not found then
     raise exception 'failed to create instance';
   end if;
+  --
+  return query select ins_instance as instance, null, null
+  ;
 
   -- invariant: originator must not be null :sigh:
   update public.workinstance

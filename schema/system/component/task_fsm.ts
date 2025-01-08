@@ -205,49 +205,6 @@ export async function advance_fsm(
       Promise.reject(`unknown underlying type '${choice._type}'`),
     );
 
-  // // For now, we are going to assume that it is always a worktemplate.
-  // if (choice._type !== "worktemplate") {
-  //   // Note that this is not currently possible as the underlying type of a
-  //   // `transitions` node will always be worktemplate. The one case I can
-  //   // think of in which this would come into play is a sort of escape hatch
-  //   // rule that would allow transitioning from a (potentially deeply) nested
-  //   // state back to some high-level state. For example, in the MFT case it
-  //   // might be desirable to transition back into production directly from a
-  //   // nested downtime state, e.g. you started planned downtime but then were
-  //   // derailed into unplanned downtime, and now you'd like jump back into
-  //   // production without otherwise have to re-enter - only to exit - planned
-  //   // downtime, which would be the default "backing out" behavior that exists
-  //   // now. This would be rather simple to implement, I think. It is just a
-  //   // matter of closing out the active task along with all intermediate
-  //   // ancestors on the way up to the "choice". However, the question is
-  //   // whether this is a valid plan in the generic case. We could just as
-  //   // easily declare the fsm (really: worktemplatenexttemplate) to be acyclic
-  //   // and thus never have this problem (excluding concurrency).
-  //   throw "not supported - re-entrant transitions, i.e. whose underlying type is workinstance";
-  // }
-  //
-  // await sql.begin(tx =>
-  //   // FIXME: copyFrom does not correctly handle deduplication. Sigh.
-  //   // This really shouldn't be part of its job anyways. However, I do think
-  //   // this might suggest that we are using too low-level of an api in this
-  //   // spot because at this level of abstraction we DO want to engage the rules
-  //   // engine. Regardless, we can fix this later. CopyFrom is fine for now,
-  //   // albeit rather overpowered and lacking proper guardrails :)
-  //   copyFromWorkTemplate(
-  //     tx,
-  //     choice._id,
-  //     {
-  //       chain: "continue",
-  //       previous: fsm.active?._id,
-  //       // some extra options
-  //       carryOverAssignments: true,
-  //       fieldOverrides: opts.task.overrides,
-  //       withStatus: "inProgress",
-  //     },
-  //     ctx,
-  //   ),
-  // );
-
   // More useful would be a changeset summary.
   return /* fsm */;
 }

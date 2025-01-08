@@ -2,13 +2,13 @@
 begin
 ;
 
-drop function util.inspect
+drop function if exists util.inspect
 ;
 
-drop function util.inspect_t
+drop function if exists util.inspect_t
 ;
 
-drop schema util cascade
+drop schema if exists util cascade
 ;
 
 commit

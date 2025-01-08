@@ -52,6 +52,7 @@
             copilot-cli
             just
             nodejs # required by biome's entrypoint
+            perlPackages.TAPParserSourceHandlerpgTAP # pg_prove
             postgres
             sqitchPg
             squawk

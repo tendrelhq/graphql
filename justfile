@@ -12,3 +12,6 @@ deploy:
 
 package:
     docker build -t {{image_name}} .
+
+tap:
+    pg_prove ./test/*.test.sql

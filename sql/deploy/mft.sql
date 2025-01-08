@@ -259,6 +259,7 @@ begin
                 lateral util.create_morphism(
                     prev_template_id := ins_template,
                     next_template_id := ins_next.id,
+                    state_condition := 'In Progress',
                     type_tag := 'Task'
                 ) as t
         )
@@ -330,6 +331,7 @@ begin
                 lateral util.create_morphism(
                     prev_template_id := ins_template,
                     next_template_id := ins_next.id,
+                    state_condition := 'In Progress',
                     type_tag := 'Task'
                 ) as t
         )
