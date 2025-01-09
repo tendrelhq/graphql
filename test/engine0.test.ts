@@ -13,18 +13,13 @@ describe("engine0", () => {
           engine0.plan_build(task_id := ${INSTANCE}) as p,
           unnest(p.ops) as t
     `;
+    // IMPORTANT! This is the build phase and so what we get back is the
+    // *entire* plan. The check phase actually evaluates the conditions.
     expect(result).toBeArrayOfSize(2);
   });
 
   test("build + check", async () => {
-    // set the instance to 'in progress'
-    await sql`
-      update public.workinstance
-      set workinstancestatusid = 707
-      where id = ${INSTANCE}
-    `;
-
-    const result = await sql`
+    const r0 = await sql`
       select pc.*
       from
           engine0.plan_build(${INSTANCE}) as pb,
@@ -34,7 +29,32 @@ describe("engine0", () => {
               conditions := pb.ops
           ) as pc
     `;
-    expect(result).toMatchSnapshot();
+    // The instance in question is currently Open. The default rules created as
+    // part of the MFT demo consist of only InProgress state conditions.
+    expect(r0).toHaveLength(0);
+
+    // Set the instance to InProgress.
+    await sql`
+      update public.workinstance
+      set workinstancestatusid = 707
+      where id = ${INSTANCE}
+    `;
+    //
+    const r1 = await sql`
+      select pc.*
+      from
+          engine0.plan_build(${INSTANCE}) as pb,
+          engine0.plan_check(
+              target := pb.target,
+              target_type := pb.target_type,
+              conditions := pb.ops
+          ) as pc
+      order by pc.system
+    `;
+    // Now that the instance is InProgress, we expect our plan to include the
+    // two default rules included in the MFT demo (Idle, Downtime).
+    expect(r1).toBeArrayOfSize(2);
+    expect(r1).toMatchSnapshot();
   });
 
   test("build + check + execute", async () => {

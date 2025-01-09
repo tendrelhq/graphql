@@ -29,7 +29,12 @@ export async function fsm(
     return null;
   }
 
-  const [fsm] = await sql<[{ active: ID; transitions: ID[] }?]>`
+  type Plan = {
+    active: ID;
+    transitions: ID[];
+  };
+
+  const [plan] = await sql<[Plan?]>`
     with recursive
         chain as (
             select *
@@ -42,9 +47,7 @@ export async function fsm(
         ),
 
         active as (
-            select
-                chain.workinstanceworktemplateid as _template,
-                encode(('workinstance:' || chain.id)::bytea, 'base64') as id
+            select chain.id
             from chain
             inner join public.systag on chain.workinstancestatusid = systag.systagid
             where systag.systagtype in ('Open', 'In Progress')
@@ -52,44 +55,49 @@ export async function fsm(
             limit 1
         ),
 
-        transition as (
-            select encode(('worktemplate:' || wt.id)::bytea, 'base64') as id
-            from public.worktemplatenexttemplate as nt
-            inner join
-                public.worktemplate as wt
-                on nt.worktemplatenexttemplatenexttemplateid = wt.worktemplateid
-            where
-                exists (
-                    select 1
-                    from active
-                    where active._template = nt.worktemplatenexttemplateprevioustemplateid
-                )
-                and nt.worktemplatenexttemplateviaworkresultid is null
+        plan as (
+            select pb.*
+            from
+                active,
+                engine0.plan_build(active.id) as pb,
+                engine0.plan_check(
+                    target := pb.target,
+                    target_type := pb.target_type,
+                    conditions := pb.ops
+                ) as pc
+            where pc.result = true
+            order by pb.target
         )
 
-    select active.id as active, array_remove(array_agg(transition.id), null) as transitions
+    select
+        encode(('workinstance:' || active.id)::bytea, 'base64') as active,
+        array_remove(
+          array_agg(encode(('worktemplate:' || plan.target)::bytea, 'base64')),
+          null
+        ) as transitions
     from active
-    left join transition on true
+    left join plan on true
     group by active.id
   `;
 
-  if (!fsm) {
+  if (!plan) {
+    // This is most notably the case on task close.
     // assert(false, "no fsm for task instance");
     return null;
   }
 
   return {
-    active: new Task({ id: fsm.active }, ctx),
+    active: new Task({ id: plan.active }, ctx),
     transitions: {
-      edges: fsm.transitions.map(id => ({
-        cursor: id,
-        node: new Task({ id: id }, ctx),
+      edges: plan.transitions.map(transition => ({
+        cursor: transition,
+        node: new Task({ id: transition }, ctx),
       })),
       pageInfo: {
         hasNextPage: false,
         hasPreviousPage: false,
       },
-      totalCount: fsm.transitions.length,
+      totalCount: plan.transitions.length,
     },
   };
 }
@@ -201,9 +209,7 @@ export async function advance_fsm(
         ),
       ),
     )
-    .otherwise(() =>
-      Promise.reject(`unknown underlying type '${choice._type}'`),
-    );
+    .otherwise(() => assert(false, `unknown underlying type ${choice._type}`));
 
   // More useful would be a changeset summary.
   return /* fsm */;

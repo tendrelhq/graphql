@@ -570,6 +570,7 @@ export async function advance(
     const [state] = await tx<[{ _id: number }?]>`
       select workinstancestatusid as _id from public.workinstance where id = ${t._id}
     `;
+
     const result = await match(state?._id.toString())
       .with(
         "706",
@@ -620,6 +621,19 @@ export async function advance(
         console.debug(`advance: applied ${result.count} field-level edits`);
       }
     }
+
+    // Finally, we must engage the engine. The engine is responsible for
+    // instantiation (e.g. "respawn on in-progress"). However, as is the
+    // engine would instantiate everything that made it through the check phase.
+    // Notably, this includes fsm transitions. So, we need a way to further
+    // refine the plan i.e. exclude fsm transitions. I wonder how we can do
+    // that? `worktemplatenexttemplate` does not help us here, although we could
+    // extend it... Perhaps the key is the "mode of instantiation", which we
+    // *could* encode into worktemplatenexttemplate. So there exist a set of
+    // rules whose "instantiation mode" is "lazy", i.e. the ones we return to
+    // the user as "transitions" under the fsm model. Then there is also a set
+    // of "eager" instantiation rules which should always be instantiated on the
+    // spot, e.g. respawns, audit/remediation generation, etc.
   });
 
   return t;
