@@ -64,6 +64,16 @@ that we intend to invoke it with, via `ctx`.
 
 $$;
 
+create function engine0.invoke(c engine0.closure)
+returns setof record
+as $$
+begin
+  return query execute format('select * from %s($1)', c.f) using c.ctx;
+end $$
+language plpgsql
+strict
+;
+
 -- fmt: off
 create function engine0.plan_build(task_id text)
 returns
@@ -218,9 +228,8 @@ declare
   x engine0.closure;
 begin
   foreach x in array conditions loop
-    return query
-      execute format('select $1, %s($2)', x.f)
-      using x.f, x.ctx
+    return query  select x.f as system, fx.ok
+                  from engine0.invoke(x) as fx(ok boolean)
     ;
   end loop;
 
@@ -237,37 +246,47 @@ comment on function engine0.plan_check is $$
 $$;
 
 create function engine0.eval_field_condition(ctx jsonb)
-returns boolean
+returns table(ok boolean)
 as $$
 begin
-  return false;
+  return query select false as ok;
+  return;
 end $$
 language plpgsql
 strict
 ;
 
 create function engine0.eval_state_condition(ctx jsonb)
-returns boolean
+returns table(ok boolean)
 as $$
 begin
-  perform 1
-  from jsonb_to_record(ctx) as x(state text, task text)
-  inner join public.workinstance as i on x.task = i.id
-  inner join public.systag as s on x.state = s.systaguuid
-  where i.workinstancestatusid = s.systagid
+  return query
+    select true as ok
+    from jsonb_to_record(ctx) as x(state text, task text)
+    inner join public.workinstance as i on x.task = i.id
+    inner join public.systag as s on x.state = s.systaguuid
+    where i.workinstancestatusid = s.systagid
   ;
 
-  return found;
+  return;
 end $$
 language plpgsql
 strict
 ;
 
 create function engine0.eval_field_and_state_condition(ctx jsonb)
-returns boolean
+returns table(ok boolean)
 as $$
 begin
-  return engine0.eval_field_condition(ctx) and engine0.eval_state_condition(ctx);
+  return query 
+    select true as ok
+    from
+        engine0.eval_field_condition(ctx) as f,
+        engine0.eval_state_condition(ctx) as s
+    where f.ok and s.ok
+  ;
+
+  return;
 end $$
 language plpgsql
 strict
