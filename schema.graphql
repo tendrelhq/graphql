@@ -739,6 +739,11 @@ type Field {
   the (raw data) value. The underlying (raw data) value can be `null`.
   """
   value: Value @semanticNonNull
+  """
+  The type of data underlying `value`. This is provided as a convenience when
+  interacting with field-level edits through other apis.
+  """
+  valueType: ValueType @semanticNonNull
 }
 
 type FieldConnection {
@@ -754,7 +759,16 @@ type FieldEdge {
 
 input FieldInput {
   field: ID!
-  value: ValueInput!
+  value: ValueInput
+  """
+  Must match the type of the `value`, e.g.:
+  ```typescript
+  if (field.valueType === "string") {
+    assert("string" in field.value);
+  }
+  ```
+  """
+  valueType: ValueType!
 }
 
 """
@@ -1686,6 +1700,14 @@ input ValueInput @oneOf {
   Date in either ISO or epoch millisecond format.
   """
   timestamp: String
+}
+
+enum ValueType {
+  boolean
+  entity
+  number
+  string
+  timestamp
 }
 
 """

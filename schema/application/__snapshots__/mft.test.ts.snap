@@ -670,7 +670,7 @@ exports[`MFT start run 1`] = `
                 },
                 "value": {
                   "__typename": "StringValue",
-                  "string": "We got off to a late start, hence this comment and the overridden start time!",
+                  "string": null,
                 },
               },
             },
@@ -949,7 +949,7 @@ exports[`MFT end idle time 1`] = `
                 },
                 "value": {
                   "__typename": "StringValue",
-                  "string": "We got off to a late start, hence this comment and the overridden start time!",
+                  "string": null,
                 },
               },
             },
@@ -1228,7 +1228,7 @@ exports[`MFT end downtime 1`] = `
                 },
                 "value": {
                   "__typename": "StringValue",
-                  "string": "We got off to a late start, hence this comment and the overridden start time!",
+                  "string": null,
                 },
               },
             },

@@ -1,5 +1,6 @@
 import {
   GraphQLBoolean,
+  GraphQLEnumType,
   GraphQLID,
   GraphQLInputObjectType,
   GraphQLInt,
@@ -588,6 +589,26 @@ export function getSchema(): GraphQLSchema {
       ];
     },
   });
+  const ValueTypeType: GraphQLEnumType = new GraphQLEnumType({
+    name: "ValueType",
+    values: {
+      boolean: {
+        value: "boolean",
+      },
+      entity: {
+        value: "entity",
+      },
+      number: {
+        value: "number",
+      },
+      string: {
+        value: "string",
+      },
+      timestamp: {
+        value: "timestamp",
+      },
+    },
+  });
   const FieldType: GraphQLObjectType = new GraphQLObjectType({
     name: "Field",
     fields() {
@@ -615,6 +636,17 @@ export function getSchema(): GraphQLSchema {
             "The value for this Field, if any. This field will always be present (when\nrequested) for the given Field so as to convey the underlying data type of\nthe (raw data) value. The underlying (raw data) value can be `null`.",
           name: "value",
           type: ValueType,
+          resolve(source, args, context, info) {
+            return assertNonNull(
+              defaultFieldResolver(source, args, context, info),
+            );
+          },
+        },
+        valueType: {
+          description:
+            "The type of data underlying `value`. This is provided as a convenience when\ninteracting with field-level edits through other apis.",
+          name: "valueType",
+          type: ValueTypeType,
           resolve(source, args, context, info) {
             return assertNonNull(
               defaultFieldResolver(source, args, context, info),
@@ -953,7 +985,13 @@ export function getSchema(): GraphQLSchema {
         },
         value: {
           name: "value",
-          type: new GraphQLNonNull(ValueInputType),
+          type: ValueInputType,
+        },
+        valueType: {
+          description:
+            'Must match the type of the `value`, e.g.:\n```typescript\nif (field.valueType === "string") {\n  assert("string" in field.value);\n}\n```',
+          name: "valueType",
+          type: new GraphQLNonNull(ValueTypeType),
         },
       };
     },
@@ -1081,6 +1119,7 @@ export function getSchema(): GraphQLSchema {
     types: [
       LocaleType,
       TimestampType,
+      ValueTypeType,
       TaskStateType,
       ValueType,
       AssignableType,

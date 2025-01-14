@@ -53,13 +53,17 @@ describe("MFT", () => {
               value: {
                 timestamp: NOW.toISOString(),
               },
+              valueType: "timestamp",
             },
             {
               field: await getFieldByName(FSM, "Comments"),
-              value: {
-                string:
-                  "We got off to a late start, hence this comment and the overridden start time!",
-              },
+              // Test null field-level overrides:
+              value: undefined,
+              // value: {
+              //   string:
+              //     "We got off to a late start, hence this comment and the overridden start time!",
+              // },
+              valueType: "string",
             },
           ],
         },
@@ -97,6 +101,7 @@ describe("MFT", () => {
               value: {
                 string: "We idled for awhile, twas a no wake zone...",
               },
+              valueType: "string",
             },
           ],
         },

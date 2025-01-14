@@ -194,6 +194,14 @@ export type Field = {
    * @gqlField
    */
   value: Value;
+
+  /**
+   * The type of data underlying `value`. This is provided as a convenience when
+   * interacting with field-level edits through other apis.
+   *
+   * @gqlField
+   */
+  valueType: ValueType;
 };
 
 /**
@@ -208,8 +216,25 @@ export function name(field: Field): DisplayName {
 /** @gqlInput */
 export type FieldInput = {
   field: ID;
-  value: ValueInput;
+  value?: ValueInput | null;
+  /**
+   * Must match the type of the `value`, e.g.:
+   * ```typescript
+   * if (field.valueType === "string") {
+   *   assert("string" in field.value);
+   * }
+   * ```
+   */
+  valueType: ValueType;
 };
+
+/** @gqlEnum */
+export type ValueType =
+  | "boolean"
+  | "entity"
+  | "number"
+  | "string"
+  | "timestamp";
 
 /** @gqlUnion */
 export type Value =
@@ -266,24 +291,24 @@ type TimestampValue = {
 export type ValueInput =
   // Boolean
   | {
-      boolean: boolean | null;
+      boolean: boolean;
     }
   // Entity
   | {
-      id: ID | null;
+      id: ID;
     }
   // Number
   | {
-      number: Int | null;
+      number: Int;
     }
   // String
   | {
-      string: string | null;
+      string: string;
     }
   // Temporal
   | {
       /**
        * Date in either ISO or epoch millisecond format.
        */
-      timestamp: string | null;
+      timestamp: string;
     };
