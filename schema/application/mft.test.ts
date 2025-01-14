@@ -270,7 +270,7 @@ describe("MFT", () => {
     }
 
     // we get customer uuid back in the first row
-    const row1 = logs.at(1 - 1);
+    const row1 = logs.at(0);
     // but we can check the tag to be sure
     if (row1?.op?.trim() !== "+customer") {
       debugLogs();
@@ -281,8 +281,8 @@ describe("MFT", () => {
       id: row1.id,
     });
 
-    // grab the first instance from the 25th row
-    const row25 = logs.at(25 - 1);
+    // grab the first instance from the 26th row
+    const row25 = logs.at(25);
     // but we can check the tag to be sure
     if (row25?.op?.trim() !== "+instance") {
       debugLogs();
@@ -293,8 +293,8 @@ describe("MFT", () => {
       id: row25.id,
     });
 
-    // we get 'Idle Time' in the 13th row
-    const row13 = logs.at(13 - 1);
+    // we get 'Idle Time' in the 14th row
+    const row13 = logs.at(13);
     // but we can check the tag to be sure
     if (row13?.op?.trim() !== "+task") {
       debugLogs();
@@ -305,8 +305,8 @@ describe("MFT", () => {
       id: row13.id,
     });
 
-    // we get 'Downtime' in the 18th row
-    const row18 = logs.at(18 - 1);
+    // we get 'Downtime' in the 19th row
+    const row18 = logs.at(18);
     // but we can check the tag to be sure
     if (row18?.op?.trim() !== "+task") {
       debugLogs();

@@ -284,6 +284,41 @@ language plpgsql
 strict
 ;
 
+-- TODO: not quite ready yet...
+-- fmt: off
+-- create function
+--     util.create_rrule(template_id text, frequency_type text, frequency_interval text)
+-- returns table(_id bigint)
+-- as $$
+-- begin
+--   return query
+--     insert into public.workfrequency (
+--         workfrequencycustomerid,
+--         workfrequencyworktemplateid,
+--         workfrequencytypeid,
+--         workfrequencyvalue
+--     )
+--     select
+--         wt.worktemplatecustomerid,
+--         wt.worktemplateid,
+--         ft.systagid,
+--         frequency_interval
+--     from public.worktemplate as wt
+--     inner join public.systag as ft on ft.systaguuid = frequency_type
+--     returning workfrequencyid as _id
+--   ;
+--   --
+--   if not found then
+--     raise exception 'failed to create recurrence rule';
+--   end if;
+--
+--   return;
+-- end $$
+-- language plpgsql
+-- strict
+-- ;
+-- fmt: on
+
 -- FIXME: ensure template is instantiable at location according to
 -- worktemplateconstraint.
 create function
@@ -352,7 +387,7 @@ begin
   -- invariant: originator must not be null :sigh:
   update public.workinstance
   set workinstanceoriginatorworkinstanceid = workinstanceid
-  where id = ins_instance
+  where id = ins_instance and workinstanceoriginatorworkinstanceid is null
   ;
 
   -- default instantiate fields
@@ -407,16 +442,17 @@ begin
     raise exception 'failed to find primary location field';
   end if;
 
-  return query select
-                   ins_instance as instance,
-                   field.workresultinstanceuuid as field,
-                   field.workresultinstancevalue as value
-               from public.workresultinstance as field
-               where field.workresultinstanceworkinstanceid in (
-                   select workinstanceid
-                   from public.workinstance
-                   where id = ins_instance
-               )
+  return query
+    select
+        ins_instance as instance,
+        field.workresultinstanceuuid as field,
+        field.workresultinstancevalue as value
+    from public.workresultinstance as field
+    where field.workresultinstanceworkinstanceid in (
+        select workinstanceid
+        from public.workinstance
+        where id = ins_instance
+    )
   ;
 
   return;

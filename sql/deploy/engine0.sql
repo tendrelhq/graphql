@@ -11,17 +11,17 @@ begin
   return query
     with
         stage1 as (
-            select * from engine0.plan_build(task_id)
+            select * from engine0.build_instantiation_plan(task_id)
         ),
 
         stage2 as (
             select distinct s1.target, s1.target_parent, s1.target_type
-            from stage1 s1, engine0.plan_check(
+            from stage1 s1, engine0.evaluate_instantiation_plan(
                 target := s1.target,
                 target_type := s1.target_type,
                 conditions := s1.ops
             ) pc
-            where pc.result = true
+            where s1.i_mode = 'eager' and pc.result = true
         ),
 
         stage3 as (
@@ -34,7 +34,8 @@ begin
             ) i
         )
 
-    select s3.instance from stage3 s3
+    select s3.instance
+    from stage3 s3
     group by s3.instance
   ;
 
@@ -64,22 +65,23 @@ that we intend to invoke it with, via `ctx`.
 
 $$;
 
-create function engine0.invoke(c engine0.closure)
+create function engine0.invoke(x engine0.closure)
 returns setof record
 as $$
 begin
-  return query execute format('select * from %s($1)', c.f) using c.ctx;
+  return query execute format('select * from %s($1)', x.f) using x.ctx;
 end $$
 language plpgsql
 strict
 ;
 
 -- fmt: off
-create function engine0.plan_build(task_id text)
+create function engine0.build_instantiation_plan(task_id text)
 returns
     table(
         count bigint,
         ops engine0.closure[],
+        i_mode text,
         target text,
         target_parent text,
         target_type text
@@ -109,7 +111,12 @@ begin
         ),
 
         dst as (
+            -- instantiation rules; prev != next
             select
+                -- 'On Demand' implies lazy instantiation, everything else is eager
+                case when t.systagtype = 'On Demand' then 'lazy'
+                     else 'eager'
+                end as i_mode,
                 nt.worktemplatenexttemplateid as _id,
                 root.id as task,
                 root.parent_id as task_parent,
@@ -120,7 +127,12 @@ begin
                 t.systaguuid as next_type_id
             from root
             inner join public.worktemplatenexttemplate as nt
-                on root.workinstanceworktemplateid = nt.worktemplatenexttemplateprevioustemplateid
+                on  root.workinstanceworktemplateid = nt.worktemplatenexttemplateprevioustemplateid
+                and root.workinstanceworktemplateid != nt.worktemplatenexttemplatenexttemplateid
+                and (
+                    nt.worktemplatenexttemplateenddate is null
+                    or nt.worktemplatenexttemplateenddate > now()
+                )
             inner join public.worktemplate as n
                 on nt.worktemplatenexttemplatenexttemplateid = n.worktemplateid
             left join public.workresult as f
@@ -129,7 +141,38 @@ begin
                 on nt.worktemplatenexttemplateviaworkresultcontstraintid = f_op.systagid
             left join public.systag as s
                 on nt.worktemplatenexttemplateviastatuschangeid = s.systagid
-            left join public.systag as t
+            inner join public.systag as t
+                on nt.worktemplatenexttemplatetypeid = t.systagid
+            union all
+            -- recurrence rules; prev = next
+            -- FIXME: the only reason we have to differentiate here is because
+            -- worktemplatenexttemplate only has the single column "typeid"
+            -- which specifies the type of the *next* task. What we want in
+            -- addition to this is a column that specifies the *mode*, i.e.
+            -- eager or lazy.
+            select
+                'eager' as i_mode, -- rrules are always eager
+                nt.worktemplatenexttemplateid as _id,
+                root.id as task,
+                root.parent_id as task_parent,
+                root_t.id as next_task_id,
+                null::text as curr_field_id,
+                null::text as curr_field_op_id,
+                s.systaguuid as curr_state_id,
+                t.systaguuid as next_type_id
+            from root
+            inner join public.worktemplatenexttemplate as nt
+                on  root.workinstanceworktemplateid = nt.worktemplatenexttemplateprevioustemplateid
+                and root.workinstanceworktemplateid = nt.worktemplatenexttemplatenexttemplateid
+                and (
+                    nt.worktemplatenexttemplateenddate is null
+                    or nt.worktemplatenexttemplateenddate > now()
+                )
+            inner join public.worktemplate as root_t
+                on root.workinstanceworktemplateid = root_t.worktemplateid
+            inner join public.systag as s
+                on nt.worktemplatenexttemplateviastatuschangeid = s.systagid
+            inner join public.systag as t
                 on nt.worktemplatenexttemplatetypeid = t.systagid
         ),
 
@@ -198,11 +241,12 @@ begin
     select
         count(*) as count,
         array_agg(plan.op) as ops,
+        plan.i_mode as i_mode,
         plan.next_task_id as target,
         plan.task_parent as target_parent,
         plan.next_type_id as target_type
     from plan
-    group by plan.next_task_id, plan.next_type_id, plan.task_parent
+    group by plan.next_task_id, plan.next_type_id, plan.task_parent, plan.i_mode
   ;
 
   return;
@@ -212,24 +256,27 @@ strict
 ;
 -- fmt: on
 
-comment on function engine0.plan_build is $$
+comment on function engine0.build_instantiation_plan is $$
 
-# engine0.plan_build
+# engine0.build_instantiation_plan
 
 Build an instantiation plan based on the current state of the system.
 
 $$;
 
 create function
-    engine0.plan_check(target text, target_type text, conditions engine0.closure[])
+    engine0.evaluate_instantiation_plan(
+        target text, target_type text, conditions engine0.closure[]
+    )
 returns table(system regproc, result boolean)
 as $$
 declare
   x engine0.closure;
 begin
   foreach x in array conditions loop
-    return query  select x.f as system, fx.ok
-                  from engine0.invoke(x) as fx(ok boolean)
+    return query 
+      select x.f as system, fx.ok
+      from engine0.invoke(x) as fx(ok boolean)
     ;
   end loop;
 
@@ -239,9 +286,11 @@ language plpgsql
 strict
 ;
 
-comment on function engine0.plan_check is $$
+comment on function engine0.evaluate_instantiation_plan is $$
 
-# engine0.plan_check
+# engine0.evaluate_instantiation_plan
+
+Evaluate an instantiation plan.
 
 $$;
 
@@ -249,7 +298,13 @@ create function engine0.eval_field_condition(ctx jsonb)
 returns table(ok boolean)
 as $$
 begin
-  return query select false as ok;
+  return query
+    select false as ok
+    from jsonb_to_record(ctx) as x(
+        field text, field_operator text, state text, task text
+    )
+  ;
+
   return;
 end $$
 language plpgsql
@@ -264,8 +319,9 @@ begin
     select true as ok
     from jsonb_to_record(ctx) as x(state text, task text)
     inner join public.workinstance as i on x.task = i.id
-    inner join public.systag as s on x.state = s.systaguuid
-    where i.workinstancestatusid = s.systagid
+    inner join public.systag as s
+        on  x.state = s.systaguuid
+        and i.workinstancestatusid = s.systagid
   ;
 
   return;

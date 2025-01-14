@@ -43,7 +43,9 @@ export async function fsm(
             union all
             select wi.*
             from chain, public.workinstance as wi
-            where chain.workinstanceid = wi.workinstancepreviousid
+            where
+                chain.workinstanceoriginatorworkinstanceid = wi.workinstanceoriginatorworkinstanceid
+                and chain.workinstanceid = wi.workinstancepreviousid
         ),
 
         active as (
@@ -59,13 +61,13 @@ export async function fsm(
             select pb.*
             from
                 active,
-                engine0.plan_build(active.id) as pb,
-                engine0.plan_check(
+                engine0.build_instantiation_plan(active.id) as pb,
+                engine0.evaluate_instantiation_plan(
                     target := pb.target,
                     target_type := pb.target_type,
                     conditions := pb.ops
                 ) as pc
-            where pc.result = true
+            where pb.i_mode = 'lazy' and pc.result = true
             order by pb.target
         )
 

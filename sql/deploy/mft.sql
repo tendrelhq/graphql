@@ -206,6 +206,21 @@ begin
     raise exception 'failed to create template fields';
   end if;
 
+  -- The canonical on-demand in-progress "respawn" rule. This rule causes a new,
+  -- Open task instance to be created when a task transitions to InProgress.
+  return query
+    select '  +irule', t.next
+    from util.create_morphism(
+        prev_template_id := ins_template,
+        next_template_id := ins_template,
+        state_condition := 'In Progress',
+        type_tag := 'On Demand'
+    ) as t;
+  --
+  if not found then
+    raise exception 'failed to create canonical on-demand in-progress irule';
+  end if;
+
   -- Create the Idle Time template, which is a transition from Runtime.
   return query
     with
@@ -260,7 +275,7 @@ begin
                     prev_template_id := ins_template,
                     next_template_id := ins_next.id,
                     state_condition := 'In Progress',
-                    type_tag := 'Task'
+                    type_tag := 'On Demand'
                 ) as t
         )
 
@@ -332,7 +347,7 @@ begin
                     prev_template_id := ins_template,
                     next_template_id := ins_next.id,
                     state_condition := 'In Progress',
-                    type_tag := 'Task'
+                    type_tag := 'On Demand'
                 ) as t
         )
 

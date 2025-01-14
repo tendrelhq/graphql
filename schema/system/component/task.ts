@@ -123,7 +123,7 @@ export class Task
 
     // NOTE: the following sql supports start/end date overrides as per the
     // mocks. It does NOT do any bullshit name matching, but requires that you
-    // set up the workresults correctly.
+    // set up the workresults correctly. We could make the order configurable.
     // - workresulttypeid must point at 'Date'
     // - workresultisprimary must be true
     // - workresultorder should be 0 for 'start' and 1 for 'end'
@@ -391,9 +391,11 @@ export async function chain(
         from public.workinstance
         where workinstance.id = ${t._id}
         union all
-        select children.*
-        from chain, public.workinstance as children
-        where chain.workinstanceid = children.workinstancepreviousid
+        select child.*
+        from chain, public.workinstance as child
+        where
+            chain.workinstanceoriginatorworkinstanceid = child.workinstanceoriginatorworkinstanceid
+            and chain.workinstanceid = child.workinstancepreviousid
     )
     select encode(('workinstance:' || id)::bytea, 'base64') as id
     from chain
@@ -463,9 +465,11 @@ export async function chainAgg(
             from public.workinstance
             where workinstance.id = ${t._id}
             union all
-            select children.*
-            from chain, public.workinstance as children
-            where chain.workinstanceid = children.workinstancepreviousid
+            select child.*
+            from chain, public.workinstance as child
+            where
+                chain.workinstanceoriginatorworkinstanceid = child.workinstanceoriginatorworkinstanceid
+                and chain.workinstanceid = child.workinstancepreviousid
         )
         select
             tt.systagtype as "group",
@@ -567,13 +571,10 @@ export async function advance(
 
   await sql.begin(async tx => {
     // FIXME: use MERGE once we've upgraded to postgres >=15
-    const [state] = await tx<[{ _id: number }?]>`
-      select workinstancestatusid as _id from public.workinstance where id = ${t._id}
-    `;
-
-    const result = await match(state?._id.toString())
+    const state = await t.state(); // N.B. db call
+    const result = await match(state?.__typename)
       .with(
-        "706",
+        "Open", // to InProgress
         () => tx`
           update public.workinstance as t
           set workinstancestatusid = 707,
@@ -584,7 +585,7 @@ export async function advance(
         `,
       )
       .with(
-        "707",
+        "InProgress", // to Closed
         () => tx`
           update public.workinstance as t
           set workinstancestatusid = 710,
@@ -597,8 +598,23 @@ export async function advance(
       .otherwise(() => ({ count: 0 }));
 
     if (!result.count) {
-      // FIXME: probably not a hard error. Leaving it for testing.
+      // TODO: merge resolution. The implication here is that the end user sees
+      // a different view of the given Task than what exists in the database,
+      // which could happen under concurrency and/or stale data. We could simply
+      // hard error in this case and force the end user to recover/retry (e.g.
+      // via a refresh). This is probably the right course of action.
+      // Alternatively we could be more clever and say that the "last write
+      // wins" or something along the lines of canonical merge strategies (e.g.
+      // in CRDTs).
       assert(false, "no merge action performed");
+      throw new GraphQLError(
+        `Task cannot be advanced. Current state: ${state?.__typename}`,
+        {
+          extensions: {
+            code: "T_INVALID_STATE",
+          },
+        },
+      );
     }
 
     {
@@ -622,18 +638,10 @@ export async function advance(
       }
     }
 
-    // Finally, we must engage the engine. The engine is responsible for
-    // instantiation (e.g. "respawn on in-progress"). However, as is the
-    // engine would instantiate everything that made it through the check phase.
-    // Notably, this includes fsm transitions. So, we need a way to further
-    // refine the plan i.e. exclude fsm transitions. I wonder how we can do
-    // that? `worktemplatenexttemplate` does not help us here, although we could
-    // extend it... Perhaps the key is the "mode of instantiation", which we
-    // *could* encode into worktemplatenexttemplate. So there exist a set of
-    // rules whose "instantiation mode" is "lazy", i.e. the ones we return to
-    // the user as "transitions" under the fsm model. Then there is also a set
-    // of "eager" instantiation rules which should always be instantiated on the
-    // spot, e.g. respawns, audit/remediation generation, etc.
+    {
+      const result = await tx`select * from engine0.execute(${t._id})`;
+      console.debug(`advance: engine.execute.count: ${result.count}`);
+    }
   });
 
   return t;

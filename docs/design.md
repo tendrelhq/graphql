@@ -20,210 +20,135 @@ worktemplatenexttemplate. The question is how.
 - [x] demo rules should be on status = in-progress
 
 Let's think about the generic implementation. We have basically two modes of
-execution, related to instantiation: lazy and eager.
-
-**The eager case is really just an extension of the lazy case.**
-
-So we have two steps:
-
-1. create an instantiation plan
-2. (when mode = eager) execute the plan
-
-The instantiation plan is just some rows that encode the inputs to the
-`instantiate` operation?
-(template, location, state, type, chain root, chain prev)
-
-Debug logs:
-
-```
-building instantiation plan... ok.
-validating instantiation plan... ok.
-executing instantiation plan... ok.
-```
-
-Requirements:
-
-- we'd like each step to be independently verifiable, for testing purposes
-- maybe even a debug/dryrun mode?
-- the "mode of instantiation" depends on type tags, should be configurable
-
-SQL:
-
-```sql
-select * from engine.build_instantiation_plan(...);
-select * from engine.validate_instantiation_plan(...);
-select * from engine.exec_instantiation_plan(...);
-```
-
-The _output_ of executing the engine (regardless of instantiation mode) should
-include both the plan and the result. Depending on mode, the result might not
-contain anything! Even in the lazy instantiation case, the result _might_
-include _eager_ instantiations, e.g. in the "respawn" case (which is really
-about scheduling/frequency).
-
-Inputs:
-
-- template/location id (for ownership)
-- chain root/previous id (for causality)
-
-**Assumption: changes to the active task have already been committed!**
-
-So, user calls advance/setStatus/setValue which writes changes to disk.
-
-Then we trigger the rules engine, which will construct a plan based on the
-current state of the system (i.e. including what we just wrote).
-
-There might be two things to do here?
-
-1. construct a representation of the fsm from the perspective of the type
-   system
-2. map the current (instance) state onto the fsm to identify the "active state"
+execution, related to instantiation: lazy and eager. The difference between
+these two is _intent_. Lazy instantiation allows the user to _choose their own
+path_. This is what we do in Yield. Eager instantiation is a _reaction to user
+interaction_; it happens "behind the scenes". This is how "audits",
+"remediations" and the like work in SWK.
 
 # Design
 
-## Generic worktemplatenexttemplate engine
+## Rules engine
 
-Wtnt has four pieces:
+The RE operates in stages:
 
-1. previous template
-2. next template
-3. field (+optional constraint)
-4. status
+1. build phase
+2. evaluation phase
+3. instantiation phase
 
-This is what we've already done for fsm, except it just needs to be slightly
-more generic. We need to implement the field level rules, but I think those can
-come second. First is the generic status change. This needs to look at the
-current state of the task and if it matches the foreign key, trigger
-instantiation of the foreign key (task template).
+Each of these stages has its own (public) interface in order to promote granular
+test coverage and composability, in addition to developer sanity because... SQL.
 
-The most complicated bit is (a) determining the location at which to
-instantiate, and (b) de-duplicating existing instances (impl: upsert).
+Additionally, we provide a high(er) level interface that, internally, invokes
+each stage in sequence. This is the canonical "public api" into the RE.
 
-I think for (a) we can just "carry over" the location same as we do assignment.
-The implication is that we won't support cross location instantiation, but I
-think this is acceptable considering the legacy engine does not support this
-either.
-
-(b) is tricky. Unfortunately, I can't think of a unique constraint that we could
-enforce for this such that we can make use of a traditional upsert. I suppose we
-could write one via a FOR EACH STATEMENT trigger but that would be highly
-intrusive to the point that we'd need to gate it by default.
-
-We are left with no choice but to do it the hard way.
-First we must check for a matching instance. If we find one then we are done;
-the "rule" is already satisfied.[^1]
+For example;
 
 ```sql
-select 1
-from public.workinstance as i
-inner join public.location on location.locationuuid = $2
-inner join public.workresult as field_t
-    on i.workinstanceworktemplateid = field_t.workresultworktemplateid
-    and field_t.workresulttypeid = ??? -- Entity
-    and field_t.workresultentitytypeid = ??? -- Location
-    and field_t.workresultisprimary = true
-inner join public.workresultinstance as field
-    on field_t.workresultid = field.workresultinstanceworkresultid
-    and i.workinstanceid = field.workinstanceid
-    and field.workresultinstancevalue = location.locationid::text
-where
-    i.workinstanceworktemplateid in (
-        select worktemplateid
-        from public.worktemplate
-        where id = $1
-    )
-    and i.workinstancestatusid in (
-        select systagid
-        from public.systag
-        where systagparentid = ??? and systagtype = $3
-    )
+select *
+from engine.execute($1) -- $1 is a workinstance.id (uuid)
 ```
 
-Actually, I suppose in reality we don't really need to check for Open
-duplicates. This is because this specific use case is not creating Open
-instances, but actually jumping straight to InProgress! The question is then:
-what is the implication of multiple InProgress instances? How could we get into
-such a state? It is entirely ambiguous[^1]. Perhaps we should just make this
-configurable. I don't think we have any way to encode this sort of decision in
-our existing data model.
+> IMPORTANT!
+> This interface **assumes** that all modification(s) to $1 and its components
+> have already been _committed_.
 
-Generically, I suppose there are many ways to get into this situation. For
-example, it is entirely reasonable that a single task be triggerable from
-separate and distinct other tasks? The ol "A or B can trigger C". Naturally,
-this is just a (unique) constraint! I _think_ the default right now is that it
-is an error, i.e. unique. Maybe we make it configurable: (a) error, (b) no-op,
-or (c) ignore. We can make it yet further configurable by allowing you to
-specify _where_ the constraint applies, i.e. the constraint scope: chain
-(meaning a duplicate with the same originator id) or parent (meaning a duplicate
-at the same location). Maybe we hold off on that for now because that really
-just wants to be a tree problem, i.e. tell me where to start in the tree when
-checking the unique constraint.
+As previously stated, the above is really just syntactic sugar over the
+following sequence of calls:
 
-IMPORTANT: for the "duplicate" to show up in our query, it must have the same
-originator. Therefore the unique constraint can only apply at the chain level.
+```sql
+with
+    -- (1) build phase
+    stage1 as (
+        select * from engine.build_instantiation_plan($1)
+    ),
 
-If we do _not_ find a matching instance we must create one. This is essentially
-copyFrom but carrying over the primary location.
+    -- (2) check phase
+    stage2 as (
+        select distinct s1.target, s1.target_parent, s1.target_type
+        from stage1 s1, engine.evaluate_instantiation_plan(
+            target := s1.target,
+            target_type := s1.target_type,
+            conditions := s1.ops
+        ) pc
+        where pc.result = true
+    ),
 
-Rewinding all the way back, the `advance` method must also be configurable such
-that the app can control what happens to the active task. The mocks, for
-example, imply that transitioning closes the previously active task such that
-there is only ever a single InProgress task. This seems like a pretty bad design
-decision IMO since it makes really simple things quite complicated, e.g. how do
-you calculate "total time"? No matter, we can leave it up to them to figure it
-out (use type tags). Regardless we will make it configurable. This just means
-that task_fsm's advance method takes an extra parameter to control this behavior.
+    -- (3) execute phase
+    stage3 as (
+        select pe.*
+        from stage2 s2, engine.plan_execute(
+            template_id := s2.target,
+            location_id := s2.target_parent,
+            target_state := s2.target_state,
+            target_type := s2.target_type
+        ) pe
+    )
 
-So, to summarize:
+select s3.instance
+from stage3 s3
+group by s3.instance;
+```
 
-- [x] demo procedures need to create initial instances
-      (ideally via some generic instantiate procedure)
-- [x] Location's `tracking()` needs to return chains, not templates
-      (and just rely on the rules engine to provide on-demand opens)
-      (this is actually _really_ annoying in conjunction with "flat chaining"[^2])
-- [ ] task_fsm's advance takes an extra parameter to affect the active task when
-      transitioning
-      (which allows for "close and start" behavior)
-- [ ] transitioning needs to first check whether there is an existing instance
-      _in the same chain_ matching the given status
-      (doing it this way we can probably skip the location check for now)
+### (1) build phase
 
-The following should cover essentially all of our remaining TODOs for Yield.
+The goal of this phase is construct what we call a "decision tree" (DST).
 
-Yay!
+DSTs encode all possible permutations that could result from the current state
+of the system. Practically speaking, a DST identifies every template that
+_could_ be instantiated. Instantiation does not happen in this phase.
 
-### design breakdown
+### (2) evaluation phase
 
-It starts with a StateMachine<Task>, representing the wtnt rules. We call this
-the "fsm". The fsm is a data structure that holds an "active" task as well as
-any number of "transitions". The user is free to operate on both the active
-and/or transitions. Operating on the active task is essentially the same thing
-as "doing a checklist" or "doing a task (in swk)" - it is the entrypoint into
-the task-specific state machine (i.e. a StateMachine<TaskStatus>) that abstracts
-the "rules engine". Operating on a transition is essentially just an
-instantiation operation. In particular, this is the _same operation_ that the
-"rules engine" might choose in the active case.
+The goal of this phase is to identify which permutations are allowed to happen
+given the current state of the system. This is where we evaluate conditions and
+keep only those for which _some_ condition holds.
 
-# Appendix
+### (3) instantiation phase
 
-Pass id to trackable screen. This id is the originator, the root of the chain.
+The goal of this phase is instantiation. For each valid permutation (as
+determined by (2)), an instance will be created.
 
-Render FSM. There will always be an active task in the FSM since we are dealing
-with chains. Therefore initially the active task will always be the originator,
-in an Open state. There will be no initial transitions.
+## Instantiation mode, i.e. eager vs lazy
 
-The application is free to create any number of InProgress rules which will
-manifest as transitions. The transition api takes two parameters: the chain and
-the rule. It also takes a third optional parameter to control
-instantiation/chain behavior.
+Canonically, the rules engine has always operated in eager instantiation mode.
+That is: valid permutations _always_ lead to instantiation. However, this is not
+always the case[^1].
 
-[^1]: There are many ambiguities to deal with here.
+Instantiation mode, in the current data model, is derived from
+`worktemplatenexttemplatetypeid`. Historically, this column indicates what "Work
+Type" a new instance should be given, e.g. Audit, Remediation, Task, On Demand.
 
-[^2]:
-    "flat chaining" describes the behavior inherent in the mocks for the
-    Runtime app where each transition marks the end of the previous task. The
-    alternative is "deep chaining" where the previous task is unaffected by the
-    transition, creating a tree-like hierarchy of tasks. Flat chaining is
-    annoying because we have to look for "active chains" rather than just
-    "active roots", which means we have to materialize the entire chain rather
-    than just look at a single node.
+In our new world order, the "On Demand" type indicates lazy instantiation while
+everything else indicates eager instantiation. Lazy instantiation _never_
+happens automatically (by definition). Thus, the execution phase of the engine
+will only create instances for which eager instantiation is prescribed.
+
+## Frequency (and scheduling)
+
+This is really two things:
+
+1. Scheduling, e.g. "every weekday at 2pm"
+2. Rate limiting, e.g. "twice per week"
+
+The former (1) is in play during stage 3: we know we want to instantiate, we
+just don't know _when_ the instance should "start".
+
+The latter (2) is actually stage 2: it is a condition. Instantiation should not
+proceed if the "quota" has already been filled. I don't think we support this
+right now.
+
+## Respawn
+
+Respawn is canonically tied to On Demand vs frequency (i.e. instantiation mode
+in the new world order). When a task is On Demand, it is "always available" i.e.
+there is always an Open instance. This is where the current data model lets us
+down a bit. What we want is an _eager_ instantiation rule that tells us to create
+a new, Open instance when the existing instance goes InProgress. But we lose out
+on "Work Type"? Perhaps we can say that, in such cases, the new instance gets
+the same WT as the previous? This would apply _just_ to respawn rules, i.e.
+self referencing rules.
+
+[^1]:
+    For example, in Yield we desire lazy instantiation to allow the user to
+    explicitly choose which (logical) branch to enter into.

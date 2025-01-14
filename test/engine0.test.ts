@@ -1,6 +1,28 @@
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 import { sql } from "@/datasources/postgres";
 import { assert } from "@/util";
+import type { ID } from "grats";
+
+/**
+ * The result of a call to engine.execute
+ */
+type EngineOutput = {
+  /**
+   * Eagerly instantiated entities. This completes the feedback loop for the
+   * user, such that they can conceivably avoid multiple fetch calls and
+   * re-renders.
+   */
+  eager: {
+    id: ID;
+  }[];
+
+  /**
+   * Lazy instantiation choices. This is essentially the same as our FSM atm.
+   */
+  lazy: {
+    id: ID;
+  }[];
+};
 
 describe("engine0", () => {
   let CUSTOMER: string;
@@ -8,22 +30,23 @@ describe("engine0", () => {
 
   test("build", async () => {
     const result = await sql`
-      select target, target_type, row_to_json(t.*) as condition
+      select target, target_type, row_to_json(t.*) as condition, *
       from
-          engine0.plan_build(task_id := ${INSTANCE}) as p,
+          engine0.build_instantiation_plan(task_id := ${INSTANCE}) as p,
           unnest(p.ops) as t
     `;
     // IMPORTANT! This is the build phase and so what we get back is the
     // *entire* plan. The check phase actually evaluates the conditions.
-    expect(result).toBeArrayOfSize(2);
+    expect(result).toBeArrayOfSize(3);
+    // expect(result).toMatchSnapshot();
   });
 
   test("build + check", async () => {
     const r0 = await sql`
       select pc.*
       from
-          engine0.plan_build(${INSTANCE}) as pb,
-          engine0.plan_check(
+          engine0.build_instantiation_plan(${INSTANCE}) as pb,
+          engine0.evaluate_instantiation_plan(
               target := pb.target,
               target_type := pb.target_type,
               conditions := pb.ops
@@ -43,8 +66,8 @@ describe("engine0", () => {
     const r1 = await sql`
       select pc.*
       from
-          engine0.plan_build(${INSTANCE}) as pb,
-          engine0.plan_check(
+          engine0.build_instantiation_plan(${INSTANCE}) as pb,
+          engine0.evaluate_instantiation_plan(
               target := pb.target,
               target_type := pb.target_type,
               conditions := pb.ops
@@ -52,15 +75,30 @@ describe("engine0", () => {
       order by pc.system
     `;
     // Now that the instance is InProgress, we expect our plan to include the
-    // two default rules included in the MFT demo (Idle, Downtime).
-    expect(r1).toBeArrayOfSize(2);
-    expect(r1).toMatchSnapshot();
+    // two default rules included in the MFT demo (Idle, Downtime) as well as
+    // the canonical respawn rule.
+    expect(r1).toMatchObject([
+      {
+        result: true,
+        system: "engine0.eval_state_condition",
+      },
+      {
+        result: true,
+        system: "engine0.eval_state_condition",
+      },
+      {
+        result: true,
+        system: "engine0.eval_state_condition",
+      },
+    ]);
   });
 
   test("build + check + execute", async () => {
     await sql.begin(async tx => {
       const result = await tx`select * from engine0.execute(${INSTANCE})`;
-      expect(result.at(0)?.instance).toBeTruthy();
+      // We expect only the respawn rule to result in instantiation.
+      expect(result).toHaveLength(1);
+      expect(result.some(row => !row.instance)).toBeFalse();
       await tx`rollback and chain`; // to avoid 25P01 error
     });
   });

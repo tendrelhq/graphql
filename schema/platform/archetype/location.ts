@@ -150,12 +150,6 @@ export class Location implements Component, Refetchable, Trackable {
 
     assert(nodes.length !== 0, "no tracking set");
 
-    // TODO: we can potentially put the aggregate on the edge, and pass in the
-    // location when we construct the edge. This gives us knowledge of our
-    // parent in that location (which we don't - and can't - have in the node
-    // itself, at least when it is a template). In order for the aggregate to
-    // participate in the usual single-roundtrip-rerender, we'd need `advance`
-    // to return an edge, as opposed to just the node.
     return {
       edges: nodes.map(node => ({
         cursor: node.id,
