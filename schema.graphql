@@ -1708,6 +1708,7 @@ enum ValueType {
   number
   string
   timestamp
+  unknown
 }
 
 """

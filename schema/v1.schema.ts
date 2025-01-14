@@ -607,6 +607,9 @@ export function getSchema(): GraphQLSchema {
       timestamp: {
         value: "timestamp",
       },
+      unknown: {
+        value: "unknown",
+      },
     },
   });
   const FieldType: GraphQLObjectType = new GraphQLObjectType({

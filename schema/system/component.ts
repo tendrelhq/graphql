@@ -50,7 +50,14 @@ export async function fields(
   const rows = await match(type)
     .with(
       "workinstance",
-      () => sql<{ _name: string; id: string; value: object }[]>`
+      () => sql<
+        {
+          _name: string;
+          id: string;
+          value: Value;
+          valueType: ValueType;
+        }[]
+      >`
         WITH field AS (
             SELECT
                 encode(('workresultinstance:' || wi.id || ':' || wr.id)::bytea, 'base64') AS id,
@@ -102,7 +109,14 @@ export async function fields(
                     'string', coalesce(wri.workresultinstancevalue, f.default_value)
                 )
                 ELSE '{}'::jsonb
-            END AS value
+            END AS value,
+            CASE
+                WHEN f.type = 'Boolean' THEN 'boolean'
+                WHEN f.type = 'Date' THEN 'timestamp'
+                WHEN f.type = 'Number' THEN 'number'
+                WHEN f.type = 'String' THEN 'string'
+                ELSE 'unknown'
+            END AS "valueType"
         FROM field AS f
         LEFT JOIN public.workresultinstance AS wri
             ON (f._id, f._field) = (wri.workresultinstanceworkinstanceid, wri.workresultinstanceworkresultid)
@@ -110,7 +124,14 @@ export async function fields(
     )
     .with(
       "worktemplate",
-      () => sql<{ _name: string; id: string; value: object }[]>`
+      () => sql<
+        {
+          _name: string;
+          id: string;
+          value: Value;
+          valueType: ValueType;
+        }[]
+      >`
         WITH field AS (
             SELECT
                 encode(('workresult:' || wr.id)::bytea, 'base64') AS id,
@@ -158,7 +179,14 @@ export async function fields(
                     'string', f.default_value::text
                 )
                 ELSE '{}'::jsonb
-            END AS value
+            END AS value,
+            CASE
+                WHEN f.type = 'Boolean' THEN 'boolean'
+                WHEN f.type = 'Date' THEN 'timestamp'
+                WHEN f.type = 'Number' THEN 'number'
+                WHEN f.type = 'String' THEN 'string'
+                ELSE 'unknown'
+            END AS "valueType"
         FROM field AS f
       `,
     )
@@ -166,7 +194,7 @@ export async function fields(
     .otherwise((_: never) => []);
 
   return {
-    edges: rows.map(row => ({ cursor: row.id, node: row as Field })),
+    edges: rows.map(row => ({ cursor: row.id, node: row })),
     pageInfo: {
       hasNextPage: false,
       hasPreviousPage: false,
@@ -234,7 +262,9 @@ export type ValueType =
   | "entity"
   | "number"
   | "string"
-  | "timestamp";
+  | "timestamp"
+  /** For backwards compatibility. */
+  | "unknown";
 
 /** @gqlUnion */
 export type Value =

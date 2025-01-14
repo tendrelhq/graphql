@@ -48,6 +48,7 @@ enum ValueType {
   number
   string
   timestamp
+  unknown
 }
 
 union TaskState = Closed | InProgress | Open

@@ -52,6 +52,7 @@ exports[`MFT entrypoint query 1`] = `
                                 "__typename": "TimestampValue",
                                 "timestamp": null,
                               },
+                              "valueType": "timestamp",
                             },
                           },
                           {
@@ -65,6 +66,7 @@ exports[`MFT entrypoint query 1`] = `
                                 "__typename": "TimestampValue",
                                 "timestamp": null,
                               },
+                              "valueType": "timestamp",
                             },
                           },
                           {
@@ -77,6 +79,7 @@ exports[`MFT entrypoint query 1`] = `
                               "value": {
                                 "__typename": "NumberValue",
                               },
+                              "valueType": "number",
                             },
                           },
                           {
@@ -89,6 +92,7 @@ exports[`MFT entrypoint query 1`] = `
                               "value": {
                                 "__typename": "NumberValue",
                               },
+                              "valueType": "number",
                             },
                           },
                           {
@@ -102,6 +106,7 @@ exports[`MFT entrypoint query 1`] = `
                                 "__typename": "StringValue",
                                 "string": null,
                               },
+                              "valueType": "string",
                             },
                           },
                         ],
@@ -167,6 +172,7 @@ exports[`MFT entrypoint query 1`] = `
                                 "__typename": "TimestampValue",
                                 "timestamp": null,
                               },
+                              "valueType": "timestamp",
                             },
                           },
                           {
@@ -180,6 +186,7 @@ exports[`MFT entrypoint query 1`] = `
                                 "__typename": "TimestampValue",
                                 "timestamp": null,
                               },
+                              "valueType": "timestamp",
                             },
                           },
                           {
@@ -192,6 +199,7 @@ exports[`MFT entrypoint query 1`] = `
                               "value": {
                                 "__typename": "NumberValue",
                               },
+                              "valueType": "number",
                             },
                           },
                           {
@@ -204,6 +212,7 @@ exports[`MFT entrypoint query 1`] = `
                               "value": {
                                 "__typename": "NumberValue",
                               },
+                              "valueType": "number",
                             },
                           },
                           {
@@ -217,6 +226,7 @@ exports[`MFT entrypoint query 1`] = `
                                 "__typename": "StringValue",
                                 "string": null,
                               },
+                              "valueType": "string",
                             },
                           },
                         ],
@@ -282,6 +292,7 @@ exports[`MFT entrypoint query 1`] = `
                                 "__typename": "TimestampValue",
                                 "timestamp": null,
                               },
+                              "valueType": "timestamp",
                             },
                           },
                           {
@@ -295,6 +306,7 @@ exports[`MFT entrypoint query 1`] = `
                                 "__typename": "TimestampValue",
                                 "timestamp": null,
                               },
+                              "valueType": "timestamp",
                             },
                           },
                           {
@@ -307,6 +319,7 @@ exports[`MFT entrypoint query 1`] = `
                               "value": {
                                 "__typename": "NumberValue",
                               },
+                              "valueType": "number",
                             },
                           },
                           {
@@ -319,6 +332,7 @@ exports[`MFT entrypoint query 1`] = `
                               "value": {
                                 "__typename": "NumberValue",
                               },
+                              "valueType": "number",
                             },
                           },
                           {
@@ -332,6 +346,7 @@ exports[`MFT entrypoint query 1`] = `
                                 "__typename": "StringValue",
                                 "string": null,
                               },
+                              "valueType": "string",
                             },
                           },
                         ],
@@ -397,6 +412,7 @@ exports[`MFT entrypoint query 1`] = `
                                 "__typename": "TimestampValue",
                                 "timestamp": null,
                               },
+                              "valueType": "timestamp",
                             },
                           },
                           {
@@ -410,6 +426,7 @@ exports[`MFT entrypoint query 1`] = `
                                 "__typename": "TimestampValue",
                                 "timestamp": null,
                               },
+                              "valueType": "timestamp",
                             },
                           },
                           {
@@ -422,6 +439,7 @@ exports[`MFT entrypoint query 1`] = `
                               "value": {
                                 "__typename": "NumberValue",
                               },
+                              "valueType": "number",
                             },
                           },
                           {
@@ -434,6 +452,7 @@ exports[`MFT entrypoint query 1`] = `
                               "value": {
                                 "__typename": "NumberValue",
                               },
+                              "valueType": "number",
                             },
                           },
                           {
@@ -447,6 +466,7 @@ exports[`MFT entrypoint query 1`] = `
                                 "__typename": "StringValue",
                                 "string": null,
                               },
+                              "valueType": "string",
                             },
                           },
                         ],
@@ -512,6 +532,7 @@ exports[`MFT entrypoint query 1`] = `
                                 "__typename": "TimestampValue",
                                 "timestamp": null,
                               },
+                              "valueType": "timestamp",
                             },
                           },
                           {
@@ -525,6 +546,7 @@ exports[`MFT entrypoint query 1`] = `
                                 "__typename": "TimestampValue",
                                 "timestamp": null,
                               },
+                              "valueType": "timestamp",
                             },
                           },
                           {
@@ -537,6 +559,7 @@ exports[`MFT entrypoint query 1`] = `
                               "value": {
                                 "__typename": "NumberValue",
                               },
+                              "valueType": "number",
                             },
                           },
                           {
@@ -549,6 +572,7 @@ exports[`MFT entrypoint query 1`] = `
                               "value": {
                                 "__typename": "NumberValue",
                               },
+                              "valueType": "number",
                             },
                           },
                           {
@@ -562,6 +586,7 @@ exports[`MFT entrypoint query 1`] = `
                                 "__typename": "StringValue",
                                 "string": null,
                               },
+                              "valueType": "string",
                             },
                           },
                         ],
@@ -622,6 +647,7 @@ exports[`MFT start run 1`] = `
                   "__typename": "TimestampValue",
                   "timestamp": "2024-09-08T19:31:45.364+00:00",
                 },
+                "valueType": "timestamp",
               },
             },
             {
@@ -635,6 +661,7 @@ exports[`MFT start run 1`] = `
                   "__typename": "TimestampValue",
                   "timestamp": null,
                 },
+                "valueType": "timestamp",
               },
             },
             {
@@ -647,6 +674,7 @@ exports[`MFT start run 1`] = `
                 "value": {
                   "__typename": "NumberValue",
                 },
+                "valueType": "number",
               },
             },
             {
@@ -659,6 +687,7 @@ exports[`MFT start run 1`] = `
                 "value": {
                   "__typename": "NumberValue",
                 },
+                "valueType": "number",
               },
             },
             {
@@ -672,6 +701,7 @@ exports[`MFT start run 1`] = `
                   "__typename": "StringValue",
                   "string": null,
                 },
+                "valueType": "string",
               },
             },
           ],
@@ -686,7 +716,7 @@ exports[`MFT start run 1`] = `
             "node": {
               "displayName": {
                 "name": {
-                  "value": "Idle Time",
+                  "value": "Downtime",
                 },
               },
               "fields": {
@@ -735,7 +765,7 @@ exports[`MFT start run 1`] = `
             "node": {
               "displayName": {
                 "name": {
-                  "value": "Downtime",
+                  "value": "Idle Time",
                 },
               },
               "fields": {
@@ -823,6 +853,7 @@ exports[`MFT production -> idle time 1`] = `
                   "__typename": "TimestampValue",
                   "timestamp": null,
                 },
+                "valueType": "timestamp",
               },
             },
             {
@@ -836,6 +867,7 @@ exports[`MFT production -> idle time 1`] = `
                   "__typename": "TimestampValue",
                   "timestamp": null,
                 },
+                "valueType": "timestamp",
               },
             },
             {
@@ -849,6 +881,7 @@ exports[`MFT production -> idle time 1`] = `
                   "__typename": "StringValue",
                   "string": null,
                 },
+                "valueType": "string",
               },
             },
           ],
@@ -901,6 +934,7 @@ exports[`MFT end idle time 1`] = `
                   "__typename": "TimestampValue",
                   "timestamp": "2024-09-08T19:31:45.364+00:00",
                 },
+                "valueType": "timestamp",
               },
             },
             {
@@ -914,6 +948,7 @@ exports[`MFT end idle time 1`] = `
                   "__typename": "TimestampValue",
                   "timestamp": null,
                 },
+                "valueType": "timestamp",
               },
             },
             {
@@ -926,6 +961,7 @@ exports[`MFT end idle time 1`] = `
                 "value": {
                   "__typename": "NumberValue",
                 },
+                "valueType": "number",
               },
             },
             {
@@ -938,6 +974,7 @@ exports[`MFT end idle time 1`] = `
                 "value": {
                   "__typename": "NumberValue",
                 },
+                "valueType": "number",
               },
             },
             {
@@ -951,6 +988,7 @@ exports[`MFT end idle time 1`] = `
                   "__typename": "StringValue",
                   "string": null,
                 },
+                "valueType": "string",
               },
             },
           ],
@@ -965,7 +1003,7 @@ exports[`MFT end idle time 1`] = `
             "node": {
               "displayName": {
                 "name": {
-                  "value": "Idle Time",
+                  "value": "Downtime",
                 },
               },
               "fields": {
@@ -1014,7 +1052,7 @@ exports[`MFT end idle time 1`] = `
             "node": {
               "displayName": {
                 "name": {
-                  "value": "Downtime",
+                  "value": "Idle Time",
                 },
               },
               "fields": {
@@ -1102,6 +1140,7 @@ exports[`MFT production -> downtime 1`] = `
                   "__typename": "TimestampValue",
                   "timestamp": null,
                 },
+                "valueType": "timestamp",
               },
             },
             {
@@ -1115,6 +1154,7 @@ exports[`MFT production -> downtime 1`] = `
                   "__typename": "TimestampValue",
                   "timestamp": null,
                 },
+                "valueType": "timestamp",
               },
             },
             {
@@ -1128,6 +1168,7 @@ exports[`MFT production -> downtime 1`] = `
                   "__typename": "StringValue",
                   "string": null,
                 },
+                "valueType": "string",
               },
             },
           ],
@@ -1180,6 +1221,7 @@ exports[`MFT end downtime 1`] = `
                   "__typename": "TimestampValue",
                   "timestamp": "2024-09-08T19:31:45.364+00:00",
                 },
+                "valueType": "timestamp",
               },
             },
             {
@@ -1193,6 +1235,7 @@ exports[`MFT end downtime 1`] = `
                   "__typename": "TimestampValue",
                   "timestamp": null,
                 },
+                "valueType": "timestamp",
               },
             },
             {
@@ -1205,6 +1248,7 @@ exports[`MFT end downtime 1`] = `
                 "value": {
                   "__typename": "NumberValue",
                 },
+                "valueType": "number",
               },
             },
             {
@@ -1217,6 +1261,7 @@ exports[`MFT end downtime 1`] = `
                 "value": {
                   "__typename": "NumberValue",
                 },
+                "valueType": "number",
               },
             },
             {
@@ -1230,6 +1275,7 @@ exports[`MFT end downtime 1`] = `
                   "__typename": "StringValue",
                   "string": null,
                 },
+                "valueType": "string",
               },
             },
           ],
@@ -1244,7 +1290,7 @@ exports[`MFT end downtime 1`] = `
             "node": {
               "displayName": {
                 "name": {
-                  "value": "Idle Time",
+                  "value": "Downtime",
                 },
               },
               "fields": {
@@ -1293,7 +1339,7 @@ exports[`MFT end downtime 1`] = `
             "node": {
               "displayName": {
                 "name": {
-                  "value": "Downtime",
+                  "value": "Idle Time",
                 },
               },
               "fields": {

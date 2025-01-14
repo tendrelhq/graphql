@@ -158,6 +158,7 @@ fragment TaskFSM_fragment on TaskStateMachine {
               timestamp
             }
           }
+          valueType
         }
       }
     }

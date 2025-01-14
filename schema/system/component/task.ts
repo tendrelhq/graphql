@@ -731,20 +731,14 @@ function applyEdits(t: Task, edits: FieldInput[]): Fragment | undefined {
     const { type, id, suffix } = decodeGlobalId(e.field);
     switch (type) {
       case "workresult": {
-        return [
-          [
-            id,
-            valueInputToSql(e.value) ?? null,
-            valueInputTypeToSql(e.value) ?? null,
-          ],
-        ];
+        return [[id, valueInputToSql(e), valueInputTypeToSql(e)]];
       }
       case "workresultinstance": {
         return [
           [
             assertNonNull(suffix?.at(0)),
-            valueInputToSql(e.value) ?? null,
-            valueInputTypeToSql(e.value) ?? null,
+            valueInputToSql(e),
+            valueInputTypeToSql(e),
           ],
         ];
       }
@@ -793,59 +787,81 @@ function applyEdits(t: Task, edits: FieldInput[]): Fragment | undefined {
   `;
 }
 
-export function valueInputToSql(value?: FieldInput["value"]) {
-  if (!value) return null;
+export function valueInputToSql(input: FieldInput) {
+  if (!input.value) return null;
   switch (true) {
-    case "boolean" in value:
-      return map(value.boolean, v => (v ? "true" : "false"));
+    case "boolean" in input.value: {
+      assert(
+        input.valueType === "boolean",
+        `invalid valueType '${input.valueType}' for boolean input`,
+      );
+      return input.value.boolean ? "true" : "false";
+    }
     // case "decimal" in value:
     //   return value.decimal.toString();
     // case "duration" in value:
     //   return value.duration;
-    case "id" in value:
-      return value.id;
-    case "number" in value:
-      return value.number?.toString();
-    case "string" in value:
-      return value.string;
-    case "timestamp" in value: {
-      return map(value.timestamp, t => {
-        const ms = Date.parse(t);
-        if (Number.isNaN(ms)) {
-          console.warn(`Discarding invalid timestamp '${t}'`);
-          return null;
-        }
-        return new Date(t).toISOString();
-      });
+    case "id" in input.value: {
+      assert(
+        input.valueType === "entity",
+        `invalid valueType '${input.valueType}' for entity input`,
+      );
+      return input.value.id;
+    }
+    case "number" in input.value: {
+      assert(
+        input.valueType === "number",
+        `invalid valueType '${input.valueType}' for number input`,
+      );
+      return input.value.number.toString();
+    }
+    case "string" in input.value: {
+      assert(
+        input.valueType === "string",
+        `invalid valueType '${input.valueType}' for string input`,
+      );
+      return input.value.string;
+    }
+    case "timestamp" in input.value: {
+      assert(
+        input.valueType === "timestamp",
+        `invalid valueType '${input.valueType}' for timestamp input`,
+      );
+      const ms = Date.parse(input.value.timestamp);
+      if (Number.isNaN(ms)) {
+        console.warn(`Discarding invalid timestamp '${input.value.timestamp}'`);
+        return null;
+      }
+      return new Date(ms).toISOString();
     }
     default: {
-      const _: never = value;
-      console.warn(`Unhandled input variant '${JSON.stringify(value)}'`);
+      const _: never = input.value;
+      console.warn(`Unhandled input variant '${JSON.stringify(input.value)}'`);
       return null;
     }
   }
 }
 
-export function valueInputTypeToSql(value?: FieldInput["value"]) {
-  if (!value) return null;
+export function valueInputTypeToSql(input: FieldInput) {
+  if (!input.value) return null;
   switch (true) {
-    case "boolean" in value:
+    case "boolean" in input.value:
       return "Boolean";
     // case "decimal" in value:
     //   return "Number";
     // case "duration" in value:
     //   return "Duration";
-    case "id" in value:
-      return value.id;
-    case "number" in value:
+    case "id" in input.value:
+      return input.value.id;
+    case "number" in input.value:
       return "Number";
-    case "string" in value:
+    case "string" in input.value:
       return "String";
-    case "timestamp" in value:
+    case "timestamp" in input.value:
       return "Date";
     default: {
-      const _: never = value;
-      console.warn(`Unhandled input variant: ${JSON.stringify(value)}`);
+      const _: never = input.value;
+      console.warn(`Unhandled input variant: ${JSON.stringify(input.value)}`);
       return null;
     }
   }
