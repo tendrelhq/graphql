@@ -107,16 +107,13 @@ export async function trackables(
             select
                 'Location' AS "__typename",
                 encode(('location:' || l.locationuuid)::bytea, 'base64') as id
-            from public.location as l
-            inner join public.customer as parent
-                on l.locationcustomerid = parent.customerid
+            from public.customer as parent
+            inner join public.location as l
+                on parent.customerid = l.locationcustomerid
             inner join public.custag as c
-                on l.locationcategoryid = c.custagid
-            inner join public.systag as s
-                on c.custagsystagid = s.systagid
-            where
-                parent.customeruuid = ${id}
-                and s.systagtype = 'Trackable'
+                on  l.locationcategoryid = c.custagid
+                and c.custagtype = 'Runtime Location'
+            where parent.customeruuid = ${id}
             limit ${first ?? null}
           `,
         ),

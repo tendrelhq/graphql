@@ -55,7 +55,7 @@ export class Location implements Component, Refetchable, Trackable {
   async tracking(): Promise<Connection<Trackable> | null> {
     // Location's have a "category" [^1], which is really just a user-defined
     // type. We require that every user-defined type exist in a type hierarchy
-    // whose root is a system-defined type (custagsystagid -> systag).
+    // whose root is a system-defined type (custagsystagid -> systag).[^2]
     //
     // In the "trackable" or "tracking system" world, there is a system-defined
     // type that identifies as the "root" of the "trackable type hierarchy". All
@@ -63,7 +63,7 @@ export class Location implements Component, Refetchable, Trackable {
     //
     // The question is: what are we tracking? For that, we must consult
     // worktemplatetype; we are looking for worktemplates whose type is the same
-    // system-defined "root"[^2] of the "trackable type hierarchy" type as that
+    // system-defined "root"[^3] of the "trackable type hierarchy" type as that
     // of our location category's parent (custagsystagid). Finally,
     // worktemplateconstraint allows us to join everything together:
     //
@@ -75,22 +75,21 @@ export class Location implements Component, Refetchable, Trackable {
     // - for locations: "track all relevant tasks at this location"
     // - for worktemplates: "i am a relevant task"
     //
-    // [^1]: we really need to break this 1:1 relationship!
-    // [^2]: in the future we can match on system-defined children as well
+    // [^1]: We really need to break this 1:1 relationship!
+    // [^2]: Due to invariants elsewhere in the system, custagsystagid points at
+    //       the canonical 'Location Category'. We match on custagtype to
+    //       determine trackability: custagtype = 'Runtime Location'. :tear:
+    // [^3]: In the future we can match on system-defined children as well
     const nodes = await sql<TaskConstructorArgs[]>`
       with
           -- check that the current location is indeed trackable
           is_trackable as (
               select l.locationid as _id, c.custaguuid as type_id
               from public.location as l
-              inner join public.custag as c on l.locationcategoryid = c.custagid
-              where
-                  l.locationuuid = ${this._id}
-                  and exists (
-                      select 1
-                      from public.systag as s
-                      where c.custagsystagid = s.systagid and s.systagtype = 'Trackable'
-                  )
+              inner join public.custag as c
+                  on  l.locationcategoryid = c.custagid
+                  and c.custagtype = 'Runtime Location'
+              where l.locationuuid = ${this._id}
           ),
 
           -- find all trackable tasks for this location

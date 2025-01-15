@@ -331,13 +331,66 @@ create function
 returns table(target_start_time timestamptz)
 as $$
 begin
-  -- TODO: where do we want to handle null? In `instantiate`? Or here?
-  -- For now we'll do it here.
-  return query select now() as target_start_time;
+  return query
+    select coalesce(
+        util.compute_rrule_next_occurrence(
+            freq := freq.systagtype,
+            interval_v := rr.workfrequencyvalue,
+            dtstart := prev.workinstancecompleteddate,
+            tzid := prev.workinstancetimezone
+        ),
+        now()
+    ) as target_start_time
+    from public.worktemplate as t
+    left join public.workinstance as prev on prev.id = task_prev_id
+    left join public.workfrequency as rr
+        on  rr.workfrequencyworktemplateid = t.worktemplateid
+        and (
+            rr.workfrequencyenddate is null
+            or rr.workfrequencyenddate > now()
+        )
+    left join public.systag as freq
+        on  rr.workfrequencytypeid = freq.systagid
+        and freq.systagtype != 'one time'
+    where t.id = task_id
+  ;
+
+  if not found then
+    return query select now() as target_start_time;
+  end if;
+
   return;
 end $$
 language plpgsql
 ;
+
+-- fmt: off
+create function
+    util.compute_rrule_next_occurrence(
+        freq text, interval_v numeric, dtstart timestamptz, tzid text = 'utc'
+    )
+returns timestamptz
+as $$
+declare
+  -- normalize our inputs
+  -- 1. adjust dtstart for the correct timezone
+  dtstart_norm timestamptz := timezone(tzid, dtstart);
+  -- 2. convert 'quarter' frequency to 'month'
+  freq_norm text := case when freq = 'quarter' then 'month' else freq end;
+  --
+  base_freq interval := format('1 %s', freq_norm)::interval;
+begin
+  if freq = 'quarter' then
+    base_freq := '3 month'::interval;
+  end if;
+
+  return dtstart_norm + (base_freq / interval_v);
+end $$
+language plpgsql
+stable
+strict
+;
+-- fmt: on
 
 -- FIXME: ensure template is instantiable at location according to
 -- worktemplateconstraint.

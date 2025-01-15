@@ -81,7 +81,8 @@ begin
                   location_name := location_name,
                   location_parent_id := location_parent_id,
                   location_typename := location_typename,
-                  location_type_hierarchy := 'Trackable',
+                  -- Current invariant: custagsystagid -> Location Category
+                  location_type_hierarchy := 'Location Category',
                   location_timezone := timezone
                );
 
@@ -105,7 +106,7 @@ declare
   --
   ins_template text;
   --
-  loop0_t text;
+  loop0_x text;
 begin
   select t.id into ins_customer
   from
@@ -368,11 +369,11 @@ begin
   with
       inputs(location_name, location_typename) as (
           values
-              ('Mixing Line'::text, 'Mixing Tracking'::text),
-              ('Fill Line', 'Fill Tracking'),
-              ('Assembly Line', 'Assembly Tracking'),
-              ('Cartoning Line', 'Cartoning Tracking'),
-              ('Packaging Line', 'Packaging Tracking')
+              ('Mixing Line'::text, 'Runtime Location'::text),
+              ('Fill Line', 'Runtime Location'),
+              ('Assembly Line', 'Runtime Location'),
+              ('Cartoning Line', 'Runtime Location'),
+              ('Packaging Line', 'Runtime Location')
       )
   select array_agg(t.id) into ins_location
   from inputs
@@ -392,14 +393,14 @@ begin
   end if;
 
   <<loop0>>
-  foreach loop0_t in array ins_location loop
+  foreach loop0_x in array ins_location loop
     return query
       with
           ins_constraint as (
               select *
               from util.create_template_constraint_on_location(
                   template_id := ins_template,
-                  location_id := loop0_t
+                  location_id := loop0_x
               ) as t
           ),
 
@@ -407,13 +408,13 @@ begin
               select *
               from util.instantiate(
                   template_id := ins_template,
-                  location_id := loop0_t,
+                  location_id := loop0_x,
                   target_state := 'Open',
                   target_type := 'On Demand'
               )
           )
 
-      select ' +location', loop0_t
+      select ' +location', loop0_x
       union all
       select '  +constraint', t.id
       from ins_constraint as t

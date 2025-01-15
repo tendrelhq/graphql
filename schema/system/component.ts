@@ -2,7 +2,6 @@ import { sql } from "@/datasources/postgres";
 import type { ID, Int } from "grats";
 import { match } from "ts-pattern";
 import { decodeGlobalId } from ".";
-import type { Mutation } from "../root";
 import type { Context } from "../types";
 import { DisplayName } from "./component/name";
 import type { Task } from "./component/task";
