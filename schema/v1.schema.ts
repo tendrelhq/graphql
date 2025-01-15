@@ -20,6 +20,7 @@ import { fields as taskFieldsResolver } from "./system/component";
 import { assignees as taskAssigneesResolver } from "./system/component/task";
 import { chain as taskChainResolver } from "./system/component/task";
 import { chainAgg as taskChainAggResolver } from "./system/component/task";
+import { applyFieldEdits as mutationApplyFieldEditsResolver } from "./system/component/task";
 import { fsm as taskFsmResolver } from "./system/component/task_fsm";
 import { advance as mutationAdvanceResolver } from "./system/component/task_fsm";
 import { node as queryNodeResolver } from "./system/node";
@@ -1048,6 +1049,32 @@ export function getSchema(): GraphQLSchema {
           resolve(source, args, context) {
             return assertNonNull(
               mutationAdvanceResolver(source, context, args.opts),
+            );
+          },
+        },
+        applyFieldEdits: {
+          name: "applyFieldEdits",
+          type: TaskType,
+          args: {
+            edits: {
+              name: "edits",
+              type: new GraphQLNonNull(
+                new GraphQLList(new GraphQLNonNull(FieldInputType)),
+              ),
+            },
+            entity: {
+              name: "entity",
+              type: new GraphQLNonNull(GraphQLID),
+            },
+          },
+          resolve(source, args, context) {
+            return assertNonNull(
+              mutationApplyFieldEditsResolver(
+                source,
+                context,
+                args.entity,
+                args.edits,
+              ),
             );
           },
         },

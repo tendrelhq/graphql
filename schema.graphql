@@ -961,6 +961,7 @@ type Mutation {
   activate(entity: ID!): Activatable!
   activateWorker(id: ID!): Worker!
   advance(opts: FsmOptions!): Task @semanticNonNull
+  applyFieldEdits(edits: [FieldInput!]!, entity: ID!): Task @semanticNonNull
   """
   Assign an entity to another entity. If the entity is already assigned to the
   same entity, this operation is a no-op.

@@ -1,11 +1,12 @@
-import { join, sql } from "@/datasources/postgres";
+import { sql } from "@/datasources/postgres";
 import {
   Location,
   type ConstructorArgs as LocationConstructorArgs,
 } from "@/schema/platform/archetype/location";
 import type { Trackable } from "@/schema/platform/tracking";
+import type { Mutation } from "@/schema/root";
 import type { Context } from "@/schema/types";
-import { assert, assertNonNull, map, modifiedBy } from "@/util";
+import { assert, assertNonNull, modifiedBy } from "@/util";
 import { GraphQLError } from "graphql/error";
 import type { ID, Int } from "grats";
 import type { Fragment } from "postgres";
@@ -705,6 +706,24 @@ export function applyAssignments$fragment(
   `;
 }
 
+/** @gqlField */
+export async function applyFieldEdits(
+  _: Mutation,
+  ctx: Context,
+  entity: ID,
+  edits: FieldInput[],
+): Promise<Task> {
+  const t = new Task({ id: entity }, ctx);
+
+  await sql.begin(async tx => {
+    const f = applyEdits$fragment(t, edits);
+    if (!f) return;
+    await tx`${f}`;
+  });
+
+  return t;
+}
+
 /**
  * The purpose of this function is to abstract the process of applying
  * field-level edits to a Task (i.e. a workinstance's workresultinstances).
@@ -716,10 +735,6 @@ export function applyEdits$fragment(
   t: Task,
   edits: FieldInput[],
 ): Fragment | undefined {
-  return applyEdits(t, edits);
-}
-
-function applyEdits(t: Task, edits: FieldInput[]): Fragment | undefined {
   if (t._type !== "workinstance") {
     assert(t._type === "workinstance", `cannot apply edits to a '${t._type}'`);
     return;

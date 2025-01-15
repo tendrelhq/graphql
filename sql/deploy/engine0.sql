@@ -11,17 +11,35 @@ begin
   return query
     with
         stage1 as (
-            select * from engine0.build_instantiation_plan(task_id)
+            select p0.*
+            from
+                engine0.build_instantiation_plan(task_id) as p0,
+                engine0.evaluate_instantiation_plan(
+                    target := p0.target,
+                    target_type := p0.target_type,
+                    conditions := p0.ops
+                ) as p1
+            where p1.result = true
         ),
 
+        -- FIXME: we shouldn't need to do this per se. Really we need to replace
+        -- util.instantiate with a better procedure, one that takes uuids
+        -- instead of typenames.
         stage2 as (
-            select distinct s1.target, s1.target_parent, s1.target_type
-            from stage1 s1, engine0.evaluate_instantiation_plan(
-                target := s1.target,
-                target_type := s1.target_type,
-                conditions := s1.ops
-            ) pc
-            where s1.i_mode = 'eager' and pc.result = true
+            select distinct
+                s1.target,
+                s1.target_parent,
+                ts.systagtype as target_state,
+                tt.systagtype as target_type
+            from stage1 s1
+            inner join public.systag as ts
+                -- FIXME: this should be configurable. For now our goal is 1:1
+                -- parity with the existing rules engine; this is the implicit
+                -- configuration for that system at the moment.
+                on ts.systagparentid = 705 and ts.systagtype = 'Open'
+            inner join public.systag as tt
+                on s1.target_type = tt.systaguuid
+            where s1.i_mode = 'eager'
         ),
 
         stage3 as (
@@ -29,8 +47,8 @@ begin
             from stage2 s2, util.instantiate(
                 template_id := s2.target,
                 location_id := s2.target_parent,
-                target_state := 'Open',    -- FIXME: s2.target_state (doesn't exist)
-                target_type := 'On Demand' -- FIXME: s2.target_type (but its a uuid)
+                target_state := s2.target_state,
+                target_type := s2.target_type
             ) i
         )
 

@@ -291,6 +291,7 @@ type Location implements Component & Node & Trackable {
 
 type Mutation {
   advance(opts: FsmOptions!): Task @semanticNonNull
+  applyFieldEdits(edits: [FieldInput!]!, entity: ID!): Task @semanticNonNull
 }
 
 type NumberValue {

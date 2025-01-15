@@ -5,6 +5,7 @@ import { decodeGlobalId, encodeGlobalId } from "@/schema/system";
 import { NOW, execute } from "@/test/prelude";
 import { assert, nullish } from "@/util";
 import {
+  TestMftApplyFieldEditsMutationDocument,
   TestMftDetailDocument,
   TestMftEntrypointDocument,
   TestMftTransitionMutationDocument,
@@ -249,6 +250,28 @@ describe("MFT", () => {
     // });
     // expect(result2.errors).toBeFalsy();
     // expect(result2.data).toMatchSnapshot();
+  });
+
+  test("apply field edits retroactively", async () => {
+    const result = await execute(
+      schema,
+      TestMftApplyFieldEditsMutationDocument,
+      {
+        entity: FSM,
+        edits: [
+          {
+            field: await getFieldByName(FSM, "Comments"),
+            value: {
+              string: "Don't mind me! Just leaving a comment :)",
+            },
+            valueType: "string",
+          },
+        ],
+      },
+    );
+
+    expect(result.errors).toBeFalsy();
+    expect(result.data).toMatchSnapshot();
   });
 
   beforeAll(async () => {

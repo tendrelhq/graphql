@@ -100,6 +100,32 @@ mutation TestMftTransitionMutation(
   }
 }
 
+mutation TestMftApplyFieldEditsMutation($entity: ID!, $edits: [FieldInput!]!) {
+  applyFieldEdits(entity: $entity, edits: $edits) {
+    fields {
+      edges {
+        node {
+          name {
+            name {
+              value
+            }
+          }
+          value {
+            __typename
+            ... on StringValue {
+              string
+            }
+            ... on TimestampValue {
+              timestamp
+            }
+          }
+          valueType
+        }
+      }
+    }
+  }
+}
+
 fragment Trackables_fragment on Trackable {
   tracking {
     edges {

@@ -319,6 +319,26 @@ strict
 -- ;
 -- fmt: on
 
+create function
+    util.evaluate_rrules(
+        -- fmt: off
+        task_id text,
+        task_parent_id text,
+        task_prev_id text = null,
+        task_root_id text = null
+        -- fmt: on
+    )
+returns table(target_start_time timestamptz)
+as $$
+begin
+  -- TODO: where do we want to handle null? In `instantiate`? Or here?
+  -- For now we'll do it here.
+  return query select now() as target_start_time;
+  return;
+end $$
+language plpgsql
+;
+
 -- FIXME: ensure template is instantiable at location according to
 -- worktemplateconstraint.
 create function
@@ -360,13 +380,19 @@ begin
       task_type_t.systagid,
       task_t.worktemplatesoplink,
       null, -- start date
-      now(), -- target start date, FIXME: implement scheduling
+      rr.target_start_time,
       location.locationtimezone
   from
       public.worktemplate as task_t,
       public.location as location,
       public.systag as task_state_t,
-      public.systag as task_type_t
+      public.systag as task_type_t,
+      util.evaluate_rrules(
+          task_id := task_t.id,
+          task_parent_id := location.locationuuid,
+          task_prev_id := chain_prev_id,
+          task_root_id := chain_root_id
+      ) as rr
   left join public.workinstance as chain_root on chain_root.id = chain_root_id
   left join public.workinstance as chain_prev on chain_prev.id = chain_prev_id
   where
