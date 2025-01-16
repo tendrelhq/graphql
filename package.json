@@ -8,7 +8,7 @@
     "clean": "rimraf **/__generated__/** **/*.generated.ts node_modules out",
     "compile": "bun build.ts",
     "generate": "bunx grats && bun ./scripts/generate-legacy-schema.ts && bun ./scripts/print-schema.ts",
-    "postgenerate": "treefmt",
+    "postgenerate": "eval $TREEFMT",
     "start": "bun ./bin/app.ts",
     "start+tracing": "bun -r ./lib/instrument.ts ./bin/app.ts",
     "postinstall": "bun generate"

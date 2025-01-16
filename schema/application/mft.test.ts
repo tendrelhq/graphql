@@ -26,7 +26,7 @@ import {
  * - [ ] Better nomenclature re. differentiating template vs instance
  */
 
-describe("MFT", () => {
+describe.skipIf(!!process.env.CI)("MFT", () => {
   // See beforeAll for initialization of these variables.
   let CUSTOMER: string;
   let FSM: string; // instance

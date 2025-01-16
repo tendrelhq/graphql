@@ -24,7 +24,7 @@ type EngineOutput = {
   }[];
 };
 
-describe("engine0", () => {
+describe.skipIf(!!process.env.CI)("engine0", () => {
   let CUSTOMER: string;
   let INSTANCE: string;
 

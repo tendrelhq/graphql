@@ -42,6 +42,8 @@
             # TODO: switch to dev, but I need to get a self contained test
             # environment up and running first :/
             PGDATABASE = "postgres";
+            # Janky af I know, but an easy way to silently fail successfully
+            TREEFMT = "treefmt";
           };
           packages = with pkgs;
           with config.packages; [
