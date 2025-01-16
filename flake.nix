@@ -34,6 +34,12 @@
         self',
         ...
       }: {
+        devShells.ci = pkgs.mkShellNoCC {
+          name = "tendrel-graphql/ci";
+          buildInputs = [pkgs.bun config.packages.treefmt];
+          # Environment variables:
+          TREEFMT = "treefmt";
+        };
         devenv.shells.default = {
           name = "tendrel-graphql";
           containers = lib.mkForce {};
@@ -59,12 +65,12 @@
             postgres
             sqitchPg
             squawk
+            treefmt
             vtsls
-            config.treefmt.build.wrapper
           ];
           pre-commit.hooks.treefmt = {
             enable = true;
-            package = config.treefmt.build.wrapper;
+            package = config.packages.treefmt;
           };
           processes = {
             app.exec = "bun --inspect ./bin/app.ts";
@@ -164,6 +170,7 @@
           };
 
           postgres = pkgs.postgresql_16;
+          treefmt = config.treefmt.build.wrapper;
         };
 
         treefmt.config = {
