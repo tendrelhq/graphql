@@ -2,6 +2,15 @@
 begin
 ;
 
+drop function if exists util.create_rrule
+;
+
+drop function if exists util.evaluate_rrules
+;
+
+drop function if exists util.compute_rrule_next_occurrence
+;
+
 drop function if exists util.create_task_t
 ;
 

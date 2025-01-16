@@ -284,40 +284,68 @@ language plpgsql
 strict
 ;
 
--- TODO: not quite ready yet...
--- fmt: off
--- create function
---     util.create_rrule(template_id text, frequency_type text, frequency_interval text)
--- returns table(_id bigint)
--- as $$
--- begin
---   return query
---     insert into public.workfrequency (
---         workfrequencycustomerid,
---         workfrequencyworktemplateid,
---         workfrequencytypeid,
---         workfrequencyvalue
---     )
---     select
---         wt.worktemplatecustomerid,
---         wt.worktemplateid,
---         ft.systagid,
---         frequency_interval
---     from public.worktemplate as wt
---     inner join public.systag as ft on ft.systaguuid = frequency_type
---     returning workfrequencyid as _id
---   ;
---   --
---   if not found then
---     raise exception 'failed to create recurrence rule';
---   end if;
---
---   return;
--- end $$
--- language plpgsql
--- strict
--- ;
--- fmt: on
+create function
+    util.create_rrule(task_id text, frequency_type text, frequency_interval numeric)
+returns table(_id bigint)
+as $$
+begin
+  return query
+    with
+        task as (
+            select *
+            from public.worktemplate
+            where id = task_id
+        ),
+
+        type as (
+            select *
+            from public.systag
+            where systagparentid = 738 and systagtype = frequency_type
+        ),
+
+        ins_freq as (
+            insert into public.workfrequency (
+                workfrequencycustomerid,
+                workfrequencyworktemplateid,
+                workfrequencytypeid,
+                workfrequencyvalue
+            )
+            select
+                task.worktemplatecustomerid,
+                task.worktemplateid,
+                type.systagid,
+                frequency_interval
+            from task, type
+            where not exists (
+                select 1
+                from public.workfrequency as wf
+                inner join task on wf.workfrequencyworktemplateid = task.worktemplateid
+                inner join type on wf.workfrequencytypeid = type.systagid
+                where wf.workfrequencyvalue = frequency_interval
+            )
+            returning workfrequencyid
+        )
+
+    select workfrequencyid as _id
+    from ins_freq
+    union all
+    select wf.workfrequencyid as _id
+    from task, type, public.workfrequency as wf
+    where
+        wf.workfrequencyworktemplateid = task.worktemplateid
+        and wf.workfrequencytypeid = type.systagid
+        and wf.workfrequencyvalue = frequency_interval
+  ;
+  --
+  if not found then
+    raise exception 'failed to create recurrence rule';
+  end if;
+
+  return;
+end $$
+language plpgsql
+strict
+;
 
 create function
     util.evaluate_rrules(

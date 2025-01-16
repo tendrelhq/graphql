@@ -48,7 +48,8 @@ begin
                 template_id := s2.target,
                 location_id := s2.target_parent,
                 target_state := s2.target_state,
-                target_type := s2.target_type
+                target_type := s2.target_type,
+                chain_prev_id := task_id
             ) i
         )
 

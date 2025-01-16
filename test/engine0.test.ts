@@ -1,28 +1,6 @@
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 import { sql } from "@/datasources/postgres";
 import { assert } from "@/util";
-import type { ID } from "grats";
-
-/**
- * The result of a call to engine.execute
- */
-type EngineOutput = {
-  /**
-   * Eagerly instantiated entities. This completes the feedback loop for the
-   * user, such that they can conceivably avoid multiple fetch calls and
-   * re-renders.
-   */
-  eager: {
-    id: ID;
-  }[];
-
-  /**
-   * Lazy instantiation choices. This is essentially the same as our FSM atm.
-   */
-  lazy: {
-    id: ID;
-  }[];
-};
 
 describe.skipIf(!!process.env.CI)("engine0", () => {
   let CUSTOMER: string;
@@ -99,7 +77,6 @@ describe.skipIf(!!process.env.CI)("engine0", () => {
       // We expect only the respawn rule to result in instantiation.
       expect(result).toHaveLength(1);
       expect(result.some(row => !row.instance)).toBeFalse();
-      await tx`rollback and chain`; // to avoid 25P01 error
     });
   });
 
@@ -134,15 +111,3 @@ describe.skipIf(!!process.env.CI)("engine0", () => {
     console.debug(row.ok);
   });
 });
-
-// test("fc tutorial", () => {
-//   fc.assert(
-//     fc.property(fc.array(fc.integer()), data => {
-//       const sorted = data.toSorted((a, b) => a - b);
-//       for (let i = 1; i < data.length; ++i) {
-//         expect(sorted[i - 1]).toBeLessThanOrEqual(sorted[i]);
-//       }
-//     }),
-//     { numRuns: 100_000 },
-//   );
-// });
