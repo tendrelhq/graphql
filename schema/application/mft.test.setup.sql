@@ -18,4 +18,3 @@ from util.create_type('Downtime')
 
 commit
 ;
-

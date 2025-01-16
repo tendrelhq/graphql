@@ -19,4 +19,3 @@ select pg_catalog.has_function_privilege('mft.destroy_demo'::regproc, 'execute')
 
 rollback
 ;
-

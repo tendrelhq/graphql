@@ -28,4 +28,3 @@ strict
 
 commit
 ;
-

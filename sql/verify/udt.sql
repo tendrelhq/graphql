@@ -10,4 +10,3 @@ select pg_catalog.has_function_privilege('util.create_type'::regproc, 'execute')
 
 rollback
 ;
-

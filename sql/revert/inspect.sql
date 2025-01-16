@@ -13,4 +13,3 @@ drop schema if exists util cascade
 
 commit
 ;
-

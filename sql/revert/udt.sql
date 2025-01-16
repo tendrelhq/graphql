@@ -10,4 +10,3 @@ drop function if exists util.create_type
 
 commit
 ;
-

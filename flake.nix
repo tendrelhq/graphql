@@ -53,6 +53,7 @@
             just
             nodejs # required by biome's entrypoint
             perlPackages.TAPParserSourceHandlerpgTAP # pg_prove
+            python3.pkgs.sqlfmt
             postgres
             sqitchPg
             squawk
@@ -177,7 +178,27 @@
               includes = ["*.md" "*.yaml" "*.yml"];
             };
           };
-          settings.formatter.biome.options = lib.mkForce ["check" "--write"];
+          settings = {
+            formatter = {
+              biome.options = lib.mkForce ["check" "--write"];
+              sqlfmt = {
+                command = lib.getExe pkgs.python3.pkgs.sqlfmt;
+                options = ["-"];
+                includes = ["*.sql"];
+              };
+            };
+            global.excludes = [
+              "*.conf"
+              "*.lockb"
+              "*.plan"
+              "*.snap"
+              "*.toml"
+              ".*" # hidden files
+              "copilot/.workspace"
+              "Dockerfile"
+              "justfile"
+            ];
+          };
         };
       };
     };

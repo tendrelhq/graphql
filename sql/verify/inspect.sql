@@ -13,4 +13,3 @@ select pg_catalog.has_function_privilege('util.inspect_t'::regproc, 'execute')
 
 rollback
 ;
-

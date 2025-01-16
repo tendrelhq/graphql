@@ -42,4 +42,3 @@ where
     and chain.workinstancecompleteddate is not null
 order by chain.workinstancecompleteddate desc
 ;
-

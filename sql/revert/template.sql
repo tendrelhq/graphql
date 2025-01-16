@@ -22,4 +22,3 @@ drop function if exists util.instantiate
 
 commit
 ;
-

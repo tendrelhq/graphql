@@ -19,4 +19,3 @@ drop schema if exists mft
 
 commit
 ;
-

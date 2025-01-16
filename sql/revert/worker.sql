@@ -7,4 +7,3 @@ drop function if exists util.create_worker
 
 commit
 ;
-
