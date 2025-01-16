@@ -108,12 +108,12 @@
 
         packages = {
           biome = let
-            pkg = lib.importJSON ./package.json;
+            pkgJSON = lib.importJSON ./package.json;
           in
             pkgs.stdenv.mkDerivation rec {
               pname = "biome";
               version = let
-                v = pkg.devDependencies."@biomejs/biome";
+                v = pkgJSON.devDependencies."@biomejs/biome";
               in "v${lib.strings.removePrefix "^" v}";
 
               src = pkgs.fetchurl {
