@@ -20,6 +20,58 @@ using [sqitch] as a helpful little migration tool. Once installed, basically the
 only command you need is `sqitch rebase -y`. This will revert (if applicable)
 and deploy the scripts in [./sql] as per [./sql/sqitch.plan].
 
+### formatting
+
+If you don't have [nix] and want to format, the generated configuration looks
+like this:
+
+```toml
+[formatter.alejandra]
+command = "alejandra"
+excludes = []
+includes = ["*.nix"]
+options = []
+
+[formatter.biome]
+command = "biome"
+excludes = []
+includes = ["*.graphql", "*.json", "*.ts"]
+options = ["check", "--write"]
+
+[formatter.prettier]
+command = "prettier"
+excludes = []
+includes = ["*.md", "*.yaml", "*.yml"]
+options = ["--write"]
+
+[formatter.sqlfmt]
+command = "sqlfmt"
+excludes = []
+includes = ["*.sql"]
+options = ["-"]
+
+[global]
+excludes = ["*.lock", "*.patch", "package-lock.json", "go.mod", "go.sum", ".gitignore", ".gitmodules", ".hgignore", ".svnignore", "*.conf", "*.lockb", "*.plan", "*.snap", "*.toml", ".*", "copilot/.workspace", "Dockerfile", "justfile"]
+```
+
+You can derive the correct commands from there, e.g.
+
+```
+$ biome check --write **/*.{graphql,json,ts}
+Checked 198 files in 107ms. No fixes applied.
+
+$ prettier --write **/*.{yaml,yml}
+copilot/environments/beta/manifest.yml 16ms (unchanged)
+copilot/environments/dev/manifest.yml 2ms (unchanged)
+copilot/environments/test/manifest.yml 2ms (unchanged)
+copilot/graphql/manifest.yml 6ms (unchanged)
+copilot/pipelines/graphql-workloads/buildspec.yml 4ms (unchanged)
+copilot/pipelines/graphql-workloads/manifest.yml 1ms (unchanged)
+
+$ sqlfmt **/*.sql
+28 files left unchanged.
+```
+
 [nix]: https://nixos.org/download/
 [ruru]: https://github.com/graphile/crystal/tree/main/grafast/ruru
 [pgweb]: https://github.com/sosedoff/pgweb
