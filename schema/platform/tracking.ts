@@ -43,13 +43,16 @@ export interface Trackable extends Component {
 /**
  * Query for Trackable entities in the given `parent` hierarchy.
  *
+ * Note that this api does not yet support pagination! The `first` argument is
+ * used purely for testing at the moment.
+ *
  * @gqlField
  */
 export async function trackables(
   _: Query,
   ctx: Context,
   /**
-   * Pagination argument. Specifies a limit when performing forward pagination.
+   * Forward pagination limit. Should only be used in conjunction with `after`.
    */
   first: Int | null,
   /**
@@ -63,12 +66,18 @@ export async function trackables(
    */
   parent: ID,
   /**
+   * By default, this api will only return Trackables that are active. This can
+   * be overridden using the `includeInactive` flag.
+   */
+  includeInactive?: boolean | null,
+  /**
    * Allows filtering the returned set of Trackables by the *implementing* type.
    *
    * Currently this is only 'Location' (the default) or 'Task'. Note that
    * specifying the latter will return a connection of trackable Tasks that
    * represent the *chain roots* (i.e. originators). This is for you, Will
-   * Twait, so you can get started on the history screen.
+   * Twait, so you can get started on the history screen. Note also that it will
+   * only give you *closed* chains, i.e. `workinstancecompleteddate is not null`.
    */
   withImplementation?: string | null,
 ): Promise<Connection<Trackable>> {
@@ -83,8 +92,18 @@ export async function trackables(
                 'Task' as "__typename",
                 encode(('workinstance:' || chain.id)::bytea, 'base64') as id
             from public.worktemplate as parent
-            inner join
-                public.worktemplatetype as wtt on parent.id = wtt.worktemplatetypeworktemplateuuid
+            inner join public.worktemplatetype as wtt
+                on parent.id = wtt.worktemplatetypeworktemplateuuid
+                ${
+                  !includeInactive
+                    ? sql`
+                and (
+                    wtt.worktemplatetypeenddate is null
+                    or wtt.worktemplatetypeenddate > now()
+                )
+                    `
+                    : sql``
+                }
             inner join public.systag as tag on wtt.worktemplatetypesystaguuid = tag.systaguuid
             inner join
                 public.workinstance as chain
@@ -96,6 +115,16 @@ export async function trackables(
                     from public.customer
                     where customeruuid = ${id}
                 )
+                ${
+                  !includeInactive
+                    ? sql`
+                and (
+                    parent.worktemplateenddate is null
+                    or parent.worktemplateenddate > now()
+                )
+                    `
+                    : sql``
+                }
                 and tag.systagtype in ('Trackable')
                 and chain.workinstancecompleteddate is not null
             order by chain.workinstancecompleteddate desc
@@ -103,6 +132,10 @@ export async function trackables(
           `,
         )
         .otherwise(
+          // We can't use locationcategoryid because that is user defined.
+          // Instead, we need to look for all templates with the Trackable type
+          // that also have a constraint allowing them to be instantiated at the
+          // given location. Ugh.
           () => sql<Trackable[]>`
             select
                 'Location' AS "__typename",
@@ -110,9 +143,56 @@ export async function trackables(
             from public.customer as parent
             inner join public.location as l
                 on parent.customerid = l.locationcustomerid
-            inner join public.custag as c
-                on  l.locationcategoryid = c.custagid
-                and c.custagtype = 'Runtime Location'
+                and (
+                    l.locationenddate is null
+                    or l.locationenddate > now()
+                )
+            inner join public.custag as c on l.locationcategoryid = c.custagid
+            inner join public.worktemplate as wt
+                on  parent.customerid = wt.worktemplatecustomerid
+                ${
+                  !includeInactive
+                    ? sql`
+                and (
+                    wt.worktemplateenddate is null
+                    or wt.worktemplateenddate > now()
+                )
+                    `
+                    : sql``
+                }
+                and exists (
+                    select 1
+                    from public.worktemplatetype as wtt
+                    where
+                        wt.worktemplateid = wtt.worktemplatetypeworktemplateid
+                        and wtt.worktemplatetypesystaguuid = (
+                            select systaguuid
+                            from public.systag
+                            where systagtype = 'Trackable'
+                        )
+                        ${
+                          !includeInactive
+                            ? sql`
+                        and (
+                            wtt.worktemplatetypeenddate is null
+                            or wtt.worktemplatetypeenddate > now()
+                        )
+                            `
+                            : sql``
+                        }
+                )
+                and exists (
+                    select 1
+                    from public.worktemplateconstraint as wtc
+                    inner join public.systag as wtc_t
+                        on  wtc.worktemplateconstraintconstraintid = c.custaguuid
+                        and wtc.worktemplateconstraintconstrainedtypeid = (
+                            select systaguuid
+                            from public.systag
+                            where systagparentid = 849 and systagtype = 'Location'
+                        )
+                    where wt.id = wtc.worktemplateconstrainttemplateid
+                )
             where parent.customeruuid = ${id}
             limit ${first ?? null}
           `,

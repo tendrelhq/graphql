@@ -11,31 +11,16 @@ import {
   TestMftTransitionMutationDocument,
 } from "./mft.test.generated";
 
-/*
- * MFT todos.
- *
- * - [x] TaskState
- * - [x] Assignees
- * - [~] Time at Task (punted; can be calculated)
- * - [x] Transition payloads (overrides, notes, etc)
- * - [~] Matrix (first pass)
- * - [~] History (partial; can't filter)
- * - [~] Task detail (first pass)
- * - [x] Location time zone
- * - [ ] Task time zone?
- * - [ ] Better nomenclature re. differentiating template vs instance
- */
-
 describe.skipIf(!!process.env.CI)("MFT", () => {
   // See beforeAll for initialization of these variables.
-  let CUSTOMER: string;
+  let ACCOUNT: string; // customer
   let FSM: string; // instance
   let IDLE_TIME: string; // template
   let DOWNTIME: string; // template
 
   test("entrypoint query", async () => {
     const result = await execute(schema, TestMftEntrypointDocument, {
-      root: CUSTOMER,
+      root: ACCOUNT,
     });
     expect(result.errors).toBeFalsy();
     expect(result.data).toMatchSnapshot();
@@ -244,12 +229,6 @@ describe.skipIf(!!process.env.CI)("MFT", () => {
     });
     expect(result.errors).toBeFalsy();
     expect(result.data).toMatchSnapshot();
-
-    // const result2 = await execute(schema, TestMftDetailDocument, {
-    //   node: FSM,
-    // });
-    // expect(result2.errors).toBeFalsy();
-    // expect(result2.data).toMatchSnapshot();
   });
 
   test("apply field edits retroactively", async () => {
@@ -269,9 +248,48 @@ describe.skipIf(!!process.env.CI)("MFT", () => {
         ],
       },
     );
-
     expect(result.errors).toBeFalsy();
     expect(result.data).toMatchSnapshot();
+  });
+
+  test("history query", async () => {
+    const result = await execute(schema, TestMftEntrypointDocument, {
+      root: ACCOUNT,
+      impl: "Task",
+    });
+    expect(result.errors).toBeFalsy();
+    expect(result.data).toMatchSnapshot();
+  });
+
+  test("includeInactive", async () => {
+    // Deactivate all templates for CUSTOMER.
+    const r0 = await sql`
+      update public.worktemplate
+      set worktemplateenddate = now()
+      where worktemplatecustomerid = (
+          select customerid
+          from public.customer
+          where customeruuid = ${decodeGlobalId(ACCOUNT).id}
+      )
+    `;
+    assert(r0.count > 0);
+
+    // Without `includeInactive` we should get nothing back.
+    const r1 = await execute(schema, TestMftEntrypointDocument, {
+      root: ACCOUNT,
+      impl: "Task",
+    });
+    expect(r1.data?.trackables?.totalCount).toBe(0);
+
+    // With `includeInactive` we should get back exactly what we got in the
+    // previous test: "history query". We just assert on the count since we
+    // already asserted on the content in the aforementioned test.
+    const r2 = await execute(schema, TestMftEntrypointDocument, {
+      root: ACCOUNT,
+      impl: "Task",
+      includeInactive: true,
+    });
+    expect(r2.data?.trackables?.totalCount).toBe(1);
   });
 
   beforeAll(async () => {
@@ -304,7 +322,7 @@ describe.skipIf(!!process.env.CI)("MFT", () => {
       debugLogs();
       throw "setup failed to find customer";
     }
-    CUSTOMER = encodeGlobalId({
+    ACCOUNT = encodeGlobalId({
       type: "organization",
       id: row1.id,
     });
@@ -356,7 +374,7 @@ describe.skipIf(!!process.env.CI)("MFT", () => {
           workinstancecustomerid in (
               select customerid
               from public.customer
-              where customeruuid = ${decodeGlobalId(CUSTOMER).id}
+              where customeruuid = ${decodeGlobalId(ACCOUNT).id}
           )
           and workinstancestatusid = 707
       returning id
@@ -377,7 +395,7 @@ ${rows.map(r => ` - ${r.id}`).join("\n")}
       );
     }
 
-    const { id } = decodeGlobalId(CUSTOMER);
+    const { id } = decodeGlobalId(ACCOUNT);
     // useful for debugging tests:
     if (process.env.SKIP_MFT_CLEANUP) {
       console.log(
@@ -418,7 +436,7 @@ async function mostRecentlyInProgress(instanceId: string): Promise<string> {
 }
 
 /**
- * HACK! Grabs the "Override State Time" field (i.e. workresult) for the given
+ * HACK! Grabs the "Override Start Time" field (i.e. workresult) for the given
  * work instance.
  */
 async function overrideStartTimeField(instanceId: string): Promise<string> {
@@ -464,28 +482,3 @@ async function getFieldByName(
   assert(nullish(row) === false, `no named field '${name}'`);
   return row.id;
 }
-
-// async function getTemplateByTypeTag(
-//   customerId: string,
-//   typeTag: string,
-// ): Promise<string> {
-//   const [{ id }] = await sql`
-//     select encode(('worktemplate:' || wt.id)::bytea, 'base64') as id
-//     from public.worktemplate as wt
-//     inner join public.worktemplatetype as wtt
-//         on wt.worktemplateid = wtt.worktemplatetypeworktemplateid
-//     where
-//         wt.worktemplatecustomerid in (
-//             select customerid
-//             from public.customer
-//             where customeruuid = ${customerId}
-//         )
-//         and wtt.worktemplatetypesystagid in (
-//             select systagid
-//             from public.systag
-//             where systagtype = ${typeTag}
-//         )
-//   `;
-//
-//   return id;
-// }

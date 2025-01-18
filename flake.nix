@@ -206,6 +206,7 @@
               "copilot/.workspace"
               "Dockerfile"
               "justfile"
+              "sql/manual-deploy.sql"
             ];
           };
         };

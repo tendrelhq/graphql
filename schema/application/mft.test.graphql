@@ -1,5 +1,15 @@
-query TestMftEntrypoint($count: Int, $root: ID!, $impl: String) {
-  trackables(first: $count, parent: $root, withImplementation: $impl) {
+query TestMftEntrypoint(
+  $count: Int
+  $root: ID!
+  $impl: String
+  $includeInactive: Boolean
+) {
+  trackables(
+    first: $count
+    parent: $root
+    includeInactive: $includeInactive
+    withImplementation: $impl
+  ) {
     edges {
       node {
         ... on Location {

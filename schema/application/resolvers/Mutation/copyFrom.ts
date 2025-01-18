@@ -50,6 +50,10 @@ export const copyFrom: NonNullable<MutationResolvers["copyFrom"]> = async (
 export type CopyFromInstanceOptions = {
   /**
    * Automatically assign the new instance to the calling identity.
+   *
+   * Note that this option has the lowest precedence in the context of
+   * assignment. In particular, `carryOverAssignments` will prevail when both
+   * options are given.
    */
   autoAssign?: boolean;
   /**
@@ -64,6 +68,9 @@ export type CopyFromInstanceOptions = {
    * Instruct the engine to carry over any "assignments" from ancestors in the
    * chain. By default, this carries over the previous's assignments (if it
    * exists) else the originator's assignments (if it exists).
+   *
+   * Note that this option has lower precedence than `withAssignee` and
+   * therefore that option will prevail when both options are given.
    */
   carryOverAssignments?: boolean;
   /**
@@ -119,8 +126,6 @@ type CopyFromWorkTemplateOptions = {
  * instantiation", i.e. we create a workinstance AND all workresultinstances
  * as specified by the underlying workresults.
  */
-
-// TODO: need to use real frequency for target start date
 export async function copyFromWorkTemplate(
   tx: TransactionSql,
   id: string,
@@ -286,6 +291,14 @@ export async function copyFromWorkTemplate(
     console.debug(
       "Auto-assigned new instance to currently authenticated user.",
     );
+
+    if (options.withAssignee?.length || options.carryOverAssignments) {
+      console.warn(`
+        WARNING: \`autoAssign\` used alongside \`withAssignee\` and/or \`carryOverAssignments\`.
+        | Note that \`withAssignee\` and/or \`carryOverAssignments\` take precedence in this scenario.
+        | You should expect auto-assignments to be overwritten.
+      `);
+    }
   }
 
   if (
@@ -391,11 +404,11 @@ export async function copyFromWorkTemplate(
     console.log(`Created ${result.count} assignments for the new instance`);
 
     if (options.carryOverAssignments) {
-      console.warn(
-        "WARNING: `carryOverAssignments` used along with `withAssignee`",
-        "Note that `withAssignee` takes precedence over that option.",
-        "You should expect that the carried over assignments have been overwritten.",
-      );
+      console.warn(`
+        WARNING: \`carryOverAssignments\` used alongside \`withAssignee\`.
+        | Note that \`withAssignee\` takes precedence over that option.
+        | You should expect any carried-over assignments to be overwritten.
+      `);
     }
   }
 

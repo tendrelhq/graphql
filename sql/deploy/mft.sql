@@ -166,13 +166,15 @@ begin
   --
   return query select ' +task', ins_template;
 
-  return query select '  +type', t.id
-               from public.systag as s
-               cross join lateral util.create_template_type(
-                   template_id := ins_template,
-                   systag_id := s.systaguuid
-               ) as t
-               where s.systagtype in ('Trackable', 'Runtime')
+  return query
+    select '  +type', t.id
+    from
+        public.systag as s,
+        util.create_template_type(
+            template_id := ins_template,
+            systag_id := s.systaguuid
+        ) as t
+    where s.systagtype in ('Trackable', 'Runtime')
   ;
   --
   if not found then
@@ -238,7 +240,8 @@ begin
                 customer_id := ins_customer,
                 language_type := default_language_type,
                 task_name := 'Idle Time',
-                task_parent_id := ins_site
+                task_parent_id := ins_site,
+                task_order := 1
             ) as t
         ),
 
@@ -310,7 +313,8 @@ begin
                 customer_id := ins_customer,
                 language_type := default_language_type,
                 task_name := 'Downtime',
-                task_parent_id := ins_site
+                task_parent_id := ins_site,
+                task_order := 0
             ) as t
         ),
 

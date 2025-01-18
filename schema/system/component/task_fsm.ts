@@ -68,17 +68,17 @@ export async function fsm(
                     conditions := pb.ops
                 ) as pc
             where pb.i_mode = 'lazy' and pc.result = true
-            order by pb.target
         )
 
     select
         encode(('workinstance:' || active.id)::bytea, 'base64') as active,
         array_remove(
-          array_agg(encode(('worktemplate:' || plan.target)::bytea, 'base64')),
+          array_agg(encode(('worktemplate:' || wt.id)::bytea, 'base64') order by wt.worktemplateorder, wt.worktemplateid),
           null
         ) as transitions
     from active
     left join plan on true
+    left join public.worktemplate as wt on plan.target = wt.id
     group by active.id
   `;
 

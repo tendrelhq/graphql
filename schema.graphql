@@ -1158,12 +1158,20 @@ type Query {
   roles: [Tag!]!
   """
   Query for Trackable entities in the given `parent` hierarchy.
+
+  Note that this api does not yet support pagination! The `first` argument is
+  used purely for testing at the moment.
   """
   trackables(
     """
-    Pagination argument. Specifies a limit when performing forward pagination.
+    Forward pagination limit. Should only be used in conjunction with `after`.
     """
     first: Int
+    """
+    By default, this api will only return Trackables that are active. This can
+    be overridden using the `includeInactive` flag.
+    """
+    includeInactive: Boolean
     """
     Identifies the root of the hierarchy in which to search for Trackable
     entities.
@@ -1180,7 +1188,8 @@ type Query {
     Currently this is only 'Location' (the default) or 'Task'. Note that
     specifying the latter will return a connection of trackable Tasks that
     represent the *chain roots* (i.e. originators). This is for you, Will
-    Twait, so you can get started on the history screen.
+    Twait, so you can get started on the history screen. Note also that it will
+    only give you *closed* chains, i.e. `workinstancecompleteddate is not null`.
     """
     withImplementation: String
   ): TrackableConnection @semanticNonNull

@@ -5,7 +5,11 @@ begin
 
 create function
     util.create_task_t(
-        customer_id text, language_type text, task_name text, task_parent_id text
+        customer_id text,
+        language_type text,
+        task_name text,
+        task_parent_id text,
+        task_order integer = 0
     )
 returns table(_id bigint, id text)
 as $$
@@ -26,7 +30,8 @@ begin
       worktemplatenameid,
       worktemplateallowondemand,
       worktemplateworkfrequencyid,
-      worktemplateisauditable
+      worktemplateisauditable,
+      worktemplateorder
   )
   select
       customer.customerid,
@@ -36,7 +41,8 @@ begin
       true,
       1404,
       -- FIXME: implement audits
-      false
+      false,
+      task_order
   from public.customer, public.location, ins_name
   where customer.customeruuid = customer_id and location.locationuuid = task_parent_id
   returning worktemplate.id into ins_template

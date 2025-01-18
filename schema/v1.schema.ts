@@ -194,15 +194,21 @@ export function getSchema(): GraphQLSchema {
         },
         trackables: {
           description:
-            "Query for Trackable entities in the given `parent` hierarchy.",
+            "Query for Trackable entities in the given `parent` hierarchy.\n\nNote that this api does not yet support pagination! The `first` argument is\nused purely for testing at the moment.",
           name: "trackables",
           type: TrackableConnectionType,
           args: {
             first: {
               description:
-                "Pagination argument. Specifies a limit when performing forward pagination.",
+                "Forward pagination limit. Should only be used in conjunction with `after`.",
               name: "first",
               type: GraphQLInt,
+            },
+            includeInactive: {
+              description:
+                "By default, this api will only return Trackables that are active. This can\nbe overridden using the `includeInactive` flag.",
+              name: "includeInactive",
+              type: GraphQLBoolean,
             },
             parent: {
               description:
@@ -212,7 +218,7 @@ export function getSchema(): GraphQLSchema {
             },
             withImplementation: {
               description:
-                "Allows filtering the returned set of Trackables by the *implementing* type.\n\nCurrently this is only 'Location' (the default) or 'Task'. Note that\nspecifying the latter will return a connection of trackable Tasks that\nrepresent the *chain roots* (i.e. originators). This is for you, Will\nTwait, so you can get started on the history screen.",
+                "Allows filtering the returned set of Trackables by the *implementing* type.\n\nCurrently this is only 'Location' (the default) or 'Task'. Note that\nspecifying the latter will return a connection of trackable Tasks that\nrepresent the *chain roots* (i.e. originators). This is for you, Will\nTwait, so you can get started on the history screen. Note also that it will\nonly give you *closed* chains, i.e. `workinstancecompleteddate is not null`.",
               name: "withImplementation",
               type: GraphQLString,
             },
@@ -224,6 +230,7 @@ export function getSchema(): GraphQLSchema {
                 context,
                 args.first,
                 args.parent,
+                args.includeInactive,
                 args.withImplementation,
               ),
             );

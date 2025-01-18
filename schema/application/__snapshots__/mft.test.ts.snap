@@ -1569,3 +1569,31 @@ exports[`MFT apply field edits retroactively 1`] = `
   },
 }
 `;
+
+exports[`MFT history query 1`] = `
+{
+  "trackables": {
+    "__typename": "TrackableConnection",
+    "edges": [
+      {
+        "__typename": "TrackableEdge",
+        "node": {
+          "__typename": "Task",
+          "displayName": {
+            "__typename": "DisplayName",
+            "name": {
+              "__typename": "DynamicString",
+              "value": "Run",
+            },
+          },
+          "state": {
+            "__typename": "Closed",
+          },
+          "tracking": null,
+        },
+      },
+    ],
+    "totalCount": 1,
+  },
+}
+`;
