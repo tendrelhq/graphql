@@ -566,11 +566,11 @@ input CreateInvitationInput {
 }
 
 input CreateLocationInput {
-  active: Boolean!
-  id: ID
-  name: CreateNameInput!
-  orgId: ID!
-  scanCode: ID
+  category: String!
+  name: String!
+  parent: ID!
+  scanCode: String
+  timeZone: String!
 }
 
 input CreateNameInput {
@@ -975,7 +975,7 @@ type Mutation {
   copyFrom(entity: ID!, options: CopyFromOptions!): CopyFromPayload!
   createEntity(id: String, suffix: [String!], type: String!): ID!
   createInvitation(input: CreateInvitationInput!): Worker!
-  createLocation(input: CreateLocationInput!): Location!
+  createLocation(input: CreateLocationInput!): Location @semanticNonNull
   createUser(input: CreateUserInput!): User!
   createWorker(input: CreateWorkerInput!): WorkerEdge!
   """

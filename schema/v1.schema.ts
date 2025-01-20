@@ -14,6 +14,7 @@ import {
   GraphQLUnionType,
   defaultFieldResolver,
 } from "graphql";
+import { createLocation as mutationCreateLocationResolver } from "./platform/archetype/location/create";
 import { trackables as queryTrackablesResolver } from "./platform/tracking";
 import { name as fieldNameResolver } from "./system/component";
 import { fields as taskFieldsResolver } from "./system/component";
@@ -1040,6 +1041,68 @@ export function getSchema(): GraphQLSchema {
       };
     },
   });
+  const LocationType: GraphQLObjectType = new GraphQLObjectType({
+    name: "Location",
+    fields() {
+      return {
+        id: {
+          description: "A globally unique opaque identifier for a node.",
+          name: "id",
+          type: new GraphQLNonNull(GraphQLID),
+          resolve(source) {
+            return locationIdResolver(source);
+          },
+        },
+        timeZone: {
+          description: "IANA time zone identifier for this Location.",
+          name: "timeZone",
+          type: GraphQLString,
+          resolve(source, args, context, info) {
+            return assertNonNull(
+              defaultFieldResolver(source, args, context, info),
+            );
+          },
+        },
+        tracking: {
+          description:
+            'Entrypoint into the "tracking system(s)" for the given Location.',
+          name: "tracking",
+          type: TrackableConnectionType,
+        },
+      };
+    },
+    interfaces() {
+      return [ComponentType, NodeType, TrackableType];
+    },
+  });
+  const CreateLocationInputType: GraphQLInputObjectType =
+    new GraphQLInputObjectType({
+      name: "CreateLocationInput",
+      fields() {
+        return {
+          category: {
+            name: "category",
+            type: new GraphQLNonNull(GraphQLString),
+          },
+          name: {
+            name: "name",
+            type: new GraphQLNonNull(GraphQLString),
+          },
+          parent: {
+            name: "parent",
+            type: new GraphQLNonNull(GraphQLID),
+          },
+          scanCode: {
+            name: "scanCode",
+            type: GraphQLString,
+          },
+          timeZone: {
+            name: "timeZone",
+            type: new GraphQLNonNull(GraphQLString),
+          },
+        };
+      },
+    });
   const MutationType: GraphQLObjectType = new GraphQLObjectType({
     name: "Mutation",
     fields() {
@@ -1085,6 +1148,21 @@ export function getSchema(): GraphQLSchema {
             );
           },
         },
+        createLocation: {
+          name: "createLocation",
+          type: LocationType,
+          args: {
+            input: {
+              name: "input",
+              type: new GraphQLNonNull(CreateLocationInputType),
+            },
+          },
+          resolve(source, args, context) {
+            return assertNonNull(
+              mutationCreateLocationResolver(source, context, args.input),
+            );
+          },
+        },
       };
     },
   });
@@ -1116,40 +1194,6 @@ export function getSchema(): GraphQLSchema {
         };
       },
     });
-  const LocationType: GraphQLObjectType = new GraphQLObjectType({
-    name: "Location",
-    fields() {
-      return {
-        id: {
-          description: "A globally unique opaque identifier for a node.",
-          name: "id",
-          type: new GraphQLNonNull(GraphQLID),
-          resolve(source) {
-            return locationIdResolver(source);
-          },
-        },
-        timeZone: {
-          description: "IANA time zone identifier for this Location.",
-          name: "timeZone",
-          type: GraphQLString,
-          resolve(source, args, context, info) {
-            return assertNonNull(
-              defaultFieldResolver(source, args, context, info),
-            );
-          },
-        },
-        tracking: {
-          description:
-            'Entrypoint into the "tracking system(s)" for the given Location.',
-          name: "tracking",
-          type: TrackableConnectionType,
-        },
-      };
-    },
-    interfaces() {
-      return [ComponentType, NodeType, TrackableType];
-    },
-  });
   return new GraphQLSchema({
     query: QueryType,
     mutation: MutationType,
@@ -1164,6 +1208,7 @@ export function getSchema(): GraphQLSchema {
       NodeType,
       TrackableType,
       AssignmentInputType,
+      CreateLocationInputType,
       DynamicStringInputType,
       FieldInputType,
       FsmOptionsType,

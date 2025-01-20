@@ -74,8 +74,8 @@ export const Location: Pick<
     return ctx.orm.name.load(decodeGlobalId(hack.nameId).id);
   },
   async parent(parent, _, ctx) {
-    if (parent.parentId) {
-      const hack = await ctx.orm.location.load(decodeGlobalId(parent.id).id);
+    const hack = await ctx.orm.location.load(decodeGlobalId(parent.id).id);
+    if (hack.parentId) {
       return ctx.orm.location.load(decodeGlobalId(hack.parentId).id);
     }
   },

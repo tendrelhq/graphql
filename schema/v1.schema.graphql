@@ -105,6 +105,14 @@ input AssignmentInput {
   assignedTo: ID!
 }
 
+input CreateLocationInput {
+  category: String!
+  name: String!
+  parent: ID!
+  scanCode: String
+  timeZone: String!
+}
+
 input DynamicStringInput {
   locale: Locale!
   value: String!
@@ -292,6 +300,7 @@ type Location implements Component & Node & Trackable {
 type Mutation {
   advance(opts: FsmOptions!): Task @semanticNonNull
   applyFieldEdits(edits: [FieldInput!]!, entity: ID!): Task @semanticNonNull
+  createLocation(input: CreateLocationInput!): Location @semanticNonNull
 }
 
 type NumberValue {

@@ -247,7 +247,6 @@ input WorkersQueryOptions {
 
 type Mutation {
   # Location CRUD
-  createLocation(input: CreateLocationInput!): Location!
   updateLocation(input: UpdateLocationInput!): Location!
 
   # Name CRUD
@@ -272,14 +271,6 @@ type Mutation {
   ## Helpers
   enableLanguage(orgId: ID!, languageId: ID!): EnabledLanguageEdge!
   disableLanguage(orgId: ID!, languageId: ID!): EnabledLanguageEdge!
-}
-
-input CreateLocationInput {
-  id: ID
-  active: Boolean!
-  name: CreateNameInput!
-  orgId: ID!
-  scanCode: ID
 }
 
 input GeofenceInput {
