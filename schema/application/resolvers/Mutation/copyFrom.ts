@@ -415,7 +415,7 @@ export async function copyFromWorkTemplate(
   const t = new Task(row, ctx);
 
   if (options.fieldOverrides?.length) {
-    const edits = applyEdits$fragment(t, options.fieldOverrides);
+    const edits = applyEdits$fragment(ctx, t, options.fieldOverrides);
     if (edits) {
       const result = await tx`${edits}`;
       console.log(`Applied ${result.count} field-level edits.`);

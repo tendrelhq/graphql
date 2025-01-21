@@ -213,7 +213,7 @@ begin
   -- Open task instance to be created when a task transitions to InProgress.
   return query
     select '  +irule', t.next
-    from util.create_morphism(
+    from util.create_transition(
         prev_template_id := ins_template,
         next_template_id := ins_template,
         state_condition := 'In Progress',
@@ -275,7 +275,7 @@ begin
             select t.*
             from ins_next
             cross join
-                lateral util.create_morphism(
+                lateral util.create_transition(
                     prev_template_id := ins_template,
                     next_template_id := ins_next.id,
                     state_condition := 'In Progress',
@@ -348,7 +348,7 @@ begin
             select t.*
             from ins_next
             cross join
-                lateral util.create_morphism(
+                lateral util.create_transition(
                     prev_template_id := ins_template,
                     next_template_id := ins_next.id,
                     state_condition := 'In Progress',

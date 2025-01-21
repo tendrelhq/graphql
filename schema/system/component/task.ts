@@ -546,8 +546,6 @@ export type Closed = {
 export type TaskInput = {
   id: ID;
   overrides?: FieldInput[] | null;
-  // TODO: for photos
-  // attachments?: Attachment[] | null;
 };
 
 /**
@@ -577,23 +575,23 @@ export async function advance(
       .with(
         "Open", // to InProgress
         () => tx`
-          update public.workinstance as t
+          update public.workinstance
           set workinstancestatusid = 707,
               workinstancestartdate = now(),
               workinstancemodifieddate = now(),
-              workinstancemodifiedby = (${modifiedBy(sql`t.workinstancecustomerid`, ctx.auth.userId)})
-          where t.id = ${t._id} and t.workinstancestatusid = 706
+              workinstancemodifiedby = auth.current_identity(workinstancecustomerid, ${ctx.auth.userId})
+          where id = ${t._id} and workinstancestatusid = 706
         `,
       )
       .with(
         "InProgress", // to Closed
         () => tx`
-          update public.workinstance as t
+          update public.workinstance
           set workinstancestatusid = 710,
               workinstancecompleteddate = now(),
               workinstancemodifieddate = now(),
-              workinstancemodifiedby = (${modifiedBy(sql`t.workinstancecustomerid`, ctx.auth.userId)})
-          where t.id = ${t._id} and t.workinstancestatusid = 707
+              workinstancemodifiedby = auth.current_identity(workinstancecustomerid, ${ctx.auth.userId})
+          where id = ${t._id} and workinstancestatusid = 707
         `,
       )
       .otherwise(() => ({ count: 0 }));
@@ -632,14 +630,39 @@ export async function advance(
 
     {
       // Check for and apply (if necessary) field-level edits.
-      const op = applyEdits$fragment(t, opts?.overrides ?? []);
+      const op = applyEdits$fragment(ctx, t, opts?.overrides ?? []);
       if (op) {
         const result = await tx`${op}`;
         console.debug(`advance: applied ${result.count} field-level edits`);
       }
     }
 
+    if (state?.__typename === "InProgress") {
+      // Ensure "Time At Task" is set.
+      const [result] = await tx<[{ _value: string }]>`
+        update public.workresultinstance
+        set
+            workresultinstancevalue = extract(epoch from i.workinstancecompleteddate - i.workinstancestartdate)::text,
+            workresultinstancemodifieddate = now(),
+            workresultinstancemodifiedby = auth.current_identity(workresultinstancecustomerid, ${ctx.auth.userId})
+        from public.workinstance as i
+        where
+            i.id = ${t._id}
+            and workresultinstanceworkinstanceid = i.workinstanceid
+            and workresultinstanceworkresultid = (
+                select workresultid
+                from public.workresult
+                where
+                    workresultworktemplateid = i.workinstanceworktemplateid
+                    and workresulttypeid = 737
+            )
+        returning workresultinstancevalue as _value
+      `;
+      console.debug(`advance: recorded time at task: ${result._value}s`);
+    }
+
     {
+      // Run the "rules engine".
       const result = await tx`select * from engine0.execute(${t._id})`;
       console.debug(`advance: engine.execute.count: ${result.count}`);
     }
@@ -653,55 +676,42 @@ export function applyAssignments$fragment(
   t: Task,
   mergeAction: "keep" | "replace" = "replace",
 ): Fragment | undefined {
-  const ma = match(mergeAction)
+  const ma: Fragment = match(mergeAction)
     // When keeping, we only perform the update when the value is null.
     .with("keep", () => sql`t.workresultinstancevalue is null`)
     // When replacing, we only perform the update when the value is distinctly
     // different from the existing value.
     .with(
       "replace",
-      () => sql`t.workresultinstancevalue is distinct from auth._id::text`,
+      () =>
+        sql`t.workresultinstancevalue is distinct from auth.current_identity(cte._parent, ${ctx.auth.userId})::text`,
     )
     .exhaustive();
 
   return sql`
-    with
-        cte as (
-            select i.workinstancecustomerid as _parent, field.workresultinstanceid as _id
-            from public.workinstance as i
-            inner join public.systag as i_state
-                on i.workinstancestatusid = i_state.systagid
-            inner join public.workresultinstance as field
-                on i.workinstanceid = field.workresultinstanceworkinstanceid
-            inner join public.workresult as field_t
-                on field.workresultinstanceworkresultid = field_t.workresultid
-            where
-                i.id = ${t._id}
-                and i_state.systagtype in ('In Progress', 'Complete')
-                and field_t.workresulttypeid = 848
-                and field_t.workresultentitytypeid = 850
-                and field_t.workresultisprimary = true
-            limit 1
-        ),
-
-        auth as (
-            select w.workerinstanceid as _id
-            from cte, public.workerinstance as w
-            where
-                w.workerinstancecustomerid = cte._parent
-                and w.workerinstanceworkerid = (
-                    select workerid
-                    from public.worker
-                    where workeridentityid = ${ctx.auth.userId}
-                )
-        )
-
+    with cte as (
+        select i.workinstancecustomerid as _parent, field.workresultinstanceid as _id
+        from public.workinstance as i
+        inner join public.systag as i_state
+            on i.workinstancestatusid = i_state.systagid
+        inner join public.workresultinstance as field
+            on i.workinstanceid = field.workresultinstanceworkinstanceid
+        inner join public.workresult as field_t
+            on field.workresultinstanceworkresultid = field_t.workresultid
+        where
+            i.id = ${t._id}
+            and i_state.systagtype in ('In Progress', 'Complete')
+            and field_t.workresulttypeid = 848
+            and field_t.workresultentitytypeid = 850
+            and field_t.workresultisprimary = true
+        limit 1
+    )
 
     update public.workresultinstance as t
-    set workresultinstancevalue = auth._id::text,
+    set workresultinstancevalue = auth.current_identity(cte._parent, ${ctx.auth.userId})::text,
         workresultinstancemodifieddate = now(),
-        workresultinstancemodifiedby = auth._id
-    from cte, auth
+        workresultinstancemodifiedby = auth.current_identity(cte._parent, ${ctx.auth.userId})
+    from cte
     where t.workresultinstanceid = cte._id and ${ma}
   `;
 }
@@ -716,7 +726,7 @@ export async function applyFieldEdits(
   const t = new Task({ id: entity }, ctx);
 
   await sql.begin(async tx => {
-    const f = applyEdits$fragment(t, edits);
+    const f = applyEdits$fragment(ctx, t, edits);
     if (!f) return;
     await tx`${f}`;
   });
@@ -732,6 +742,7 @@ export async function applyFieldEdits(
  * - This operation does not affect field-level status.
  */
 export function applyEdits$fragment(
+  ctx: Context,
   t: Task,
   edits: FieldInput[],
 ): Fragment | undefined {
@@ -765,40 +776,40 @@ export function applyEdits$fragment(
   });
 
   return sql`
-    WITH edits (field, value, type) AS (
-        VALUES ${sql(edits_ as string[][])}
+    with edits (field, value, type) as (
+        values ${sql(edits_ as string[][])}
     )
 
-    INSERT INTO public.workresultinstance AS t (
+    insert into public.workresultinstance as t (
         workresultinstancecustomerid,
         workresultinstanceworkinstanceid,
         workresultinstanceworkresultid,
         workresultinstancetimezone,
-        workresultinstancevalue
+        workresultinstancevalue,
+        workresultinstancemodifiedby
     )
-    SELECT
+    select
         wi.workinstancecustomerid,
         wi.workinstanceid,
         wr.workresultid,
         wi.workinstancetimezone,
-        coalesce(nullif(edits.value, ''), wr.workresultdefaultvalue)
-    FROM edits
-    INNER JOIN public.workinstance AS wi
-        ON wi.id = ${t._id}
-    INNER JOIN public.workresult AS wr
-        ON edits.field = wr.id
-           AND wi.workinstanceworktemplateid = wr.workresultworktemplateid
-    INNER JOIN public.systag AS wrt
-        ON edits.type = wrt.systagtype
-           AND wrt.systagparentid = 699
-    ON CONFLICT
-        (workresultinstanceworkinstanceid, workresultinstanceworkresultid)
-    DO UPDATE
-        SET workresultinstancevalue = EXCLUDED.workresultinstancevalue,
+        coalesce(nullif(edits.value, ''), wr.workresultdefaultvalue),
+        auth.current_identity(wi.workinstancecustomerid, ${ctx.auth.userId})
+    from edits
+    inner join public.workinstance as wi on wi.id = ${t._id}
+    inner join public.workresult as wr
+        on  edits.field = wr.id
+        and wi.workinstanceworktemplateid = wr.workresultworktemplateid
+    inner join public.systag as wrt
+        on  edits.type = wrt.systagtype
+        and wrt.systagparentid = 699
+    on conflict (workresultinstanceworkinstanceid, workresultinstanceworkresultid)
+    do update
+        set workresultinstancevalue = excluded.workresultinstancevalue,
+            workresultinstancemodifiedby = excluded.workresultinstancemodifiedby,
             workresultinstancemodifieddate = now()
-        WHERE
-            t.workresultinstancevalue IS DISTINCT FROM EXCLUDED.workresultinstancevalue
-    RETURNING 1
+        where
+            t.workresultinstancevalue is distinct from excluded.workresultinstancevalue
   `;
 }
 

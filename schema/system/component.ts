@@ -75,6 +75,7 @@ export async function fields(
                       or (
                           wr.workresultisprimary = true
                           and wr.workresultentitytypeid is null
+                          and wr.workresulttypeid != 737 -- Time At Task :heavy-sigh:
                       )
                    )
             INNER JOIN public.languagemaster AS n
@@ -148,6 +149,7 @@ export async function fields(
                       or (
                           wr.workresultisprimary = true
                           and wr.workresultentitytypeid is null
+                          and wr.workresulttypeid != 737 -- Time At Task :heavy-sigh:
                       )
                    )
             INNER JOIN public.languagemaster AS n

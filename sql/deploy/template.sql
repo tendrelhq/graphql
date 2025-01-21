@@ -37,7 +37,6 @@ begin
       customer.customerid,
       location.locationid,
       ins_name._id,
-      -- FIXME: implement scheduling
       true,
       1404,
       -- FIXME: implement audits
@@ -52,29 +51,33 @@ begin
     raise exception 'failed to create template';
   end if;
 
-  perform * from (
-                values ('Location'::text, 'Location'::text), ('Worker', 'Worker')
-            ) as field (f_name, f_ref_type)
-            cross join
-                lateral util.create_field_t(
-                    customer_id := customer_id,
-                    language_type := language_type,
-                    template_id := ins_template,
-                    field_name := field.f_name,
-                    field_type := 'Entity'::text,
-                    field_reference_type := field.f_ref_type,
-                    field_is_primary := true,
-                    field_order := 0
-                )
+  perform *
+  from
+      (
+          values ('Location'::text, 'Entity'::text, 'Location'::text),
+                 ('Worker', 'Entity', 'Worker'),
+                 ('Time At Task', 'Time At Task', null)
+      ) as field (f_name, f_type, f_ref_type),
+      util.create_field_t(
+          customer_id := customer_id,
+          language_type := language_type,
+          template_id := ins_template,
+          field_name := field.f_name,
+          field_type := field.f_type,
+          field_reference_type := field.f_ref_type,
+          field_is_primary := true,
+          field_order := 0
+      )
   ;
   --
   if not found then
-    raise exception 'failed to create location primary field';
+    raise exception 'failed to create primary fields [location, worker, time at task]';
   end if;
 
-  return query select worktemplateid as _id, worktemplate.id
-               from public.worktemplate
-               where worktemplate.id = ins_template
+  return query
+    select worktemplateid as _id, worktemplate.id
+    from public.worktemplate
+    where worktemplate.id = ins_template
   ;
 
   return;
@@ -232,7 +235,7 @@ language sql
 ;
 
 create function
-    util.create_morphism(
+    util.create_transition(
         prev_template_id text,
         next_template_id text,
         state_condition text,
@@ -274,10 +277,8 @@ begin
 
     select prev.id as prev, next.id as next
     from cte
-    inner join public.worktemplate as prev
-        on cte._prev = prev.worktemplateid
-    inner join public.worktemplate as next
-        on cte._next = next.worktemplateid
+    inner join public.worktemplate as prev on cte._prev = prev.worktemplateid
+    inner join public.worktemplate as next on cte._next = next.worktemplateid
   ;
 
   if not found then
@@ -529,30 +530,36 @@ begin
       and (f.workresultenddate is null or f.workresultenddate > now())
   ;
 
-  -- ensure the location primary field is correct
+  -- Ensure the location primary field is set.
   with upd_value as (
-      select field.workresultinstanceid as _id, l.locationid::text as value
+      select field.workresultinstanceid as _id
       from public.workinstance as i
-      inner join public.location as l
-          on l.locationuuid = location_id
       inner join public.workresult as field_t
           on i.workinstanceworktemplateid = field_t.workresultworktemplateid
           and field_t.workresulttypeid = 848
           and field_t.workresultentitytypeid = 852
           and field_t.workresultisprimary = true
       inner join public.workresultinstance as field
-          on i.workinstanceid = field.workresultinstanceworkinstanceid
+          on  i.workinstanceid = field.workresultinstanceworkinstanceid
           and field_t.workresultid = field.workresultinstanceworkresultid
       where i.id = ins_instance
   )
   update public.workresultinstance
-  set workresultinstancevalue = upd_value.value
-  from upd_value
-  where workresultinstanceid = upd_value._id
+  set workresultinstancevalue = location.locationid::text
+  from public.location, upd_value
+  where
+      workresultinstanceid = upd_value._id
+      and location.locationuuid = location_id
   ;
   --
   if not found then
-    raise exception 'failed to find primary location field';
+    -- Not an error? In theory primary location is not required at this level of
+    -- abstraction. "Primary Location" is really an "Activity" invariant (recall
+    -- that "Activity" is a Task + Location + Worker). We *should* try to
+    -- generically enforce such invariants here however. One way that I can
+    -- think to accomplish this is to treat primaries as "constructor" arguments
+    -- and if they are `workresultisrequired` without a value, error.
+    raise warning 'no primary location field for instance %', ins_instance;
   end if;
 
   return query
@@ -588,7 +595,7 @@ primitive that implements generic instantiation.
 select *
 from util.instantiate(
     template_id := $1,     -- worktemplate.id (uuid)
-    location_id := $2,     -- location.id (uuid)
+    location_id := $2,     -- location.id (uuid), i.e. primary location
     target_state := $3,    -- 'Work Status' variant, e.g. 'Open'
     target_type := $4,     -- 'Work Type' variant, e.g. 'On Demand'
     chain_root_id := $5,   -- workinstance.id (uuid), i.e. originator
