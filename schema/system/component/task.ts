@@ -6,7 +6,7 @@ import {
 import type { Trackable } from "@/schema/platform/tracking";
 import type { Mutation } from "@/schema/root";
 import type { Context } from "@/schema/types";
-import { assert, assertNonNull, modifiedBy } from "@/util";
+import { assert, assertNonNull } from "@/util";
 import { GraphQLError } from "graphql/error";
 import type { ID, Int } from "grats";
 import type { Fragment } from "postgres";
@@ -617,11 +617,12 @@ export async function advance(
     }
 
     {
-      const ma = "replace";
       // Check for and apply (if necessary) assignments.
-      const op = applyAssignments$fragment(ctx, t, ma);
-      if (op) {
-        const result = await tx`${op}`;
+      /** @see {@link applyAssignments$fragment} */
+      const ma = "replace";
+      const frag = applyAssignments$fragment(ctx, t, ma);
+      if (frag) {
+        const result = await tx`${frag}`;
         console.debug(
           `advance: applied ${result.count} assignments (mergeAction: ${ma})`,
         );
@@ -630,9 +631,9 @@ export async function advance(
 
     {
       // Check for and apply (if necessary) field-level edits.
-      const op = applyEdits$fragment(ctx, t, opts?.overrides ?? []);
-      if (op) {
-        const result = await tx`${op}`;
+      const frag = applyEdits$fragment(ctx, t, opts?.overrides ?? []);
+      if (frag) {
+        const result = await tx`${frag}`;
         console.debug(`advance: applied ${result.count} field-level edits`);
       }
     }

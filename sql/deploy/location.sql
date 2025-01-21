@@ -60,7 +60,8 @@ begin
       locationcornerstoneorder,
       locationcategoryid,
       locationnameid,
-      locationtimezone
+      locationtimezone,
+      locationmodifiedby
   )
   select
       c.customerid,
@@ -71,7 +72,8 @@ begin
       0,
       location_type._id,
       ins_name._id,
-      location_timezone
+      location_timezone,
+      null -- TODO: modified by
   from
       public.customer as c,
       ins_name,
@@ -85,12 +87,6 @@ begin
   if not found then
     raise exception 'failed to create location';
   end if;
-
-  -- TODO: set modifiedby
-  -- update public.location
-  -- set locationmodifiedby = auth.current_identity(locationcustomerid, 'user_2iADtxE5UonU4KO5lphsG59bkR9')
-  -- where locationuuid = ins_location
-  -- ;
 
   return query select locationid as _id, locationuuid as id
                from public.location
