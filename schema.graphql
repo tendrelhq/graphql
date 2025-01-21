@@ -903,7 +903,7 @@ type Location implements Component & Node & Referenceable & Trackable {
   """
   Entrypoint into the "tracking system(s)" for the given Location.
   """
-  tracking: TrackableConnection
+  tracking: TrackableConnection @semanticNonNull
 }
 
 type LocationConnection {

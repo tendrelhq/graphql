@@ -51,7 +51,7 @@ export class Location implements Component, Refetchable, Trackable {
    *
    * @gqlField
    */
-  async tracking(): Promise<Connection<Trackable> | null> {
+  async tracking(): Promise<Connection<Trackable>> {
     // At a given location, the "tracking systems" correspond to worktemplates
     // with a worktemplatetype tag of `Trackable`. This tag is a system-defined
     // type tag used specifically for identifying templates that are "opted

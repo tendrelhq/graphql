@@ -294,7 +294,7 @@ type Location implements Component & Node & Trackable {
   """
   Entrypoint into the "tracking system(s)" for the given Location.
   """
-  tracking: TrackableConnection
+  tracking: TrackableConnection @semanticNonNull
 }
 
 type Mutation {

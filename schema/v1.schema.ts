@@ -1068,6 +1068,11 @@ export function getSchema(): GraphQLSchema {
             'Entrypoint into the "tracking system(s)" for the given Location.',
           name: "tracking",
           type: TrackableConnectionType,
+          resolve(source, args, context, info) {
+            return assertNonNull(
+              defaultFieldResolver(source, args, context, info),
+            );
+          },
         },
       };
     },
