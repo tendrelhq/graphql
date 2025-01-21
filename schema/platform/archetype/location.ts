@@ -8,7 +8,6 @@ import {
 import type { Refetchable } from "@/schema/system/node";
 import type { Connection } from "@/schema/system/pagination";
 import type { Context } from "@/schema/types";
-import { assert } from "@/util";
 import type { ID } from "grats";
 import type { Trackable } from "../tracking";
 
@@ -53,64 +52,43 @@ export class Location implements Component, Refetchable, Trackable {
    * @gqlField
    */
   async tracking(): Promise<Connection<Trackable> | null> {
-    // Location's have a "category" [^1], which is really just a user-defined
-    // type. We require that every user-defined type exist in a type hierarchy
-    // whose root is a system-defined type (custagsystagid -> systag).[^2]
-    //
-    // In the "trackable" or "tracking system" world, there is a system-defined
-    // type that identifies as the "root" of the "trackable type hierarchy". All
-    // entities whose type exists in this hierarchy are "opted into" tracking.
-    //
-    // The question is: what are we tracking? For that, we must consult
-    // worktemplatetype; we are looking for worktemplates whose type is the same
-    // system-defined "root"[^3] of the "trackable type hierarchy" type as that
-    // of our location category's parent (custagsystagid). Finally,
-    // worktemplateconstraint allows us to join everything together:
-    //
-    //   location ^ worktemplateconstraint ^ worktemplatetype ^ worktemplate
-    //
-    // The glue in all of this is the "trackable type hierarchy". Membership in
-    // this hierarchy has dual meaning, colloquially:
-    //
-    // - for locations: "track all relevant tasks at this location"
-    // - for worktemplates: "i am a relevant task"
-    //
-    // [^1]: We really need to break this 1:1 relationship!
-    // [^2]: Due to invariants elsewhere in the system, custagsystagid points at
-    //       the canonical 'Location Category'. We match on custagtype to
-    //       determine trackability: custagtype = 'Runtime Location'. :tear:
-    // [^3]: In the future we can match on system-defined children as well
+    // At a given location, the "tracking systems" correspond to worktemplates
+    // with a worktemplatetype tag of `Trackable`. This tag is a system-defined
+    // type tag used specifically for identifying templates that are "opted
+    // into" tracking (e.g. as in Runtime). Furthermore, we must inspect
+    // worktemplateconstraint to identify which among these templates are
+    // instantiable at the given location. Note that *any* location where a
+    // "trackable" template can be instantiated is considered itself to be
+    // "trackable" (e.g. in the case of Runtime's "home screen"). We do *not*
+    // support opting locations *out of* tracking while also maintaining
+    // instantiability of "trackable" templates. It is therefore an all or
+    // nothing approach: either a location has "trackable" templates or it does
+    // not. This is something that can (and probably will) change in the entity
+    // model via arbitrary many to many tagging.
     const nodes = await sql<TaskConstructorArgs[]>`
       with
-          -- check that the current location is indeed trackable
-          is_trackable as (
-              select l.locationid as _id, c.custaguuid as type_id
-              from public.location as l
-              inner join public.custag as c
-                  on  l.locationcategoryid = c.custagid
-                  and c.custagtype = 'Runtime Location'
-              where l.locationuuid = ${this._id}
-          ),
-
           -- find all trackable tasks for this location
           trackable_task_t as (
-              select is_trackable._id as _location_id, wt.worktemplateid as _id
-              from is_trackable
+              select l.locationid as _location_id, wt.worktemplateid as _id
+              from public.location as l
+              inner join public.custag as c on l.locationcategoryid = c.custagid
               inner join public.worktemplateconstraint as wtc
-                  on is_trackable.type_id = wtc.worktemplateconstraintconstraintid
+                  on  c.custaguuid = wtc.worktemplateconstraintconstraintid
                   and wtc.worktemplateconstraintresultid is null
               inner join public.worktemplate as wt
-                  on wtc.worktemplateconstrainttemplateid = wt.id
+                  on  wtc.worktemplateconstrainttemplateid = wt.id
+                  and (
+                      wt.worktemplateenddate is null
+                      or wt.worktemplateenddate > now()
+                  )
               inner join public.worktemplatetype as wtt
-                  on wt.id = wtt.worktemplatetypeworktemplateuuid
+                  on  wt.id = wtt.worktemplatetypeworktemplateuuid
                   and wtt.worktemplatetypesystaguuid in (
                       select systaguuid
                       from public.systag
                       where systagparentid = 1 and systagtype = 'Trackable'
                   )
-              where
-                  wt.worktemplateenddate is null
-                  or wt.worktemplateenddate > now()
+              where l.locationuuid = ${this._id}
           ),
 
           -- find all active (i.e. open or in progress) chains
@@ -118,7 +96,7 @@ export class Location implements Component, Refetchable, Trackable {
               select distinct task.workinstanceoriginatorworkinstanceid as _id
               from trackable_task_t as ttt
               inner join public.workresult as field_t
-                  on ttt._id = field_t.workresultworktemplateid
+                  on  ttt._id = field_t.workresultworktemplateid
                   and field_t.workresulttypeid = (
                       select systagid
                       from public.systag
@@ -131,10 +109,11 @@ export class Location implements Component, Refetchable, Trackable {
                   )
                   and field_t.workresultisprimary = true
               inner join public.workresultinstance as field
-                  on field_t.workresultid = field.workresultinstanceworkresultid
+                  on  field_t.workresultid = field.workresultinstanceworkresultid
                   and field.workresultinstancevalue = ttt._location_id::text
               inner join public.workinstance as task
-                  on field.workresultinstanceworkinstanceid = task.workinstanceid
+                  on  ttt._id = task.workinstanceworktemplateid
+                  and field.workresultinstanceworkinstanceid = task.workinstanceid
               inner join public.systag as task_state
                   on task.workinstancestatusid = task_state.systagid
                   and task_state.systagtype in ('Open', 'In Progress')
@@ -142,12 +121,9 @@ export class Location implements Component, Refetchable, Trackable {
 
       select encode(('workinstance:' || og.id)::bytea, 'base64') as id
       from active_chain as c
-      inner join public.workinstance as og
-          on c._id = og.workinstanceid
+      inner join public.workinstance as og on c._id = og.workinstanceid
       ;
     `;
-
-    assert(nodes.length !== 0, "no tracking set");
 
     return {
       edges: nodes.map(node => ({
