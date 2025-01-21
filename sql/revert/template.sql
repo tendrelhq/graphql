@@ -23,7 +23,7 @@ drop function if exists util.create_template_constraint_on_location
 drop function if exists util.create_field_t
 ;
 
-drop function if exists util.create_transition
+drop function if exists util.create_instantiation_rule
 ;
 
 drop function if exists util.instantiate

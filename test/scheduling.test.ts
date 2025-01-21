@@ -46,7 +46,7 @@ describe.skipIf(!!process.env.CI)("engine/scheduling", () => {
 
     const result = await sql.begin(async tx => {
       const rows = await tx<[{ instance: string }?]>`
-        select * from engine0.execute(${INSTANCE})
+        select * from engine0.execute(${INSTANCE}, 895)
       `;
       assert(!!rows.at(0)?.instance);
       return await tx<[{ diff: string }?]>`

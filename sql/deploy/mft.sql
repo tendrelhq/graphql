@@ -5,7 +5,8 @@ begin
 create schema mft
 ;
 
-create function mft.create_customer(customer_name text, language_type text)
+create function
+    mft.create_customer(customer_name text, language_type text, modified_by bigint)
 returns table(_id bigint, id text)
 as $$
 declare
@@ -18,7 +19,8 @@ begin
         lateral util.create_name(
             customer_id := c.customeruuid,
             source_language := language_type,
-            source_text := customer_name
+            source_text := customer_name,
+            modified_by := modified_by
         ) as t
     where c.customerid = 0
   )
@@ -26,13 +28,15 @@ begin
       customername,
       customerlanguagetypeid,
       customerlanguagetypeuuid,
-      customernamelanguagemasterid
+      customernamelanguagemasterid,
+      customermodifiedby
   )
   select
       customer_name,
       s.systagid,
       s.systaguuid,
-      ins_name._id
+      ins_name._id,
+      modified_by
   from ins_name
   inner join public.systag as s on s.systagparentid = 2 and s.systagtype = language_type
   returning customeruuid into ins_customer;
@@ -65,6 +69,7 @@ strict
 create function
     mft.create_location(
         customer_id text,
+        modified_by bigint,
         language_type text,
         timezone text,
         location_name text,
@@ -77,6 +82,7 @@ begin
   return query select *
                from util.create_location(
                   customer_id := customer_id,
+                  modified_by := modified_by,
                   language_type := language_type,
                   location_name := location_name,
                   location_parent_id := location_parent_id,
@@ -92,7 +98,7 @@ language plpgsql
 strict
 ;
 
-create function mft.create_demo(customer_name text, admins text[])
+create function mft.create_demo(customer_name text, admins text[], modified_by bigint)
 returns table(op text, id text)
 as $$
 declare
@@ -112,21 +118,24 @@ begin
   from
       mft.create_customer(
           customer_name := customer_name,
-          language_type := default_language_type
+          language_type := default_language_type,
+          modified_by := modified_by
       ) as t
   ;
   --
   return query select '+customer', ins_customer;
 
-  return query select ' +worker', t.id
-               from public.worker as w
-               cross join
-                   lateral util.create_worker(
-                       customer_id := ins_customer,
-                       user_id := w.workeruuid,
-                       user_role := default_user_role
-                   ) as t
-               where w.workeruuid = any(admins)
+  return query
+    select ' +worker', t.id
+    from public.worker as w
+    cross join
+        lateral util.create_worker(
+            customer_id := ins_customer,
+            user_id := w.workeruuid,
+            user_role := default_user_role,
+            modified_by := modified_by
+        ) as t
+    where w.workeruuid = any(admins)
   ;
   --
   if not found and array_length(admins, 1) > 0 then
@@ -142,7 +151,8 @@ begin
           location_parent_id := null,
           location_typename := 'Tendy Factory',
           location_type_hierarchy := 'Location Category',
-          location_timezone := default_timezone
+          location_timezone := default_timezone,
+          modified_by := modified_by
       ) as t
   ;
   --
@@ -157,7 +167,8 @@ begin
       customer_id := ins_customer,
       language_type := default_language_type,
       task_name := 'Run',
-      task_parent_id := ins_site
+      task_parent_id := ins_site,
+      modified_by := modified_by
   ) as t;
   --
   if not found then
@@ -172,7 +183,8 @@ begin
         public.systag as s,
         util.create_template_type(
             template_id := ins_template,
-            systag_id := s.systaguuid
+            systag_id := s.systaguuid,
+            modified_by := modified_by
         ) as t
     where s.systagtype in ('Trackable', 'Runtime')
   ;
@@ -201,7 +213,8 @@ begin
             field_type := field.f_type,
             field_reference_type := null,
             field_is_primary := field.f_is_primary,
-            field_order := field.f_order
+            field_order := field.f_order,
+            modified_by := modified_by
         ) as t
   ;
   --
@@ -213,11 +226,12 @@ begin
   -- Open task instance to be created when a task transitions to InProgress.
   return query
     select '  +irule', t.next
-    from util.create_transition(
+    from util.create_instantiation_rule(
         prev_template_id := ins_template,
         next_template_id := ins_template,
         state_condition := 'In Progress',
-        type_tag := 'On Demand'
+        type_tag := 'On Demand',
+        modified_by := modified_by
     ) as t;
   --
   if not found then
@@ -241,7 +255,8 @@ begin
                 language_type := default_language_type,
                 task_name := 'Idle Time',
                 task_parent_id := ins_site,
-                task_order := 1
+                task_order := 1,
+                modified_by := modified_by
             ) as t
         ),
 
@@ -250,7 +265,8 @@ begin
             from ins_next, public.systag as s
             cross join lateral util.create_template_type(
                 template_id := ins_next.id,
-                systag_id := s.systaguuid
+                systag_id := s.systaguuid,
+                modified_by := modified_by
             ) as t
             where s.systagtype = 'Idle Time'
         ),
@@ -267,7 +283,8 @@ begin
                     field_type := field.f_type,
                     field_reference_type := null,
                     field_is_primary := field.f_is_primary,
-                    field_order := field.f_order
+                    field_order := field.f_order,
+                    modified_by := modified_by
                 ) as t
         ),
 
@@ -275,11 +292,12 @@ begin
             select t.*
             from ins_next
             cross join
-                lateral util.create_transition(
+                lateral util.create_instantiation_rule(
                     prev_template_id := ins_template,
                     next_template_id := ins_next.id,
                     state_condition := 'In Progress',
-                    type_tag := 'On Demand'
+                    type_tag := 'On Demand',
+                    modified_by := modified_by
                 ) as t
         )
 
@@ -314,7 +332,8 @@ begin
                 language_type := default_language_type,
                 task_name := 'Downtime',
                 task_parent_id := ins_site,
-                task_order := 0
+                task_order := 0,
+                modified_by := modified_by
             ) as t
         ),
 
@@ -323,7 +342,8 @@ begin
             from ins_next, public.systag as s
             cross join lateral util.create_template_type(
                 template_id := ins_next.id,
-                systag_id := s.systaguuid
+                systag_id := s.systaguuid,
+                modified_by := modified_by
             ) as t
             where s.systagtype = 'Downtime'
         ),
@@ -340,7 +360,8 @@ begin
                     field_type := field.f_type,
                     field_reference_type := null,
                     field_is_primary := field.f_is_primary,
-                    field_order := field.f_order
+                    field_order := field.f_order,
+                    modified_by := modified_by
                 ) as t
         ),
 
@@ -348,11 +369,12 @@ begin
             select t.*
             from ins_next
             cross join
-                lateral util.create_transition(
+                lateral util.create_instantiation_rule(
                     prev_template_id := ins_template,
                     next_template_id := ins_next.id,
                     state_condition := 'In Progress',
-                    type_tag := 'On Demand'
+                    type_tag := 'On Demand',
+                    modified_by := modified_by
                 ) as t
         )
 
@@ -388,7 +410,8 @@ begin
           timezone := default_timezone,
           location_name := inputs.location_name,
           location_parent_id := ins_site,
-          location_typename := inputs.location_typename
+          location_typename := inputs.location_typename,
+          modified_by := modified_by
       ) as t
   ;
   --
@@ -404,7 +427,8 @@ begin
               select *
               from util.create_template_constraint_on_location(
                   template_id := ins_template,
-                  location_id := loop0_x
+                  location_id := loop0_x,
+                  modified_by := modified_by
               ) as t
           ),
 
@@ -414,7 +438,8 @@ begin
                   template_id := ins_template,
                   location_id := loop0_x,
                   target_state := 'Open',
-                  target_type := 'On Demand'
+                  target_type := 'On Demand',
+                  modified_by := modified_by
               )
           )
 

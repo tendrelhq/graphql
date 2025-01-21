@@ -2,7 +2,10 @@
 begin
 ;
 
-create function util.create_worker(customer_id text, user_id text, user_role text)
+create function
+    util.create_worker(
+        customer_id text, modified_by bigint, user_id text, user_role text
+    )
 returns table(_id bigint, id text)
 as $$
   insert into public.workerinstance (
@@ -13,7 +16,8 @@ as $$
       workerinstancelanguageid,
       workerinstancelanguageuuid,
       workerinstanceuserroleid,
-      workerinstanceuserroleuuid
+      workerinstanceuserroleuuid,
+      workerinstancemodifiedby
   )
   select
       c.customerid,
@@ -23,7 +27,8 @@ as $$
       l.systagid,
       l.systaguuid,
       r.systagid,
-      r.systaguuid
+      r.systaguuid,
+      modified_by
   from public.customer as c
   inner join public.worker as u
       on u.workeruuid = user_id

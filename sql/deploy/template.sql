@@ -6,6 +6,7 @@ begin
 create function
     util.create_task_t(
         customer_id text,
+        modified_by bigint,
         language_type text,
         task_name text,
         task_parent_id text,
@@ -20,6 +21,7 @@ begin
     select *
     from util.create_name (
         customer_id := customer_id,
+        modified_by := modified_by,
         source_language := language_type,
         source_text := task_name
     )
@@ -31,7 +33,8 @@ begin
       worktemplateallowondemand,
       worktemplateworkfrequencyid,
       worktemplateisauditable,
-      worktemplateorder
+      worktemplateorder,
+      worktemplatemodifiedby
   )
   select
       customer.customerid,
@@ -41,7 +44,8 @@ begin
       1404,
       -- FIXME: implement audits
       false,
-      task_order
+      task_order,
+      modified_by
   from public.customer, public.location, ins_name
   where customer.customeruuid = customer_id and location.locationuuid = task_parent_id
   returning worktemplate.id into ins_template
@@ -60,6 +64,7 @@ begin
       ) as field (f_name, f_type, f_ref_type),
       util.create_field_t(
           customer_id := customer_id,
+          modified_by := modified_by,
           language_type := language_type,
           template_id := ins_template,
           field_name := field.f_name,
@@ -86,7 +91,8 @@ language plpgsql
 strict
 ;
 
-create function util.create_template_type(template_id text, systag_id text)
+create function
+    util.create_template_type(modified_by bigint, template_id text, systag_id text)
 returns table(id text)
 as $$
   insert into public.worktemplatetype (
@@ -94,14 +100,16 @@ as $$
       worktemplatetypeworktemplateuuid,
       worktemplatetypeworktemplateid,
       worktemplatetypesystaguuid,
-      worktemplatetypesystagid
+      worktemplatetypesystagid,
+      worktemplatetypemodifiedby
   )
   select
       t.worktemplatecustomerid,
       t.id,
       t.worktemplateid,
       tt.systaguuid,
-      tt.systagid
+      tt.systagid,
+      modified_by
   from public.worktemplate as t, public.systag as tt
   where t.id = template_id and tt.systaguuid = systag_id
   returning worktemplatetypeuuid as id
@@ -111,31 +119,36 @@ strict
 ;
 
 create function
-    util.create_template_constraint_on_location(template_id text, location_id text)
+    util.create_template_constraint_on_location(
+        modified_by bigint, template_id text, location_id text
+    )
 returns table(id text)
 as $$
 begin
-  return query insert into public.worktemplateconstraint (
-                           worktemplateconstraintcustomerid,
-                           worktemplateconstrainttemplateid,
-                           worktemplateconstraintconstrainedtypeid,
-                           worktemplateconstraintconstraintid
-                       )
-                       select
-                           t.worktemplatecustomerid,
-                           t.id,
-                           s.systaguuid,
-                           lt.custaguuid
-                       from public.worktemplate as t
-                       inner join public.systag as s
-                           on s.systagparentid = 849 and s.systagtype = 'Location'
-                       inner join public.location as l
-                           on t.worktemplatesiteid = l.locationsiteid
-                           and l.locationuuid = location_id
-                       inner join public.custag as lt
-                           on l.locationcategoryid = lt.custagid
-                       where t.id = template_id
-                       returning worktemplateconstraintid as id
+  return query
+    insert into public.worktemplateconstraint (
+        worktemplateconstraintcustomerid,
+        worktemplateconstrainttemplateid,
+        worktemplateconstraintconstrainedtypeid,
+        worktemplateconstraintconstraintid,
+        worktemplateconstraintmodifiedby
+    )
+    select
+        t.worktemplatecustomerid,
+        t.id,
+        s.systaguuid,
+        lt.custaguuid,
+        modified_by
+    from public.worktemplate as t
+    inner join public.systag as s
+        on s.systagparentid = 849 and s.systagtype = 'Location'
+    inner join public.location as l
+        on t.worktemplatesiteid = l.locationsiteid
+        and l.locationuuid = location_id
+    inner join public.custag as lt
+        on l.locationcategoryid = lt.custagid
+    where t.id = template_id
+    returning worktemplateconstraintid as id
   ;
 
   if not found then
@@ -162,6 +175,7 @@ $$;
 create function
     util.create_field_t(
         customer_id text,
+        modified_by bigint,
         language_type text,
         template_id text,
         field_name text,
@@ -177,6 +191,7 @@ as $$
           select *
           from util.create_name(
               customer_id := customer_id,
+              modified_by := modified_by,
               source_language := language_type,
               source_text := field_name
           )
@@ -207,7 +222,8 @@ as $$
       workresultsoplink,
       workresulttypeid,
       workresultwidgetid,
-      workresultworktemplateid
+      workresultworktemplateid,
+      workresultmodifiedby
   )
   select
       wt.worktemplatecustomerid,
@@ -223,7 +239,8 @@ as $$
       null,
       ins_type._type,
       null,
-      wt.worktemplateid
+      wt.worktemplateid,
+      modified_by
   from
       public.worktemplate as wt,
       ins_name,
@@ -235,7 +252,8 @@ language sql
 ;
 
 create function
-    util.create_transition(
+    util.create_instantiation_rule(
+        modified_by bigint,
         prev_template_id text,
         next_template_id text,
         state_condition text,
@@ -253,7 +271,8 @@ begin
             worktemplatenexttemplatenexttemplateid,
             worktemplatenexttemplateviastatuschange,
             worktemplatenexttemplateviastatuschangeid,
-            worktemplatenexttemplatetypeid
+            worktemplatenexttemplatetypeid,
+            worktemplatenexttemplatemodifiedby
         )
         select
             prev.worktemplatecustomerid,
@@ -262,7 +281,8 @@ begin
             next.worktemplateid,
             true,
             s.systagid,
-            tt.systagid
+            tt.systagid,
+            modified_by
         from public.worktemplate as prev
         inner join public.worktemplate as next on next.id = next_template_id
         inner join public.systag as s
@@ -282,7 +302,7 @@ begin
   ;
 
   if not found then
-    raise exception 'failed to create morphism';
+    raise exception 'failed to create instantiation rule';
   end if;
 
   return;
@@ -292,7 +312,12 @@ strict
 ;
 
 create function
-    util.create_rrule(task_id text, frequency_type text, frequency_interval numeric)
+    util.create_rrule(
+        modified_by bigint,
+        task_id text,
+        frequency_type text,
+        frequency_interval numeric
+    )
 returns table(_id bigint)
 as $$
 begin
@@ -315,13 +340,15 @@ begin
                 workfrequencycustomerid,
                 workfrequencyworktemplateid,
                 workfrequencytypeid,
-                workfrequencyvalue
+                workfrequencyvalue,
+                workfrequencymodifiedby
             )
             select
                 task.worktemplatecustomerid,
                 task.worktemplateid,
                 type.systagid,
-                frequency_interval
+                frequency_interval,
+                modified_by
             from task, type
             where not exists (
                 select 1
@@ -431,11 +458,12 @@ strict
 -- worktemplateconstraint.
 create function
     util.instantiate(
-        -- fmt: off
+        modified_by bigint,
         template_id text,
         location_id text,
         target_state text,
         target_type text,
+        -- fmt: off
         chain_root_id text = null,
         chain_prev_id text = null
         -- fmt: on
@@ -456,7 +484,8 @@ begin
       workinstancesoplink,
       workinstancestartdate,
       workinstancetargetstartdate,
-      workinstancetimezone
+      workinstancetimezone,
+      workinstancemodifiedby
   )
   select
       task_t.worktemplatecustomerid,
@@ -469,7 +498,8 @@ begin
       task_t.worktemplatesoplink,
       null, -- start date
       rr.target_start_time,
-      location.locationtimezone
+      location.locationtimezone,
+      modified_by
   from
       public.worktemplate as task_t,
       public.location as location,
@@ -512,7 +542,8 @@ begin
       workresultinstancestartdate,
       workresultinstancecompleteddate,
       workresultinstancevalue,
-      workresultinstancetimezone
+      workresultinstancetimezone,
+      workresultinstancemodifiedby
   )
   select
       i.workinstancecustomerid,
@@ -521,13 +552,15 @@ begin
       i.workinstancestartdate,
       i.workinstancecompleteddate,
       f.workresultdefaultvalue,
-      i.workinstancetimezone
+      i.workinstancetimezone,
+      modified_by
   from public.workinstance as i
   inner join public.workresult as f
       on i.workinstanceworktemplateid = f.workresultworktemplateid
   where
       i.id = ins_instance
       and (f.workresultenddate is null or f.workresultenddate > now())
+  on conflict do nothing
   ;
 
   -- Ensure the location primary field is set.
@@ -545,7 +578,10 @@ begin
       where i.id = ins_instance
   )
   update public.workresultinstance
-  set workresultinstancevalue = location.locationid::text
+  set
+      workresultinstancevalue = location.locationid::text,
+      workresultinstancemodifiedby = modified_by,
+      workresultinstancemodifieddate = now()
   from public.location, upd_value
   where
       workresultinstanceid = upd_value._id
@@ -599,7 +635,8 @@ from util.instantiate(
     target_state := $3,    -- 'Work Status' variant, e.g. 'Open'
     target_type := $4,     -- 'Work Type' variant, e.g. 'On Demand'
     chain_root_id := $5,   -- workinstance.id (uuid), i.e. originator
-    chain_prev_id := $6    -- workinstance.id (uuid), i.e. previous
+    chain_prev_id := $6,   -- workinstance.id (uuid), i.e. previous
+    modified_by := $7      -- workerinstance.id (bigint)
 );
 ```
 

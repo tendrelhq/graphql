@@ -664,7 +664,19 @@ export async function advance(
 
     {
       // Run the "rules engine".
-      const result = await tx`select * from engine0.execute(${t._id})`;
+      const result = await tx`
+        with t as (
+            select *
+            from public.workinstance
+            where id = ${t._id}
+        )
+
+        select 1
+        from t, engine0.execute(
+            task_id := t.id,
+            modified_by := auth.current_identity(t.workinstancecustomerid, ${ctx.auth.userId})
+        )
+      `;
       console.debug(`advance: engine.execute.count: ${result.count}`);
     }
   });

@@ -4,7 +4,7 @@ begin
 
 create schema engine0;
 
-create function engine0.execute(task_id text)
+create function engine0.execute(task_id text, modified_by bigint)
 returns table(instance text)
 as $$
 begin
@@ -49,7 +49,8 @@ begin
                 location_id := s2.target_parent,
                 target_state := s2.target_state,
                 target_type := s2.target_type,
-                chain_prev_id := task_id
+                chain_prev_id := task_id,
+                modified_by := modified_by
             ) i
         )
 

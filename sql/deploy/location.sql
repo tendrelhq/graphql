@@ -8,13 +8,13 @@ begin
 create function
     util.create_location(
         customer_id text,
-        -- identity_id text,
         language_type text,
         location_name text,
         location_parent_id text,
         location_typename text,
         location_type_hierarchy text,
-        location_timezone text
+        location_timezone text,
+        modified_by bigint
     )
 returns table(_id bigint, id text)
 as $$
@@ -34,9 +34,9 @@ begin
     select *
     from util.create_name(
         customer_id := customer_id,
-        -- identity_id := identity_id,
         source_language := language_type,
-        source_text := location_name
+        source_text := location_name,
+        modified_by := modified_by
     )
   ),
 
@@ -44,10 +44,10 @@ begin
     select *
     from util.create_user_type(
         customer_id := customer_id,
-        -- identity_id := identity_id,
         language_type := language_type,
         type_name := location_typename,
-        type_hierarchy := location_type_hierarchy
+        type_hierarchy := location_type_hierarchy,
+        modified_by := modified_by
     )
   )
 
@@ -73,7 +73,7 @@ begin
       location_type._id,
       ins_name._id,
       location_timezone,
-      null -- TODO: modified by
+      modified_by
   from
       public.customer as c,
       ins_name,

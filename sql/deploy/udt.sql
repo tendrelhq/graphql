@@ -4,7 +4,11 @@ begin
 
 create function
     util.create_user_type(
-        customer_id text, language_type text, type_name text, type_hierarchy text
+        customer_id text,
+        modified_by bigint,
+        language_type text,
+        type_name text,
+        type_hierarchy text
     )
 returns table(_id bigint, id text)
 as $$
@@ -12,12 +16,14 @@ as $$
       insert into public.custag (
         custagcustomerid,
         custagsystagid,
-        custagtype
+        custagtype,
+        custagmodifiedby
       )
       select
         c.customerid,
         s.systagid,
-        type_name
+        type_name,
+        modified_by
       from public.customer as c, public.systag as s
       where c.customeruuid = customer_id and s.systagtype = type_hierarchy
       on conflict do nothing
@@ -47,7 +53,7 @@ language sql
 strict
 ;
 
-create function util.create_type(type_name text)
+create function util.create_type(modified_by bigint, type_name text)
 returns table(_id bigint, id text)
 as $$
 begin
@@ -62,6 +68,7 @@ begin
         cross join
             lateral util.create_name(
                 customer_id := c.customeruuid,
+                modified_by := modified_by,
                 source_language := 'en',
                 source_text := type_name
             ) as t
@@ -71,13 +78,15 @@ begin
         systagcustomerid,
         systagparentid,
         systagtype,
-        systagnameid
+        systagnameid,
+        systagmodifiedby
     )
     select
         0,
         1,
         type_name,
-        ins_name._id
+        ins_name._id,
+        modified_by
     from ins_name
     returning systagid as _id, systaguuid as id
   ;

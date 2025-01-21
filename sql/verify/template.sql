@@ -15,7 +15,10 @@ select
 select pg_catalog.has_function_privilege('util.create_field_t'::regproc, 'execute')
 ;
 
-select pg_catalog.has_function_privilege('util.create_transition'::regproc, 'execute')
+select
+    pg_catalog.has_function_privilege(
+        'util.create_instantiation_rule'::regproc, 'execute'
+    )
 ;
 
 select pg_catalog.has_function_privilege('util.instantiate'::regproc, 'execute')

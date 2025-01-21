@@ -73,7 +73,7 @@ describe.skipIf(!!process.env.CI)("engine0", () => {
 
   test("build + check + execute", async () => {
     await sql.begin(async tx => {
-      const result = await tx`select * from engine0.execute(${INSTANCE})`;
+      const result = await tx`select * from engine0.execute(${INSTANCE}, 895)`;
       // We expect only the respawn rule to result in instantiation.
       expect(result).toHaveLength(1);
       expect(result.some(row => !row.instance)).toBeFalse();
@@ -89,7 +89,8 @@ describe.skipIf(!!process.env.CI)("engine0", () => {
               select array_agg(workeruuid)
               from public.worker
               where workerfullname = 'Jerry Garcia'
-          )
+          ),
+          modified_by := 895
       )
     `;
 
