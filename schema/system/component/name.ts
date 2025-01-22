@@ -5,6 +5,15 @@ import type { Refetchable } from "@/schema/system/node";
 import type { Context } from "@/schema/types";
 import type { ID } from "grats";
 
+/** @gqlInput */
+export type UpdateNameInput = {
+  id: ID;
+  activatedAt?: string | null;
+  deactivatedAt?: string | null;
+  languageId: ID;
+  value: string;
+};
+
 /** @gqlType */
 export class DisplayName implements Component, Refetchable {
   readonly __typename = "DisplayName" as const;

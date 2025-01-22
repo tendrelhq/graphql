@@ -1,7 +1,9 @@
 import { sql } from "@/datasources/postgres";
 import type { OrganizationResolvers, PageInfo } from "@/schema";
+import { Location } from "@/schema/platform/archetype/location";
 import { decodeGlobalId } from "@/schema/system";
 import type { WithKey } from "@/util";
+import type { ID } from "grats";
 import { match } from "ts-pattern";
 
 export const Organization: OrganizationResolvers = {
@@ -238,9 +240,10 @@ export const Organization: OrganizationResolvers = {
     const after = args.after ? decodeGlobalId(args.after).id : null;
     const before = args.before ? decodeGlobalId(args.before).id : null;
 
-    // biome-ignore lint/complexity/noBannedTypes:
-    const keys = await sql<WithKey<{}>[]>`
-      SELECT locationuuid AS _key
+    const rows = await sql<WithKey<{ id: ID }>[]>`
+      SELECT
+          locationuuid AS _key,
+          encode(('location:' || locationuuid)::bytea, 'base64') as id
       FROM public.location
       WHERE
           locationcustomerid = (
@@ -306,7 +309,7 @@ export const Organization: OrganizationResolvers = {
                       AND locationid > (
                           SELECT locationid
                           FROM public.location
-                          WHERE locationuuid = ${keys.at(-1)?._key ?? null}
+                          WHERE locationuuid = ${rows.at(-1)?._key ?? null}
                       )
                       AND ${match(args.search?.active)
                         .with(
@@ -341,7 +344,7 @@ export const Organization: OrganizationResolvers = {
                       AND locationid < (
                           SELECT locationid
                           FROM public.location
-                          WHERE locationuuid = ${keys.at(1)?._key ?? null}
+                          WHERE locationuuid = ${rows.at(1)?._key ?? null}
                       )
                       AND ${match(args.search?.active)
                         .with(
@@ -365,28 +368,15 @@ export const Organization: OrganizationResolvers = {
           ) AS "hasPreviousPage"
     `;
 
-    const rows = await ctx.orm.location.loadMany(keys.map(e => e._key));
     const startCursor = rows.at(0);
     const endCursor = rows.at(-1);
 
-    if (startCursor instanceof Error) {
-      throw startCursor;
-    }
-    if (endCursor instanceof Error) {
-      throw endCursor;
-    }
-
     return {
-      edges: rows.map(row => {
-        if (row instanceof Error) {
-          throw row;
-        }
-
-        return {
-          cursor: row.id.toString(),
-          node: row,
-        };
-      }),
+      edges: rows.map(row => ({
+        cursor: row.id.toString(),
+        // biome-ignore lint/suspicious/noExplicitAny: temporary during migration
+        node: new Location(row, ctx) as any,
+      })),
       pageInfo: {
         startCursor: startCursor?.id.toString(),
         endCursor: endCursor?.id.toString(),

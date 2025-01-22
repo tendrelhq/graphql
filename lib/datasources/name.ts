@@ -1,12 +1,9 @@
-import type {
-  Component,
-  ID,
-  Name,
-  NameMetadata,
-  UpdateNameInput,
-} from "@/schema";
+import type { Component, ID, Name, NameMetadata } from "@/schema";
 import { type GlobalId, decodeGlobalId } from "@/schema/system";
-import { DisplayName } from "@/schema/system/component/name";
+import {
+  DisplayName,
+  type UpdateNameInput,
+} from "@/schema/system/component/name";
 import type { WithKey } from "@/util";
 import Dataloader from "dataloader";
 import type { Request } from "express";

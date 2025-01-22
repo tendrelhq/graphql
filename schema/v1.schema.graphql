@@ -144,9 +144,32 @@ input FsmOptions {
   task: TaskInput!
 }
 
+input GeofenceInput {
+  latitude: String
+  longitude: String
+  radius: Float
+}
+
 input TaskInput {
   id: ID!
   overrides: [FieldInput!]
+}
+
+input UpdateLocationInput {
+  activatedAt: String
+  deactivatedAt: String
+  geofence: GeofenceInput
+  id: ID!
+  name: UpdateNameInput
+  scanCode: ID
+}
+
+input UpdateNameInput {
+  activatedAt: String
+  deactivatedAt: String
+  id: ID!
+  languageId: ID!
+  value: String!
 }
 
 input ValueInput @oneOf {
@@ -301,6 +324,7 @@ type Mutation {
   advance(opts: FsmOptions!): Task @semanticNonNull
   applyFieldEdits(edits: [FieldInput!]!, entity: ID!): Task @semanticNonNull
   createLocation(input: CreateLocationInput!): Location @semanticNonNull
+  updateLocation(input: UpdateLocationInput!): Location @semanticNonNull
 }
 
 type NumberValue {

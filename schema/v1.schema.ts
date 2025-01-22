@@ -1,6 +1,7 @@
 import {
   GraphQLBoolean,
   GraphQLEnumType,
+  GraphQLFloat,
   GraphQLID,
   GraphQLInputObjectType,
   GraphQLInt,
@@ -15,6 +16,7 @@ import {
   defaultFieldResolver,
 } from "graphql";
 import { createLocation as mutationCreateLocationResolver } from "./platform/archetype/location/create";
+import { updateLocation as mutationUpdateLocationResolver } from "./platform/archetype/location/update";
 import { trackables as queryTrackablesResolver } from "./platform/tracking";
 import { name as fieldNameResolver } from "./system/component";
 import { fields as taskFieldsResolver } from "./system/component";
@@ -1108,6 +1110,85 @@ export function getSchema(): GraphQLSchema {
         };
       },
     });
+  const GeofenceInputType: GraphQLInputObjectType = new GraphQLInputObjectType({
+    name: "GeofenceInput",
+    fields() {
+      return {
+        latitude: {
+          name: "latitude",
+          type: GraphQLString,
+        },
+        longitude: {
+          name: "longitude",
+          type: GraphQLString,
+        },
+        radius: {
+          name: "radius",
+          type: GraphQLFloat,
+        },
+      };
+    },
+  });
+  const UpdateNameInputType: GraphQLInputObjectType =
+    new GraphQLInputObjectType({
+      name: "UpdateNameInput",
+      fields() {
+        return {
+          activatedAt: {
+            name: "activatedAt",
+            type: GraphQLString,
+          },
+          deactivatedAt: {
+            name: "deactivatedAt",
+            type: GraphQLString,
+          },
+          id: {
+            name: "id",
+            type: new GraphQLNonNull(GraphQLID),
+          },
+          languageId: {
+            name: "languageId",
+            type: new GraphQLNonNull(GraphQLID),
+          },
+          value: {
+            name: "value",
+            type: new GraphQLNonNull(GraphQLString),
+          },
+        };
+      },
+    });
+  const UpdateLocationInputType: GraphQLInputObjectType =
+    new GraphQLInputObjectType({
+      name: "UpdateLocationInput",
+      fields() {
+        return {
+          activatedAt: {
+            name: "activatedAt",
+            type: GraphQLString,
+          },
+          deactivatedAt: {
+            name: "deactivatedAt",
+            type: GraphQLString,
+          },
+          geofence: {
+            name: "geofence",
+            type: GeofenceInputType,
+          },
+          id: {
+            name: "id",
+            type: new GraphQLNonNull(GraphQLID),
+          },
+          name: {
+            name: "name",
+            type: UpdateNameInputType,
+          },
+          scanCode: {
+            name: "scanCode",
+            type: GraphQLID,
+          },
+        };
+      },
+    });
   const MutationType: GraphQLObjectType = new GraphQLObjectType({
     name: "Mutation",
     fields() {
@@ -1168,6 +1249,21 @@ export function getSchema(): GraphQLSchema {
             );
           },
         },
+        updateLocation: {
+          name: "updateLocation",
+          type: LocationType,
+          args: {
+            input: {
+              name: "input",
+              type: new GraphQLNonNull(UpdateLocationInputType),
+            },
+          },
+          resolve(source, args, context) {
+            return assertNonNull(
+              mutationUpdateLocationResolver(source, args.input, context),
+            );
+          },
+        },
       };
     },
   });
@@ -1217,7 +1313,10 @@ export function getSchema(): GraphQLSchema {
       DynamicStringInputType,
       FieldInputType,
       FsmOptionsType,
+      GeofenceInputType,
       TaskInputType,
+      UpdateLocationInputType,
+      UpdateNameInputType,
       ValueInputType,
       AggregateType,
       AssignmentType,

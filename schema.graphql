@@ -1003,7 +1003,7 @@ type Mutation {
   - E_ASSIGN_CONFLICT, if the entity is assigned to a different entity
   """
   unassign(entity: ID!, from: ID!): UnassignmentPayload!
-  updateLocation(input: UpdateLocationInput!): Location!
+  updateLocation(input: UpdateLocationInput!): Location @semanticNonNull
   updateName(input: UpdateNameInput!): Name!
   updateUser(input: UpdateUserInput!): User!
   updateWorker(input: UpdateWorkerInput!): WorkerEdge!

@@ -246,9 +246,6 @@ input WorkersQueryOptions {
 }
 
 type Mutation {
-  # Location CRUD
-  updateLocation(input: UpdateLocationInput!): Location!
-
   # Name CRUD
   updateName(input: UpdateNameInput!): Name!
 
@@ -271,21 +268,6 @@ type Mutation {
   ## Helpers
   enableLanguage(orgId: ID!, languageId: ID!): EnabledLanguageEdge!
   disableLanguage(orgId: ID!, languageId: ID!): EnabledLanguageEdge!
-}
-
-input GeofenceInput {
-  longitude: String
-  latitude: String
-  radius: Float
-}
-
-input UpdateLocationInput {
-  id: ID!
-  activatedAt: String
-  deactivatedAt: String
-  name: UpdateNameInput
-  scanCode: ID
-  geofence: GeofenceInput
 }
 
 input CreateUserInput {
@@ -332,14 +314,6 @@ input UpdateWorkerInput {
 input CreateNameInput {
   id: ID
   active: Boolean!
-  languageId: ID!
-  value: String!
-}
-
-input UpdateNameInput {
-  id: ID!
-  activatedAt: String
-  deactivatedAt: String
   languageId: ID!
   value: String!
 }
