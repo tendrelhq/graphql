@@ -53,7 +53,7 @@ export async function updateLocation(
     // FIXME: conditional update!
     await sql`
       update public.location
-      set locationradius = nullif(${input.geofence?.radius ?? null}, ''),
+      set locationradius = nullif(${input.geofence?.radius ?? null}, '')::numeric,
           locationlatitude = nullif(${input.geofence?.latitude ?? null}, ''),
           locationlongitude = nullif(${input.geofence?.longitude ?? null}, ''),
           locationmodifiedby = auth.current_identity(locationcustomerid, ${ctx.auth.userId}),
