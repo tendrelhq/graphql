@@ -1,31 +1,3 @@
-## finishing off Yield
-
-- [x] in progress agg
-- [x] instance parent (location)
-- [x] configurable chain behavior
-- [x] auto assign
-- [x] bug: double constraint in demo
-- [ ] export task type tags
-
-The main thing we need to rework is that we can only deal in instances to make
-the app work like the mocks want it to. The "trackable" screen should really be
-showing you the originator, that is the rock. So the "trackables" query for a
-Location parent _is returning_ Tasks but these Tasks are understood to be
-so-called chain roots.
-
-What this all boils down to is that we need to generically implement
-worktemplatenexttemplate. The question is how.
-
-- [x] implement respawn on in-progress
-- [x] demo rules should be on status = in-progress
-
-Let's think about the generic implementation. We have basically two modes of
-execution, related to instantiation: lazy and eager. The difference between
-these two is _intent_. Lazy instantiation allows the user to _choose their own
-path_. This is what we do in Yield. Eager instantiation is a _reaction to user
-interaction_; it happens "behind the scenes". This is how "audits",
-"remediations" and the like work in SWK.
-
 # Design
 
 ## Rules engine
