@@ -98,17 +98,12 @@ will only create instances for which eager instantiation is prescribed.
 
 ## Frequency (and scheduling)
 
-This is really two things:
+Target start time is derived from `workfrequency`. We simply convert the
+value/type columns of this table into a standard interval through inversion.
+Thus "2 per day" becomes "every 1/2 day" (or "every 12 hours"). "0.5 per day"
+becomes "every 2 days". etc.
 
-1. Scheduling, e.g. "every weekday at 2pm"
-2. Rate limiting, e.g. "twice per week"
-
-The former (1) is in play during stage 3: we know we want to instantiate, we
-just don't know _when_ the instance should "start".
-
-The latter (2) is actually stage 2: it is a condition. Instantiation should not
-proceed if the "quota" has already been filled. I don't think we support this
-right now.
+See `util.compute_rrule_next_occurrence` for the implementation.
 
 ## Respawn
 

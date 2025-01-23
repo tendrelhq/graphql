@@ -7,7 +7,7 @@ set local client_min_messages to 'notice'
 set local search_path to tap
 ;
 
-select plan(11)
+select plan(10)
 ;
 
 select
@@ -113,18 +113,6 @@ select
         ),
         '2025-05-13 12:00:00.000+00'::timestamptz,
         '"three per year" (or: "every four months")'
-    )
-;
-
-select
-    is (
-        util.compute_rrule_next_occurrence(
-            freq := 'week',
-            interval_v := 7,
-            dtstart := '2025-01-13 12:00:00.000-07',
-            tzid := 'America/Denver'
-        ),
-        '2025-01-14 12:00:00.000+00'::timestamptz
     )
 ;
 

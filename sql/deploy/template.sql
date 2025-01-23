@@ -398,8 +398,7 @@ begin
         util.compute_rrule_next_occurrence(
             freq := freq.systagtype,
             interval_v := rr.workfrequencyvalue,
-            dtstart := prev.workinstancecompleteddate,
-            tzid := prev.workinstancetimezone
+            dtstart := prev.workinstancecompleteddate
         ),
         now()
     ) as target_start_time
@@ -430,24 +429,19 @@ stable
 -- fmt: off
 create function
     util.compute_rrule_next_occurrence(
-        freq text, interval_v numeric, dtstart timestamptz, tzid text = 'utc'
+        freq text, interval_v numeric, dtstart timestamptz
     )
 returns timestamptz
 as $$
 declare
-  -- normalize our inputs
-  -- 1. adjust dtstart for the correct timezone
-  dtstart_norm timestamptz := timezone(tzid, dtstart);
-  -- 2. convert 'quarter' frequency to 'month'
-  freq_norm text := case when freq = 'quarter' then 'month' else freq end;
-  --
-  base_freq interval := format('1 %s', freq_norm)::interval;
+  freq_type text := case when freq = 'quarter' then 'month' else freq end;
+  base_freq interval := format('1 %s', freq_type)::interval;
 begin
   if freq = 'quarter' then
     base_freq := '3 month'::interval;
   end if;
 
-  return dtstart_norm + (base_freq / interval_v);
+  return dtstart + (base_freq / interval_v);
 end $$
 language plpgsql
 stable
