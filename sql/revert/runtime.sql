@@ -1,4 +1,4 @@
--- Revert graphql:mft from pg
+-- Revert graphql:runtime from pg
 begin
 ;
 

@@ -6,10 +6,10 @@ begin
 create function
     util.create_task_t(
         customer_id text,
-        modified_by bigint,
         language_type text,
         task_name text,
         task_parent_id text,
+        modified_by bigint,
         task_order integer = 0
     )
 returns table(_id bigint, id text)
@@ -92,7 +92,7 @@ strict
 ;
 
 create function
-    util.create_template_type(modified_by bigint, template_id text, systag_id text)
+    util.create_template_type(template_id text, systag_id text, modified_by bigint)
 returns table(id text)
 as $$
   insert into public.worktemplatetype (
@@ -120,7 +120,7 @@ strict
 
 create function
     util.create_template_constraint_on_location(
-        modified_by bigint, template_id text, location_id text
+        template_id text, location_id text, modified_by bigint
     )
 returns table(id text)
 as $$
@@ -175,14 +175,14 @@ $$;
 create function
     util.create_field_t(
         customer_id text,
-        modified_by bigint,
         language_type text,
         template_id text,
         field_name text,
         field_type text,
         field_reference_type text,
         field_is_primary boolean,
-        field_order integer
+        field_order integer,
+        modified_by bigint
     )
 returns table(id text)
 as $$
@@ -253,11 +253,11 @@ language sql
 
 create function
     util.create_instantiation_rule(
-        modified_by bigint,
         prev_template_id text,
         next_template_id text,
         state_condition text,
-        type_tag text
+        type_tag text,
+        modified_by bigint
     )
 returns table(prev text, next text)
 as $$
@@ -313,10 +313,10 @@ strict
 
 create function
     util.create_rrule(
-        modified_by bigint,
         task_id text,
         frequency_type text,
-        frequency_interval numeric
+        frequency_interval numeric,
+        modified_by bigint
     )
 returns table(_id bigint)
 as $$
@@ -424,6 +424,7 @@ begin
   return;
 end $$
 language plpgsql
+stable
 ;
 
 -- fmt: off
@@ -458,11 +459,11 @@ strict
 -- worktemplateconstraint.
 create function
     util.instantiate(
-        modified_by bigint,
         template_id text,
         location_id text,
         target_state text,
         target_type text,
+        modified_by bigint,
         -- fmt: off
         chain_root_id text = null,
         chain_prev_id text = null

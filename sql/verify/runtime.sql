@@ -1,4 +1,4 @@
--- Verify graphql:mft on pg
+-- Verify graphql:runtime on pg
 begin
 ;
 

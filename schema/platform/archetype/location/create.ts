@@ -70,9 +70,8 @@ export async function createLocation(
               language_type := ${ctx.req.i18n.language},
               location_name := ${input.name},
               location_parent_id := parent.id,
-              location_typename := ${input.category},
-              location_type_hierarchy := 'Location Category',
               location_timezone := ${input.timeZone},
+              location_typename := ${input.category},
               modified_by := auth.current_identity(parent._authority, ${ctx.auth.userId})
           ) as t
       ;

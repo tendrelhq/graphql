@@ -4,7 +4,7 @@ begin
 
 create function
     util.create_worker(
-        customer_id text, modified_by bigint, user_id text, user_role text
+        customer_id text, user_id text, user_role text, modified_by bigint
     )
 returns table(_id bigint, id text)
 as $$

@@ -4,7 +4,7 @@ begin
 
 create function
     util.create_name(
-        customer_id text, modified_by bigint, source_language text, source_text text
+        customer_id text, source_language text, source_text text, modified_by bigint
     )
 returns table(_id bigint, id text)
 as $$

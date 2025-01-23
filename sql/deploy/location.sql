@@ -11,9 +11,8 @@ create function
         language_type text,
         location_name text,
         location_parent_id text,
-        location_typename text,
-        location_type_hierarchy text,
         location_timezone text,
+        location_typename text,
         modified_by bigint
     )
 returns table(_id bigint, id text)
@@ -46,7 +45,7 @@ begin
         customer_id := customer_id,
         language_type := language_type,
         type_name := location_typename,
-        type_hierarchy := location_type_hierarchy,
+        type_hierarchy := 'Location Category',
         modified_by := modified_by
     )
   )

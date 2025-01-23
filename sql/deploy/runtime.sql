@@ -1,4 +1,8 @@
--- Deploy graphql:mft to pg
+-- Deploy graphql:runtime to pg
+-- requires: name
+-- requires: location
+-- requires: worker
+-- requires: template
 begin
 ;
 
@@ -82,14 +86,12 @@ begin
   return query select *
                from util.create_location(
                   customer_id := customer_id,
-                  modified_by := modified_by,
                   language_type := language_type,
                   location_name := location_name,
                   location_parent_id := location_parent_id,
+                  location_timezone := timezone,
                   location_typename := location_typename,
-                  -- Current invariant: custagsystagid -> Location Category
-                  location_type_hierarchy := 'Location Category',
-                  location_timezone := timezone
+                  modified_by := modified_by
                );
 
   return;
@@ -149,9 +151,8 @@ begin
           language_type := default_language_type,
           location_name := 'Frozen Tendy Factory',
           location_parent_id := null,
-          location_typename := 'Tendy Factory',
-          location_type_hierarchy := 'Location Category',
           location_timezone := default_timezone,
+          location_typename := 'Tendy Factory',
           modified_by := modified_by
       ) as t
   ;
