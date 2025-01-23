@@ -12,7 +12,7 @@ import { copyFromWorkTemplate } from "./copyFrom";
 
 export const saveChecklist: NonNullable<
   MutationResolvers["saveChecklist"]
-> = async (_, { input }) => {
+> = async (_, { input }, ctx) => {
   const { type, id } = decodeGlobalId(input.id);
 
   // TODO: (we'll want these eventually)
@@ -744,7 +744,7 @@ export const saveChecklist: NonNullable<
     }
 
     // Create an Open instance of the newly created Checklist template.
-    await sql.begin(sql => copyFromWorkTemplate(sql, id, {}));
+    await sql.begin(sql => copyFromWorkTemplate(sql, id, {}, ctx));
   }
 
   return {

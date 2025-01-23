@@ -1,0 +1,22 @@
+mutation TestCreateLocation($input: CreateLocationInput!) {
+  createLocation(input: $input) {
+    name {
+      value
+    }
+    parent {
+      name {
+        value
+      }
+    }
+    site {
+      name {
+        value
+      }
+    }
+    scanCode
+    tags {
+      type
+    }
+    timeZone
+  }
+}

@@ -1,5 +1,6 @@
-import type { DynamicString, ID } from "@/schema";
+import type { ID } from "@/schema";
 import { decodeGlobalId } from "@/schema/system";
+import type { DynamicString } from "@/schema/system/i18n";
 import type { WithKey } from "@/util";
 import DataLoader from "dataloader";
 import type { Request } from "express";

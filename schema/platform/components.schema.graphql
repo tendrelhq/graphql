@@ -41,21 +41,13 @@ input ActiveInput {
   updatedAt: TemporalInput
 }
 
-"""
-Identifies an entity being assignable to another entity.
-Assignable entities have two operations: assign and unassign.
-"""
-interface Assignable implements Component {
-  id: ID!
-}
-
-type AssignableConnection implements Connection {
+type AssignableConnection {
   edges: [AssignableEdge!]!
   pageInfo: PageInfo!
   totalCount: Int!
 }
 
-type AssignableEdge implements Edge {
+type AssignableEdge {
   cursor: String!
   node: Assignable!
 }
@@ -122,13 +114,13 @@ input AssigneeInput {
   assignAt: TemporalInput!
 }
 
-type AssigneeConnection implements Connection {
+type AssigneeConnection {
   edges: [AssigneeEdge!]!
   pageInfo: PageInfo!
   totalCount: Int!
 }
 
-type AssigneeEdge implements Edge {
+type AssigneeEdge {
   cursor: String!
   node: Assignee!
 }
@@ -143,13 +135,13 @@ type Attachment implements Component & Node {
   attachedOn: Temporal @semanticNonNull
 }
 
-type AttachmentConnection implements Connection {
+type AttachmentConnection {
   edges: [AttachmentEdge!]!
   pageInfo: PageInfo!
   totalCount: Int!
 }
 
-type AttachmentEdge implements Edge {
+type AttachmentEdge {
   cursor: String!
   node: Attachment!
 }
@@ -188,14 +180,6 @@ TODO
 input DescriptionInput {
   id: ID!
   value: DynamicStringInput!
-}
-
-"""
-TODO
-"""
-type DisplayName implements Component {
-  id: ID!
-  name: DynamicString!
 }
 
 """

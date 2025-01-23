@@ -1,0 +1,82 @@
+// Bun Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`createLocation only required inputs; parent == customer 1`] = `
+{
+  "data": {
+    "createLocation": {
+      "__typename": "Location",
+      "name": {
+        "__typename": "Name",
+        "value": "ASDF",
+      },
+      "parent": null,
+      "scanCode": null,
+      "site": {
+        "__typename": "Location",
+        "name": {
+          "__typename": "Name",
+          "value": "ASDF",
+        },
+      },
+      "tags": [],
+      "timeZone": "America/Denver",
+    },
+  },
+}
+`;
+
+exports[`createLocation with optional inputs 1`] = `
+{
+  "data": {
+    "createLocation": {
+      "__typename": "Location",
+      "name": {
+        "__typename": "Name",
+        "value": "ASDF",
+      },
+      "parent": null,
+      "scanCode": "asdf",
+      "site": {
+        "__typename": "Location",
+        "name": {
+          "__typename": "Name",
+          "value": "ASDF",
+        },
+      },
+      "tags": [],
+      "timeZone": "America/Denver",
+    },
+  },
+}
+`;
+
+exports[`createLocation parent == location 1`] = `
+{
+  "data": {
+    "createLocation": {
+      "__typename": "Location",
+      "name": {
+        "__typename": "Name",
+        "value": "ASDF",
+      },
+      "parent": {
+        "__typename": "Location",
+        "name": {
+          "__typename": "Name",
+          "value": "ASDF",
+        },
+      },
+      "scanCode": null,
+      "site": {
+        "__typename": "Location",
+        "name": {
+          "__typename": "Name",
+          "value": "ASDF",
+        },
+      },
+      "tags": [],
+      "timeZone": "America/Denver",
+    },
+  },
+}
+`;

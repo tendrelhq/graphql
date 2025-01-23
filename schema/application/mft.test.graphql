@@ -1,0 +1,230 @@
+query TestMftEntrypoint(
+  $count: Int
+  $root: ID!
+  $impl: String
+  $includeInactive: Boolean
+) {
+  trackables(
+    first: $count
+    parent: $root
+    includeInactive: $includeInactive
+    withImplementation: $impl
+  ) {
+    edges {
+      node {
+        ... on Location {
+          name {
+            value
+          }
+          timeZone
+        }
+        ... on Task {
+          displayName {
+            name {
+              value
+            }
+          }
+          state {
+            __typename
+          }
+        }
+        ...Trackables_fragment
+      }
+    }
+    totalCount
+  }
+}
+
+query TestMftDetail($node: ID!) {
+  node(id: $node) {
+    ... on Task {
+      # "matrix" component
+      chainAgg(overType: ["Runtime", "Idle Time", "Downtime"]) {
+        group
+        value
+      }
+      # "run output" and "reject count" components
+      # fields {
+      #   edges {
+      #     node {
+      #       name {
+      #         name {
+      #           value
+      #         }
+      #       }
+      #       value {
+      #         __typename
+      #       }
+      #     }
+      #   }
+      # }
+      # "timeline" component
+      chain {
+        edges {
+          node {
+            displayName {
+              name {
+                value
+              }
+            }
+            state {
+              __typename
+            }
+          }
+        }
+        totalCount
+      }
+      parent {
+        ... on Location {
+          name {
+            value
+          }
+        }
+      }
+    }
+  }
+}
+
+mutation TestMftTransitionMutation(
+  $opts: FsmOptions!
+  $includeChain: Boolean!
+) {
+  advance(opts: $opts) {
+    chain @include(if: $includeChain) {
+      edges {
+        node {
+          displayName {
+            name {
+              value
+            }
+          }
+          state {
+            __typename
+          }
+        }
+      }
+    }
+    fsm {
+      ...TaskFSM_fragment
+    }
+  }
+}
+
+mutation TestMftApplyFieldEditsMutation($entity: ID!, $edits: [FieldInput!]!) {
+  applyFieldEdits(entity: $entity, edits: $edits) {
+    fields {
+      edges {
+        node {
+          name {
+            name {
+              value
+            }
+          }
+          value {
+            __typename
+            ... on StringValue {
+              string
+            }
+            ... on TimestampValue {
+              timestamp
+            }
+          }
+          valueType
+        }
+      }
+    }
+  }
+}
+
+fragment Trackables_fragment on Trackable {
+  tracking {
+    edges {
+      node {
+        ... on Task {
+          # chainAgg(overType: ["Runtime", "Idle Time", "Downtime"]) {
+          #   group
+          #   value
+          # }
+          displayName {
+            name {
+              value
+            }
+          }
+          fsm {
+            ...TaskFSM_fragment
+          }
+        }
+      }
+    }
+  }
+}
+
+fragment TaskFSM_fragment on TaskStateMachine {
+  active {
+    assignees {
+      edges {
+        node {
+          assignedTo {
+            ... on Worker {
+              displayName
+            }
+          }
+        }
+      }
+    }
+    displayName {
+      name {
+        value
+      }
+    }
+    fields {
+      edges {
+        node {
+          name {
+            name {
+              value
+            }
+          }
+          value {
+            __typename
+            ... on StringValue {
+              string
+            }
+            ... on TimestampValue {
+              timestamp
+            }
+          }
+          valueType
+        }
+      }
+    }
+    state {
+      __typename
+    }
+  }
+  transitions {
+    edges {
+      node {
+        displayName {
+          name {
+            value
+          }
+        }
+        fields {
+          edges {
+            node {
+              name {
+                name {
+                  value
+                }
+              }
+              value {
+                __typename
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

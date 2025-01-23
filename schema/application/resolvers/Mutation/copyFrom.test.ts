@@ -1,11 +1,8 @@
 import { describe, expect, test } from "bun:test";
-import { resolvers, typeDefs } from "@/schema";
+import { schema } from "@/schema/final";
 import { encodeGlobalId } from "@/schema/system";
 import { execute } from "@/test/prelude";
-import { makeExecutableSchema } from "@graphql-tools/schema";
 import { TestCopyFromDocument } from "./copyFrom.test.generated";
-
-const schema = makeExecutableSchema({ resolvers, typeDefs });
 
 describe.skipIf(!!process.env.CI)("copyFrom", () => {
   test("when entity is a template", async () => {

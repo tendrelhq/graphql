@@ -1,13 +1,10 @@
 import { describe, expect, test } from "bun:test";
 import { randomUUID } from "node:crypto";
-import { resolvers, typeDefs } from "@/schema";
+import { schema } from "@/schema/final";
 import { encodeGlobalId } from "@/schema/system";
 import { execute } from "@/test/prelude";
-import { makeExecutableSchema } from "@graphql-tools/schema";
 import { SetupTestUpdateWorkerDocument } from "./updateWorker.setup.test.generated";
 import { TestUpdateWorkerDocument } from "./updateWorker.test.generated";
-
-const schema = makeExecutableSchema({ resolvers, typeDefs });
 
 describe.skipIf(!!process.env.CI)("updateWorker", () => {
   test("updates worker without conflict", async () => {

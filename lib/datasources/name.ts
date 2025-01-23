@@ -1,11 +1,9 @@
-import type {
-  Component,
-  ID,
-  Name,
-  NameMetadata,
-  UpdateNameInput,
-} from "@/schema";
+import type { Component, ID, Name, NameMetadata } from "@/schema";
 import { type GlobalId, decodeGlobalId } from "@/schema/system";
+import {
+  DisplayName,
+  type UpdateNameInput,
+} from "@/schema/system/component/name";
 import type { WithKey } from "@/util";
 import Dataloader from "dataloader";
 import type { Request } from "express";
@@ -14,7 +12,7 @@ import { match } from "ts-pattern";
 import { type SQL, sql, unionAll } from "./postgres";
 
 export function makeDisplayNameLoader(_req: Request) {
-  return new Dataloader<ID, Component>(async keys => {
+  return new Dataloader<ID, DisplayName>(async keys => {
     const entities = keys.map(decodeGlobalId);
     const byUnderlyingType = entities.reduce((acc, { type, ...ids }) => {
       if (!acc.has(type)) acc.set(type, []);
@@ -98,7 +96,7 @@ export function makeDisplayNameLoader(_req: Request) {
       const key = [e.id, ...(e.suffix ?? [])].join(":");
       const x = xs.find(x => x._key === key);
 
-      if (x) return x;
+      if (x) return new DisplayName(x.id as string);
 
       return new GraphQLError(
         `No DisplayName for (${e.type}:${e.id}${e.suffix?.length ? `:${e.suffix.join()}` : ""})`,

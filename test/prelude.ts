@@ -35,10 +35,10 @@ async function createTestContext(): Promise<Context> {
   return {
     // biome-ignore lint/suspicious/noExplicitAny: i know i know...
     auth: { userId: process.env.X_TENDREL_USER } as any,
-    // biome-ignore lint/suspicious/noExplicitAny: ...room for improvement
+    // biome-ignore lint/suspicious/noExplicitAny: ...room for improvement...
     orm: orm(DEFAULT_REQUEST as any),
-    // biome-ignore lint/suspicious/noExplicitAny: i know i know x 2...
-    req: {} as any,
+    // biome-ignore lint/suspicious/noExplicitAny: ...but whatever.
+    req: DEFAULT_REQUEST as any,
   };
 }
 
