@@ -12,7 +12,7 @@ export default (_: Request) =>
             w.workerinstanceuuid AS _key,
             encode(('worker:' || w.workerinstanceuuid)::bytea, 'base64') AS id,
             w.workerinstanceid AS _hack_numeric_id,
-            u.workerfullname AS "displayName",
+            coalesce(u.workerfullname, u.workergeneratedname) AS "displayName",
             u.workerfirstname AS "firstName",
             u.workerlastname AS "lastName",
             l.systaguuid AS "languageId",
