@@ -239,6 +239,12 @@ describe.skipIf(!!process.env.CI)("MFT", () => {
         entity: FSM,
         edits: [
           {
+            field: await overrideStartTimeField(FSM),
+            // Test null field-level overrides:
+            value: undefined,
+            valueType: "timestamp",
+          },
+          {
             field: await getFieldByName(FSM, "Comments"),
             value: {
               string: "Don't mind me! Just leaving a comment :)",
