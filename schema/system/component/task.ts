@@ -897,7 +897,10 @@ export function valueInputTypeToSql(input: FieldInput) {
       return "String";
     case "timestamp":
       return "Date";
-    case "unknown":
+    default: {
+      const _: "unknown" = input.valueType;
+      console.warn("Unknown input variant:", JSON.stringify(input));
       return null; // will get INNER JOIN'd out
+    }
   }
 }
