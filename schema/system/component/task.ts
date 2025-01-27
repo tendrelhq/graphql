@@ -814,8 +814,8 @@ export function applyEdits$fragment(
         on  edits.field = wr.id
         and wi.workinstanceworktemplateid = wr.workresultworktemplateid
     inner join public.systag as wrt
-        on  edits.type = wrt.systagtype
-        and wrt.systagparentid = 699
+        on  wr.workresulttypeid = wrt.systagid
+        and edits.type = wrt.systagtype
     on conflict (workresultinstanceworkinstanceid, workresultinstanceworkresultid)
     do update
         set workresultinstancevalue = excluded.workresultinstancevalue,
@@ -882,26 +882,22 @@ export function valueInputToSql(input: FieldInput) {
 }
 
 export function valueInputTypeToSql(input: FieldInput) {
-  if (!input.value) return null;
-  switch (true) {
-    case "boolean" in input.value:
+  switch (input.valueType) {
+    case "boolean":
       return "Boolean";
     // case "decimal" in value:
     //   return "Number";
     // case "duration" in value:
     //   return "Duration";
-    case "id" in input.value:
-      return input.value.id;
-    case "number" in input.value:
+    case "entity":
+      return "Entity";
+    case "number":
       return "Number";
-    case "string" in input.value:
+    case "string":
       return "String";
-    case "timestamp" in input.value:
+    case "timestamp":
       return "Date";
-    default: {
-      const _: never = input.value;
-      console.warn(`Unhandled input variant: ${JSON.stringify(input.value)}`);
-      return null;
-    }
+    case "unknown":
+      return null; // will get INNER JOIN'd out
   }
 }
