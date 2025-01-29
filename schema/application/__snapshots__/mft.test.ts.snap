@@ -614,205 +614,223 @@ exports[`MFT entrypoint query 1`] = `
 exports[`MFT start run 1`] = `
 {
   "advance": {
-    "__typename": "Task",
+    "__typename": "AdvanceResult",
     "fsm": {
-      "__typename": "TaskStateMachine",
-      "active": {
-        "assignees": {
+      "__typename": "Task",
+      "fsm": {
+        "__typename": "TaskStateMachine",
+        "active": {
+          "assignees": {
+            "edges": [
+              {
+                "node": {
+                  "assignedTo": {
+                    "displayName": "Will Ruggiano",
+                  },
+                },
+              },
+            ],
+          },
+          "displayName": {
+            "name": {
+              "value": "Run",
+            },
+          },
+          "fields": {
+            "edges": [
+              {
+                "node": {
+                  "name": {
+                    "name": {
+                      "value": "Override Start Time",
+                    },
+                  },
+                  "value": {
+                    "__typename": "TimestampValue",
+                    "timestamp": "2024-09-08T19:31:45.364+00:00",
+                  },
+                  "valueType": "timestamp",
+                },
+              },
+              {
+                "node": {
+                  "name": {
+                    "name": {
+                      "value": "Override End Time",
+                    },
+                  },
+                  "value": {
+                    "__typename": "TimestampValue",
+                    "timestamp": null,
+                  },
+                  "valueType": "timestamp",
+                },
+              },
+              {
+                "node": {
+                  "name": {
+                    "name": {
+                      "value": "Run Output",
+                    },
+                  },
+                  "value": {
+                    "__typename": "NumberValue",
+                  },
+                  "valueType": "number",
+                },
+              },
+              {
+                "node": {
+                  "name": {
+                    "name": {
+                      "value": "Reject Count",
+                    },
+                  },
+                  "value": {
+                    "__typename": "NumberValue",
+                  },
+                  "valueType": "number",
+                },
+              },
+              {
+                "node": {
+                  "name": {
+                    "name": {
+                      "value": "Comments",
+                    },
+                  },
+                  "value": {
+                    "__typename": "StringValue",
+                    "string": null,
+                  },
+                  "valueType": "string",
+                },
+              },
+            ],
+          },
+          "state": {
+            "__typename": "InProgress",
+          },
+        },
+        "transitions": {
           "edges": [
             {
               "node": {
-                "assignedTo": {
-                  "displayName": "Will Ruggiano",
+                "displayName": {
+                  "name": {
+                    "value": "Downtime",
+                  },
+                },
+                "fields": {
+                  "edges": [
+                    {
+                      "node": {
+                        "name": {
+                          "name": {
+                            "value": "Override State Time",
+                          },
+                        },
+                        "value": {
+                          "__typename": "TimestampValue",
+                        },
+                      },
+                    },
+                    {
+                      "node": {
+                        "name": {
+                          "name": {
+                            "value": "Override End Time",
+                          },
+                        },
+                        "value": {
+                          "__typename": "TimestampValue",
+                        },
+                      },
+                    },
+                    {
+                      "node": {
+                        "name": {
+                          "name": {
+                            "value": "Description",
+                          },
+                        },
+                        "value": {
+                          "__typename": "StringValue",
+                        },
+                      },
+                    },
+                  ],
+                },
+              },
+            },
+            {
+              "node": {
+                "displayName": {
+                  "name": {
+                    "value": "Idle Time",
+                  },
+                },
+                "fields": {
+                  "edges": [
+                    {
+                      "node": {
+                        "name": {
+                          "name": {
+                            "value": "Override State Time",
+                          },
+                        },
+                        "value": {
+                          "__typename": "TimestampValue",
+                        },
+                      },
+                    },
+                    {
+                      "node": {
+                        "name": {
+                          "name": {
+                            "value": "Override End Time",
+                          },
+                        },
+                        "value": {
+                          "__typename": "TimestampValue",
+                        },
+                      },
+                    },
+                    {
+                      "node": {
+                        "name": {
+                          "name": {
+                            "value": "Description",
+                          },
+                        },
+                        "value": {
+                          "__typename": "StringValue",
+                        },
+                      },
+                    },
+                  ],
                 },
               },
             },
           ],
         },
-        "displayName": {
-          "name": {
-            "value": "Run",
-          },
-        },
-        "fields": {
-          "edges": [
-            {
-              "node": {
-                "name": {
-                  "name": {
-                    "value": "Override Start Time",
-                  },
-                },
-                "value": {
-                  "__typename": "TimestampValue",
-                  "timestamp": "2024-09-08T19:31:45.364+00:00",
-                },
-                "valueType": "timestamp",
-              },
-            },
-            {
-              "node": {
-                "name": {
-                  "name": {
-                    "value": "Override End Time",
-                  },
-                },
-                "value": {
-                  "__typename": "TimestampValue",
-                  "timestamp": null,
-                },
-                "valueType": "timestamp",
-              },
-            },
-            {
-              "node": {
-                "name": {
-                  "name": {
-                    "value": "Run Output",
-                  },
-                },
-                "value": {
-                  "__typename": "NumberValue",
-                },
-                "valueType": "number",
-              },
-            },
-            {
-              "node": {
-                "name": {
-                  "name": {
-                    "value": "Reject Count",
-                  },
-                },
-                "value": {
-                  "__typename": "NumberValue",
-                },
-                "valueType": "number",
-              },
-            },
-            {
-              "node": {
-                "name": {
-                  "name": {
-                    "value": "Comments",
-                  },
-                },
-                "value": {
-                  "__typename": "StringValue",
-                  "string": null,
-                },
-                "valueType": "string",
-              },
-            },
-          ],
-        },
-        "state": {
-          "__typename": "InProgress",
-        },
-      },
-      "transitions": {
-        "edges": [
-          {
-            "node": {
-              "displayName": {
-                "name": {
-                  "value": "Downtime",
-                },
-              },
-              "fields": {
-                "edges": [
-                  {
-                    "node": {
-                      "name": {
-                        "name": {
-                          "value": "Override State Time",
-                        },
-                      },
-                      "value": {
-                        "__typename": "TimestampValue",
-                      },
-                    },
-                  },
-                  {
-                    "node": {
-                      "name": {
-                        "name": {
-                          "value": "Override End Time",
-                        },
-                      },
-                      "value": {
-                        "__typename": "TimestampValue",
-                      },
-                    },
-                  },
-                  {
-                    "node": {
-                      "name": {
-                        "name": {
-                          "value": "Description",
-                        },
-                      },
-                      "value": {
-                        "__typename": "StringValue",
-                      },
-                    },
-                  },
-                ],
-              },
-            },
-          },
-          {
-            "node": {
-              "displayName": {
-                "name": {
-                  "value": "Idle Time",
-                },
-              },
-              "fields": {
-                "edges": [
-                  {
-                    "node": {
-                      "name": {
-                        "name": {
-                          "value": "Override State Time",
-                        },
-                      },
-                      "value": {
-                        "__typename": "TimestampValue",
-                      },
-                    },
-                  },
-                  {
-                    "node": {
-                      "name": {
-                        "name": {
-                          "value": "Override End Time",
-                        },
-                      },
-                      "value": {
-                        "__typename": "TimestampValue",
-                      },
-                    },
-                  },
-                  {
-                    "node": {
-                      "name": {
-                        "name": {
-                          "value": "Description",
-                        },
-                      },
-                      "value": {
-                        "__typename": "StringValue",
-                      },
-                    },
-                  },
-                ],
-              },
-            },
-          },
-        ],
       },
     },
+    "instantiations": [
+      {
+        "__typename": "TaskEdge",
+        "node": {
+          "__typename": "Task",
+          "displayName": {
+            "__typename": "DisplayName",
+            "name": {
+              "__typename": "DynamicString",
+              "value": "Run",
+            },
+          },
+        },
+      },
+    ],
   },
 }
 `;
@@ -820,80 +838,84 @@ exports[`MFT start run 1`] = `
 exports[`MFT production -> idle time 1`] = `
 {
   "advance": {
-    "__typename": "Task",
+    "__typename": "AdvanceResult",
     "fsm": {
-      "__typename": "TaskStateMachine",
-      "active": {
-        "assignees": {
-          "edges": [
-            {
-              "node": {
-                "assignedTo": {
-                  "displayName": "Will Ruggiano",
+      "__typename": "Task",
+      "fsm": {
+        "__typename": "TaskStateMachine",
+        "active": {
+          "assignees": {
+            "edges": [
+              {
+                "node": {
+                  "assignedTo": {
+                    "displayName": "Will Ruggiano",
+                  },
                 },
               },
+            ],
+          },
+          "displayName": {
+            "name": {
+              "value": "Idle Time",
             },
-          ],
-        },
-        "displayName": {
-          "name": {
-            "value": "Idle Time",
+          },
+          "fields": {
+            "edges": [
+              {
+                "node": {
+                  "name": {
+                    "name": {
+                      "value": "Override State Time",
+                    },
+                  },
+                  "value": {
+                    "__typename": "TimestampValue",
+                    "timestamp": null,
+                  },
+                  "valueType": "timestamp",
+                },
+              },
+              {
+                "node": {
+                  "name": {
+                    "name": {
+                      "value": "Override End Time",
+                    },
+                  },
+                  "value": {
+                    "__typename": "TimestampValue",
+                    "timestamp": null,
+                  },
+                  "valueType": "timestamp",
+                },
+              },
+              {
+                "node": {
+                  "name": {
+                    "name": {
+                      "value": "Description",
+                    },
+                  },
+                  "value": {
+                    "__typename": "StringValue",
+                    "string": null,
+                  },
+                  "valueType": "string",
+                },
+              },
+            ],
+          },
+          "state": {
+            "__typename": "InProgress",
           },
         },
-        "fields": {
-          "edges": [
-            {
-              "node": {
-                "name": {
-                  "name": {
-                    "value": "Override State Time",
-                  },
-                },
-                "value": {
-                  "__typename": "TimestampValue",
-                  "timestamp": null,
-                },
-                "valueType": "timestamp",
-              },
-            },
-            {
-              "node": {
-                "name": {
-                  "name": {
-                    "value": "Override End Time",
-                  },
-                },
-                "value": {
-                  "__typename": "TimestampValue",
-                  "timestamp": null,
-                },
-                "valueType": "timestamp",
-              },
-            },
-            {
-              "node": {
-                "name": {
-                  "name": {
-                    "value": "Description",
-                  },
-                },
-                "value": {
-                  "__typename": "StringValue",
-                  "string": null,
-                },
-                "valueType": "string",
-              },
-            },
-          ],
+        "transitions": {
+          "edges": [],
         },
-        "state": {
-          "__typename": "InProgress",
-        },
-      },
-      "transitions": {
-        "edges": [],
       },
     },
+    "instantiations": [],
   },
 }
 `;
@@ -901,205 +923,209 @@ exports[`MFT production -> idle time 1`] = `
 exports[`MFT end idle time 1`] = `
 {
   "advance": {
-    "__typename": "Task",
+    "__typename": "AdvanceResult",
     "fsm": {
-      "__typename": "TaskStateMachine",
-      "active": {
-        "assignees": {
+      "__typename": "Task",
+      "fsm": {
+        "__typename": "TaskStateMachine",
+        "active": {
+          "assignees": {
+            "edges": [
+              {
+                "node": {
+                  "assignedTo": {
+                    "displayName": "Will Ruggiano",
+                  },
+                },
+              },
+            ],
+          },
+          "displayName": {
+            "name": {
+              "value": "Run",
+            },
+          },
+          "fields": {
+            "edges": [
+              {
+                "node": {
+                  "name": {
+                    "name": {
+                      "value": "Override Start Time",
+                    },
+                  },
+                  "value": {
+                    "__typename": "TimestampValue",
+                    "timestamp": "2024-09-08T19:31:45.364+00:00",
+                  },
+                  "valueType": "timestamp",
+                },
+              },
+              {
+                "node": {
+                  "name": {
+                    "name": {
+                      "value": "Override End Time",
+                    },
+                  },
+                  "value": {
+                    "__typename": "TimestampValue",
+                    "timestamp": null,
+                  },
+                  "valueType": "timestamp",
+                },
+              },
+              {
+                "node": {
+                  "name": {
+                    "name": {
+                      "value": "Run Output",
+                    },
+                  },
+                  "value": {
+                    "__typename": "NumberValue",
+                  },
+                  "valueType": "number",
+                },
+              },
+              {
+                "node": {
+                  "name": {
+                    "name": {
+                      "value": "Reject Count",
+                    },
+                  },
+                  "value": {
+                    "__typename": "NumberValue",
+                  },
+                  "valueType": "number",
+                },
+              },
+              {
+                "node": {
+                  "name": {
+                    "name": {
+                      "value": "Comments",
+                    },
+                  },
+                  "value": {
+                    "__typename": "StringValue",
+                    "string": null,
+                  },
+                  "valueType": "string",
+                },
+              },
+            ],
+          },
+          "state": {
+            "__typename": "InProgress",
+          },
+        },
+        "transitions": {
           "edges": [
             {
               "node": {
-                "assignedTo": {
-                  "displayName": "Will Ruggiano",
+                "displayName": {
+                  "name": {
+                    "value": "Downtime",
+                  },
+                },
+                "fields": {
+                  "edges": [
+                    {
+                      "node": {
+                        "name": {
+                          "name": {
+                            "value": "Override State Time",
+                          },
+                        },
+                        "value": {
+                          "__typename": "TimestampValue",
+                        },
+                      },
+                    },
+                    {
+                      "node": {
+                        "name": {
+                          "name": {
+                            "value": "Override End Time",
+                          },
+                        },
+                        "value": {
+                          "__typename": "TimestampValue",
+                        },
+                      },
+                    },
+                    {
+                      "node": {
+                        "name": {
+                          "name": {
+                            "value": "Description",
+                          },
+                        },
+                        "value": {
+                          "__typename": "StringValue",
+                        },
+                      },
+                    },
+                  ],
+                },
+              },
+            },
+            {
+              "node": {
+                "displayName": {
+                  "name": {
+                    "value": "Idle Time",
+                  },
+                },
+                "fields": {
+                  "edges": [
+                    {
+                      "node": {
+                        "name": {
+                          "name": {
+                            "value": "Override State Time",
+                          },
+                        },
+                        "value": {
+                          "__typename": "TimestampValue",
+                        },
+                      },
+                    },
+                    {
+                      "node": {
+                        "name": {
+                          "name": {
+                            "value": "Override End Time",
+                          },
+                        },
+                        "value": {
+                          "__typename": "TimestampValue",
+                        },
+                      },
+                    },
+                    {
+                      "node": {
+                        "name": {
+                          "name": {
+                            "value": "Description",
+                          },
+                        },
+                        "value": {
+                          "__typename": "StringValue",
+                        },
+                      },
+                    },
+                  ],
                 },
               },
             },
           ],
         },
-        "displayName": {
-          "name": {
-            "value": "Run",
-          },
-        },
-        "fields": {
-          "edges": [
-            {
-              "node": {
-                "name": {
-                  "name": {
-                    "value": "Override Start Time",
-                  },
-                },
-                "value": {
-                  "__typename": "TimestampValue",
-                  "timestamp": "2024-09-08T19:31:45.364+00:00",
-                },
-                "valueType": "timestamp",
-              },
-            },
-            {
-              "node": {
-                "name": {
-                  "name": {
-                    "value": "Override End Time",
-                  },
-                },
-                "value": {
-                  "__typename": "TimestampValue",
-                  "timestamp": null,
-                },
-                "valueType": "timestamp",
-              },
-            },
-            {
-              "node": {
-                "name": {
-                  "name": {
-                    "value": "Run Output",
-                  },
-                },
-                "value": {
-                  "__typename": "NumberValue",
-                },
-                "valueType": "number",
-              },
-            },
-            {
-              "node": {
-                "name": {
-                  "name": {
-                    "value": "Reject Count",
-                  },
-                },
-                "value": {
-                  "__typename": "NumberValue",
-                },
-                "valueType": "number",
-              },
-            },
-            {
-              "node": {
-                "name": {
-                  "name": {
-                    "value": "Comments",
-                  },
-                },
-                "value": {
-                  "__typename": "StringValue",
-                  "string": null,
-                },
-                "valueType": "string",
-              },
-            },
-          ],
-        },
-        "state": {
-          "__typename": "InProgress",
-        },
-      },
-      "transitions": {
-        "edges": [
-          {
-            "node": {
-              "displayName": {
-                "name": {
-                  "value": "Downtime",
-                },
-              },
-              "fields": {
-                "edges": [
-                  {
-                    "node": {
-                      "name": {
-                        "name": {
-                          "value": "Override State Time",
-                        },
-                      },
-                      "value": {
-                        "__typename": "TimestampValue",
-                      },
-                    },
-                  },
-                  {
-                    "node": {
-                      "name": {
-                        "name": {
-                          "value": "Override End Time",
-                        },
-                      },
-                      "value": {
-                        "__typename": "TimestampValue",
-                      },
-                    },
-                  },
-                  {
-                    "node": {
-                      "name": {
-                        "name": {
-                          "value": "Description",
-                        },
-                      },
-                      "value": {
-                        "__typename": "StringValue",
-                      },
-                    },
-                  },
-                ],
-              },
-            },
-          },
-          {
-            "node": {
-              "displayName": {
-                "name": {
-                  "value": "Idle Time",
-                },
-              },
-              "fields": {
-                "edges": [
-                  {
-                    "node": {
-                      "name": {
-                        "name": {
-                          "value": "Override State Time",
-                        },
-                      },
-                      "value": {
-                        "__typename": "TimestampValue",
-                      },
-                    },
-                  },
-                  {
-                    "node": {
-                      "name": {
-                        "name": {
-                          "value": "Override End Time",
-                        },
-                      },
-                      "value": {
-                        "__typename": "TimestampValue",
-                      },
-                    },
-                  },
-                  {
-                    "node": {
-                      "name": {
-                        "name": {
-                          "value": "Description",
-                        },
-                      },
-                      "value": {
-                        "__typename": "StringValue",
-                      },
-                    },
-                  },
-                ],
-              },
-            },
-          },
-        ],
       },
     },
+    "instantiations": [],
   },
 }
 `;
@@ -1107,80 +1133,84 @@ exports[`MFT end idle time 1`] = `
 exports[`MFT production -> downtime 1`] = `
 {
   "advance": {
-    "__typename": "Task",
+    "__typename": "AdvanceResult",
     "fsm": {
-      "__typename": "TaskStateMachine",
-      "active": {
-        "assignees": {
-          "edges": [
-            {
-              "node": {
-                "assignedTo": {
-                  "displayName": "Will Ruggiano",
+      "__typename": "Task",
+      "fsm": {
+        "__typename": "TaskStateMachine",
+        "active": {
+          "assignees": {
+            "edges": [
+              {
+                "node": {
+                  "assignedTo": {
+                    "displayName": "Will Ruggiano",
+                  },
                 },
               },
+            ],
+          },
+          "displayName": {
+            "name": {
+              "value": "Downtime",
             },
-          ],
-        },
-        "displayName": {
-          "name": {
-            "value": "Downtime",
+          },
+          "fields": {
+            "edges": [
+              {
+                "node": {
+                  "name": {
+                    "name": {
+                      "value": "Override State Time",
+                    },
+                  },
+                  "value": {
+                    "__typename": "TimestampValue",
+                    "timestamp": null,
+                  },
+                  "valueType": "timestamp",
+                },
+              },
+              {
+                "node": {
+                  "name": {
+                    "name": {
+                      "value": "Override End Time",
+                    },
+                  },
+                  "value": {
+                    "__typename": "TimestampValue",
+                    "timestamp": null,
+                  },
+                  "valueType": "timestamp",
+                },
+              },
+              {
+                "node": {
+                  "name": {
+                    "name": {
+                      "value": "Description",
+                    },
+                  },
+                  "value": {
+                    "__typename": "StringValue",
+                    "string": null,
+                  },
+                  "valueType": "string",
+                },
+              },
+            ],
+          },
+          "state": {
+            "__typename": "InProgress",
           },
         },
-        "fields": {
-          "edges": [
-            {
-              "node": {
-                "name": {
-                  "name": {
-                    "value": "Override State Time",
-                  },
-                },
-                "value": {
-                  "__typename": "TimestampValue",
-                  "timestamp": null,
-                },
-                "valueType": "timestamp",
-              },
-            },
-            {
-              "node": {
-                "name": {
-                  "name": {
-                    "value": "Override End Time",
-                  },
-                },
-                "value": {
-                  "__typename": "TimestampValue",
-                  "timestamp": null,
-                },
-                "valueType": "timestamp",
-              },
-            },
-            {
-              "node": {
-                "name": {
-                  "name": {
-                    "value": "Description",
-                  },
-                },
-                "value": {
-                  "__typename": "StringValue",
-                  "string": null,
-                },
-                "valueType": "string",
-              },
-            },
-          ],
+        "transitions": {
+          "edges": [],
         },
-        "state": {
-          "__typename": "InProgress",
-        },
-      },
-      "transitions": {
-        "edges": [],
       },
     },
+    "instantiations": [],
   },
 }
 `;
@@ -1188,205 +1218,209 @@ exports[`MFT production -> downtime 1`] = `
 exports[`MFT end downtime 1`] = `
 {
   "advance": {
-    "__typename": "Task",
+    "__typename": "AdvanceResult",
     "fsm": {
-      "__typename": "TaskStateMachine",
-      "active": {
-        "assignees": {
+      "__typename": "Task",
+      "fsm": {
+        "__typename": "TaskStateMachine",
+        "active": {
+          "assignees": {
+            "edges": [
+              {
+                "node": {
+                  "assignedTo": {
+                    "displayName": "Will Ruggiano",
+                  },
+                },
+              },
+            ],
+          },
+          "displayName": {
+            "name": {
+              "value": "Run",
+            },
+          },
+          "fields": {
+            "edges": [
+              {
+                "node": {
+                  "name": {
+                    "name": {
+                      "value": "Override Start Time",
+                    },
+                  },
+                  "value": {
+                    "__typename": "TimestampValue",
+                    "timestamp": "2024-09-08T19:31:45.364+00:00",
+                  },
+                  "valueType": "timestamp",
+                },
+              },
+              {
+                "node": {
+                  "name": {
+                    "name": {
+                      "value": "Override End Time",
+                    },
+                  },
+                  "value": {
+                    "__typename": "TimestampValue",
+                    "timestamp": null,
+                  },
+                  "valueType": "timestamp",
+                },
+              },
+              {
+                "node": {
+                  "name": {
+                    "name": {
+                      "value": "Run Output",
+                    },
+                  },
+                  "value": {
+                    "__typename": "NumberValue",
+                  },
+                  "valueType": "number",
+                },
+              },
+              {
+                "node": {
+                  "name": {
+                    "name": {
+                      "value": "Reject Count",
+                    },
+                  },
+                  "value": {
+                    "__typename": "NumberValue",
+                  },
+                  "valueType": "number",
+                },
+              },
+              {
+                "node": {
+                  "name": {
+                    "name": {
+                      "value": "Comments",
+                    },
+                  },
+                  "value": {
+                    "__typename": "StringValue",
+                    "string": null,
+                  },
+                  "valueType": "string",
+                },
+              },
+            ],
+          },
+          "state": {
+            "__typename": "InProgress",
+          },
+        },
+        "transitions": {
           "edges": [
             {
               "node": {
-                "assignedTo": {
-                  "displayName": "Will Ruggiano",
+                "displayName": {
+                  "name": {
+                    "value": "Downtime",
+                  },
+                },
+                "fields": {
+                  "edges": [
+                    {
+                      "node": {
+                        "name": {
+                          "name": {
+                            "value": "Override State Time",
+                          },
+                        },
+                        "value": {
+                          "__typename": "TimestampValue",
+                        },
+                      },
+                    },
+                    {
+                      "node": {
+                        "name": {
+                          "name": {
+                            "value": "Override End Time",
+                          },
+                        },
+                        "value": {
+                          "__typename": "TimestampValue",
+                        },
+                      },
+                    },
+                    {
+                      "node": {
+                        "name": {
+                          "name": {
+                            "value": "Description",
+                          },
+                        },
+                        "value": {
+                          "__typename": "StringValue",
+                        },
+                      },
+                    },
+                  ],
+                },
+              },
+            },
+            {
+              "node": {
+                "displayName": {
+                  "name": {
+                    "value": "Idle Time",
+                  },
+                },
+                "fields": {
+                  "edges": [
+                    {
+                      "node": {
+                        "name": {
+                          "name": {
+                            "value": "Override State Time",
+                          },
+                        },
+                        "value": {
+                          "__typename": "TimestampValue",
+                        },
+                      },
+                    },
+                    {
+                      "node": {
+                        "name": {
+                          "name": {
+                            "value": "Override End Time",
+                          },
+                        },
+                        "value": {
+                          "__typename": "TimestampValue",
+                        },
+                      },
+                    },
+                    {
+                      "node": {
+                        "name": {
+                          "name": {
+                            "value": "Description",
+                          },
+                        },
+                        "value": {
+                          "__typename": "StringValue",
+                        },
+                      },
+                    },
+                  ],
                 },
               },
             },
           ],
         },
-        "displayName": {
-          "name": {
-            "value": "Run",
-          },
-        },
-        "fields": {
-          "edges": [
-            {
-              "node": {
-                "name": {
-                  "name": {
-                    "value": "Override Start Time",
-                  },
-                },
-                "value": {
-                  "__typename": "TimestampValue",
-                  "timestamp": "2024-09-08T19:31:45.364+00:00",
-                },
-                "valueType": "timestamp",
-              },
-            },
-            {
-              "node": {
-                "name": {
-                  "name": {
-                    "value": "Override End Time",
-                  },
-                },
-                "value": {
-                  "__typename": "TimestampValue",
-                  "timestamp": null,
-                },
-                "valueType": "timestamp",
-              },
-            },
-            {
-              "node": {
-                "name": {
-                  "name": {
-                    "value": "Run Output",
-                  },
-                },
-                "value": {
-                  "__typename": "NumberValue",
-                },
-                "valueType": "number",
-              },
-            },
-            {
-              "node": {
-                "name": {
-                  "name": {
-                    "value": "Reject Count",
-                  },
-                },
-                "value": {
-                  "__typename": "NumberValue",
-                },
-                "valueType": "number",
-              },
-            },
-            {
-              "node": {
-                "name": {
-                  "name": {
-                    "value": "Comments",
-                  },
-                },
-                "value": {
-                  "__typename": "StringValue",
-                  "string": null,
-                },
-                "valueType": "string",
-              },
-            },
-          ],
-        },
-        "state": {
-          "__typename": "InProgress",
-        },
-      },
-      "transitions": {
-        "edges": [
-          {
-            "node": {
-              "displayName": {
-                "name": {
-                  "value": "Downtime",
-                },
-              },
-              "fields": {
-                "edges": [
-                  {
-                    "node": {
-                      "name": {
-                        "name": {
-                          "value": "Override State Time",
-                        },
-                      },
-                      "value": {
-                        "__typename": "TimestampValue",
-                      },
-                    },
-                  },
-                  {
-                    "node": {
-                      "name": {
-                        "name": {
-                          "value": "Override End Time",
-                        },
-                      },
-                      "value": {
-                        "__typename": "TimestampValue",
-                      },
-                    },
-                  },
-                  {
-                    "node": {
-                      "name": {
-                        "name": {
-                          "value": "Description",
-                        },
-                      },
-                      "value": {
-                        "__typename": "StringValue",
-                      },
-                    },
-                  },
-                ],
-              },
-            },
-          },
-          {
-            "node": {
-              "displayName": {
-                "name": {
-                  "value": "Idle Time",
-                },
-              },
-              "fields": {
-                "edges": [
-                  {
-                    "node": {
-                      "name": {
-                        "name": {
-                          "value": "Override State Time",
-                        },
-                      },
-                      "value": {
-                        "__typename": "TimestampValue",
-                      },
-                    },
-                  },
-                  {
-                    "node": {
-                      "name": {
-                        "name": {
-                          "value": "Override End Time",
-                        },
-                      },
-                      "value": {
-                        "__typename": "TimestampValue",
-                      },
-                    },
-                  },
-                  {
-                    "node": {
-                      "name": {
-                        "name": {
-                          "value": "Description",
-                        },
-                      },
-                      "value": {
-                        "__typename": "StringValue",
-                      },
-                    },
-                  },
-                ],
-              },
-            },
-          },
-        ],
       },
     },
+    "instantiations": [],
   },
 }
 `;
@@ -1394,77 +1428,81 @@ exports[`MFT end downtime 1`] = `
 exports[`MFT end run 1`] = `
 {
   "advance": {
-    "__typename": "Task",
-    "chain": {
-      "__typename": "TaskConnection",
-      "edges": [
-        {
-          "__typename": "TaskEdge",
-          "node": {
-            "__typename": "Task",
-            "displayName": {
-              "__typename": "DisplayName",
-              "name": {
-                "__typename": "DynamicString",
-                "value": "Run",
+    "__typename": "AdvanceResult",
+    "fsm": {
+      "__typename": "Task",
+      "chain": {
+        "__typename": "TaskConnection",
+        "edges": [
+          {
+            "__typename": "TaskEdge",
+            "node": {
+              "__typename": "Task",
+              "displayName": {
+                "__typename": "DisplayName",
+                "name": {
+                  "__typename": "DynamicString",
+                  "value": "Run",
+                },
+              },
+              "state": {
+                "__typename": "Closed",
               },
             },
-            "state": {
-              "__typename": "Closed",
-            },
           },
-        },
-        {
-          "__typename": "TaskEdge",
-          "node": {
-            "__typename": "Task",
-            "displayName": {
-              "__typename": "DisplayName",
-              "name": {
-                "__typename": "DynamicString",
-                "value": "Idle Time",
+          {
+            "__typename": "TaskEdge",
+            "node": {
+              "__typename": "Task",
+              "displayName": {
+                "__typename": "DisplayName",
+                "name": {
+                  "__typename": "DynamicString",
+                  "value": "Idle Time",
+                },
+              },
+              "state": {
+                "__typename": "Closed",
               },
             },
-            "state": {
-              "__typename": "Closed",
-            },
           },
-        },
-        {
-          "__typename": "TaskEdge",
-          "node": {
-            "__typename": "Task",
-            "displayName": {
-              "__typename": "DisplayName",
-              "name": {
-                "__typename": "DynamicString",
-                "value": "Downtime",
+          {
+            "__typename": "TaskEdge",
+            "node": {
+              "__typename": "Task",
+              "displayName": {
+                "__typename": "DisplayName",
+                "name": {
+                  "__typename": "DynamicString",
+                  "value": "Downtime",
+                },
+              },
+              "state": {
+                "__typename": "Closed",
               },
             },
-            "state": {
-              "__typename": "Closed",
-            },
           },
-        },
-        {
-          "__typename": "TaskEdge",
-          "node": {
-            "__typename": "Task",
-            "displayName": {
-              "__typename": "DisplayName",
-              "name": {
-                "__typename": "DynamicString",
-                "value": "Idle Time",
+          {
+            "__typename": "TaskEdge",
+            "node": {
+              "__typename": "Task",
+              "displayName": {
+                "__typename": "DisplayName",
+                "name": {
+                  "__typename": "DynamicString",
+                  "value": "Idle Time",
+                },
+              },
+              "state": {
+                "__typename": "Closed",
               },
             },
-            "state": {
-              "__typename": "Closed",
-            },
           },
-        },
-      ],
+        ],
+      },
+      "fsm": null,
     },
-    "fsm": null,
+    "instantiations": [],
   },
 }
 `;

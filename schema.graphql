@@ -72,6 +72,12 @@ input ActiveInput {
   updatedAt: TemporalInput
 }
 
+type AdvanceResult {
+  fsm: Task @semanticNonNull
+  instantiations: [TaskEdge!] @semanticNonNull
+  task: Task @semanticNonNull
+}
+
 type Aggregate {
   """
   The group, or bucket, that uniquely identifies this aggregate.
@@ -903,7 +909,7 @@ type Location implements Component & Node & Referenceable & Trackable {
   """
   Entrypoint into the "tracking system(s)" for the given Location.
   """
-  tracking: TrackableConnection @semanticNonNull
+  tracking(after: ID, first: Int): TrackableConnection @semanticNonNull
 }
 
 type LocationConnection {
@@ -960,7 +966,7 @@ type Mutation {
   """
   activate(entity: ID!): Activatable!
   activateWorker(id: ID!): Worker!
-  advance(opts: FsmOptions!): Task @semanticNonNull
+  advance(opts: FsmOptions!): AdvanceResult @semanticNonNull
   applyFieldEdits(edits: [FieldInput!]!, entity: ID!): Task @semanticNonNull
   """
   Assign an entity to another entity. If the entity is already assigned to the
@@ -1482,7 +1488,7 @@ type Task implements Assignable & Component & Node & Trackable {
   At the moment, sub-task tracking is not supported and therefore `null` will
   always be returned for this field.
   """
-  tracking: TrackableConnection
+  tracking(after: ID, first: Int): TrackableConnection
 }
 
 type TaskConnection {
@@ -1606,7 +1612,7 @@ interface Trackable implements Component {
   in practice. In order for an Entity to be trackable, it must be explicitly
   configured as such.
   """
-  tracking: TrackableConnection
+  tracking(after: ID, first: Int): TrackableConnection
 }
 
 type TrackableConnection {

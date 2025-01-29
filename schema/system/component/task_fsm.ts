@@ -7,6 +7,7 @@ import { GraphQLError } from "graphql";
 import type { ID } from "grats";
 import { match } from "ts-pattern";
 import type { StateMachine } from "../fsm";
+import type { Edge } from "../pagination";
 import { Task, type TaskInput, advance as advance_active } from "./task";
 
 /**
@@ -124,12 +125,22 @@ export type FsmOptions = {
   task: TaskInput;
 };
 
+/** @gqlType */
+export type AdvanceResult = {
+  /** @gqlField */
+  fsm: Task;
+  /** @gqlField */
+  task: Task;
+  /** @gqlField */
+  instantiations: Edge<Task>[];
+};
+
 /** @gqlField */
 export async function advance(
   _: Mutation,
   ctx: Context,
   opts: FsmOptions,
-): Promise<Task> {
+): Promise<AdvanceResult> {
   const r = new Task({ id: opts.fsm }, ctx);
   console.log(`fsm: ${r}`);
 
@@ -156,11 +167,13 @@ export async function advance(
     );
   }
 
+  let instantiations: Edge<Task>[] = [];
   if (choice.id === f.active?.id) {
     console.debug("advance: operating on the active task");
     // When the "choice" is the active task, we advance that task's internal
     // state machine as defined by its own `advance` implementation.
-    await advance_active(ctx, choice, opts.task);
+    const r = await advance_active(ctx, choice, opts.task);
+    instantiations = r.instantiations;
   } else {
     console.debug("advance: operating on the fsm");
     // Otherwise, the "choice" identifies a transition in the fsm.
@@ -168,9 +181,15 @@ export async function advance(
   }
 
   console.debug("advance: success!");
-  // We always return the fsm back to the client, allowing for single-roundtrip
-  // state transitions and a highly responsive ux.
-  return r;
+
+  // Return the FSM, the (now previous) choice, as well as any new
+  // instantiations resultant of this operation such that the caller can refresh
+  // their local state without requiring another roundtrip.
+  return {
+    fsm: r,
+    task: choice,
+    instantiations,
+  };
 }
 
 export async function advance_fsm(

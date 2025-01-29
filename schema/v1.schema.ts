@@ -79,6 +79,16 @@ export function getSchema(): GraphQLSchema {
             'Entrypoint into the "tracking system(s)" for a given Entity. Note that while\nmany types admit to being trackable, this does not mean that all in fact are\nin practice. In order for an Entity to be trackable, it must be explicitly\nconfigured as such.',
           name: "tracking",
           type: TrackableConnectionType,
+          args: {
+            after: {
+              name: "after",
+              type: GraphQLID,
+            },
+            first: {
+              name: "first",
+              type: GraphQLInt,
+            },
+          },
         },
       };
     },
@@ -953,11 +963,58 @@ export function getSchema(): GraphQLSchema {
             'Entrypoint into the "tracking system(s)" for the given Task.\nAt the moment, sub-task tracking is not supported and therefore `null` will\nalways be returned for this field.',
           name: "tracking",
           type: TrackableConnectionType,
+          args: {
+            after: {
+              name: "after",
+              type: GraphQLID,
+            },
+            first: {
+              name: "first",
+              type: GraphQLInt,
+            },
+          },
+          resolve(source, args) {
+            return source.tracking(args.first, args.after);
+          },
         },
       };
     },
     interfaces() {
       return [AssignableType, ComponentType, NodeType, TrackableType];
+    },
+  });
+  const AdvanceResultType: GraphQLObjectType = new GraphQLObjectType({
+    name: "AdvanceResult",
+    fields() {
+      return {
+        fsm: {
+          name: "fsm",
+          type: TaskType,
+          resolve(source, args, context, info) {
+            return assertNonNull(
+              defaultFieldResolver(source, args, context, info),
+            );
+          },
+        },
+        instantiations: {
+          name: "instantiations",
+          type: new GraphQLList(new GraphQLNonNull(TaskEdgeType)),
+          resolve(source, args, context, info) {
+            return assertNonNull(
+              defaultFieldResolver(source, args, context, info),
+            );
+          },
+        },
+        task: {
+          name: "task",
+          type: TaskType,
+          resolve(source, args, context, info) {
+            return assertNonNull(
+              defaultFieldResolver(source, args, context, info),
+            );
+          },
+        },
+      };
     },
   });
   const ValueInputType: GraphQLInputObjectType = new GraphQLInputObjectType({
@@ -1070,10 +1127,18 @@ export function getSchema(): GraphQLSchema {
             'Entrypoint into the "tracking system(s)" for the given Location.',
           name: "tracking",
           type: TrackableConnectionType,
-          resolve(source, args, context, info) {
-            return assertNonNull(
-              defaultFieldResolver(source, args, context, info),
-            );
+          args: {
+            after: {
+              name: "after",
+              type: GraphQLID,
+            },
+            first: {
+              name: "first",
+              type: GraphQLInt,
+            },
+          },
+          resolve(source, args) {
+            return assertNonNull(source.tracking(args.first, args.after));
           },
         },
       };
@@ -1195,7 +1260,7 @@ export function getSchema(): GraphQLSchema {
       return {
         advance: {
           name: "advance",
-          type: TaskType,
+          type: AdvanceResultType,
           args: {
             opts: {
               name: "opts",
@@ -1318,6 +1383,7 @@ export function getSchema(): GraphQLSchema {
       UpdateLocationInputType,
       UpdateNameInputType,
       ValueInputType,
+      AdvanceResultType,
       AggregateType,
       AssignmentType,
       AssignmentConnectionType,

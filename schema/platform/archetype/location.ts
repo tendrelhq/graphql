@@ -8,7 +8,7 @@ import {
 import type { Refetchable } from "@/schema/system/node";
 import type { Connection } from "@/schema/system/pagination";
 import type { Context } from "@/schema/types";
-import type { ID } from "grats";
+import type { ID, Int } from "grats";
 import type { Trackable } from "../tracking";
 
 export type ConstructorArgs = {
@@ -51,7 +51,10 @@ export class Location implements Component, Refetchable, Trackable {
    *
    * @gqlField
    */
-  async tracking(): Promise<Connection<Trackable>> {
+  async tracking(
+    first?: Int | null,
+    after?: ID | null,
+  ): Promise<Connection<Trackable>> {
     // At a given location, the "tracking systems" correspond to worktemplates
     // with a worktemplatetype tag of `Trackable`. This tag is a system-defined
     // type tag used specifically for identifying templates that are "opted

@@ -16,7 +16,7 @@ import type { Aggregate } from "../aggregation";
 import type { Component, FieldInput } from "../component";
 import type { Refetchable } from "../node";
 import type { Overridable } from "../overridable";
-import type { Connection } from "../pagination";
+import type { Connection, Edge } from "../pagination";
 import type { Timestamp } from "../temporal";
 import { type Assignable, Assignment } from "./assignee";
 import type { DisplayName, Named } from "./name";
@@ -302,7 +302,10 @@ export class Task
    *
    * @gqlField
    */
-  async tracking(): Promise<Connection<Trackable> | null> {
+  async tracking(
+    first?: Int | null,
+    after?: ID | null,
+  ): Promise<Connection<Trackable> | null> {
     return null;
   }
 
@@ -548,6 +551,11 @@ export type TaskInput = {
   overrides?: FieldInput[] | null;
 };
 
+export type AdvanceTaskResult = {
+  task: Task;
+  instantiations: Edge<Task>[];
+};
+
 /**
  * Similar to task_fsm's advance method, this method advances a Task through its
  * internal state machine. A Task's state machine has its finite set defined by
@@ -560,7 +568,7 @@ export async function advance(
   ctx: Context,
   t: Task,
   opts?: Omit<TaskInput, "id"> | null,
-): Promise<Task> {
+): Promise<AdvanceTaskResult> {
   if (t._type !== "workinstance") {
     // Punt on this for now. We can come back to it.
     // This is, at least at present, used solely by the `advance` implementation
@@ -568,7 +576,7 @@ export async function advance(
     throw "not yet implemented - lazy instantiation of a Task";
   }
 
-  await sql.begin(async tx => {
+  const instantiations = await sql.begin(async tx => {
     // FIXME: use MERGE once we've upgraded to postgres >=15
     const state = await t.state(); // N.B. db call
     const result = await match(state?.__typename)
@@ -662,26 +670,32 @@ export async function advance(
       console.debug(`advance: recorded time at task: ${result._value}s`);
     }
 
-    {
-      // Run the "rules engine".
-      const result = await tx`
-        with t as (
-            select *
-            from public.workinstance
-            where id = ${t._id}
-        )
+    // Run the "rules engine".
+    const instantiations = await tx<{ id: string }[]>`
+      with t as (
+          select *
+          from public.workinstance
+          where id = ${t._id}
+      )
 
-        select 1
-        from t, engine0.execute(
-            task_id := t.id,
-            modified_by := auth.current_identity(t.workinstancecustomerid, ${ctx.auth.userId})
-        )
-      `;
-      console.debug(`advance: engine.execute.count: ${result.count}`);
-    }
+      select encode(('workinstance:' || i.instance)::bytea, 'base64') as id, i.instance
+      from t, engine0.execute(
+          task_id := t.id,
+          modified_by := auth.current_identity(t.workinstancecustomerid, ${ctx.auth.userId})
+      ) as i
+    `;
+    console.debug(`advance: engine.execute.count: ${instantiations.length}`);
+
+    return instantiations;
   });
 
-  return t;
+  return {
+    task: t,
+    instantiations: instantiations.map(i => ({
+      cursor: i.id,
+      node: new Task(i, ctx),
+    })),
+  };
 }
 
 export function applyAssignments$fragment(
