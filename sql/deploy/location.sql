@@ -51,28 +51,30 @@ begin
   )
 
   insert into public.location (
+      locationcategoryid,
+      locationcornerstoneorder,
       locationcustomerid,
-      locationsiteid,
-      locationparentid,
       locationistop,
       locationiscornerstone,
-      locationcornerstoneorder,
-      locationcategoryid,
+      locationlookupname,
+      locationmodifiedby,
       locationnameid,
-      locationtimezone,
-      locationmodifiedby
+      locationparentid,
+      locationsiteid,
+      locationtimezone
   )
   select
+      location_type._id,
+      0, -- cornerstone order
       c.customerid,
-      p.locationsiteid,
-      p.locationid,
       location_parent_id is null,
       false,
-      0,
-      location_type._id,
+      location_name, -- lookup name
+      modified_by,
       ins_name._id,
-      location_timezone,
-      modified_by
+      p.locationid,
+      p.locationsiteid,
+      location_timezone
   from
       public.customer as c,
       ins_name,
