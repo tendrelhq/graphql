@@ -520,11 +520,11 @@ input ClickerWidgetInput {
 type Closed {
   closedAt: TimestampOverridable @semanticNonNull
   closedBecause: String
-  closedBy: String
+  closedBy: Assignable
   inProgressAt: TimestampOverridable
-  inProgressBy: String
+  inProgressBy: Assignable
   openedAt: TimestampOverridable @semanticNonNull
-  openedBy: String
+  openedBy: Assignable
 }
 
 """
@@ -820,7 +820,7 @@ interface Identity implements Component {
 
 type InProgress {
   inProgressAt: TimestampOverridable @semanticNonNull
-  inProgressBy: String
+  inProgressBy: Assignable
   openedAt: TimestampOverridable @semanticNonNull
   openedBy: String
 }
@@ -1083,7 +1083,7 @@ type OnceSchedule {
 
 type Open {
   openedAt: TimestampOverridable @semanticNonNull
-  openedBy: String
+  openedBy: Assignable
 }
 
 type Organization implements Node {

@@ -188,6 +188,9 @@ export class Task
       return null;
     }
 
+    // HACK: not great, but ok for now.
+    const ass = await assignees(this, this.ctx); // n.b. db call
+
     return match(row.status)
       .with(
         "Open",
@@ -202,7 +205,7 @@ export class Task
       )
       .with(
         "In Progress",
-        () =>
+        async () =>
           ({
             __typename: "InProgress",
             openedAt: {
@@ -221,11 +224,12 @@ export class Task
                 `Task ${this}, in state 'In Progress', has no start date`,
               ),
             },
+            inProgressBy: await ass?.edges.at(0)?.node.assignedTo(), // n.b. db call :/
           }) satisfies InProgress,
       )
       .with(
         "Cancelled",
-        () =>
+        async () =>
           ({
             __typename: "Closed",
             openedAt: {
@@ -254,11 +258,12 @@ export class Task
                 `Task ${this}, in state 'Cancelled', has no close date`,
               ),
             },
+            closedBy: await ass?.edges.at(0)?.node.assignedTo(), // n.b. db call :/
           }) satisfies Closed,
       )
       .with(
         "Complete",
-        () =>
+        async () =>
           ({
             __typename: "Closed",
             openedAt: {
@@ -287,6 +292,7 @@ export class Task
                 `Task ${this}, in state 'Closed', has no close date`,
               ),
             },
+            closedBy: await ass?.edges.at(0)?.node.assignedTo(), // n.b. db call :/
           }) satisfies Closed,
       )
       .otherwise(s => {
@@ -508,7 +514,7 @@ export type Open = {
   /** @gqlField */
   openedAt: Overridable<Timestamp>;
   /** @gqlField */
-  openedBy?: string;
+  openedBy?: Assignable | null;
 };
 
 /** @gqlType */
@@ -522,7 +528,7 @@ export type InProgress = {
   /** @gqlField */
   inProgressAt: Overridable<Timestamp>;
   /** @gqlField */
-  inProgressBy?: string | null;
+  inProgressBy?: Assignable | null;
 };
 
 /** @gqlType */
@@ -532,17 +538,17 @@ export type Closed = {
   /** @gqlField */
   openedAt: Overridable<Timestamp>;
   /** @gqlField */
-  openedBy?: string | null;
+  openedBy?: Assignable | null;
   /** @gqlField */
   inProgressAt?: Overridable<Timestamp> | null;
   /** @gqlField */
-  inProgressBy?: string | null;
+  inProgressBy?: Assignable | null;
   /** @gqlField */
   closedAt: Overridable<Timestamp>;
   /** @gqlField */
   closedBecause?: string | null;
   /** @gqlField */
-  closedBy?: string;
+  closedBy?: Assignable | null;
 };
 
 /** @gqlInput */
@@ -578,6 +584,8 @@ export async function advance(
 
   const instantiations = await sql.begin(async tx => {
     // FIXME: use MERGE once we've upgraded to postgres >=15
+    // FIXME: this is bad under concurrency! This easily leads to inadvertently
+    // stopping an in-progress instance when you *think* you are starting it lmao.
     const state = await t.state(); // N.B. db call
     const result = await match(state?.__typename)
       .with(

@@ -710,6 +710,9 @@ exports[`MFT start run 1`] = `
           },
           "state": {
             "__typename": "InProgress",
+            "inProgressBy": {
+              "displayName": "Will Ruggiano",
+            },
           },
         },
         "transitions": {
@@ -908,6 +911,9 @@ exports[`MFT production -> idle time 1`] = `
           },
           "state": {
             "__typename": "InProgress",
+            "inProgressBy": {
+              "displayName": "Will Ruggiano",
+            },
           },
         },
         "transitions": {
@@ -1019,6 +1025,9 @@ exports[`MFT end idle time 1`] = `
           },
           "state": {
             "__typename": "InProgress",
+            "inProgressBy": {
+              "displayName": "Will Ruggiano",
+            },
           },
         },
         "transitions": {
@@ -1203,6 +1212,9 @@ exports[`MFT production -> downtime 1`] = `
           },
           "state": {
             "__typename": "InProgress",
+            "inProgressBy": {
+              "displayName": "Will Ruggiano",
+            },
           },
         },
         "transitions": {
@@ -1314,6 +1326,9 @@ exports[`MFT end downtime 1`] = `
           },
           "state": {
             "__typename": "InProgress",
+            "inProgressBy": {
+              "displayName": "Will Ruggiano",
+            },
           },
         },
         "transitions": {
@@ -1626,6 +1641,10 @@ exports[`MFT history query 1`] = `
           },
           "state": {
             "__typename": "Closed",
+            "closedBy": {
+              "__typename": "Worker",
+              "displayName": "Will Ruggiano",
+            },
           },
           "tracking": null,
         },

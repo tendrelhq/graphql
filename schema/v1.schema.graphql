@@ -243,11 +243,11 @@ type BooleanValue {
 type Closed {
   closedAt: TimestampOverridable @semanticNonNull
   closedBecause: String
-  closedBy: String
+  closedBy: Assignable
   inProgressAt: TimestampOverridable
-  inProgressBy: String
+  inProgressBy: Assignable
   openedAt: TimestampOverridable @semanticNonNull
-  openedBy: String
+  openedBy: Assignable
 }
 
 type DisplayName implements Component & Node {
@@ -306,7 +306,7 @@ type FieldEdge {
 
 type InProgress {
   inProgressAt: TimestampOverridable @semanticNonNull
-  inProgressBy: String
+  inProgressBy: Assignable
   openedAt: TimestampOverridable @semanticNonNull
   openedBy: String
 }
@@ -339,7 +339,7 @@ type NumberValue {
 
 type Open {
   openedAt: TimestampOverridable @semanticNonNull
-  openedBy: String
+  openedBy: Assignable
 }
 
 type PageInfo {

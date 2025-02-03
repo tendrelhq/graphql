@@ -775,7 +775,7 @@ export function getSchema(): GraphQLSchema {
         },
         closedBy: {
           name: "closedBy",
-          type: GraphQLString,
+          type: AssignableType,
         },
         inProgressAt: {
           name: "inProgressAt",
@@ -783,7 +783,7 @@ export function getSchema(): GraphQLSchema {
         },
         inProgressBy: {
           name: "inProgressBy",
-          type: GraphQLString,
+          type: AssignableType,
         },
         openedAt: {
           name: "openedAt",
@@ -796,7 +796,7 @@ export function getSchema(): GraphQLSchema {
         },
         openedBy: {
           name: "openedBy",
-          type: GraphQLString,
+          type: AssignableType,
         },
       };
     },
@@ -816,7 +816,7 @@ export function getSchema(): GraphQLSchema {
         },
         inProgressBy: {
           name: "inProgressBy",
-          type: GraphQLString,
+          type: AssignableType,
         },
         openedAt: {
           name: "openedAt",
@@ -849,7 +849,7 @@ export function getSchema(): GraphQLSchema {
         },
         openedBy: {
           name: "openedBy",
-          type: GraphQLString,
+          type: AssignableType,
         },
       };
     },
