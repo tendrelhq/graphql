@@ -75,7 +75,6 @@
           processes = {
             app.exec = "bun --inspect ./bin/app.ts";
             iql.exec = "bunx ruru@beta -Pe http://localhost:4000";
-            pgweb.exec = lib.getExe pkgs.pgweb;
           };
           services.postgres = {
             enable = true;
