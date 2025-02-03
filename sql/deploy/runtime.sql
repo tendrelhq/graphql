@@ -244,7 +244,7 @@ begin
     with
         field (f_name, f_type, f_is_primary, f_order) as (
             values
-                ('Override State Time'::text, 'Date'::text, true::boolean, 0::integer),
+                ('Override Start Time'::text, 'Date'::text, true::boolean, 0::integer),
                 ('Override End Time', 'Date', true, 1),
                 ('Description', 'String', false, 2)
         ),
@@ -321,7 +321,7 @@ begin
     with
         field (f_name, f_type, f_is_primary, f_order) as (
             values
-                ('Override State Time'::text, 'Date'::text, true::boolean, 0::integer),
+                ('Override Start Time'::text, 'Date'::text, true::boolean, 0::integer),
                 ('Override End Time', 'Date', true, 1),
                 ('Description', 'String', false, 2)
         ),
