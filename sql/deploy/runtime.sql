@@ -106,7 +106,7 @@ as $$
 declare
   default_language_type text := 'en';
   default_user_role text := 'Admin';
-  default_timezone text := 'America/Denver';
+  default_timezone text := current_setting('timezone');
   --
   ins_customer text;
   ins_site text;
@@ -116,37 +116,37 @@ declare
   --
   loop0_x text;
 begin
-  select customeruuid into ins_customer
-  from public.customer
-  where customerid = 89
+  -- select customeruuid into ins_customer
+  -- from public.customer
+  -- where customerid = 89
+  -- ;
+  select t.id into ins_customer
+  from
+      mft.create_customer(
+          customer_name := customer_name,
+          language_type := default_language_type,
+          modified_by := modified_by
+      ) as t
   ;
-  -- select t.id into ins_customer
-  -- from
-  --     mft.create_customer(
-  --         customer_name := customer_name,
-  --         language_type := default_language_type,
-  --         modified_by := modified_by
-  --     ) as t
-  -- ;
-  -- --
-  -- return query select '+customer', ins_customer;
   --
-  -- return query
-  --   select ' +worker', t.id
-  --   from public.worker as w
-  --   cross join
-  --       lateral util.create_worker(
-  --           customer_id := ins_customer,
-  --           user_id := w.workeruuid,
-  --           user_role := default_user_role,
-  --           modified_by := modified_by
-  --       ) as t
-  --   where w.workeruuid = any(admins)
-  -- ;
-  -- --
-  -- if not found and array_length(admins, 1) > 0 then
-  --   raise exception 'failed to create admin workers';
-  -- end if;
+  return query select '+customer', ins_customer;
+
+  return query
+    select ' +worker', t.id
+    from public.worker as w
+    cross join
+        lateral util.create_worker(
+            customer_id := ins_customer,
+            user_id := w.workeruuid,
+            user_role := default_user_role,
+            modified_by := modified_by
+        ) as t
+    where w.workeruuid = any(admins)
+  ;
+  --
+  if not found and array_length(admins, 1) > 0 then
+    raise exception 'failed to create admin workers';
+  end if;
 
   select t.id into ins_site
   from

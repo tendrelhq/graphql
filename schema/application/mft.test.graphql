@@ -26,6 +26,13 @@ query TestMftEntrypoint(
           }
           state {
             __typename
+            ... on Closed {
+              closedBy {
+                ... on Worker {
+                  displayName
+                }
+              }
+            }
           }
         }
         ...Trackables_fragment
@@ -211,6 +218,13 @@ fragment TaskFSM_fragment on TaskStateMachine {
     }
     state {
       __typename
+      ... on InProgress {
+        inProgressBy {
+          ... on Worker {
+            displayName
+          }
+        }
+      }
     }
   }
   transitions {
