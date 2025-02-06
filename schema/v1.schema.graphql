@@ -42,6 +42,47 @@ A date-time string in ISO 8601 format.
 scalar Timestamp
   @specifiedBy(url: "https://www.rfc-editor.org/rfc/rfc3339.html#section-5.6")
 
+enum DiagnosticKind {
+  candidate_change_discarded
+  candidate_choice_unavailable
+  """
+  Indicates that an operation expected an instance type to be provided but
+  received a template type.
+  """
+  expected_instance_got_template
+  """
+  Indicates that an operation expected a template type to be provided but
+  received an instance type.
+  """
+  expected_template_got_instance
+  feature_not_available
+  """
+  Some operations accept an optional hash. This is misleading. You should
+  _always_ pass a hash for operations that accept them.
+  """
+  hash_is_required
+  """
+  Diagnostics of this kind indicates that the requested operation is no longer
+  a valid operation due to a state change that has not yet been observed by
+  the client. Typically this is due to data staleness but may also occur for
+  the _loser_ of a race under concurrency.
+
+  Hashes are opaque. Clients should not attempt to derive any meaning from them.
+  """
+  hash_mismatch_precludes_operation
+  """
+  Indicates that an operation received a type that it is not allowed to
+  operate on.
+  """
+  invalid_type
+  """
+  When you operate on a StateMachine<T>, there must obviously be a state
+  machine to operate *on*. This diagnostic is returned when no such state
+  machine exists.
+  """
+  no_associated_fsm
+}
+
 enum ValueType {
   boolean
   entity
@@ -50,6 +91,14 @@ enum ValueType {
   timestamp
   unknown
 }
+
+"""
+Let's be honest: errors in GraphQL suck. This is why Tendrel doesn't throw
+errors, but rather returns them as "diagnostics". If an operation throws an
+error, this should be considered a _bug in Tendrel_ and treated the same as
+an "internal server error" (i.e. status code 500) in classical HTTP.
+"""
+union AdvanceFsmEffectResult = AdvanceFsmEffect | Diagnostic
 
 union TaskState = Closed | InProgress | Open
 
@@ -101,6 +150,28 @@ interface Trackable implements Component {
   tracking(after: ID, first: Int): TrackableConnection
 }
 
+input AdvanceFsmOptions {
+  """
+  The unique identifier of the FSM on which you are operating. Wherever you
+  access the `fsm` field of a `Task`, that task's id should go here.
+  """
+  fsm: AdvanceTaskOptions!
+  """
+  [object Object],[object Object],[object Object]
+  """
+  task: AdvanceTaskOptions!
+}
+
+input AdvanceTaskOptions {
+  """
+  This should be the Task's current hash (as far as you know) as it was
+  returned to you when first querying for the Task in question.
+  """
+  hash: String!
+  id: ID!
+  overrides: [FieldInput!]
+}
+
 input AssignmentInput {
   assignedTo: ID!
 }
@@ -132,27 +203,10 @@ input FieldInput {
   valueType: ValueType!
 }
 
-input FsmOptions {
-  """
-  The unique identifier of the FSM on which you are operating. Wherever you
-  access the `fsm` field of a `Task`, that task's id should go here.
-  """
-  fsm: ID!
-  """
-  [object Object],[object Object],[object Object]
-  """
-  task: TaskInput!
-}
-
 input GeofenceInput {
   latitude: String
   longitude: String
   radius: Float
-}
-
-input TaskInput {
-  id: ID!
-  overrides: [FieldInput!]
 }
 
 input UpdateLocationInput {
@@ -183,7 +237,7 @@ input ValueInput @oneOf {
   timestamp: String
 }
 
-type AdvanceResult {
+type AdvanceFsmEffect {
   fsm: Task @semanticNonNull
   instantiations: [TaskEdge!] @semanticNonNull
   task: Task @semanticNonNull
@@ -248,6 +302,10 @@ type Closed {
   inProgressBy: Assignable
   openedAt: TimestampOverridable @semanticNonNull
   openedBy: Assignable
+}
+
+type Diagnostic {
+  code: DiagnosticKind @semanticNonNull
 }
 
 type DisplayName implements Component & Node {
@@ -327,7 +385,7 @@ type Location implements Component & Node & Trackable {
 }
 
 type Mutation {
-  advance(opts: FsmOptions!): AdvanceResult @semanticNonNull
+  advance(opts: AdvanceFsmOptions!): AdvanceFsmEffectResult @semanticNonNull
   applyFieldEdits(edits: [FieldInput!]!, entity: ID!): Task @semanticNonNull
   createLocation(input: CreateLocationInput!): Location @semanticNonNull
   updateLocation(input: UpdateLocationInput!): Location @semanticNonNull
@@ -458,6 +516,11 @@ type Task implements Assignable & Component & Node & Trackable {
   """
   fsm: TaskStateMachine
   """
+  The hash signature of the given Task. This is only useful when interacting
+  with APIs that require a hash as a concurrency control mechanism.
+  """
+  hash: String @semanticNonNull
+  """
   A globally unique opaque identifier for a node.
   """
   id: ID!
@@ -501,6 +564,7 @@ directly with the underlying state machine.
 """
 type TaskStateMachine {
   active: Task
+  hash: String @semanticNonNull
   transitions: TaskConnection
 }
 

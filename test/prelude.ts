@@ -31,7 +31,7 @@ const DEFAULT_REQUEST = {
   },
 };
 
-async function createTestContext(): Promise<Context> {
+export async function createTestContext(): Promise<Context> {
   return {
     // biome-ignore lint/suspicious/noExplicitAny: i know i know...
     auth: { userId: process.env.X_TENDREL_USER } as any,

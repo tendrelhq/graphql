@@ -36,10 +36,13 @@ export const sql = postgres({
   // connection: {
   //   statement_timeout: DB_STATEMENT_TIMEOUT * 1000, // milliseconds
   // },
+  types: {
+    bigint: postgres.BigInt,
+  },
 });
 
-export type SQL = typeof sql;
-export type TxSQL = Parameters<Parameters<typeof sql.begin>[1]>[0];
+export type Sql = typeof sql;
+export type TxSql = Parameters<Parameters<typeof sql.begin>[1]>[0];
 
 /**
  * Like Array.prototype.join but for sql.Fragments.

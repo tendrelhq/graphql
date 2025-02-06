@@ -1,7 +1,7 @@
 import { sql } from "@/datasources/postgres";
 import type { ID, Int } from "grats";
+import type { Fragment } from "postgres";
 import { match } from "ts-pattern";
-import { decodeGlobalId } from ".";
 import type { Context } from "../types";
 import { DisplayName } from "./component/name";
 import type { Task } from "./component/task";
@@ -24,6 +24,43 @@ export interface Component {
   readonly id: ID;
 }
 
+const field$fragment: Fragment = sql`
+select
+    f._name,
+    f.id,
+    case
+        when f.type = 'Boolean'
+        then
+            jsonb_build_object(
+                '__typename', 'BooleanValue', 'boolean', f.value::boolean
+            )
+        when f.type = 'Date'
+        then
+            jsonb_build_object(
+                '__typename', 'TimestampValue', 'timestamp', f.value::timestamptz
+            )
+        when f.type = 'Number'
+        then
+            jsonb_build_object(
+                '__typename', 'NumberValue', 'number', f.value::numeric
+            )
+        when f.type = 'String'
+        then
+            jsonb_build_object(
+                '__typename', 'StringValue', 'string', f.value
+            )
+        else '{}'::jsonb
+    end as value,
+    case
+        when f.type = 'Boolean' then 'boolean'
+        when f.type = 'Date' then 'timestamp'
+        when f.type = 'Number' then 'number'
+        when f.type = 'String' then 'string'
+        else 'unknown'
+    end as "valueType"
+from field as f
+`;
+
 /**
  * TODO: description.
  *
@@ -31,12 +68,10 @@ export interface Component {
  */
 export async function fields(
   parent: Task,
-  ctx: Context,
+  _ctx: Context,
 ): Promise<Connection<Field>> {
-  const { type, id } = decodeGlobalId(parent.id);
-
-  if (type !== "workinstance" && type !== "worktemplate") {
-    console.warn(`Underlying type '${type}' does not support fields`);
+  if (parent._type !== "workinstance" && parent._type !== "worktemplate") {
+    console.warn(`Underlying type '${parent._type}' does not support fields`);
     return {
       edges: [],
       pageInfo: {
@@ -47,7 +82,7 @@ export async function fields(
     };
   }
 
-  const rows = await match(type)
+  const rows = await match(parent._type)
     .with(
       "workinstance",
       () => sql<
@@ -58,69 +93,40 @@ export async function fields(
           valueType: ValueType;
         }[]
       >`
-        WITH field AS (
-            SELECT
-                encode(('workresultinstance:' || wi.id || ':' || wr.id)::bytea, 'base64') AS id,
-                encode(('name:' || n.languagemasteruuid)::bytea, 'base64') AS "_name",
-                wi.workinstanceid AS _id,
-                wr.workresultid AS _field,
-                wr.workresultdefaultvalue AS default_value,
-                t.systagtype AS type
-            FROM public.workinstance AS wi
-            INNER JOIN public.workresult AS wr
-                ON wi.workinstanceworktemplateid = wr.workresultworktemplateid
-                   and (wr.workresultenddate is null or wr.workresultenddate > now())
-                   and (
-                      wr.workresultisprimary = false
-                      or (
-                          wr.workresultisprimary = true
-                          and wr.workresultentitytypeid is null
-                          and wr.workresulttypeid != 737 -- Time At Task :heavy-sigh:
-                      )
-                   )
-            INNER JOIN public.languagemaster AS n
-                ON wr.workresultlanguagemasterid = n.languagemasterid
-            INNER JOIN public.systag AS t
-                ON wr.workresulttypeid = t.systagid
-            WHERE wi.id = ${id}
-            ORDER BY wr.workresultorder ASC
-        )
-
-        SELECT
-            f._name,
-            f.id,
-            CASE
-                WHEN f.type = 'Boolean' THEN jsonb_build_object(
-                    '__typename', 'BooleanValue',
-                    'boolean', coalesce(wri.workresultinstancevalue::boolean, f.default_value::boolean)
-                )
-                WHEN f.type = 'Date' THEN jsonb_build_object(
-                    '__typename', 'TimestampValue',
-                    'timestamp', coalesce(
-                        wri.workresultinstancevalue::timestamptz,
-                        f.default_value::timestamptz
+        with
+            field as (
+                select
+                    encode(
+                        ('workresultinstance:' || wi.id || ':' || wr.id)::bytea, 'base64'
+                    ) as id,
+                    encode(('name:' || n.languagemasteruuid)::bytea, 'base64') as _name,
+                    wi.workinstanceid as _id,
+                    wr.workresultid as _field,
+                    t.systagtype as type,
+                    wri.workresultinstancevalue as value
+                from public.workinstance as wi
+                inner join
+                    public.workresultinstance as wri
+                    on wi.workinstanceid = wri.workresultinstanceworkinstanceid
+                inner join
+                    public.workresult as wr
+                    on wri.workresultinstanceworkresultid = wr.workresultid
+                    and (
+                        wr.workresultisprimary = false
+                        or (
+                            wr.workresultisprimary = true
+                            and wr.workresultentitytypeid is null
+                            and wr.workresulttypeid != 737  -- Time At Task :heavy-sigh:
+                        )
                     )
-                )
-                WHEN f.type = 'Number' THEN jsonb_build_object(
-                    '__typename', 'NumberValue',
-                    'number', coalesce(wri.workresultinstancevalue::numeric, f.default_value::numeric)
-                )
-                WHEN f.type = 'String' THEN jsonb_build_object(
-                    '__typename', 'StringValue',
-                    'string', coalesce(wri.workresultinstancevalue, f.default_value)
-                )
-                ELSE '{}'::jsonb
-            END AS value,
-            CASE
-                WHEN f.type = 'Boolean' THEN 'boolean'
-                WHEN f.type = 'Date' THEN 'timestamp'
-                WHEN f.type = 'Number' THEN 'number'
-                WHEN f.type = 'String' THEN 'string'
-                ELSE 'unknown'
-            END AS "valueType"
-        FROM field AS f
-        LEFT JOIN public.workresultinstance AS wri
-            ON (f._id, f._field) = (wri.workresultinstanceworkinstanceid, wri.workresultinstanceworkresultid)
+                inner join
+                    public.languagemaster as n
+                    on wr.workresultlanguagemasterid = n.languagemasterid
+                inner join public.systag as t on wr.workresulttypeid = t.systagid
+                where wi.id = ${parent._id}
+                order by wr.workresultorder asc, wr.workresultid asc
+            )
+        ${field$fragment}
       `,
     )
     .with(
@@ -133,63 +139,35 @@ export async function fields(
           valueType: ValueType;
         }[]
       >`
-        WITH field AS (
-            SELECT
-                encode(('workresult:' || wr.id)::bytea, 'base64') AS id,
-                encode(('name:' || n.languagemasteruuid)::bytea, 'base64') AS "_name",
-                wr.workresultid AS _field,
-                wr.workresultdefaultvalue AS default_value,
-                t.systagtype AS type
-            FROM public.worktemplate AS wt
-            INNER JOIN public.workresult AS wr
-                ON wt.worktemplateid = wr.workresultworktemplateid
-                   and (wr.workresultenddate is null or wr.workresultenddate > now())
-                   and (
-                      wr.workresultisprimary = false
-                      or (
-                          wr.workresultisprimary = true
-                          and wr.workresultentitytypeid is null
-                          and wr.workresulttypeid != 737 -- Time At Task :heavy-sigh:
-                      )
-                   )
-            INNER JOIN public.languagemaster AS n
-                ON wr.workresultlanguagemasterid = n.languagemasterid
-            INNER JOIN public.systag AS t
-                ON wr.workresulttypeid = t.systagid
-            WHERE wt.id = ${id}
-            ORDER BY wr.workresultorder ASC
-        )
-
-        SELECT
-            f._name,
-            f.id,
-            CASE
-                WHEN f.type = 'Boolean' THEN jsonb_build_object(
-                    '__typename', 'BooleanValue',
-                    'boolean', f.default_value::boolean
-                )
-                WHEN f.type = 'Date' THEN jsonb_build_object(
-                    '__typename', 'TimestampValue',
-                    'timestamp', f.default_value::timestamptz
-                )
-                WHEN f.type = 'Number' THEN jsonb_build_object(
-                    '__typename', 'NumberValue',
-                    'number', f.default_value::numeric
-                )
-                WHEN f.type = 'String' THEN jsonb_build_object(
-                    '__typename', 'StringValue',
-                    'string', f.default_value::text
-                )
-                ELSE '{}'::jsonb
-            END AS value,
-            CASE
-                WHEN f.type = 'Boolean' THEN 'boolean'
-                WHEN f.type = 'Date' THEN 'timestamp'
-                WHEN f.type = 'Number' THEN 'number'
-                WHEN f.type = 'String' THEN 'string'
-                ELSE 'unknown'
-            END AS "valueType"
-        FROM field AS f
+        with
+            field as (
+                select
+                    encode(('workresult:' || wr.id)::bytea, 'base64') as id,
+                    encode(('name:' || n.languagemasteruuid)::bytea, 'base64') as "_name",
+                    wr.workresultid as _field,
+                    t.systagtype as type,
+                    wr.workresultdefaultvalue as value
+                from public.worktemplate as wt
+                inner join
+                    public.workresult as wr
+                    on wt.worktemplateid = wr.workresultworktemplateid
+                    and (wr.workresultenddate is null or wr.workresultenddate > now())
+                    and (
+                        wr.workresultisprimary = false
+                        or (
+                            wr.workresultisprimary = true
+                            and wr.workresultentitytypeid is null
+                            and wr.workresulttypeid != 737  -- Time At Task :heavy-sigh:
+                        )
+                    )
+                inner join
+                    public.languagemaster as n
+                    on wr.workresultlanguagemasterid = n.languagemasterid
+                inner join public.systag as t on wr.workresulttypeid = t.systagid
+                where wt.id = ${parent._id}
+                order by wr.workresultorder asc, wr.workresultid asc
+            )
+        ${field$fragment}
       `,
     )
     //

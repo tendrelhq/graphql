@@ -444,7 +444,7 @@ begin
   return dtstart + (base_freq / interval_v);
 end $$
 language plpgsql
-stable
+immutable
 strict
 ;
 -- fmt: on

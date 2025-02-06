@@ -6,11 +6,11 @@
 begin
 ;
 
-create schema mft
+create schema runtime
 ;
 
 create function
-    mft.create_customer(customer_name text, language_type text, modified_by bigint)
+    runtime.create_customer(customer_name text, language_type text, modified_by bigint)
 returns table(_id bigint, id text)
 as $$
 declare
@@ -71,7 +71,7 @@ strict
 ;
 
 create function
-    mft.create_location(
+    runtime.create_location(
         customer_id text,
         modified_by bigint,
         language_type text,
@@ -100,7 +100,8 @@ language plpgsql
 strict
 ;
 
-create function mft.create_demo(customer_name text, admins text[], modified_by bigint)
+create function
+    runtime.create_demo(customer_name text, admins text[], modified_by bigint)
 returns table(op text, id text)
 as $$
 declare
@@ -122,7 +123,7 @@ begin
   -- ;
   select t.id into ins_customer
   from
-      mft.create_customer(
+      runtime.create_customer(
           customer_name := customer_name,
           language_type := default_language_type,
           modified_by := modified_by
@@ -409,7 +410,7 @@ begin
   select array_agg(t.id) into ins_location
   from inputs
   cross join
-      lateral mft.create_location(
+      lateral runtime.create_location(
           customer_id := ins_customer,
           language_type := default_language_type,
           timezone := default_timezone,
@@ -467,7 +468,7 @@ language plpgsql
 strict
 ;
 
-create function mft.destroy_demo(customer_id text)
+create function runtime.destroy_demo(customer_id text)
 returns text
 as $$
 begin

@@ -23,7 +23,7 @@ from engine.execute($1) -- $1 is a workinstance.id (uuid)
 
 > IMPORTANT!
 > This interface **assumes** that all modification(s) to $1 and its components
-> have already been _committed_.
+> are visible to the current snapshot.
 
 As previously stated, the above is really just syntactic sugar over the
 following sequence of calls:

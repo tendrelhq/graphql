@@ -1,4 +1,4 @@
-query TestMftEntrypoint(
+query TestRuntimeEntrypoint(
   $count: Int
   $root: ID!
   $impl: String
@@ -24,6 +24,7 @@ query TestMftEntrypoint(
               value
             }
           }
+          hash
           state {
             __typename
             ... on Closed {
@@ -42,7 +43,7 @@ query TestMftEntrypoint(
   }
 }
 
-query TestMftDetail($node: ID!) {
+query TestRuntimeDetail($node: ID!) {
   node(id: $node) {
     ... on Task {
       # "matrix" component
@@ -92,35 +93,46 @@ query TestMftDetail($node: ID!) {
   }
 }
 
-mutation TestMftTransitionMutation(
-  $opts: FsmOptions!
+mutation TestRuntimeTransitionMutation(
+  $opts: AdvanceFsmOptions!
   $includeChain: Boolean!
 ) {
   advance(opts: $opts) {
-    fsm {
-      chain @include(if: $includeChain) {
-        edges {
-          node {
-            displayName {
-              name {
-                value
+    ... on Diagnostic {
+      code
+    }
+    ... on AdvanceFsmEffect {
+      fsm {
+        chain @include(if: $includeChain) {
+          edges {
+            node {
+              displayName {
+                name {
+                  value
+                }
               }
-            }
-            state {
-              __typename
+              state {
+                __typename
+              }
             }
           }
         }
+        fsm {
+          ...TaskFSM_fragment
+        }
       }
-      fsm {
-        ...TaskFSM_fragment
-      }
-    }
-    instantiations {
-      node {
-        displayName {
-          name {
-            value
+      instantiations {
+        node {
+          chain {
+            totalCount
+          }
+          displayName {
+            name {
+              value
+            }
+          }
+          state {
+            __typename
           }
         }
       }
@@ -128,7 +140,10 @@ mutation TestMftTransitionMutation(
   }
 }
 
-mutation TestMftApplyFieldEditsMutation($entity: ID!, $edits: [FieldInput!]!) {
+mutation TestRuntimeApplyFieldEditsMutation(
+  $entity: ID!
+  $edits: [FieldInput!]!
+) {
   applyFieldEdits(entity: $entity, edits: $edits) {
     fields {
       edges {

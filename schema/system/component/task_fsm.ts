@@ -1,41 +1,20 @@
-import { sql } from "@/datasources/postgres";
+import { type Sql, type TxSql, sql } from "@/datasources/postgres";
 import { copyFromWorkTemplate } from "@/schema/application/resolvers/Mutation/copyFrom";
+import { DiagnosticKind, type Result } from "@/schema/result";
 import type { Mutation } from "@/schema/root";
 import type { Context } from "@/schema/types";
-import { assert } from "@/util";
-import { GraphQLError } from "graphql";
+import { assert, assertNonNull, compareBase64 } from "@/util";
 import type { ID } from "grats";
+import type { Fragment } from "postgres";
 import { match } from "ts-pattern";
+import { decodeGlobalId } from "..";
 import type { StateMachine } from "../fsm";
 import type { Edge } from "../pagination";
-import { Task, type TaskInput, advance as advance_active } from "./task";
+import { type AdvanceTaskOptions, Task, advanceTask } from "./task";
 
-/**
- * Tasks can have an associated StateMachine, which defines a finite set of
- * states that the given Task can be in at any given time.
- *
- * @gqlField
- */
-export async function fsm(
-  t: Task,
-  ctx: Context,
-): Promise<StateMachine<Task> | null> {
-  // Only instances can participate in task-based state machines. We do not
-  // support lazy instantiation.
-  if (t._type !== "workinstance") {
-    assert(
-      false,
-      "only instances can participate in task-based state machines",
-    );
-    return null;
-  }
-
-  type Plan = {
-    active: ID;
-    transitions: ID[];
-  };
-
-  const [plan] = await sql<[Plan?]>`
+export function fsm$fragment(t: Task): Fragment {
+  assert(t._type === "workinstance");
+  return sql`
     with recursive
         chain as (
             select *
@@ -74,44 +53,78 @@ export async function fsm(
     select
         encode(('workinstance:' || active.id)::bytea, 'base64') as active,
         array_remove(
-          array_agg(encode(('worktemplate:' || wt.id)::bytea, 'base64') order by wt.worktemplateorder, wt.worktemplateid),
-          null
+            array_agg(encode(('worktemplate:' || wt.id)::bytea, 'base64') order by wt.worktemplateorder, wt.worktemplateid),
+            null
         ) as transitions
     from active
     left join plan on true
     left join public.worktemplate as wt on plan.target = wt.id
     group by active.id
   `;
+}
 
-  if (!plan) {
+export type FSM = {
+  active: ID;
+  transitions?: ID[] | null;
+};
+
+/**
+ * Tasks can have an associated StateMachine, which defines a finite set of
+ * states that the given Task can be in at any given time.
+ *
+ * @gqlField
+ */
+export async function fsm(
+  t: Task,
+  ctx: Context,
+): Promise<StateMachine<Task> | null> {
+  return await fsm_(sql, t, ctx);
+}
+
+export async function fsm_(
+  tx: Sql | TxSql,
+  t: Task,
+  ctx: Context,
+): Promise<StateMachine<Task> | null> {
+  if (t._type !== "workinstance") {
+    assert(
+      false,
+      "only instances can participate in task-based state machines",
+    );
+    return null;
+  }
+
+  const [fsm] = await tx<[FSM?]>`${fsm$fragment(t)}`;
+  if (!fsm) {
     // This is most notably the case on task close.
-    // assert(false, "no fsm for task instance");
     return null;
   }
 
   return {
-    active: new Task({ id: plan.active }, ctx),
+    hash: (await t.hash()) as string, // hash is only null when `t` is a template
+    active: new Task({ id: fsm.active }, ctx),
     transitions: {
-      edges: plan.transitions.map(transition => ({
-        cursor: transition,
-        node: new Task({ id: transition }, ctx),
-      })),
+      edges:
+        fsm.transitions?.map(transition => ({
+          cursor: transition,
+          node: new Task({ id: transition }, ctx),
+        })) ?? [],
       pageInfo: {
         hasNextPage: false,
         hasPreviousPage: false,
       },
-      totalCount: plan.transitions.length,
+      totalCount: fsm.transitions?.length ?? 0,
     },
   };
 }
 
 /** @gqlInput */
-export type FsmOptions = {
+export type AdvanceFsmOptions = {
   /**
    * The unique identifier of the FSM on which you are operating. Wherever you
    * access the `fsm` field of a `Task`, that task's id should go here.
    */
-  fsm: ID;
+  fsm: AdvanceTaskOptions;
   /**
    * The unique identifier of a `Task` _within_ the aforementioned FSM. These
    * are the tasks available as the `active` and/or `transitions` fields within
@@ -122,11 +135,13 @@ export type FsmOptions = {
    * - otherwise, advance the fsm using the given task as the intended next
    *   state
    */
-  task: TaskInput;
+  task: AdvanceTaskOptions;
 };
 
 /** @gqlType */
-export type AdvanceResult = {
+export type AdvanceFsmEffect = {
+  __typename: "AdvanceFsmEffect";
+
   /** @gqlField */
   fsm: Task;
   /** @gqlField */
@@ -139,101 +154,131 @@ export type AdvanceResult = {
 export async function advance(
   _: Mutation,
   ctx: Context,
-  opts: FsmOptions,
-): Promise<AdvanceResult> {
-  const r = new Task({ id: opts.fsm }, ctx);
-  console.log(`fsm: ${r}`);
+  opts: AdvanceFsmOptions,
+): Promise<Result<AdvanceFsmEffect>> {
+  const root = new Task({ id: opts.fsm.id }, ctx);
+  console.debug(`fsm: ${root.id}`);
+  assert(root._type === "workinstance");
 
-  const f = await fsm(r, ctx);
-  if (!f) {
-    throw new GraphQLError(`Task ${r} has no associated FSM`, {
-      extensions: {
-        code: "T_INVALID_TRANSITION",
-      },
-    });
-  }
+  return await sql.begin(async tx => {
+    const [fsm] = await tx<[FSM?]>`${fsm$fragment(root)}`;
+    if (!fsm) {
+      return {
+        __typename: "Diagnostic",
+        code: DiagnosticKind.no_associated_fsm,
+      };
+    }
 
-  const choice = new Task(opts.task, ctx);
-  console.log(`choice: ${choice}`);
+    assert(!!opts.fsm.hash);
+    if (!opts.fsm.hash) {
+      return {
+        __typename: "Diagnostic",
+        code: DiagnosticKind.hash_is_required,
+      };
+    }
 
-  if (is_valid_advancement(f, choice) === false) {
-    throw new GraphQLError(
-      `Task ${choice} is not a valid choice for FSM ${r}`,
-      {
-        extensions: {
-          code: "T_INVALID_TRANSITION",
-        },
-      },
-    );
-  }
+    const rootHash = assertNonNull(await root.hash());
+    if (rootHash !== opts.fsm.hash) {
+      console.warn("WARNING: Root hash mismatch precludes advancement");
+      console.debug(`| root: ${root.id}`);
+      console.debug(`| ours: ${rootHash}`);
+      console.debug(`| theirs: ${opts.fsm.hash}`);
+      return {
+        __typename: "Diagnostic",
+        code: DiagnosticKind.hash_mismatch_precludes_operation,
+      };
+    }
 
-  let instantiations: Edge<Task>[] = [];
-  if (choice.id === f.active?.id) {
-    console.debug("advance: operating on the active task");
-    // When the "choice" is the active task, we advance that task's internal
-    // state machine as defined by its own `advance` implementation.
-    const r = await advance_active(ctx, choice, opts.task);
-    instantiations = r.instantiations;
-  } else {
-    console.debug("advance: operating on the fsm");
+    const choice = new Task(opts.task, ctx);
+    console.debug(`choice: ${choice.id}`);
+
+    if (is_valid_advancement(fsm, choice) === false) {
+      console.warn("WARNING: Task is not a valid choice");
+      console.debug(`| root: ${root.id}`);
+      console.debug(`| choice: ${choice.id}`);
+      return {
+        __typename: "Diagnostic",
+        code: DiagnosticKind.candidate_choice_unavailable,
+      };
+    }
+
+    if (compareBase64(choice.id, fsm.active)) {
+      console.debug("advance: operating on the active task");
+      // When the "choice" is the active task, we advance that task's internal
+      // state machine as defined by its own `advance` implementation.
+      const r = await advanceTask(tx, ctx, choice, opts.task);
+      if ("code" in r) {
+        return r;
+      }
+      return {
+        __typename: "AdvanceFsmEffect",
+        fsm: root,
+        ...r,
+      };
+    }
+
     // Otherwise, the "choice" identifies a transition in the fsm.
-    await advance_fsm(f, choice, opts, ctx);
-  }
-
-  console.debug("advance: success!");
-
-  // Return the FSM, the (now previous) choice, as well as any new
-  // instantiations resultant of this operation such that the caller can refresh
-  // their local state without requiring another roundtrip.
-  return {
-    fsm: r,
-    task: choice,
-    instantiations,
-  };
+    console.debug("advance: operating on the fsm");
+    return await advanceFsm(tx, root, fsm, choice, opts, ctx);
+  });
 }
 
-export async function advance_fsm(
-  fsm: StateMachine<Task>,
-  choice: Task,
-  opts: Omit<FsmOptions, "fsm">,
-  ctx: Context,
-): Promise<void> {
-  assert(!!fsm.active, "fsm is not active");
-  const parent = await fsm.active?.parent(); // n.b. db call
-  assert(!!parent, "no parent for active task");
-  assert(
-    parent?._type === "location",
-    `unexpected parent type '${parent?._type}'`,
-  );
+// export function createFsmHash(root: ID, fsm: FSM) {
+//   const h = crypto.createHash("sha256").update(root).update(fsm.active);
+//   for (const t of fsm.transitions ?? []) {
+//     h.update(t);
+//   }
+//   return h.digest("hex");
+// }
 
-  await match(choice._type)
+export async function advanceFsm(
+  sql: TxSql,
+  root: Task,
+  fsm: FSM,
+  choice: Task,
+  opts: Omit<AdvanceFsmOptions, "fsm">,
+  ctx: Context,
+): Promise<Result<AdvanceFsmEffect>> {
+  assert(!!fsm.active, "fsm is not active");
+  return await match(choice._type)
     .with("workinstance", () => {
       // This path is not currently possible: transitions are guaranteed to be
       // underlied by worktemplates.
       assert(false, "advance_fsm: choice underlied by workinstance");
+      return {
+        __typename: "Diagnostic" as const,
+        code: DiagnosticKind.expected_template_got_instance,
+      };
     })
-    .with("worktemplate", () =>
-      sql.begin(tx =>
-        copyFromWorkTemplate(
-          tx,
-          choice._id,
-          {
-            chain: "continue",
-            previous: fsm.active?._id,
-            // some extra options
-            autoAssign: true,
-            carryOverAssignments: true,
-            fieldOverrides: opts.task.overrides,
-            withStatus: "inProgress",
-          },
-          ctx,
-        ),
-      ),
-    )
-    .otherwise(() => assert(false, `unknown underlying type ${choice._type}`));
-
-  // More useful would be a changeset summary.
-  return /* fsm */;
+    .with("worktemplate", async () => {
+      const _ = await copyFromWorkTemplate(
+        sql,
+        choice._id,
+        {
+          chain: "continue",
+          previous: decodeGlobalId(fsm.active).id,
+          // some extra options
+          autoAssign: true,
+          carryOverAssignments: true,
+          fieldOverrides: opts.task.overrides,
+          withStatus: "inProgress",
+        },
+        ctx,
+      );
+      return {
+        __typename: "AdvanceFsmEffect" as const,
+        fsm: root,
+        task: choice, // now previous
+        instantiations: [],
+      };
+    })
+    .otherwise(() => {
+      assert(false, `unknown underlying type ${choice._type}`);
+      return {
+        __typename: "Diagnostic" as const,
+        code: DiagnosticKind.invalid_type,
+      };
+    });
 }
 
 /**
@@ -244,7 +289,7 @@ export async function advance_fsm(
  * Note that this is a potential source of conflict in the face of concurrency
  * and/or stale (client) data. We are not going to handle this right now.
  */
-export function is_valid_advancement(fsm: StateMachine<Task>, t: Task) {
-  if (fsm.active?.id === t.id) return true;
-  return fsm.transitions?.edges.some(({ node }) => node.id === t.id) === true;
+export function is_valid_advancement(fsm: FSM, t: Task) {
+  if (compareBase64(fsm.active, t.id)) return true;
+  return fsm.transitions?.some(id => compareBase64(id, t.id)) === true;
 }
