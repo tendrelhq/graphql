@@ -143,3 +143,13 @@ export function inspect<T>(t: T) {
   console.debug("t =:", t);
   return t;
 }
+
+const newlinePattern = /\n/g;
+/**
+ * Use this function to compare base64 encoded strings for identity. This is
+ * particularly important when comparing strings that were encoded by the
+ * database, since Postgres will insert newlines every 76 characters.
+ */
+export function compareBase64(a: string, b: string): boolean {
+  return a.replace(newlinePattern, "") === b.replace(newlinePattern, "");
+}

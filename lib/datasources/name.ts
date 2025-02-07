@@ -9,7 +9,7 @@ import Dataloader from "dataloader";
 import type { Request } from "express";
 import { GraphQLError } from "graphql";
 import { match } from "ts-pattern";
-import { type SQL, sql, unionAll } from "./postgres";
+import { type Sql, sql, unionAll } from "./postgres";
 
 export function makeDisplayNameLoader(_req: Request) {
   return new Dataloader<ID, DisplayName>(async keys => {
@@ -158,7 +158,7 @@ export function makeNameLoader(req: Request) {
   );
 }
 
-export async function updateName(input: UpdateNameInput, sql: SQL) {
+export async function updateName(input: UpdateNameInput, sql: Sql) {
   const { id } = decodeGlobalId(input.id);
   // Update the language specific translation.
   await sql`

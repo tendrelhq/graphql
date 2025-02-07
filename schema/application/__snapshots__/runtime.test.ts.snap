@@ -1,6 +1,6 @@
 // Bun Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`MFT entrypoint query 1`] = `
+exports[`runtime demo entrypoint query 1`] = `
 {
   "trackables": {
     "__typename": "TrackableConnection",
@@ -611,10 +611,10 @@ exports[`MFT entrypoint query 1`] = `
 }
 `;
 
-exports[`MFT start run 1`] = `
+exports[`runtime demo start run 1`] = `
 {
   "advance": {
-    "__typename": "AdvanceResult",
+    "__typename": "AdvanceFsmEffect",
     "fsm": {
       "__typename": "Task",
       "fsm": {
@@ -730,7 +730,7 @@ exports[`MFT start run 1`] = `
                       "node": {
                         "name": {
                           "name": {
-                            "value": "Override State Time",
+                            "value": "Override Start Time",
                           },
                         },
                         "value": {
@@ -779,7 +779,7 @@ exports[`MFT start run 1`] = `
                       "node": {
                         "name": {
                           "name": {
-                            "value": "Override State Time",
+                            "value": "Override Start Time",
                           },
                         },
                         "value": {
@@ -824,12 +824,19 @@ exports[`MFT start run 1`] = `
         "__typename": "TaskEdge",
         "node": {
           "__typename": "Task",
+          "chain": {
+            "__typename": "TaskConnection",
+            "totalCount": 1,
+          },
           "displayName": {
             "__typename": "DisplayName",
             "name": {
               "__typename": "DynamicString",
               "value": "Run",
             },
+          },
+          "state": {
+            "__typename": "Open",
           },
         },
       },
@@ -838,10 +845,10 @@ exports[`MFT start run 1`] = `
 }
 `;
 
-exports[`MFT production -> idle time 1`] = `
+exports[`runtime demo production -> idle time 1`] = `
 {
   "advance": {
-    "__typename": "AdvanceResult",
+    "__typename": "AdvanceFsmEffect",
     "fsm": {
       "__typename": "Task",
       "fsm": {
@@ -869,7 +876,7 @@ exports[`MFT production -> idle time 1`] = `
                 "node": {
                   "name": {
                     "name": {
-                      "value": "Override State Time",
+                      "value": "Override Start Time",
                     },
                   },
                   "value": {
@@ -926,10 +933,10 @@ exports[`MFT production -> idle time 1`] = `
 }
 `;
 
-exports[`MFT end idle time 1`] = `
+exports[`runtime demo end idle time 1`] = `
 {
   "advance": {
-    "__typename": "AdvanceResult",
+    "__typename": "AdvanceFsmEffect",
     "fsm": {
       "__typename": "Task",
       "fsm": {
@@ -1045,7 +1052,7 @@ exports[`MFT end idle time 1`] = `
                       "node": {
                         "name": {
                           "name": {
-                            "value": "Override State Time",
+                            "value": "Override Start Time",
                           },
                         },
                         "value": {
@@ -1094,7 +1101,7 @@ exports[`MFT end idle time 1`] = `
                       "node": {
                         "name": {
                           "name": {
-                            "value": "Override State Time",
+                            "value": "Override Start Time",
                           },
                         },
                         "value": {
@@ -1139,10 +1146,10 @@ exports[`MFT end idle time 1`] = `
 }
 `;
 
-exports[`MFT production -> downtime 1`] = `
+exports[`runtime demo production -> downtime 1`] = `
 {
   "advance": {
-    "__typename": "AdvanceResult",
+    "__typename": "AdvanceFsmEffect",
     "fsm": {
       "__typename": "Task",
       "fsm": {
@@ -1170,7 +1177,7 @@ exports[`MFT production -> downtime 1`] = `
                 "node": {
                   "name": {
                     "name": {
-                      "value": "Override State Time",
+                      "value": "Override Start Time",
                     },
                   },
                   "value": {
@@ -1227,10 +1234,10 @@ exports[`MFT production -> downtime 1`] = `
 }
 `;
 
-exports[`MFT end downtime 1`] = `
+exports[`runtime demo end downtime 1`] = `
 {
   "advance": {
-    "__typename": "AdvanceResult",
+    "__typename": "AdvanceFsmEffect",
     "fsm": {
       "__typename": "Task",
       "fsm": {
@@ -1346,7 +1353,7 @@ exports[`MFT end downtime 1`] = `
                       "node": {
                         "name": {
                           "name": {
-                            "value": "Override State Time",
+                            "value": "Override Start Time",
                           },
                         },
                         "value": {
@@ -1395,7 +1402,7 @@ exports[`MFT end downtime 1`] = `
                       "node": {
                         "name": {
                           "name": {
-                            "value": "Override State Time",
+                            "value": "Override Start Time",
                           },
                         },
                         "value": {
@@ -1440,10 +1447,10 @@ exports[`MFT end downtime 1`] = `
 }
 `;
 
-exports[`MFT end run 1`] = `
+exports[`runtime demo end run 1`] = `
 {
   "advance": {
-    "__typename": "AdvanceResult",
+    "__typename": "AdvanceFsmEffect",
     "fsm": {
       "__typename": "Task",
       "chain": {
@@ -1522,7 +1529,7 @@ exports[`MFT end run 1`] = `
 }
 `;
 
-exports[`MFT apply field edits retroactively 1`] = `
+exports[`runtime demo apply field edits retroactively 1`] = `
 {
   "applyFieldEdits": {
     "__typename": "Task",
@@ -1619,38 +1626,6 @@ exports[`MFT apply field edits retroactively 1`] = `
         },
       ],
     },
-  },
-}
-`;
-
-exports[`MFT history query 1`] = `
-{
-  "trackables": {
-    "__typename": "TrackableConnection",
-    "edges": [
-      {
-        "__typename": "TrackableEdge",
-        "node": {
-          "__typename": "Task",
-          "displayName": {
-            "__typename": "DisplayName",
-            "name": {
-              "__typename": "DynamicString",
-              "value": "Run",
-            },
-          },
-          "state": {
-            "__typename": "Closed",
-            "closedBy": {
-              "__typename": "Worker",
-              "displayName": "Will Ruggiano",
-            },
-          },
-          "tracking": null,
-        },
-      },
-    ],
-    "totalCount": 1,
   },
 }
 `;

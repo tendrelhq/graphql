@@ -1,4 +1,4 @@
-import { sql } from "@/datasources/postgres";
+import { type TxSql, sql } from "@/datasources/postgres";
 import type {
   ChecklistEdge,
   Context,
@@ -10,7 +10,6 @@ import type { FieldInput } from "@/schema/system/component";
 import { Task, applyEdits$fragment } from "@/schema/system/component/task";
 import { assert, type WithKey } from "@/util";
 import { GraphQLError } from "graphql";
-import type { TransactionSql } from "postgres";
 import { match } from "ts-pattern";
 
 export const copyFrom: NonNullable<MutationResolvers["copyFrom"]> = async (
@@ -86,12 +85,12 @@ export type CopyFromInstanceOptions = {
  * Create a new workinstance from an existing workinstance.
  */
 export async function copyFromWorkInstance(
-  tx: TransactionSql,
+  sql: TxSql,
   id: string,
   options: CopyFromOptions & CopyFromInstanceOptions,
   ctx: Context,
 ): Promise<Task> {
-  const [row] = await tx<[{ id: string }]>`
+  const [row] = await sql<[{ id: string }]>`
       SELECT wt.id
       FROM public.workinstance AS wi
       INNER JOIN public.worktemplate AS wt
@@ -100,7 +99,7 @@ export async function copyFromWorkInstance(
   `;
   // For now, we just do a template-based copy:
   return copyFromWorkTemplate(
-    tx,
+    sql,
     row.id,
     {
       ...options,
@@ -127,14 +126,14 @@ type CopyFromWorkTemplateOptions = {
  * as specified by the underlying workresults.
  */
 export async function copyFromWorkTemplate(
-  tx: TransactionSql,
+  sql: TxSql,
   id: string,
   options: CopyFromOptions &
     CopyFromInstanceOptions &
     CopyFromWorkTemplateOptions,
   ctx: Context,
 ): Promise<Task> {
-  const [row] = await tx<[WithKey<{ _key_uuid: string; id: string }>?]>`
+  const [row] = await sql<[WithKey<{ _key_uuid: string; id: string }>?]>`
       INSERT INTO public.workinstance (
           workinstancecustomerid,
           workinstancesiteid,
@@ -216,7 +215,7 @@ export async function copyFromWorkTemplate(
 
   // We must have an originator, even if it needlessly points right back at us.
   // All hail the datawarehouse :heavy sigh:
-  await tx`
+  await sql`
       UPDATE public.workinstance
       SET workinstanceoriginatorworkinstanceid = workinstanceid
       WHERE
@@ -225,7 +224,7 @@ export async function copyFromWorkTemplate(
   `;
 
   // Create all workresultinstances, based on workresult.
-  const result = await tx`
+  const result = await sql`
       INSERT INTO public.workresultinstance (
           workresultinstancecompleteddate,
           workresultinstancecustomerid,
@@ -261,7 +260,7 @@ export async function copyFromWorkTemplate(
 
   // Ensure any user-specified overrides are applied.
   if (options.autoAssign) {
-    const result = await tx`
+    const result = await sql`
       update public.workresultinstance as t
       set workresultinstancevalue = wi.workerinstanceid::text
       from public.workerinstance as wi
@@ -293,11 +292,13 @@ export async function copyFromWorkTemplate(
     );
 
     if (options.withAssignee?.length || options.carryOverAssignments) {
-      console.warn(`
-        WARNING: \`autoAssign\` used alongside \`withAssignee\` and/or \`carryOverAssignments\`.
-        | Note that \`withAssignee\` and/or \`carryOverAssignments\` take precedence in this scenario.
-        | You should expect auto-assignments to be overwritten.
-      `);
+      console.warn(
+        "WARNING: `autoAssign` used alongside `withAssignee` and/or `carryOverAssignments`.",
+      );
+      console.debug(
+        "| Note that `withAssignee` and/or `carryOverAssignments` take precedence in this scenario.",
+      );
+      console.debug("| You should expect auto-assignments to be overwritten.");
     }
   }
 
@@ -319,7 +320,7 @@ export async function copyFromWorkTemplate(
     // will also support lazy *definition* (i.e. creating a new workresult on
     // the fly). This is the so-called semi-structured entrypoint, or as I like
     // to call it (which is, of course, completely made up) "structuralization".
-    const result = await tx`
+    const result = await sql`
         WITH previous AS (
             SELECT nullif(workresultinstancevalue, '') AS value
             FROM public.workresultinstance
@@ -363,7 +364,7 @@ export async function copyFromWorkTemplate(
   }
 
   if (options.withAssignee) {
-    const result = await tx`
+    const result = await sql`
         UPDATE public.workresultinstance AS t
         SET workresultinstancevalue = s.value
         FROM (
@@ -417,7 +418,7 @@ export async function copyFromWorkTemplate(
   if (options.fieldOverrides?.length) {
     const edits = applyEdits$fragment(ctx, t, options.fieldOverrides);
     if (edits) {
-      const result = await tx`${edits}`;
+      const result = await sql`${edits}`;
       console.log(`Applied ${result.count} field-level edits.`);
     }
   }

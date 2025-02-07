@@ -1,4 +1,11 @@
+import type { ID } from "grats";
 import type { Connection } from "./pagination";
+
+export type ConstructorArgs<T> = {
+  root: ID;
+  active?: T | null;
+  transitions?: Connection<T> | null;
+};
 
 /**
  * Where applicable, Entities can have an associated StateMachine that defines
@@ -12,6 +19,8 @@ import type { Connection } from "./pagination";
  * @gqlType
  */
 export type StateMachine<T> = {
+  /** @gqlField */
+  hash: string;
   /** @gqlField */
   active: T | null;
   /** @gqlField */

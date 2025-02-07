@@ -1,9 +1,10 @@
-import { sql } from "@/datasources/postgres";
+import { type Sql, type TxSql, sql } from "@/datasources/postgres";
 import {
   Location,
   type ConstructorArgs as LocationConstructorArgs,
 } from "@/schema/platform/archetype/location";
 import type { Trackable } from "@/schema/platform/tracking";
+import { DiagnosticKind, type Result } from "@/schema/result";
 import type { Mutation } from "@/schema/root";
 import type { Context } from "@/schema/types";
 import { assert, assertNonNull } from "@/util";
@@ -51,14 +52,27 @@ export class Task
     // Note that Postgres will sometimes add newlines when we `encode(...)`.
     this.id = args.id.replace(/\n/g, "");
     // Private.
-    const g = decodeGlobalId(this.id);
-    this._type = g.type;
-    this._id = g.id;
+    const { type, id } = decodeGlobalId(this.id);
+    this._type = type;
+    this._id = id;
   }
 
   /** @gqlField */
   async displayName(): Promise<DisplayName> {
     return await this.ctx.orm.displayName.load(this.id);
+  }
+
+  /**
+   * The hash signature of the given Task. This is only useful when interacting
+   * with APIs that require a hash as a concurrency control mechanism.
+   *
+   * @gqlField
+   */
+  async hash(): Promise<string> {
+    // We'll just punt on non-instances for now.
+    if (this._type !== "workinstance") return "";
+    const { hash } = await computeTaskHash(sql, this);
+    return hash;
   }
 
   /**
@@ -452,7 +466,7 @@ export async function chain(
  */
 export async function chainAgg(
   t: Task,
-  ctx: Context,
+  _ctx: Context,
   /**
    * Which sub-type-hierarchies you are interested in aggregating over.
    */
@@ -552,12 +566,17 @@ export type Closed = {
 };
 
 /** @gqlInput */
-export type TaskInput = {
+export type AdvanceTaskOptions = {
   id: ID;
+  /**
+   * This should be the Task's current hash (as far as you know) as it was
+   * returned to you when first querying for the Task in question.
+   */
+  hash: string;
   overrides?: FieldInput[] | null;
 };
 
-export type AdvanceTaskResult = {
+export type AdvanceTaskEffect = {
   task: Task;
   instantiations: Edge<Task>[];
 };
@@ -573,129 +592,165 @@ export type AdvanceTaskResult = {
 export async function advance(
   ctx: Context,
   t: Task,
-  opts?: Omit<TaskInput, "id"> | null,
-): Promise<AdvanceTaskResult> {
+  opts: Omit<AdvanceTaskOptions, "id">,
+): Promise<Result<AdvanceTaskEffect>> {
+  return sql.begin(tx => advanceTask(tx, ctx, t, opts));
+}
+
+export async function advanceTask(
+  sql: TxSql,
+  ctx: Context,
+  t: Task,
+  opts: Omit<AdvanceTaskOptions, "id">,
+): Promise<Result<AdvanceTaskEffect>> {
   if (t._type !== "workinstance") {
     // Punt on this for now. We can come back to it.
     // This is, at least at present, used solely by the `advance` implementation
     // for StateMachine<Task>.
-    throw "not yet implemented - lazy instantiation of a Task";
+    console.warn(`Task ${t} is not an instance`);
+    return {
+      __typename: "Diagnostic",
+      code: DiagnosticKind.feature_not_available,
+    };
   }
 
-  const instantiations = await sql.begin(async tx => {
-    // FIXME: use MERGE once we've upgraded to postgres >=15
-    // FIXME: this is bad under concurrency! This easily leads to inadvertently
-    // stopping an in-progress instance when you *think* you are starting it lmao.
-    const state = await t.state(); // N.B. db call
-    const result = await match(state?.__typename)
-      .with(
-        "Open", // to InProgress
-        () => tx`
-          update public.workinstance
-          set workinstancestatusid = 707,
-              workinstancestartdate = now(),
-              workinstancemodifieddate = now(),
-              workinstancemodifiedby = auth.current_identity(workinstancecustomerid, ${ctx.auth.userId})
-          where id = ${t._id} and workinstancestatusid = 706
-        `,
-      )
-      .with(
-        "InProgress", // to Closed
-        () => tx`
-          update public.workinstance
-          set workinstancestatusid = 710,
-              workinstancecompleteddate = now(),
-              workinstancemodifieddate = now(),
-              workinstancemodifiedby = auth.current_identity(workinstancecustomerid, ${ctx.auth.userId})
-          where id = ${t._id} and workinstancestatusid = 707
-        `,
-      )
-      .otherwise(() => ({ count: 0 }));
+  assert(!!opts.hash, "hash is required");
+  if (!opts.hash) {
+    return {
+      __typename: "Diagnostic",
+      code: DiagnosticKind.hash_is_required,
+    };
+  }
 
-    if (!result.count) {
-      // TODO: merge resolution. The implication here is that the end user sees
-      // a different view of the given Task than what exists in the database,
-      // which could happen under concurrency and/or stale data. We could simply
-      // hard error in this case and force the end user to recover/retry (e.g.
-      // via a refresh). This is probably the right course of action.
-      // Alternatively we could be more clever and say that the "last write
-      // wins" or something along the lines of canonical merge strategies (e.g.
-      // in CRDTs).
-      assert(false, "no merge action performed");
-      throw new GraphQLError(
-        `Task cannot be advanced. Current state: ${state?.__typename}`,
-        {
-          extensions: {
-            code: "T_INVALID_STATE",
-          },
-        },
-      );
+  const { hash, version } = await computeTaskHash(sql, t);
+  if (hash !== opts.hash) {
+    console.warn("WARNING: Hash mismatch precludes advancement");
+    console.debug(`| task: ${t.id}`);
+    console.debug(`| ours:   ${hash}`);
+    console.debug(`| theirs: ${opts.hash}`);
+    return {
+      __typename: "Diagnostic",
+      code: DiagnosticKind.hash_mismatch_precludes_operation,
+    };
+  }
+
+  // FIXME: use MERGE once we've upgraded to postgres >=15
+  const [result] = await sql<
+    [
+      (ConstructorArgs & {
+        hash: string;
+        _hack_needs_tat: boolean;
+        _version: bigint;
+      })?,
+    ]
+  >`
+    with
+        when_open as (
+            update public.workinstance as wi
+            set version = wi.version + 1,
+                workinstancestatusid = 707,
+                workinstancestartdate = now(),
+                workinstancemodifieddate = now(),
+                workinstancemodifiedby = auth.current_identity(workinstancecustomerid, ${ctx.auth.userId})
+            where wi.id = ${t._id}
+              and wi.workinstancestatusid = 706
+              and wi.version = ${version}
+            returning
+                wi.id, 
+                ${hash$fragment("wi")} as hash,
+                false as _hack_needs_tat,
+                wi.version as _version
+        ),
+
+        when_in_progress as (
+            update public.workinstance as wi
+            set version = wi.version + 1,
+                workinstancestatusid = 710,
+                workinstancecompleteddate = now(),
+                workinstancemodifieddate = now(),
+                workinstancemodifiedby = auth.current_identity(workinstancecustomerid, ${ctx.auth.userId})
+            where wi.id = ${t._id}
+              and wi.workinstancestatusid = 707
+              and wi.version = ${version}
+            returning
+                wi.id, 
+                ${hash$fragment("wi")} as hash,
+                true as _hack_needs_tat,
+                wi.version as _version
+        )
+
+    select * from when_open
+    union all
+    select * from when_in_progress
+  `;
+
+  if (!result) {
+    assert(false, "seemingly impossible no-op scenario");
+    console.warn(
+      `Discarding candidate change, presumably because the Task (${t}) is not in a state suitable to advancement.`,
+    );
+    return {
+      __typename: "Diagnostic",
+      code: DiagnosticKind.candidate_change_discarded,
+    };
+  }
+
+  {
+    /** @see {@link applyAssignments$fragment} */
+    const ma = "replace";
+    const result = await sql`${applyAssignments$fragment(ctx, t, ma)}`;
+    console.debug(
+      `advance: applied ${result.count} assignments (mergeAction: ${ma})`,
+    );
+  }
+
+  {
+    const frag = applyEdits$fragment(ctx, t, opts?.overrides ?? []);
+    if (frag) {
+      const result = await sql`${frag}`;
+      console.debug(`advance: applied ${result.count} field-level edits`);
     }
+  }
 
-    {
-      // Check for and apply (if necessary) assignments.
-      /** @see {@link applyAssignments$fragment} */
-      const ma = "replace";
-      const frag = applyAssignments$fragment(ctx, t, ma);
-      if (frag) {
-        const result = await tx`${frag}`;
-        console.debug(
-          `advance: applied ${result.count} assignments (mergeAction: ${ma})`,
-        );
-      }
-    }
-
-    {
-      // Check for and apply (if necessary) field-level edits.
-      const frag = applyEdits$fragment(ctx, t, opts?.overrides ?? []);
-      if (frag) {
-        const result = await tx`${frag}`;
-        console.debug(`advance: applied ${result.count} field-level edits`);
-      }
-    }
-
-    if (state?.__typename === "InProgress") {
-      // Ensure "Time At Task" is set.
-      const [result] = await tx<[{ _value: string }]>`
-        update public.workresultinstance
-        set
-            workresultinstancevalue = extract(epoch from i.workinstancecompleteddate - i.workinstancestartdate)::text,
-            workresultinstancemodifieddate = now(),
-            workresultinstancemodifiedby = auth.current_identity(workresultinstancecustomerid, ${ctx.auth.userId})
-        from public.workinstance as i
-        where
-            i.id = ${t._id}
-            and workresultinstanceworkinstanceid = i.workinstanceid
-            and workresultinstanceworkresultid = (
-                select workresultid
-                from public.workresult
-                where
-                    workresultworktemplateid = i.workinstanceworktemplateid
-                    and workresulttypeid = 737
-            )
-        returning workresultinstancevalue as _value
-      `;
-      console.debug(`advance: recorded time at task: ${result._value}s`);
-    }
-
-    // Run the "rules engine".
-    const instantiations = await tx<{ id: string }[]>`
-      with t as (
-          select *
-          from public.workinstance
-          where id = ${t._id}
-      )
-
-      select encode(('workinstance:' || i.instance)::bytea, 'base64') as id, i.instance
-      from t, engine0.execute(
-          task_id := t.id,
-          modified_by := auth.current_identity(t.workinstancecustomerid, ${ctx.auth.userId})
-      ) as i
+  if (result._hack_needs_tat) {
+    // Ensure "Time At Task" is set.
+    const [tat] = await sql<[{ _value: string }]>`
+      update public.workresultinstance
+      set
+          workresultinstancevalue = extract(epoch from i.workinstancecompleteddate - i.workinstancestartdate)::text,
+          workresultinstancemodifieddate = now(),
+          workresultinstancemodifiedby = auth.current_identity(workresultinstancecustomerid, ${ctx.auth.userId})
+      from public.workinstance as i
+      where
+          i.id = ${t._id}
+          and workresultinstanceworkinstanceid = i.workinstanceid
+          and workresultinstanceworkresultid = (
+              select workresultid
+              from public.workresult
+              where
+                  workresultworktemplateid = i.workinstanceworktemplateid
+                  and workresulttypeid = 737
+          )
+      returning workresultinstancevalue as _value
     `;
-    console.debug(`advance: engine.execute.count: ${instantiations.length}`);
+    console.debug(`advance: recorded time at task: ${tat._value}s`);
+  }
 
-    return instantiations;
-  });
+  // Run the "rules engine".
+  const instantiations = await sql<{ id: string }[]>`
+    with t as (
+        select *
+        from public.workinstance
+        where id = ${t._id}
+    )
+
+    select encode(('workinstance:' || i.instance)::bytea, 'base64') as id
+    from t, engine0.execute(
+        task_id := t.id,
+        modified_by := auth.current_identity(t.workinstancecustomerid, ${ctx.auth.userId})
+    ) as i
+  `;
+  console.debug(`advance: engine.execute.count: ${instantiations.length}`);
 
   return {
     task: t,
@@ -703,14 +758,14 @@ export async function advance(
       cursor: i.id,
       node: new Task(i, ctx),
     })),
-  };
+  } satisfies AdvanceTaskEffect;
 }
 
 export function applyAssignments$fragment(
   ctx: Context,
   t: Task,
   mergeAction: "keep" | "replace" = "replace",
-): Fragment | undefined {
+): Fragment {
   const ma: Fragment = match(mergeAction)
     // When keeping, we only perform the update when the value is null.
     .with("keep", () => sql`t.workresultinstancevalue is null`)
@@ -809,6 +864,8 @@ export function applyEdits$fragment(
       }
     }
   });
+
+  if (!edits_.length) return;
 
   return sql`
     with edits (field, value, type) as (
@@ -925,4 +982,26 @@ export function valueInputTypeToSql(input: FieldInput) {
       return null; // will get INNER JOIN'd out
     }
   }
+}
+
+type TaskHash = {
+  hash: string;
+  version: bigint;
+};
+
+export function hash$fragment(table_name: string) {
+  return sql`encode((${sql(table_name)}.id || ':' || ${sql(table_name)}.version::text)::bytea, 'hex')`;
+}
+
+export async function computeTaskHash(
+  sql: Sql | TxSql,
+  t: Task,
+): Promise<TaskHash> {
+  assert(t._type === "workinstance");
+  const [row] = await sql<[TaskHash]>`
+    select ${hash$fragment("wi")} as hash, wi.version
+    from public.workinstance as wi
+    where wi.id = ${t._id}
+  `;
+  return assertNonNull(row);
 }

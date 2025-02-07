@@ -2,19 +2,19 @@
 begin
 ;
 
-drop function if exists mft.destroy_demo
+drop function if exists runtime.destroy_demo
 ;
 
-drop function if exists mft.create_demo
+drop function if exists runtime.create_demo
 ;
 
-drop function if exists mft.create_location
+drop function if exists runtime.create_location
 ;
 
-drop function if exists mft.create_customer
+drop function if exists runtime.create_customer
 ;
 
-drop schema if exists mft
+drop schema if exists runtime
 ;
 
 commit
