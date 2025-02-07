@@ -4,7 +4,7 @@ import {
   type ConstructorArgs as LocationConstructorArgs,
 } from "@/schema/platform/archetype/location";
 import type { Trackable } from "@/schema/platform/tracking";
-import { DiagnosticKind, type Result } from "@/schema/result";
+import { type Diagnostic, DiagnosticKind, type Result } from "@/schema/result";
 import type { Mutation } from "@/schema/root";
 import type { Context } from "@/schema/types";
 import { assert, assertNonNull } from "@/util";
@@ -576,9 +576,10 @@ export type AdvanceTaskOptions = {
   overrides?: FieldInput[] | null;
 };
 
-export type AdvanceTaskEffect = {
+export type AdvanceTaskResult = {
   task: Task;
-  instantiations: Edge<Task>[];
+  diagnostics?: Diagnostic[] | null;
+  instantiations?: Edge<Task>[] | null;
 };
 
 /**
@@ -593,7 +594,7 @@ export async function advance(
   ctx: Context,
   t: Task,
   opts: Omit<AdvanceTaskOptions, "id">,
-): Promise<Result<AdvanceTaskEffect>> {
+): Promise<Result<AdvanceTaskResult>> {
   return sql.begin(tx => advanceTask(tx, ctx, t, opts));
 }
 
@@ -602,23 +603,33 @@ export async function advanceTask(
   ctx: Context,
   t: Task,
   opts: Omit<AdvanceTaskOptions, "id">,
-): Promise<Result<AdvanceTaskEffect>> {
+): Promise<AdvanceTaskResult> {
   if (t._type !== "workinstance") {
     // Punt on this for now. We can come back to it.
     // This is, at least at present, used solely by the `advance` implementation
     // for StateMachine<Task>.
     console.warn(`Task ${t} is not an instance`);
     return {
-      __typename: "Diagnostic",
-      code: DiagnosticKind.feature_not_available,
+      task: t,
+      diagnostics: [
+        {
+          __typename: "Diagnostic",
+          code: DiagnosticKind.feature_not_available,
+        },
+      ],
     };
   }
 
   assert(!!opts.hash, "hash is required");
   if (!opts.hash) {
     return {
-      __typename: "Diagnostic",
-      code: DiagnosticKind.hash_is_required,
+      task: t,
+      diagnostics: [
+        {
+          __typename: "Diagnostic",
+          code: DiagnosticKind.hash_is_required,
+        },
+      ],
     };
   }
 
@@ -629,8 +640,13 @@ export async function advanceTask(
     console.debug(`| ours:   ${hash}`);
     console.debug(`| theirs: ${opts.hash}`);
     return {
-      __typename: "Diagnostic",
-      code: DiagnosticKind.hash_mismatch_precludes_operation,
+      task: t,
+      diagnostics: [
+        {
+          __typename: "Diagnostic",
+          code: DiagnosticKind.hash_mismatch_precludes_operation,
+        },
+      ],
     };
   }
 
@@ -690,8 +706,13 @@ export async function advanceTask(
       `Discarding candidate change, presumably because the Task (${t}) is not in a state suitable to advancement.`,
     );
     return {
-      __typename: "Diagnostic",
-      code: DiagnosticKind.candidate_change_discarded,
+      task: t,
+      diagnostics: [
+        {
+          __typename: "Diagnostic",
+          code: DiagnosticKind.candidate_change_discarded,
+        },
+      ],
     };
   }
 
@@ -758,7 +779,7 @@ export async function advanceTask(
       cursor: i.id,
       node: new Task(i, ctx),
     })),
-  } satisfies AdvanceTaskEffect;
+  } satisfies AdvanceTaskResult;
 }
 
 export function applyAssignments$fragment(

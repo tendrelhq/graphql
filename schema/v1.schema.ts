@@ -252,6 +252,66 @@ export function getSchema(): GraphQLSchema {
       };
     },
   });
+  const DiagnosticKindType: GraphQLEnumType = new GraphQLEnumType({
+    name: "DiagnosticKind",
+    values: {
+      candidate_change_discarded: {
+        value: "candidate_change_discarded",
+      },
+      candidate_choice_unavailable: {
+        value: "candidate_choice_unavailable",
+      },
+      expected_instance_got_template: {
+        description:
+          "Indicates that an operation expected an instance type to be provided but\nreceived a template type.",
+        value: "expected_instance_got_template",
+      },
+      expected_template_got_instance: {
+        description:
+          "Indicates that an operation expected a template type to be provided but\nreceived an instance type.",
+        value: "expected_template_got_instance",
+      },
+      feature_not_available: {
+        value: "feature_not_available",
+      },
+      hash_is_required: {
+        description:
+          "Some operations accept an optional hash. This is misleading. You should\n_always_ pass a hash for operations that accept them.",
+        value: "hash_is_required",
+      },
+      hash_mismatch_precludes_operation: {
+        description:
+          "Diagnostics of this kind indicates that the requested operation is no longer\na valid operation due to a state change that has not yet been observed by\nthe client. Typically this is due to data staleness but may also occur for\nthe _loser_ of a race under concurrency.\n\nHashes are opaque. Clients should not attempt to derive any meaning from them.",
+        value: "hash_mismatch_precludes_operation",
+      },
+      invalid_type: {
+        description:
+          "Indicates that an operation received a type that it is not allowed to\noperate on.",
+        value: "invalid_type",
+      },
+      no_associated_fsm: {
+        description:
+          "When you operate on a StateMachine<T>, there must obviously be a state\nmachine to operate *on*. This diagnostic is returned when no such state\nmachine exists.",
+        value: "no_associated_fsm",
+      },
+    },
+  });
+  const DiagnosticType: GraphQLObjectType = new GraphQLObjectType({
+    name: "Diagnostic",
+    fields() {
+      return {
+        code: {
+          name: "code",
+          type: DiagnosticKindType,
+          resolve(source, args, context, info) {
+            return assertNonNull(
+              defaultFieldResolver(source, args, context, info),
+            );
+          },
+        },
+      };
+    },
+  });
   const TimestampType: GraphQLScalarType = new GraphQLScalarType({
     description: "A date-time string in ISO 8601 format.",
     name: "Timestamp",
@@ -394,31 +454,6 @@ export function getSchema(): GraphQLSchema {
         totalCount: {
           name: "totalCount",
           type: GraphQLInt,
-          resolve(source, args, context, info) {
-            return assertNonNull(
-              defaultFieldResolver(source, args, context, info),
-            );
-          },
-        },
-      };
-    },
-  });
-  const TaskEdgeType: GraphQLObjectType = new GraphQLObjectType({
-    name: "TaskEdge",
-    fields() {
-      return {
-        cursor: {
-          name: "cursor",
-          type: GraphQLString,
-          resolve(source, args, context, info) {
-            return assertNonNull(
-              defaultFieldResolver(source, args, context, info),
-            );
-          },
-        },
-        node: {
-          name: "node",
-          type: TaskType,
           resolve(source, args, context, info) {
             return assertNonNull(
               defaultFieldResolver(source, args, context, info),
@@ -1003,30 +1038,21 @@ export function getSchema(): GraphQLSchema {
       return [AssignableType, ComponentType, NodeType, TrackableType];
     },
   });
-  const AdvanceFsmEffectType: GraphQLObjectType = new GraphQLObjectType({
-    name: "AdvanceFsmEffect",
+  const TaskEdgeType: GraphQLObjectType = new GraphQLObjectType({
+    name: "TaskEdge",
     fields() {
       return {
-        fsm: {
-          name: "fsm",
-          type: TaskType,
+        cursor: {
+          name: "cursor",
+          type: GraphQLString,
           resolve(source, args, context, info) {
             return assertNonNull(
               defaultFieldResolver(source, args, context, info),
             );
           },
         },
-        instantiations: {
-          name: "instantiations",
-          type: new GraphQLList(new GraphQLNonNull(TaskEdgeType)),
-          resolve(source, args, context, info) {
-            return assertNonNull(
-              defaultFieldResolver(source, args, context, info),
-            );
-          },
-        },
-        task: {
-          name: "task",
+        node: {
+          name: "node",
           type: TaskType,
           resolve(source, args, context, info) {
             return assertNonNull(
@@ -1037,74 +1063,31 @@ export function getSchema(): GraphQLSchema {
       };
     },
   });
-  const DiagnosticKindType: GraphQLEnumType = new GraphQLEnumType({
-    name: "DiagnosticKind",
-    values: {
-      candidate_change_discarded: {
-        value: "candidate_change_discarded",
-      },
-      candidate_choice_unavailable: {
-        value: "candidate_choice_unavailable",
-      },
-      expected_instance_got_template: {
-        description:
-          "Indicates that an operation expected an instance type to be provided but\nreceived a template type.",
-        value: "expected_instance_got_template",
-      },
-      expected_template_got_instance: {
-        description:
-          "Indicates that an operation expected a template type to be provided but\nreceived an instance type.",
-        value: "expected_template_got_instance",
-      },
-      feature_not_available: {
-        value: "feature_not_available",
-      },
-      hash_is_required: {
-        description:
-          "Some operations accept an optional hash. This is misleading. You should\n_always_ pass a hash for operations that accept them.",
-        value: "hash_is_required",
-      },
-      hash_mismatch_precludes_operation: {
-        description:
-          "Diagnostics of this kind indicates that the requested operation is no longer\na valid operation due to a state change that has not yet been observed by\nthe client. Typically this is due to data staleness but may also occur for\nthe _loser_ of a race under concurrency.\n\nHashes are opaque. Clients should not attempt to derive any meaning from them.",
-        value: "hash_mismatch_precludes_operation",
-      },
-      invalid_type: {
-        description:
-          "Indicates that an operation received a type that it is not allowed to\noperate on.",
-        value: "invalid_type",
-      },
-      no_associated_fsm: {
-        description:
-          "When you operate on a StateMachine<T>, there must obviously be a state\nmachine to operate *on*. This diagnostic is returned when no such state\nmachine exists.",
-        value: "no_associated_fsm",
-      },
-    },
-  });
-  const DiagnosticType: GraphQLObjectType = new GraphQLObjectType({
-    name: "Diagnostic",
-    fields() {
-      return {
-        code: {
-          name: "code",
-          type: DiagnosticKindType,
-          resolve(source, args, context, info) {
-            return assertNonNull(
-              defaultFieldResolver(source, args, context, info),
-            );
+  const AdvanceTaskStateMachineResultType: GraphQLObjectType =
+    new GraphQLObjectType({
+      name: "AdvanceTaskStateMachineResult",
+      fields() {
+        return {
+          diagnostics: {
+            name: "diagnostics",
+            type: new GraphQLList(new GraphQLNonNull(DiagnosticType)),
           },
-        },
-      };
-    },
-  });
-  const AdvanceFsmEffectResultType: GraphQLUnionType = new GraphQLUnionType({
-    name: "AdvanceFsmEffectResult",
-    description:
-      'Let\'s be honest: errors in GraphQL suck. This is why Tendrel doesn\'t throw\nerrors, but rather returns them as "diagnostics". If an operation throws an\nerror, this should be considered a _bug in Tendrel_ and treated the same as\nan "internal server error" (i.e. status code 500) in classical HTTP.',
-    types() {
-      return [AdvanceFsmEffectType, DiagnosticType];
-    },
-  });
+          instantiations: {
+            name: "instantiations",
+            type: new GraphQLList(new GraphQLNonNull(TaskEdgeType)),
+          },
+          root: {
+            name: "root",
+            type: TaskType,
+            resolve(source, args, context, info) {
+              return assertNonNull(
+                defaultFieldResolver(source, args, context, info),
+              );
+            },
+          },
+        };
+      },
+    });
   const ValueInputType: GraphQLInputObjectType = new GraphQLInputObjectType({
     name: "ValueInput",
     fields() {
@@ -1183,13 +1166,10 @@ export function getSchema(): GraphQLSchema {
       fields() {
         return {
           fsm: {
-            description:
-              "The unique identifier of the FSM on which you are operating. Wherever you\naccess the `fsm` field of a `Task`, that task's id should go here.",
             name: "fsm",
             type: new GraphQLNonNull(AdvanceTaskOptionsType),
           },
           task: {
-            description: "[object Object],[object Object],[object Object]",
             name: "task",
             type: new GraphQLNonNull(AdvanceTaskOptionsType),
           },
@@ -1356,7 +1336,7 @@ export function getSchema(): GraphQLSchema {
       return {
         advance: {
           name: "advance",
-          type: AdvanceFsmEffectResultType,
+          type: AdvanceTaskStateMachineResultType,
           args: {
             opts: {
               name: "opts",
@@ -1464,7 +1444,6 @@ export function getSchema(): GraphQLSchema {
       TimestampType,
       DiagnosticKindType,
       ValueTypeType,
-      AdvanceFsmEffectResultType,
       TaskStateType,
       ValueType,
       AssignableType,
@@ -1481,7 +1460,7 @@ export function getSchema(): GraphQLSchema {
       UpdateLocationInputType,
       UpdateNameInputType,
       ValueInputType,
-      AdvanceFsmEffectType,
+      AdvanceTaskStateMachineResultType,
       AggregateType,
       AssignmentType,
       AssignmentConnectionType,

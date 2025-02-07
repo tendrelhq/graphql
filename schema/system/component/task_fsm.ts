@@ -1,6 +1,6 @@
 import { type Sql, type TxSql, sql } from "@/datasources/postgres";
 import { copyFromWorkTemplate } from "@/schema/application/resolvers/Mutation/copyFrom";
-import { DiagnosticKind, type Result } from "@/schema/result";
+import { type Diagnostic, DiagnosticKind } from "@/schema/result";
 import type { Mutation } from "@/schema/root";
 import type { Context } from "@/schema/types";
 import { assert, assertNonNull, compareBase64 } from "@/util";
@@ -120,34 +120,18 @@ export async function fsm_(
 
 /** @gqlInput */
 export type AdvanceFsmOptions = {
-  /**
-   * The unique identifier of the FSM on which you are operating. Wherever you
-   * access the `fsm` field of a `Task`, that task's id should go here.
-   */
   fsm: AdvanceTaskOptions;
-  /**
-   * The unique identifier of a `Task` _within_ the aforementioned FSM. These
-   * are the tasks available as the `active` and/or `transitions` fields within
-   * a task's `fsm` field. Advancing a FSM by way of this argument works as
-   * follows:
-   * - if the active task === the given task, advance the task according to
-   *   its own internal state machine as defined by {@link advance_active}
-   * - otherwise, advance the fsm using the given task as the intended next
-   *   state
-   */
   task: AdvanceTaskOptions;
 };
 
 /** @gqlType */
-export type AdvanceFsmEffect = {
-  __typename: "AdvanceFsmEffect";
-
+export type AdvanceTaskStateMachineResult = {
   /** @gqlField */
-  fsm: Task;
+  root: Task;
   /** @gqlField */
-  task: Task;
+  diagnostics?: Diagnostic[] | null;
   /** @gqlField */
-  instantiations: Edge<Task>[];
+  instantiations?: Edge<Task>[] | null;
 };
 
 /** @gqlField */
@@ -155,7 +139,7 @@ export async function advance(
   _: Mutation,
   ctx: Context,
   opts: AdvanceFsmOptions,
-): Promise<Result<AdvanceFsmEffect>> {
+): Promise<AdvanceTaskStateMachineResult> {
   const root = new Task({ id: opts.fsm.id }, ctx);
   console.debug(`fsm: ${root.id}`);
   assert(root._type === "workinstance");
@@ -164,17 +148,27 @@ export async function advance(
     const [fsm] = await tx<[FSM?]>`${fsm$fragment(root)}`;
     if (!fsm) {
       return {
-        __typename: "Diagnostic",
-        code: DiagnosticKind.no_associated_fsm,
-      };
+        root,
+        diagnostics: [
+          {
+            __typename: "Diagnostic",
+            code: DiagnosticKind.no_associated_fsm,
+          },
+        ],
+      } satisfies AdvanceTaskStateMachineResult;
     }
 
     assert(!!opts.fsm.hash);
     if (!opts.fsm.hash) {
       return {
-        __typename: "Diagnostic",
-        code: DiagnosticKind.hash_is_required,
-      };
+        root,
+        diagnostics: [
+          {
+            __typename: "Diagnostic",
+            code: DiagnosticKind.hash_is_required,
+          },
+        ],
+      } satisfies AdvanceTaskStateMachineResult;
     }
 
     const rootHash = assertNonNull(await root.hash());
@@ -184,9 +178,14 @@ export async function advance(
       console.debug(`| ours: ${rootHash}`);
       console.debug(`| theirs: ${opts.fsm.hash}`);
       return {
-        __typename: "Diagnostic",
-        code: DiagnosticKind.hash_mismatch_precludes_operation,
-      };
+        root,
+        diagnostics: [
+          {
+            __typename: "Diagnostic",
+            code: DiagnosticKind.hash_mismatch_precludes_operation,
+          },
+        ],
+      } satisfies AdvanceTaskStateMachineResult;
     }
 
     const choice = new Task(opts.task, ctx);
@@ -197,9 +196,14 @@ export async function advance(
       console.debug(`| root: ${root.id}`);
       console.debug(`| choice: ${choice.id}`);
       return {
-        __typename: "Diagnostic",
-        code: DiagnosticKind.candidate_choice_unavailable,
-      };
+        root,
+        diagnostics: [
+          {
+            __typename: "Diagnostic",
+            code: DiagnosticKind.candidate_choice_unavailable,
+          },
+        ],
+      } satisfies AdvanceTaskStateMachineResult;
     }
 
     if (compareBase64(choice.id, fsm.active)) {
@@ -207,12 +211,8 @@ export async function advance(
       // When the "choice" is the active task, we advance that task's internal
       // state machine as defined by its own `advance` implementation.
       const r = await advanceTask(tx, ctx, choice, opts.task);
-      if ("code" in r) {
-        return r;
-      }
       return {
-        __typename: "AdvanceFsmEffect",
-        fsm: root,
+        root,
         ...r,
       };
     }
@@ -223,14 +223,6 @@ export async function advance(
   });
 }
 
-// export function createFsmHash(root: ID, fsm: FSM) {
-//   const h = crypto.createHash("sha256").update(root).update(fsm.active);
-//   for (const t of fsm.transitions ?? []) {
-//     h.update(t);
-//   }
-//   return h.digest("hex");
-// }
-
 export async function advanceFsm(
   sql: TxSql,
   root: Task,
@@ -238,7 +230,7 @@ export async function advanceFsm(
   choice: Task,
   opts: Omit<AdvanceFsmOptions, "fsm">,
   ctx: Context,
-): Promise<Result<AdvanceFsmEffect>> {
+): Promise<AdvanceTaskStateMachineResult> {
   assert(!!fsm.active, "fsm is not active");
   return await match(choice._type)
     .with("workinstance", () => {
@@ -246,8 +238,13 @@ export async function advanceFsm(
       // underlied by worktemplates.
       assert(false, "advance_fsm: choice underlied by workinstance");
       return {
-        __typename: "Diagnostic" as const,
-        code: DiagnosticKind.expected_template_got_instance,
+        root,
+        diagnostics: [
+          {
+            __typename: "Diagnostic" as const,
+            code: DiagnosticKind.expected_template_got_instance,
+          },
+        ],
       };
     })
     .with("worktemplate", async () => {
@@ -265,18 +262,18 @@ export async function advanceFsm(
         },
         ctx,
       );
-      return {
-        __typename: "AdvanceFsmEffect" as const,
-        fsm: root,
-        task: choice, // now previous
-        instantiations: [],
-      };
+      return { root };
     })
     .otherwise(() => {
       assert(false, `unknown underlying type ${choice._type}`);
       return {
-        __typename: "Diagnostic" as const,
-        code: DiagnosticKind.invalid_type,
+        root,
+        diagnostics: [
+          {
+            __typename: "Diagnostic" as const,
+            code: DiagnosticKind.invalid_type,
+          },
+        ],
       };
     });
 }

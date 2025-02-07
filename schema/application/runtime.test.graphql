@@ -98,42 +98,40 @@ mutation TestRuntimeTransitionMutation(
   $includeChain: Boolean!
 ) {
   advance(opts: $opts) {
-    ... on Diagnostic {
+    diagnostics {
       code
     }
-    ... on AdvanceFsmEffect {
-      fsm {
-        chain @include(if: $includeChain) {
-          edges {
-            node {
-              displayName {
-                name {
-                  value
-                }
-              }
-              state {
-                __typename
+    root {
+      chain @include(if: $includeChain) {
+        edges {
+          node {
+            displayName {
+              name {
+                value
               }
             }
+            state {
+              __typename
+            }
           }
-        }
-        fsm {
-          ...TaskFSM_fragment
         }
       }
-      instantiations {
-        node {
-          chain {
-            totalCount
+      fsm {
+        ...TaskFSM_fragment
+      }
+    }
+    instantiations {
+      node {
+        chain {
+          totalCount
+        }
+        displayName {
+          name {
+            value
           }
-          displayName {
-            name {
-              value
-            }
-          }
-          state {
-            __typename
-          }
+        }
+        state {
+          __typename
         }
       }
     }

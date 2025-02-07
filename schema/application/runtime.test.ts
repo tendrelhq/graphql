@@ -90,12 +90,7 @@ describe.skipIf(!!process.env.CI)("runtime demo", () => {
       },
     );
     expect(result.errors).toBeFalsy();
-    expect(result.data).toEqual({
-      advance: {
-        __typename: "Diagnostic",
-        code: "hash_mismatch_precludes_operation",
-      },
-    });
+    expect(result.data).toMatchSnapshot();
   });
 
   test("production -> idle time", async () => {
@@ -139,12 +134,7 @@ describe.skipIf(!!process.env.CI)("runtime demo", () => {
       },
     );
     expect(result.errors).toBeFalsy();
-    expect(result.data).toEqual({
-      advance: {
-        __typename: "Diagnostic",
-        code: "hash_mismatch_precludes_operation",
-      },
-    });
+    expect(result.data).toMatchSnapshot();
   });
 
   test("end idle time", async () => {
@@ -196,12 +186,7 @@ describe.skipIf(!!process.env.CI)("runtime demo", () => {
       },
     });
     expect(stale.errors).toBeFalsy();
-    expect(stale.data).toEqual({
-      advance: {
-        __typename: "Diagnostic",
-        code: "candidate_choice_unavailable",
-      },
-    });
+    expect(stale.data).toMatchSnapshot();
   });
 
   test("detail query", async () => {
@@ -570,12 +555,7 @@ describe.skipIf(!!process.env.CI)("runtime demo", () => {
       },
     );
     expect(result.errors).toBeFalsy();
-    expect(result.data).toEqual({
-      advance: {
-        __typename: "Diagnostic",
-        code: "no_associated_fsm",
-      },
-    });
+    expect(result.data).toMatchSnapshot();
   });
 
   beforeAll(async () => {

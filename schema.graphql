@@ -72,29 +72,8 @@ input ActiveInput {
   updatedAt: TemporalInput
 }
 
-type AdvanceFsmEffect {
-  fsm: Task @semanticNonNull
-  instantiations: [TaskEdge!] @semanticNonNull
-  task: Task @semanticNonNull
-}
-
-"""
-Let's be honest: errors in GraphQL suck. This is why Tendrel doesn't throw
-errors, but rather returns them as "diagnostics". If an operation throws an
-error, this should be considered a _bug in Tendrel_ and treated the same as
-an "internal server error" (i.e. status code 500) in classical HTTP.
-"""
-union AdvanceFsmEffectResult = AdvanceFsmEffect | Diagnostic
-
 input AdvanceFsmOptions {
-  """
-  The unique identifier of the FSM on which you are operating. Wherever you
-  access the `fsm` field of a `Task`, that task's id should go here.
-  """
   fsm: AdvanceTaskOptions!
-  """
-  [object Object],[object Object],[object Object]
-  """
   task: AdvanceTaskOptions!
 }
 
@@ -106,6 +85,12 @@ input AdvanceTaskOptions {
   hash: String!
   id: ID!
   overrides: [FieldInput!]
+}
+
+type AdvanceTaskStateMachineResult {
+  diagnostics: [Diagnostic!]
+  instantiations: [TaskEdge!]
+  root: Task @semanticNonNull
 }
 
 type Aggregate {
@@ -1029,7 +1014,8 @@ type Mutation {
   """
   activate(entity: ID!): Activatable!
   activateWorker(id: ID!): Worker!
-  advance(opts: AdvanceFsmOptions!): AdvanceFsmEffectResult @semanticNonNull
+  advance(opts: AdvanceFsmOptions!): AdvanceTaskStateMachineResult
+    @semanticNonNull
   applyFieldEdits(edits: [FieldInput!]!, entity: ID!): Task @semanticNonNull
   """
   Assign an entity to another entity. If the entity is already assigned to the

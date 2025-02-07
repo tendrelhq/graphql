@@ -92,14 +92,6 @@ enum ValueType {
   unknown
 }
 
-"""
-Let's be honest: errors in GraphQL suck. This is why Tendrel doesn't throw
-errors, but rather returns them as "diagnostics". If an operation throws an
-error, this should be considered a _bug in Tendrel_ and treated the same as
-an "internal server error" (i.e. status code 500) in classical HTTP.
-"""
-union AdvanceFsmEffectResult = AdvanceFsmEffect | Diagnostic
-
 union TaskState = Closed | InProgress | Open
 
 union Value =
@@ -151,14 +143,7 @@ interface Trackable implements Component {
 }
 
 input AdvanceFsmOptions {
-  """
-  The unique identifier of the FSM on which you are operating. Wherever you
-  access the `fsm` field of a `Task`, that task's id should go here.
-  """
   fsm: AdvanceTaskOptions!
-  """
-  [object Object],[object Object],[object Object]
-  """
   task: AdvanceTaskOptions!
 }
 
@@ -237,10 +222,10 @@ input ValueInput @oneOf {
   timestamp: String
 }
 
-type AdvanceFsmEffect {
-  fsm: Task @semanticNonNull
-  instantiations: [TaskEdge!] @semanticNonNull
-  task: Task @semanticNonNull
+type AdvanceTaskStateMachineResult {
+  diagnostics: [Diagnostic!]
+  instantiations: [TaskEdge!]
+  root: Task @semanticNonNull
 }
 
 type Aggregate {
@@ -385,7 +370,8 @@ type Location implements Component & Node & Trackable {
 }
 
 type Mutation {
-  advance(opts: AdvanceFsmOptions!): AdvanceFsmEffectResult @semanticNonNull
+  advance(opts: AdvanceFsmOptions!): AdvanceTaskStateMachineResult
+    @semanticNonNull
   applyFieldEdits(edits: [FieldInput!]!, entity: ID!): Task @semanticNonNull
   createLocation(input: CreateLocationInput!): Location @semanticNonNull
   updateLocation(input: UpdateLocationInput!): Location @semanticNonNull
