@@ -5,6 +5,9 @@ begin
 drop function if exists runtime.destroy_demo
 ;
 
+drop function if exists runtime.add_demo_to_customer
+;
+
 drop function if exists runtime.create_demo
 ;
 
