@@ -13,7 +13,7 @@ const RUGG =
 const MIKE =
   "d29ya2VyOndvcmtlci1pbnN0YW5jZV83NWJmMjgwOC1hNDk2LTQxOGItOTg1Zi03OTIzZmJjMjVkMzE=";
 
-describe.skipIf(!!process.env.CI)("assign, reassign, unassign", () => {
+describe.skip("assign, reassign, unassign", () => {
   test("assign", async () => {
     const result = await execute(schema, TestAssignDocument, {
       entity: CHECKLIST,

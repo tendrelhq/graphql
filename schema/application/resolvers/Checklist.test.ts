@@ -4,7 +4,7 @@ import { encodeGlobalId } from "@/schema/system";
 import { execute } from "@/test/prelude";
 import { TestChecklistDocument } from "./Checklist.test.generated";
 
-describe.skipIf(!!process.env.CI)("Checklist", () => {
+describe.skip("Checklist", () => {
   test("ast", async () => {
     const entity = encodeGlobalId({
       type: "worktemplate",

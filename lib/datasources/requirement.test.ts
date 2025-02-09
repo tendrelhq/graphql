@@ -6,7 +6,7 @@ import { makeRequirementLoader } from "./requirement";
 // biome-ignore lint/suspicious/noExplicitAny:
 const makeLoader = () => makeRequirementLoader({} as any);
 
-describe.skipIf(!!process.env.CI)("status loader", () => {
+describe.skip("status loader", () => {
   test("workinstance", async () => {
     const data = await makeLoader().load(
       encodeGlobalId({

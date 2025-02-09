@@ -2,7 +2,7 @@ import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 import { sql } from "@/datasources/postgres";
 import { assert } from "@/util";
 
-describe.skipIf(!!process.env.CI)("engine0", () => {
+describe("engine0", () => {
   let CUSTOMER: string;
   let INSTANCE: string;
 
@@ -83,7 +83,7 @@ describe.skipIf(!!process.env.CI)("engine0", () => {
   beforeAll(async () => {
     const logs = await sql`
       select *
-      from mft.create_demo(
+      from runtime.create_demo(
           customer_name := 'Frozen Tendy Factory',
           admins := (
               select array_agg(workeruuid)
@@ -107,7 +107,7 @@ describe.skipIf(!!process.env.CI)("engine0", () => {
     assert(!!CUSTOMER);
     process.stderr.write("Cleaning up... ");
     const [row] = await sql`
-      select mft.destroy_demo(${CUSTOMER}) as ok;
+      select runtime.destroy_demo(${CUSTOMER}) as ok;
     `;
     console.debug(row.ok);
   });

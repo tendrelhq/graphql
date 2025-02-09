@@ -122,14 +122,14 @@ async function astQuery(args: Args, parent: Parent) {
     hasPreviousPage: hasPrev,
   };
 
-  const [{ count }] = await sql<[{ count: number }]>`
+  const [{ count }] = await sql<[{ count: bigint }]>`
     SELECT count(*)
     FROM public.worktemplate AS node
     ${buildAstJoinFragments(args, parent)}
     WHERE ${buildAstFilterFragments(args, parent)}
   `;
 
-  return { edges, pageInfo, totalCount: count };
+  return { edges, pageInfo, totalCount: Number(count) };
 }
 
 function buildAstJoinFragments(_args: Args, _parent: Parent) {
@@ -290,14 +290,14 @@ async function ecsQuery(args: Args, parent: Parent) {
     hasPreviousPage: hasPrev,
   };
 
-  const [{ count }] = await sql<[{ count: number }]>`
+  const [{ count }] = await sql<[{ count: bigint }]>`
     SELECT count(*)
     FROM public.workinstance AS node
     ${buildEcsJoinFragments(args, parent)}
     WHERE ${buildEcsFilterFragments(args, parent)}
   `;
 
-  return { edges, pageInfo, totalCount: count };
+  return { edges, pageInfo, totalCount: Number(count) };
 }
 
 function buildEcsCursor(cursor: string) {

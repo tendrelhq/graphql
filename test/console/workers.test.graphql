@@ -1,0 +1,54 @@
+query ListWorkersTest($account: ID!, $search: WorkerSearchOptions) {
+  node(id: $account) {
+    ... on Organization {
+      workers(search: $search) {
+        edges {
+          node {
+            ...Worker_fragment
+          }
+        }
+        pageInfo {
+          hasNextPage
+          hasPreviousPage
+        }
+        totalCount
+      }
+    }
+  }
+}
+
+query PaginateWorkersTest($account: ID!, $first: Int, $after: String) {
+  node(id: $account) {
+    ... on Organization {
+      workers(first: $first, after: $after) {
+        edges {
+          cursor
+          node {
+            id
+          }
+        }
+        pageInfo {
+          hasNextPage
+          endCursor
+        }
+        totalCount
+      }
+    }
+  }
+}
+
+fragment Worker_fragment on Worker {
+  active {
+    active
+  }
+  displayName
+  firstName
+  lastName
+  language {
+    code
+  }
+  role {
+    type
+  }
+  scanCode
+}

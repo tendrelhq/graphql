@@ -1,0 +1,248 @@
+// Bun Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`[console] workers list workers 1`] = `
+{
+  "node": {
+    "__typename": "Organization",
+    "workers": {
+      "__typename": "WorkerConnection",
+      "edges": [
+        {
+          "__typename": "WorkerEdge",
+          "node": {
+            "__typename": "Worker",
+            "active": {
+              "active": true,
+            },
+            "displayName": "Jerry Garcia",
+            "firstName": "Jerry",
+            "language": {
+              "code": "en",
+            },
+            "lastName": "Garcia",
+            "role": {
+              "type": "Admin",
+            },
+            "scanCode": null,
+          },
+        },
+        {
+          "__typename": "WorkerEdge",
+          "node": {
+            "__typename": "Worker",
+            "active": {
+              "active": true,
+            },
+            "displayName": "Jerry Garcia",
+            "firstName": "Jerry",
+            "language": {
+              "code": "en",
+            },
+            "lastName": "Garcia",
+            "role": {
+              "type": "Admin",
+            },
+            "scanCode": null,
+          },
+        },
+        {
+          "__typename": "WorkerEdge",
+          "node": {
+            "__typename": "Worker",
+            "active": {
+              "active": true,
+            },
+            "displayName": "Mike Heavner",
+            "firstName": "Mike",
+            "language": {
+              "code": "en",
+            },
+            "lastName": "Heavner",
+            "role": {
+              "type": "Admin",
+            },
+            "scanCode": null,
+          },
+        },
+        {
+          "__typename": "WorkerEdge",
+          "node": {
+            "__typename": "Worker",
+            "active": {
+              "active": true,
+            },
+            "displayName": "Mike Heavner",
+            "firstName": "Mike",
+            "language": {
+              "code": "en",
+            },
+            "lastName": "Heavner",
+            "role": {
+              "type": "Admin",
+            },
+            "scanCode": null,
+          },
+        },
+        {
+          "__typename": "WorkerEdge",
+          "node": {
+            "__typename": "Worker",
+            "active": {
+              "active": true,
+            },
+            "displayName": "Will Ruggiano",
+            "firstName": "Will",
+            "language": {
+              "code": "en",
+            },
+            "lastName": "Ruggiano",
+            "role": {
+              "type": "Admin",
+            },
+            "scanCode": null,
+          },
+        },
+        {
+          "__typename": "WorkerEdge",
+          "node": {
+            "__typename": "Worker",
+            "active": {
+              "active": true,
+            },
+            "displayName": "Will Twait",
+            "firstName": "Will",
+            "language": {
+              "code": "en",
+            },
+            "lastName": "Twait",
+            "role": {
+              "type": "Admin",
+            },
+            "scanCode": null,
+          },
+        },
+        {
+          "__typename": "WorkerEdge",
+          "node": {
+            "__typename": "Worker",
+            "active": {
+              "active": true,
+            },
+            "displayName": "Will Twait",
+            "firstName": "Will",
+            "language": {
+              "code": "en",
+            },
+            "lastName": "Twait",
+            "role": {
+              "type": "Admin",
+            },
+            "scanCode": null,
+          },
+        },
+        {
+          "__typename": "WorkerEdge",
+          "node": {
+            "__typename": "Worker",
+            "active": {
+              "active": true,
+            },
+            "displayName": "Will Twait",
+            "firstName": "Will",
+            "language": {
+              "code": "en",
+            },
+            "lastName": "Twait",
+            "role": {
+              "type": "Admin",
+            },
+            "scanCode": null,
+          },
+        },
+        {
+          "__typename": "WorkerEdge",
+          "node": {
+            "__typename": "Worker",
+            "active": {
+              "active": true,
+            },
+            "displayName": "Will Twait",
+            "firstName": "Will",
+            "language": {
+              "code": "en",
+            },
+            "lastName": "Twait",
+            "role": {
+              "type": "Admin",
+            },
+            "scanCode": null,
+          },
+        },
+        {
+          "__typename": "WorkerEdge",
+          "node": {
+            "__typename": "Worker",
+            "active": {
+              "active": true,
+            },
+            "displayName": "Will Twait",
+            "firstName": "Will",
+            "language": {
+              "code": "en",
+            },
+            "lastName": "Twait",
+            "role": {
+              "type": "Admin",
+            },
+            "scanCode": null,
+          },
+        },
+        {
+          "__typename": "WorkerEdge",
+          "node": {
+            "__typename": "Worker",
+            "active": {
+              "active": true,
+            },
+            "displayName": "Will Twait",
+            "firstName": "Will",
+            "language": {
+              "code": "en",
+            },
+            "lastName": "Twait",
+            "role": {
+              "type": "Admin",
+            },
+            "scanCode": null,
+          },
+        },
+        {
+          "__typename": "WorkerEdge",
+          "node": {
+            "__typename": "Worker",
+            "active": {
+              "active": true,
+            },
+            "displayName": "Will Twait",
+            "firstName": "Will",
+            "language": {
+              "code": "en",
+            },
+            "lastName": "Twait",
+            "role": {
+              "type": "Admin",
+            },
+            "scanCode": null,
+          },
+        },
+      ],
+      "pageInfo": {
+        "__typename": "PageInfo",
+        "hasNextPage": false,
+        "hasPreviousPage": false,
+      },
+      "totalCount": 12,
+    },
+  },
+}
+`;

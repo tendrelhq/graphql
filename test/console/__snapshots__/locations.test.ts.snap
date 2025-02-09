@@ -1,0 +1,166 @@
+// Bun Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`[console] locations list locations 1`] = `
+{
+  "node": {
+    "__typename": "Organization",
+    "locations": {
+      "__typename": "LocationConnection",
+      "edges": [
+        {
+          "__typename": "LocationEdge",
+          "node": {
+            "__typename": "Location",
+            "active": {
+              "active": true,
+            },
+            "geofence": null,
+            "name": {
+              "value": "Frozen Tendy Factory",
+            },
+            "parent": null,
+            "scanCode": null,
+            "site": {
+              "name": {
+                "value": "Frozen Tendy Factory",
+              },
+            },
+            "timeZone": "GMT",
+          },
+        },
+        {
+          "__typename": "LocationEdge",
+          "node": {
+            "__typename": "Location",
+            "active": {
+              "active": true,
+            },
+            "geofence": null,
+            "name": {
+              "value": "Mixing Line",
+            },
+            "parent": {
+              "name": {
+                "value": "Frozen Tendy Factory",
+              },
+            },
+            "scanCode": null,
+            "site": {
+              "name": {
+                "value": "Frozen Tendy Factory",
+              },
+            },
+            "timeZone": "GMT",
+          },
+        },
+        {
+          "__typename": "LocationEdge",
+          "node": {
+            "__typename": "Location",
+            "active": {
+              "active": true,
+            },
+            "geofence": null,
+            "name": {
+              "value": "Fill Line",
+            },
+            "parent": {
+              "name": {
+                "value": "Frozen Tendy Factory",
+              },
+            },
+            "scanCode": null,
+            "site": {
+              "name": {
+                "value": "Frozen Tendy Factory",
+              },
+            },
+            "timeZone": "GMT",
+          },
+        },
+        {
+          "__typename": "LocationEdge",
+          "node": {
+            "__typename": "Location",
+            "active": {
+              "active": true,
+            },
+            "geofence": null,
+            "name": {
+              "value": "Assembly Line",
+            },
+            "parent": {
+              "name": {
+                "value": "Frozen Tendy Factory",
+              },
+            },
+            "scanCode": null,
+            "site": {
+              "name": {
+                "value": "Frozen Tendy Factory",
+              },
+            },
+            "timeZone": "GMT",
+          },
+        },
+        {
+          "__typename": "LocationEdge",
+          "node": {
+            "__typename": "Location",
+            "active": {
+              "active": true,
+            },
+            "geofence": null,
+            "name": {
+              "value": "Cartoning Line",
+            },
+            "parent": {
+              "name": {
+                "value": "Frozen Tendy Factory",
+              },
+            },
+            "scanCode": null,
+            "site": {
+              "name": {
+                "value": "Frozen Tendy Factory",
+              },
+            },
+            "timeZone": "GMT",
+          },
+        },
+        {
+          "__typename": "LocationEdge",
+          "node": {
+            "__typename": "Location",
+            "active": {
+              "active": true,
+            },
+            "geofence": null,
+            "name": {
+              "value": "Packaging Line",
+            },
+            "parent": {
+              "name": {
+                "value": "Frozen Tendy Factory",
+              },
+            },
+            "scanCode": null,
+            "site": {
+              "name": {
+                "value": "Frozen Tendy Factory",
+              },
+            },
+            "timeZone": "GMT",
+          },
+        },
+      ],
+      "pageInfo": {
+        "__typename": "PageInfo",
+        "hasNextPage": false,
+        "hasPreviousPage": true,
+      },
+      "totalCount": 6,
+    },
+  },
+}
+`;

@@ -1,6 +1,7 @@
 import { orm } from "@/datasources/postgres";
-import type { Context } from "@/schema";
+import type { Context, InputMaybe } from "@/schema";
 import { encodeGlobalId } from "@/schema/system";
+import type { PageInfo } from "@/schema/system/pagination";
 import type { TypedDocumentNode as DocumentNode } from "@graphql-typed-document-node/core";
 import {
   type ExecutionResult,
@@ -49,3 +50,26 @@ export function testGlobalId() {
 }
 
 export const NOW = new Date(1725823905364);
+
+// biome-ignore lint/suspicious/noExplicitAny:
+type PaginateQueryOptions<R, V extends Record<any, any>> = {
+  execute(cursor?: string): Promise<ExecutionResult<R>>;
+  next(
+    result: ExecutionResult<R>,
+  ): Partial<{ endCursor?: string | null; hasNextPage?: boolean | null }>;
+};
+
+// biome-ignore lint/suspicious/noExplicitAny:
+export async function* paginateQuery<R, V extends Record<any, any>>(
+  opts: PaginateQueryOptions<R, V>,
+) {
+  let cursor: InputMaybe<string> = undefined;
+  let done = false;
+  while (!done) {
+    const result = await opts.execute(cursor);
+    yield result;
+    const { endCursor, hasNextPage } = opts.next(result);
+    cursor = endCursor as unknown as InputMaybe<string>;
+    done = hasNextPage === false;
+  }
+}

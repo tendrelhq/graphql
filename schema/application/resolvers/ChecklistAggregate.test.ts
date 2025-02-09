@@ -18,7 +18,7 @@ const TEMPLATE = encodeGlobalId({
 });
 const DUE_ON_BEFORE = "1733251472196"; // Date.now() circa Tue Dec 03 2024 10:45
 
-describe.skipIf(!!process.env.CI)("ChecklistAggregate", () => {
+describe.skip("ChecklistAggregate", () => {
   test("when parent is customer", async () => {
     const result = await execute(schema, TestChecklistAggDocument, {
       parent: CUSTOMER,

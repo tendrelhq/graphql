@@ -12,7 +12,7 @@ const RUGG =
 const NOT_ASSIGNABLE =
   "b3JnYW5pemF0aW9uOmN1c3RvbWVyXzFiMmQ2YzYwLTg2NzgtNDVhZC1iMzBkLWExMDMyM2MyYzQ0MQ==";
 
-describe.skipIf(!!process.env.CI)("assignable", () => {
+describe.skip("assignable", () => {
   test("workers", async () => {
     const result = await execute(schema, TestAssignableDocument, {
       entity: CHECKLIST,

@@ -144,16 +144,19 @@ export const User: UserResolvers = {
         hasNextPage,
         hasPreviousPage,
       },
-      totalCount: (
-        await sql<[{ count: number }]>`
-          SELECT count(*)
-          FROM public.workerinstance
-          WHERE workerinstanceworkerid = (
-              SELECT workerid
-              FROM public.worker
-              WHERE workeruuid = ${parentId}
-        );`
-      )[0].count,
+      totalCount: Number(
+        (
+          await sql<[{ count: bigint }]>`
+            SELECT count(*)
+            FROM public.workerinstance
+            WHERE workerinstanceworkerid = (
+                SELECT workerid
+                FROM public.worker
+                WHERE workeruuid = ${parentId}
+            );
+          `
+        )[0].count,
+      ),
     };
   },
   tags() {

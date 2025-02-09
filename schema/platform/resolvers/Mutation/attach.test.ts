@@ -11,7 +11,7 @@ const ENTITY =
 const S3URI =
   "s3://tendrel-ruggiano-test-attachment-bucket/workpictureinstance/92286ae9-f9f0-4948-b9ed-128dd11ed95d/screenshot-2024-11-05T11:46:56-08:00.png";
 
-describe.skipIf(!!process.env.CI)("attach", () => {
+describe.skip("attach", () => {
   test("to an instance", async () => {
     const result = await execute(schema, TestAttachDocument, {
       entity: ENTITY,

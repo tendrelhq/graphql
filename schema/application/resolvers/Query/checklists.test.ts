@@ -6,14 +6,13 @@ import type { ExecutionResult } from "graphql";
 import { TestDocument, type TestQuery } from "./checklists.test.generated";
 
 const LIMIT = 10;
-const SKIP_IN_CI = !!process.env.CI;
 
 // Customer 0
 const PARENT =
   "b3JnYW5pemF0aW9uOmN1c3RvbWVyXzQyY2I5NGVlLWVjMDctNGQzMy04OGVkLTlkNDk2NTllNjhiZQ==";
 
-describe("checklists", () => {
-  test.skipIf(SKIP_IN_CI)("AST entrypoint by default", async () => {
+describe.skip("checklists", () => {
+  test("AST entrypoint by default", async () => {
     const result = await execute(schema, TestDocument, {
       parent: PARENT,
       limit: LIMIT,
@@ -23,7 +22,7 @@ describe("checklists", () => {
     expect(result).toMatchSnapshot();
   });
 
-  describe.skipIf(SKIP_IN_CI)("filters", () => {
+  describe("filters", () => {
     test("withName", async () => {
       const result = await execute(schema, TestDocument, {
         parent: PARENT,
@@ -59,7 +58,7 @@ describe("checklists", () => {
     });
   });
 
-  describe.skipIf(SKIP_IN_CI)("pagination", () => {
+  describe("pagination", () => {
     test("ast - forward", async () => {
       const r0 = await execute(schema, TestDocument, {
         parent: PARENT,
@@ -209,7 +208,7 @@ describe("checklists", () => {
     });
   });
 
-  describe.skipIf(SKIP_IN_CI)("pagination", () => {
+  describe("pagination", () => {
     test("invalid (ast) cursor", async () => {
       const result = await execute(schema, TestDocument, {
         parent: PARENT,

@@ -66,34 +66,36 @@ export const Checklist: ChecklistResolvers = {
       )
       .otherwise(() => Promise.resolve([]));
 
+    const count = await match(type)
+      .with(
+        "workinstance",
+        () => sql<[{ count: bigint }]>`
+          SELECT count(*)
+          FROM public.workresultinstance
+          INNER JOIN public.workresult
+              ON workresultinstanceworkresultid = workresultid
+          WHERE
+              workresultinstanceworkinstanceid = (
+                  SELECT workinstanceid
+                  FROM public.workinstance
+                  WHERE id = ${id}
+              )
+              AND nullif(workresultinstancevalue, '') IS NOT null
+              AND workresulttypeid = 848
+              AND workresultentitytypeid = 850
+              AND workresultisprimary = true
+        `,
+      )
+      .otherwise(() => Promise.resolve([{ count: 0 }]))
+      .then(([row]) => row.count);
+
     return {
       edges: rows.map(row => ({ cursor: row.id, node: row as Assignee })),
       pageInfo: {
         hasNextPage: false,
         hasPreviousPage: false,
       },
-      totalCount: await match(type)
-        .with(
-          "workinstance",
-          () => sql<[{ count: number }]>`
-              SELECT count(*)
-              FROM public.workresultinstance
-              INNER JOIN public.workresult
-                  ON workresultinstanceworkresultid = workresultid
-              WHERE
-                  workresultinstanceworkinstanceid = (
-                      SELECT workinstanceid
-                      FROM public.workinstance
-                      WHERE id = ${id}
-                  )
-                  AND nullif(workresultinstancevalue, '') IS NOT null
-                  AND workresulttypeid = 848
-                  AND workresultentitytypeid = 850
-                  AND workresultisprimary = true
-          `,
-        )
-        .otherwise(() => Promise.resolve([{ count: 0 }]))
-        .then(([row]) => row.count),
+      totalCount: Number(count),
     };
   },
   async attachments(parent, args) {
@@ -402,7 +404,7 @@ export const Checklist: ChecklistResolvers = {
     const [{ count }] = await match(parentType)
       .with(
         "workinstance",
-        () => sql<[{ count: number }]>`
+        () => sql<[{ count: bigint }]>`
             SELECT count(*)
             FROM public.workresult AS wr
             WHERE
@@ -432,7 +434,7 @@ export const Checklist: ChecklistResolvers = {
       )
       .with(
         "worktemplate",
-        () => sql<[{ count: number }]>`
+        () => sql<[{ count: bigint }]>`
             SELECT count(*)
             FROM public.workresult AS wr
             WHERE
@@ -465,7 +467,7 @@ export const Checklist: ChecklistResolvers = {
     return {
       edges,
       pageInfo,
-      totalCount: count,
+      totalCount: Number(count),
     };
   },
   async metadata(parent) {

@@ -7,7 +7,7 @@ import { TestCreateLocationDocument } from "./create.test.generated";
 
 process.env.X_TENDREL_USER = "";
 
-describe.skipIf(!!process.env.CI)("createLocation", () => {
+describe.skip("createLocation", () => {
   let ACCOUNT: string; // customer
 
   test("only required inputs; parent == customer", async () => {

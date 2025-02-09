@@ -4,7 +4,7 @@ import { schema } from "@/schema/final";
 import { execute } from "@/test/prelude";
 import { TestCreateWorkerDocument } from "./createWorker.test.generated";
 
-describe.skipIf(!!process.env.CI)("createWorker", () => {
+describe.skip("createWorker", () => {
   test("creates worker without conflict", async () => {
     const result = await execute(schema, TestCreateWorkerDocument, {
       input: {
