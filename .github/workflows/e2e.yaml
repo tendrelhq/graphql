@@ -29,11 +29,6 @@ jobs:
         ports:
           - 5432:5432
     steps:
-      - run: createdb tendrel
-        env:
-          PGHOST: localhost
-          PGPASSWORD: postgres
-          PGUSER: postgres
       - uses: tailscale/github-action@v2
         with:
           oauth-client-id: ${{ secrets.TAILSCALE_OAUTH_CLIENT_ID }}
@@ -46,7 +41,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ./db.dump
-          key: ${{ runner.os }}-db-dump-IGNORE
+          key: ${{ runner.os }}-db-dump-2025-02-09+1
       - if: steps.check-cache.outputs.cache-hit != 'true'
         run: |
           pg_dump --format=c --clean --if-exists --disable-triggers --no-acl \
@@ -60,9 +55,11 @@ jobs:
         uses: actions/cache/save@v3
         with:
           path: ./db.dump
-          key: ${{ runner.os }}-db-dump
+          key: ${{ runner.os }}-db-dump-2025-02-09+1
       - run: |
-          pg_restore --format=c -d tendrel --disable-triggers --no-acl --no-owner --verbose ./db.dump
+          pg_restore -Fc -d tendrel  --disable-triggers --no-acl --no-owner \
+                     --clean --create --if-exists --exit-on-error           \
+                     --verbose ./db.dump
         env:
           PGHOST: localhost
           PGPASSWORD: postgres
