@@ -69,3 +69,9 @@ jobs:
           docker pull sqitch/sqitch
           curl -L https://git.io/JJKCn -o sqitch && chmod +x sqitch
           ./sqitch deploy --target ci
+      - run: bun test
+        env:
+          PGDATABASE: tendrel
+          PGHOST: localhost
+          PGPASSWORD: postgres
+          PGUSER: postgres
