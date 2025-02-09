@@ -4,8 +4,6 @@ import { encodeGlobalId } from "@/schema/system";
 import { execute, testGlobalId } from "@/test/prelude";
 import { TestSetStatusDocument } from "./setStatus.test.generated";
 
-process.env.X_TENDREL_USER = "user_2iADtxE5UonU4KO5lphsG59bkR9";
-
 describe.skip("setStatus", () => {
   test("workinstance", async () => {
     const result = await execute(schema, TestSetStatusDocument, {

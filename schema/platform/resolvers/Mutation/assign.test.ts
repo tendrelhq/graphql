@@ -4,8 +4,6 @@ import { execute, testGlobalId } from "@/test/prelude";
 import { TestAssignDocument } from "./assign.test.generated";
 import { TestUnassignDocument } from "./unassign.test.generated";
 
-process.env.X_TENDREL_USER = "user_2iADtxE5UonU4KO5lphsG59bkR9";
-
 const CHECKLIST =
   "d29ya2luc3RhbmNlOndvcmstaW5zdGFuY2VfMTFiZGIyNDEtODU0Ny00NjRhLWI5NGItMjhlYjgwNGY0Mjgy";
 const RUGG =

@@ -77,3 +77,4 @@ jobs:
           PGHOST: localhost
           PGPASSWORD: postgres
           PGUSER: postgres
+          X_TENDREL_USER: user_2jJ7Xl0LFewQGKKNYwfFWAM0Lmc

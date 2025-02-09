@@ -39,6 +39,7 @@ describe("[console] languages", () => {
         select systaguuid as id
         from public.systag
         where systagparentid = 2 and systagtype = 'es'
+
     `;
 
     const result = await execute(schema, AddLanguageTestDocument, {
@@ -73,7 +74,6 @@ describe("[console] languages", () => {
   });
 
   beforeAll(async () => {
-    process.env.X_TENDREL_USER = "user_2iADtxE5UonU4KO5lphsG59bkR9";
     const logs = await sql<{ op: string; id: string }[]>`
       select *
       from
@@ -106,7 +106,6 @@ describe("[console] languages", () => {
   });
 
   afterAll(async () => {
-    process.env.X_TENDREL_USER = undefined;
     const { id } = decodeGlobalId(ACCOUNT);
     process.stdout.write("Cleaning up... ");
     const [row] = await sql<[{ ok: string }]>`

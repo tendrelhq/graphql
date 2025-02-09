@@ -4,8 +4,6 @@ import { encodeGlobalId } from "@/schema/system";
 import { execute } from "@/test/prelude";
 import { TestAttachDocument } from "./attach.test.generated";
 
-process.env.X_TENDREL_USER = "user_2iADtxE5UonU4KO5lphsG59bkR9";
-
 const ENTITY =
   "d29ya2luc3RhbmNlOndvcmstaW5zdGFuY2VfOWNkYmE2ZDQtMDA1Yi00M2Y3LWI4NDMtMzA5ZDI4MjQ0YWMw";
 const S3URI =

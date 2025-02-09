@@ -559,8 +559,6 @@ describe.skipIf(!!process.env.CI)("runtime demo", () => {
   });
 
   beforeAll(async () => {
-    process.env.X_TENDREL_USER = "user_2iADtxE5UonU4KO5lphsG59bkR9";
-
     const logs = await sql<{ op: string; id: string }[]>`
       select *
       from
@@ -623,8 +621,6 @@ describe.skipIf(!!process.env.CI)("runtime demo", () => {
   });
 
   afterAll(async () => {
-    process.env.X_TENDREL_USER = undefined;
-
     const rows = await sql`
       update public.workinstance
       set workinstancestatusid = 710

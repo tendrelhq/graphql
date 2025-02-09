@@ -3,8 +3,6 @@ import { schema } from "@/schema/final";
 import { execute } from "@/test/prelude";
 import { TestAssignableDocument } from "./assignable.test.generated";
 
-process.env.X_TENDREL_USER = "user_2iADtxE5UonU4KO5lphsG59bkR9";
-
 const CHECKLIST =
   "d29ya2luc3RhbmNlOndvcmstaW5zdGFuY2VfODkzMGFkMTItNDcxZi00MDZhLWE0YjYtMGYwZjI3ZTgwMzk2";
 const RUGG =
