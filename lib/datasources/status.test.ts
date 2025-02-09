@@ -5,7 +5,7 @@ import { makeStatusLoader } from "./status";
 // biome-ignore lint/suspicious/noExplicitAny:
 const makeLoader = () => makeStatusLoader({} as any);
 
-describe.skipIf(!!process.env.CI)("status loader", () => {
+describe.skip("status loader", () => {
   test("open", async () => {
     const data = await makeLoader().load(
       "d29ya2luc3RhbmNlOndvcmstaW5zdGFuY2VfODkzMGFkMTItNDcxZi00MDZhLWE0YjYtMGYwZjI3ZTgwMzk2",

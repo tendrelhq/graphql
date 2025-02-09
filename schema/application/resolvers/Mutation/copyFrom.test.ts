@@ -4,7 +4,7 @@ import { encodeGlobalId } from "@/schema/system";
 import { execute } from "@/test/prelude";
 import { TestCopyFromDocument } from "./copyFrom.test.generated";
 
-describe.skipIf(!!process.env.CI)("copyFrom", () => {
+describe.skip("copyFrom", () => {
   test("when entity is a template", async () => {
     const result = await execute(schema, TestCopyFromDocument, {
       entity: encodeGlobalId({

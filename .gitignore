@@ -6,6 +6,9 @@
 /.direnv/
 /.envrc
 
+### db ###
+*.dump
+
 ### dotenv ###
 /.env*.local
 

@@ -1,0 +1,21 @@
+The recent console breakage was pretty embarassing. It is time to get the full
+test suite up and running using ephemeral customers. The following list is the
+remainder:
+
+lib/datasources/activatable.test.ts
+lib/datasources/attachment.test.ts
+lib/datasources/name.test.ts
+lib/datasources/requirement.test.ts
+lib/datasources/status.test.ts
+schema/application/resolvers/Checklist.test.ts
+schema/application/resolvers/ChecklistAggregate.test.ts
+schema/application/resolvers/ChecklistResult.test.ts
+schema/application/resolvers/Mutation/copyFrom.test.ts
+schema/application/resolvers/Mutation/setStatus.test.ts
+schema/application/resolvers/Mutation/setValue.test.ts
+schema/application/resolvers/Query/checklists.test.ts
+schema/legacy/resolvers/Mutation/createWorker.test.ts
+schema/legacy/resolvers/Mutation/updateWorker.test.ts
+schema/platform/resolvers/Mutation/assign.test.ts
+schema/platform/resolvers/Mutation/attach.test.ts
+schema/platform/resolvers/Query/assignable.test.ts

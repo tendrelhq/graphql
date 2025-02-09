@@ -3,7 +3,7 @@ import { schema } from "@/schema/final";
 import { execute } from "@/test/prelude";
 import { TestLanguagesQueryDocument } from "./languages.test.generated";
 
-describe.skipIf(!!process.env.CI)("languages", () => {
+describe("languages", () => {
   test("works", async () => {
     const result = await execute(schema, TestLanguagesQueryDocument);
     expect(result).toMatchSnapshot();

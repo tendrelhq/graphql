@@ -13,7 +13,7 @@ exports[`runtime demo entrypoint query 1`] = `
             "__typename": "Name",
             "value": "Mixing Line",
           },
-          "timeZone": "GMT",
+          "timeZone": "UTC",
           "tracking": {
             "edges": [
               {
@@ -133,7 +133,7 @@ exports[`runtime demo entrypoint query 1`] = `
             "__typename": "Name",
             "value": "Fill Line",
           },
-          "timeZone": "GMT",
+          "timeZone": "UTC",
           "tracking": {
             "edges": [
               {
@@ -253,7 +253,7 @@ exports[`runtime demo entrypoint query 1`] = `
             "__typename": "Name",
             "value": "Assembly Line",
           },
-          "timeZone": "GMT",
+          "timeZone": "UTC",
           "tracking": {
             "edges": [
               {
@@ -373,7 +373,7 @@ exports[`runtime demo entrypoint query 1`] = `
             "__typename": "Name",
             "value": "Cartoning Line",
           },
-          "timeZone": "GMT",
+          "timeZone": "UTC",
           "tracking": {
             "edges": [
               {
@@ -493,7 +493,7 @@ exports[`runtime demo entrypoint query 1`] = `
             "__typename": "Name",
             "value": "Packaging Line",
           },
-          "timeZone": "GMT",
+          "timeZone": "UTC",
           "tracking": {
             "edges": [
               {
@@ -648,7 +648,7 @@ exports[`runtime demo start run 1`] = `
               {
                 "node": {
                   "assignedTo": {
-                    "displayName": "Will Ruggiano",
+                    "displayName": "Jerry Garcia",
                   },
                 },
               },
@@ -734,7 +734,7 @@ exports[`runtime demo start run 1`] = `
           "state": {
             "__typename": "InProgress",
             "inProgressBy": {
-              "displayName": "Will Ruggiano",
+              "displayName": "Jerry Garcia",
             },
           },
         },
@@ -867,7 +867,7 @@ exports[`runtime demo stale: start run (should fail) 1`] = `
               {
                 "node": {
                   "assignedTo": {
-                    "displayName": "Will Ruggiano",
+                    "displayName": "Jerry Garcia",
                   },
                 },
               },
@@ -953,7 +953,7 @@ exports[`runtime demo stale: start run (should fail) 1`] = `
           "state": {
             "__typename": "InProgress",
             "inProgressBy": {
-              "displayName": "Will Ruggiano",
+              "displayName": "Jerry Garcia",
             },
           },
         },
@@ -1081,7 +1081,7 @@ exports[`runtime demo production -> idle time 1`] = `
               {
                 "node": {
                   "assignedTo": {
-                    "displayName": "Will Ruggiano",
+                    "displayName": "Jerry Garcia",
                   },
                 },
               },
@@ -1141,7 +1141,7 @@ exports[`runtime demo production -> idle time 1`] = `
           "state": {
             "__typename": "InProgress",
             "inProgressBy": {
-              "displayName": "Will Ruggiano",
+              "displayName": "Jerry Garcia",
             },
           },
         },
@@ -1175,7 +1175,7 @@ exports[`runtime demo stale: production -> idle time (should fail) 1`] = `
               {
                 "node": {
                   "assignedTo": {
-                    "displayName": "Will Ruggiano",
+                    "displayName": "Jerry Garcia",
                   },
                 },
               },
@@ -1235,7 +1235,7 @@ exports[`runtime demo stale: production -> idle time (should fail) 1`] = `
           "state": {
             "__typename": "InProgress",
             "inProgressBy": {
-              "displayName": "Will Ruggiano",
+              "displayName": "Jerry Garcia",
             },
           },
         },
@@ -1264,7 +1264,7 @@ exports[`runtime demo end idle time 1`] = `
               {
                 "node": {
                   "assignedTo": {
-                    "displayName": "Will Ruggiano",
+                    "displayName": "Jerry Garcia",
                   },
                 },
               },
@@ -1350,7 +1350,7 @@ exports[`runtime demo end idle time 1`] = `
           "state": {
             "__typename": "InProgress",
             "inProgressBy": {
-              "displayName": "Will Ruggiano",
+              "displayName": "Jerry Garcia",
             },
           },
         },
@@ -1483,7 +1483,7 @@ exports[`runtime demo end idle time 2`] = `
               {
                 "node": {
                   "assignedTo": {
-                    "displayName": "Will Ruggiano",
+                    "displayName": "Jerry Garcia",
                   },
                 },
               },
@@ -1569,7 +1569,7 @@ exports[`runtime demo end idle time 2`] = `
           "state": {
             "__typename": "InProgress",
             "inProgressBy": {
-              "displayName": "Will Ruggiano",
+              "displayName": "Jerry Garcia",
             },
           },
         },
@@ -1697,7 +1697,7 @@ exports[`runtime demo production -> downtime 1`] = `
               {
                 "node": {
                   "assignedTo": {
-                    "displayName": "Will Ruggiano",
+                    "displayName": "Jerry Garcia",
                   },
                 },
               },
@@ -1757,7 +1757,7 @@ exports[`runtime demo production -> downtime 1`] = `
           "state": {
             "__typename": "InProgress",
             "inProgressBy": {
-              "displayName": "Will Ruggiano",
+              "displayName": "Jerry Garcia",
             },
           },
         },
@@ -1786,7 +1786,7 @@ exports[`runtime demo end downtime 1`] = `
               {
                 "node": {
                   "assignedTo": {
-                    "displayName": "Will Ruggiano",
+                    "displayName": "Jerry Garcia",
                   },
                 },
               },
@@ -1872,7 +1872,7 @@ exports[`runtime demo end downtime 1`] = `
           "state": {
             "__typename": "InProgress",
             "inProgressBy": {
-              "displayName": "Will Ruggiano",
+              "displayName": "Jerry Garcia",
             },
           },
         },

@@ -44,7 +44,7 @@ begin
   from ins_name
   inner join public.systag as s on s.systagparentid = 2 and s.systagtype = language_type
   returning customeruuid into ins_customer;
-
+  --
   if not found then
     raise exception 'failed to create customer';
   end if;
@@ -56,9 +56,13 @@ begin
   where lm.languagemasterid = c.customernamelanguagemasterid
   and c.customeruuid = ins_customer;
 
-  if not found then
-    raise exception 'invariant violated';
-  end if;
+  -- create a customerrequestedlanguage
+  perform 1
+  from i18n.add_language_to_customer(
+      customer_id := ins_customer,
+      language_code := language_type,
+      modified_by := modified_by
+  );
 
   return query select customerid as _id, customeruuid as id
                from public.customer
@@ -107,7 +111,7 @@ as $$
 declare
   default_language_type text := 'en';
   default_user_role text := 'Admin';
-  default_timezone text := current_setting('timezone');
+  default_timezone text := 'UTC';
   --
   ins_customer text;
   ins_site text;
@@ -117,10 +121,6 @@ declare
   --
   loop0_x text;
 begin
-  -- select customeruuid into ins_customer
-  -- from public.customer
-  -- where customerid = 89
-  -- ;
   select t.id into ins_customer
   from
       runtime.create_customer(
@@ -149,14 +149,48 @@ begin
     raise exception 'failed to create admin workers';
   end if;
 
+  return query
+    select *
+    from runtime.add_demo_to_customer(
+        customer_id := ins_customer,
+        language_type := default_language_type,
+        modified_by := modified_by,
+        timezone := default_timezone
+    )
+  ;
+  --
+  if not found then
+    raise exception 'failed to add runtime to customer';
+  end if;
+
+  return;
+end $$
+language plpgsql
+strict
+;
+
+create function
+    runtime.add_demo_to_customer(
+        customer_id text, language_type text, modified_by bigint, timezone text
+    )
+returns table(op text, id text)
+as $$
+declare
+  ins_site text;
+  ins_location text[];
+  --
+  ins_template text;
+  --
+  loop0_x text;
+begin
   select t.id into ins_site
   from
       util.create_location(
-          customer_id := ins_customer,
-          language_type := default_language_type,
+          customer_id := customer_id,
+          language_type := language_type,
           location_name := 'Frozen Tendy Factory',
           location_parent_id := null,
-          location_timezone := default_timezone,
+          location_timezone := timezone,
           location_typename := 'Frozen Tendy Factory',
           modified_by := modified_by
       ) as t
@@ -170,8 +204,8 @@ begin
 
   select t.id into ins_template
   from util.create_task_t(
-      customer_id := ins_customer,
-      language_type := default_language_type,
+      customer_id := customer_id,
+      language_type := language_type,
       task_name := 'Run',
       task_parent_id := ins_site,
       modified_by := modified_by
@@ -212,8 +246,8 @@ begin
     from field
     cross join
         lateral util.create_field_t(
-            customer_id := ins_customer,
-            language_type := default_language_type,
+            customer_id := customer_id,
+            language_type := language_type,
             template_id := ins_template,
             field_name := field.f_name,
             field_type := field.f_type,
@@ -257,8 +291,8 @@ begin
         ins_next as (
             select t.*
             from util.create_task_t(
-                customer_id := ins_customer,
-                language_type := default_language_type,
+                customer_id := customer_id,
+                language_type := language_type,
                 task_name := 'Idle Time',
                 task_parent_id := ins_site,
                 task_order := 1,
@@ -282,8 +316,8 @@ begin
             from field, ins_next
             cross join
                 lateral util.create_field_t(
-                    customer_id := ins_customer,
-                    language_type := default_language_type,
+                    customer_id := customer_id,
+                    language_type := language_type,
                     template_id := ins_next.id,
                     field_name := field.f_name,
                     field_type := field.f_type,
@@ -334,8 +368,8 @@ begin
         ins_next as (
             select t.*
             from util.create_task_t(
-                customer_id := ins_customer,
-                language_type := default_language_type,
+                customer_id := customer_id,
+                language_type := language_type,
                 task_name := 'Downtime',
                 task_parent_id := ins_site,
                 task_order := 0,
@@ -359,8 +393,8 @@ begin
             from field, ins_next
             cross join
                 lateral util.create_field_t(
-                    customer_id := ins_customer,
-                    language_type := default_language_type,
+                    customer_id := customer_id,
+                    language_type := language_type,
                     template_id := ins_next.id,
                     field_name := field.f_name,
                     field_type := field.f_type,
@@ -411,9 +445,9 @@ begin
   from inputs
   cross join
       lateral runtime.create_location(
-          customer_id := ins_customer,
-          language_type := default_language_type,
-          timezone := default_timezone,
+          customer_id := customer_id,
+          language_type := language_type,
+          timezone := timezone,
           location_name := inputs.location_name,
           location_parent_id := ins_site,
           location_typename := inputs.location_typename,

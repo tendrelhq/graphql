@@ -14,6 +14,12 @@ select pg_catalog.has_function_privilege('runtime.create_location'::regproc, 'ex
 select pg_catalog.has_function_privilege('runtime.create_demo'::regproc, 'execute')
 ;
 
+select
+    pg_catalog.has_function_privilege(
+        'runtime.add_demo_to_customer'::regproc, 'execute'
+    )
+;
+
 select pg_catalog.has_function_privilege('runtime.destroy_demo'::regproc, 'execute')
 ;
 

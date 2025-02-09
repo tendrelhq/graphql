@@ -6,7 +6,7 @@ import { execute } from "@/test/prelude";
 import { SetupTestUpdateWorkerDocument } from "./updateWorker.setup.test.generated";
 import { TestUpdateWorkerDocument } from "./updateWorker.test.generated";
 
-describe.skipIf(!!process.env.CI)("updateWorker", () => {
+describe.skip("updateWorker", () => {
   test("updates worker without conflict", async () => {
     const { data } = await execute(schema, SetupTestUpdateWorkerDocument, {
       input: {

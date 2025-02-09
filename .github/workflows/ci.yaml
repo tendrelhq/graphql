@@ -33,22 +33,6 @@ jobs:
       # - sqlfmt: sql
       - run: nix flake check --impure .
 
-  cycle:
-    name: dev cycle (sans nix)
-    runs-on: ubuntu-latest
-    steps:
-      - uses: oven-sh/setup-bun@v2
-      - uses: actions/setup-node@v4
-        with:
-          node-version: latest
-      - uses: actions/checkout@v4
-      - run: bun install --frozen-lockfile
-      - run: bun compile
-      - run: bun test
-        env:
-          CI: true
-          DATABASE_URL: postgres://localhost:5432/postgres # fake, for now
-
   package:
     name: packaging
     runs-on: ubuntu-latest

@@ -5,7 +5,7 @@ import { makeActiveLoader } from "./activatable";
 // biome-ignore lint/suspicious/noExplicitAny:
 const makeLoader = () => makeActiveLoader({} as any);
 
-describe.skipIf(!!process.env.CI)("active loader", () => {
+describe.skip("active loader", () => {
   test("load", async () => {
     const data = await makeLoader().load(
       "d29ya3RlbXBsYXRlOjgyN2RlNDE5LTQ0YmMtNGExMi1iOWFmLWI2NDFmYjU3NjQyOQ==",

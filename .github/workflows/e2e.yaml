@@ -1,0 +1,80 @@
+name: end to end tests
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    if: ${{ !github.event.pull_request.draft }}
+    timeout-minutes: 30
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: postgres
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+    steps:
+      - uses: tailscale/github-action@v2
+        with:
+          oauth-client-id: ${{ secrets.TAILSCALE_OAUTH_CLIENT_ID }}
+          oauth-secret: ${{ secrets.TAILSCALE_OAUTH_SECRET }}
+          tags: tag:test
+      - run: |
+          sudo apt-get update
+          sudo apt-get install --yes --no-install-recommends postgresql-client
+      - id: check-cache
+        uses: actions/cache@v4
+        with:
+          path: ./db.dump
+          key: ${{ runner.os }}-db-dump-2025-02-09+1
+      - if: steps.check-cache.outputs.cache-hit != 'true'
+        run: |
+          pg_dump --format=c --clean --if-exists --disable-triggers --no-acl \
+                  --no-owner --schema=public --verbose --file ./db.dump
+        env:
+          PGDATABASE: ${{ secrets.TEST_PGDATABASE }}
+          PGHOST: ${{ secrets.TEST_PGHOST }}
+          PGPASSWORD: ${{ secrets.TEST_PGPASSWORD }}
+          PGUSER: ${{ secrets.TEST_PGUSER }}
+      - if: always() && steps.check-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v3
+        with:
+          path: ./db.dump
+          key: ${{ runner.os }}-db-dump-2025-02-09+1
+      - run: |
+          createdb tendrel
+          pg_restore --verbose --exit-on-error --no-acl --no-owner \
+                     -d tendrel --clean --if-exists db.dump
+        env:
+          PGHOST: localhost
+          PGPASSWORD: postgres
+          PGUSER: postgres
+      - uses: actions/checkout@v4
+      - run: |
+          docker pull sqitch/sqitch
+          curl -L https://git.io/JJKCn -o sqitch && chmod +x sqitch
+          ./sqitch deploy --target ci
+      - uses: oven-sh/setup-bun@v2
+      - run: bun install --frozen-lockfile
+      - run: bun test
+        env:
+          PGDATABASE: tendrel
+          PGHOST: localhost
+          PGPASSWORD: postgres
+          PGUSER: postgres
+          X_TENDREL_USER: user_2jJ7Xl0LFewQGKKNYwfFWAM0Lmc

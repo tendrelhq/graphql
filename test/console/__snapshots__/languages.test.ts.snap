@@ -1,0 +1,53 @@
+// Bun Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`[console] languages list 1`] = `
+{
+  "node": {
+    "__typename": "Organization",
+    "languages": {
+      "__typename": "EnabledLanguageConnection",
+      "edges": [
+        {
+          "__typename": "EnabledLanguageEdge",
+          "node": {
+            "__typename": "EnabledLanguage",
+            "active": {
+              "active": true,
+            },
+            "language": {
+              "code": "en",
+            },
+            "primary": true,
+          },
+        },
+      ],
+      "pageInfo": {
+        "__typename": "PageInfo",
+        "hasNextPage": false,
+        "hasPreviousPage": false,
+      },
+      "totalCount": 1,
+    },
+  },
+}
+`;
+
+exports[`[console] languages add 1`] = `
+{
+  "enableLanguage": {
+    "__typename": "EnabledLanguageEdge",
+    "node": {
+      "__typename": "EnabledLanguage",
+      "active": {
+        "__typename": "ActivationStatus",
+        "active": true,
+      },
+      "language": {
+        "__typename": "Language",
+        "code": "es",
+      },
+      "primary": false,
+    },
+  },
+}
+`;

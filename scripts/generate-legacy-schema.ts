@@ -6,7 +6,7 @@ import graphqlConfig from "../graphql.config.json";
 
 const config: CodegenConfig = {
   schema: graphqlConfig.schema,
-  documents: "./schema/**/*.test.graphql",
+  documents: ["./schema/**/*.test.graphql", "./test/**/*.test.graphql"],
   generates: {
     "./schema/__generated__": defineConfig({
       resolverGeneration: {

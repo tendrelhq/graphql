@@ -222,8 +222,9 @@ export const Organization: OrganizationResolvers = {
         hasNextPage,
         hasPreviousPage,
       },
-      totalCount: (
-        await sql<[{ count: number }]>`
+      totalCount: Number(
+        (
+          await sql<[{ count: bigint }]>`
           SELECT count(*)
           FROM public.customerrequestedlanguage
           WHERE customerrequestedlanguagecustomerid = (
@@ -231,7 +232,8 @@ export const Organization: OrganizationResolvers = {
               FROM public.customer
               WHERE customeruuid = ${parentId}
         );`
-      )[0].count,
+        )[0].count,
+      ),
     };
   },
   async locations(root, args, ctx) {
@@ -383,8 +385,9 @@ export const Organization: OrganizationResolvers = {
         hasNextPage,
         hasPreviousPage,
       },
-      totalCount: (
-        await sql<[{ count: number }]>`
+      totalCount: Number(
+        (
+          await sql<[{ count: bigint }]>`
           SELECT count(*)
           FROM public.location
           WHERE
@@ -410,7 +413,8 @@ export const Organization: OrganizationResolvers = {
                 .with(false, () => sql`locationistop = FALSE`)
                 .otherwise(() => sql`TRUE`)};
         `
-      )[0].count,
+        )[0].count,
+      ),
     };
   },
   async workers(root, args, ctx) {
@@ -604,8 +608,9 @@ export const Organization: OrganizationResolvers = {
         hasNextPage,
         hasPreviousPage,
       },
-      totalCount: (
-        await sql<[{ count: number }]>`
+      totalCount: Number(
+        (
+          await sql<[{ count: bigint }]>`
           SELECT count(*)
           FROM public.workerinstance
           INNER JOIN public.worker
@@ -634,7 +639,8 @@ export const Organization: OrganizationResolvers = {
                   : sql`TRUE`
               };
         `
-      )[0].count,
+        )[0].count,
+      ),
     };
   },
 };

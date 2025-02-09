@@ -5,9 +5,7 @@ import { decodeGlobalId, encodeGlobalId } from "@/schema/system";
 import { execute } from "@/test/prelude";
 import { TestCreateLocationDocument } from "./create.test.generated";
 
-process.env.X_TENDREL_USER = "";
-
-describe.skipIf(!!process.env.CI)("createLocation", () => {
+describe.skip("createLocation", () => {
   let ACCOUNT: string; // customer
 
   test("only required inputs; parent == customer", async () => {
@@ -58,39 +56,22 @@ describe.skipIf(!!process.env.CI)("createLocation", () => {
   });
 
   beforeAll(async () => {
-    process.env.X_TENDREL_USER = "user_2iADtxE5UonU4KO5lphsG59bkR9";
-
     const [row] = await sql`
       select id
-      from mft.create_customer(
-          customer_name := 'ASDF',
-          language_type := 'en',
-          modified_by := 895
-      );
+      from
+          mft.create_customer(
+              customer_name := 'ASDF', language_type := 'en', modified_by := 895
+          )
+      ;
+
     `;
     ACCOUNT = encodeGlobalId({
       type: "organization",
       id: row.id,
     });
-
-    // We also need to create a worker for our test :/
-    await sql`
-      select 1
-      from
-          public.worker,
-          util.create_worker(
-              customer_id := ${row.id},
-              user_id := workeruuid,
-              user_role := 'Admin',
-              modified_by := 895
-          )
-      where workeridentityid = ${process.env.X_TENDREL_USER}
-    `;
   });
 
   afterAll(async () => {
-    process.env.X_TENDREL_USER = undefined;
-
     const { id } = decodeGlobalId(ACCOUNT);
     // useful for debugging tests:
     if (process.env.SKIP_LOCATION_CRUD_CLEANUP) {

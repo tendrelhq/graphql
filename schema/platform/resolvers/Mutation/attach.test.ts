@@ -4,14 +4,12 @@ import { encodeGlobalId } from "@/schema/system";
 import { execute } from "@/test/prelude";
 import { TestAttachDocument } from "./attach.test.generated";
 
-process.env.X_TENDREL_USER = "user_2iADtxE5UonU4KO5lphsG59bkR9";
-
 const ENTITY =
   "d29ya2luc3RhbmNlOndvcmstaW5zdGFuY2VfOWNkYmE2ZDQtMDA1Yi00M2Y3LWI4NDMtMzA5ZDI4MjQ0YWMw";
 const S3URI =
   "s3://tendrel-ruggiano-test-attachment-bucket/workpictureinstance/92286ae9-f9f0-4948-b9ed-128dd11ed95d/screenshot-2024-11-05T11:46:56-08:00.png";
 
-describe.skipIf(!!process.env.CI)("attach", () => {
+describe.skip("attach", () => {
   test("to an instance", async () => {
     const result = await execute(schema, TestAttachDocument, {
       entity: ENTITY,

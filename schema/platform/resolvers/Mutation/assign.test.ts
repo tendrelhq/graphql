@@ -4,8 +4,6 @@ import { execute, testGlobalId } from "@/test/prelude";
 import { TestAssignDocument } from "./assign.test.generated";
 import { TestUnassignDocument } from "./unassign.test.generated";
 
-process.env.X_TENDREL_USER = "user_2iADtxE5UonU4KO5lphsG59bkR9";
-
 const CHECKLIST =
   "d29ya2luc3RhbmNlOndvcmstaW5zdGFuY2VfMTFiZGIyNDEtODU0Ny00NjRhLWI5NGItMjhlYjgwNGY0Mjgy";
 const RUGG =
@@ -13,7 +11,7 @@ const RUGG =
 const MIKE =
   "d29ya2VyOndvcmtlci1pbnN0YW5jZV83NWJmMjgwOC1hNDk2LTQxOGItOTg1Zi03OTIzZmJjMjVkMzE=";
 
-describe.skipIf(!!process.env.CI)("assign, reassign, unassign", () => {
+describe.skip("assign, reassign, unassign", () => {
   test("assign", async () => {
     const result = await execute(schema, TestAssignDocument, {
       entity: CHECKLIST,

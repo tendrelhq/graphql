@@ -559,15 +559,13 @@ describe.skipIf(!!process.env.CI)("runtime demo", () => {
   });
 
   beforeAll(async () => {
-    process.env.X_TENDREL_USER = "user_2iADtxE5UonU4KO5lphsG59bkR9";
-
     const logs = await sql<{ op: string; id: string }[]>`
       select *
       from
           runtime.create_demo(
               customer_name := 'Frozen Tendy Factory',
               admins := array[
-                  'worker_d3ebf472-606c-4d26-9a19-d99f187e9c92',
+                  'worker_69d4c075-39d0-4437-a9cc-7b912c7ba049',
                   'worker_a5d1d16f-4264-45e7-97c6-1ef534b8875f'
               ],
               modified_by := 895
@@ -623,8 +621,6 @@ describe.skipIf(!!process.env.CI)("runtime demo", () => {
   });
 
   afterAll(async () => {
-    process.env.X_TENDREL_USER = undefined;
-
     const rows = await sql`
       update public.workinstance
       set workinstancestatusid = 710

@@ -7,7 +7,7 @@ const makeLoader = () => makeAttachmentLoader({} as any);
 
 process.env.ATTACHMENT_BUCKET = "tendrel-ruggiano-test-attachment-bucket";
 
-describe.skipIf(!!process.env.CI)("attachment loader", () => {
+describe.skip("attachment loader", () => {
   test("ok", async () => {
     const data = await makeLoader().byId.load(
       encodeGlobalId({
