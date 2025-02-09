@@ -33,12 +33,31 @@ exports[`[console] workers list 1`] = `
             "active": {
               "active": true,
             },
-            "displayName": "Jerry Garcia",
-            "firstName": "Jerry",
+            "displayName": "Mike Heavner",
+            "firstName": "Mike",
             "language": {
               "code": "en",
             },
-            "lastName": "Garcia",
+            "lastName": "Heavner",
+            "role": {
+              "type": "Admin",
+            },
+            "scanCode": null,
+          },
+        },
+        {
+          "__typename": "WorkerEdge",
+          "node": {
+            "__typename": "Worker",
+            "active": {
+              "active": true,
+            },
+            "displayName": "Mike Heavner",
+            "firstName": "Mike",
+            "language": {
+              "code": "en",
+            },
+            "lastName": "Heavner",
             "role": {
               "type": "Admin",
             },
@@ -71,12 +90,12 @@ exports[`[console] workers list 1`] = `
             "active": {
               "active": true,
             },
-            "displayName": "Mike Heavner",
-            "firstName": "Mike",
+            "displayName": "Will Ruggiano",
+            "firstName": "Will",
             "language": {
               "code": "en",
             },
-            "lastName": "Heavner",
+            "lastName": "Ruggiano",
             "role": {
               "type": "Admin",
             },
@@ -197,51 +216,13 @@ exports[`[console] workers list 1`] = `
             "scanCode": null,
           },
         },
-        {
-          "__typename": "WorkerEdge",
-          "node": {
-            "__typename": "Worker",
-            "active": {
-              "active": true,
-            },
-            "displayName": "Will Twait",
-            "firstName": "Will",
-            "language": {
-              "code": "en",
-            },
-            "lastName": "Twait",
-            "role": {
-              "type": "Admin",
-            },
-            "scanCode": null,
-          },
-        },
-        {
-          "__typename": "WorkerEdge",
-          "node": {
-            "__typename": "Worker",
-            "active": {
-              "active": true,
-            },
-            "displayName": "Will Twait",
-            "firstName": "Will",
-            "language": {
-              "code": "en",
-            },
-            "lastName": "Twait",
-            "role": {
-              "type": "Admin",
-            },
-            "scanCode": null,
-          },
-        },
       ],
       "pageInfo": {
         "__typename": "PageInfo",
         "hasNextPage": false,
         "hasPreviousPage": false,
       },
-      "totalCount": 12,
+      "totalCount": 11,
     },
   },
 }

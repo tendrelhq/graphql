@@ -111,7 +111,7 @@ as $$
 declare
   default_language_type text := 'en';
   default_user_role text := 'Admin';
-  default_timezone text := current_setting('timezone');
+  default_timezone text := 'UTC';
   --
   ins_customer text;
   ins_site text;
