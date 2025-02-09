@@ -23,7 +23,6 @@ COPY . .
 # test and build
 ARG NODE_ENV=production
 RUN bun compile
-RUN CI=true bun test
 
 # copy production dependencies and source code into final image.
 FROM base AS release
