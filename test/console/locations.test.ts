@@ -11,7 +11,7 @@ import {
 describe("[console] locations", () => {
   let ACCOUNT: string; // customer
 
-  test("list locations", async () => {
+  test("list", async () => {
     const result = await execute(schema, ListLocationsTestDocument, {
       account: ACCOUNT,
     });
@@ -19,7 +19,7 @@ describe("[console] locations", () => {
     expect(result.data).toMatchSnapshot();
   });
 
-  test("pagination", async () => {
+  test("paginate", async () => {
     let i = 0;
     for await (const page of paginateQuery({
       async execute(cursor) {
@@ -50,6 +50,7 @@ describe("[console] locations", () => {
         isSite: true,
       },
     });
+    expect(result.errors).toBeFalsy();
     expect(result.data?.node.__typename).toBe("Organization");
     if (result.data?.node.__typename === "Organization") {
       expect(result.data.node.locations.totalCount).toBe(1);

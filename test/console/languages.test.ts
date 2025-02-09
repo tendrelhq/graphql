@@ -4,16 +4,46 @@ import { schema } from "@/schema/final";
 import { decodeGlobalId, encodeGlobalId } from "@/schema/system";
 import { execute, paginateQuery } from "@/test/prelude";
 import {
-  ListWorkersTestDocument,
-  PaginateWorkersTestDocument,
-} from "./workers.test.generated";
+  AddLanguageTestDocument,
+  ListLanguagesTestDocument,
+  PaginateLanguagesTestDocument,
+} from "./languages.test.generated";
 
-describe("[console] workers", () => {
+describe("[console] languages", () => {
   let ACCOUNT: string; // customer
 
   test("list", async () => {
-    const result = await execute(schema, ListWorkersTestDocument, {
+    const result = await execute(schema, ListLanguagesTestDocument, {
       account: ACCOUNT,
+    });
+    expect(result.errors).toBeFalsy();
+    expect(result.data).toMatchSnapshot();
+  });
+
+  test("search", async () => {
+    const result = await execute(schema, ListLanguagesTestDocument, {
+      account: ACCOUNT,
+      search: {
+        primary: true,
+      },
+    });
+    expect(result.errors).toBeFalsy();
+    expect(result.data?.node.__typename).toBe("Organization");
+    if (result.data?.node.__typename === "Organization") {
+      expect(result.data.node.languages.totalCount).toBe(1);
+    }
+  });
+
+  test("add", async () => {
+    const [{ id: languageId }] = await sql`
+        select systaguuid as id
+        from public.systag
+        where systagparentid = 2 and systagtype = 'es'
+    `;
+
+    const result = await execute(schema, AddLanguageTestDocument, {
+      account: ACCOUNT,
+      languageId: languageId,
     });
     expect(result.errors).toBeFalsy();
     expect(result.data).toMatchSnapshot();
@@ -23,9 +53,9 @@ describe("[console] workers", () => {
     let i = 0;
     for await (const page of paginateQuery({
       async execute(cursor) {
-        return await execute(schema, PaginateWorkersTestDocument, {
+        return await execute(schema, PaginateLanguagesTestDocument, {
           account: ACCOUNT,
-          first: 5,
+          first: 1,
           after: cursor,
         });
       },
@@ -33,33 +63,17 @@ describe("[console] workers", () => {
         if (result.data?.node.__typename !== "Organization") {
           throw "invariant violated";
         }
-        return result.data.node?.workers.pageInfo;
+        return result.data.node?.languages.pageInfo;
       },
     })) {
       expect(page.errors).toBeFalsy();
       i++;
     }
-    expect(i).toBe(3); // 12 total, 5 per page
-  });
-
-  test("search", async () => {
-    const result = await execute(schema, ListWorkersTestDocument, {
-      account: ACCOUNT,
-      search: {
-        active: true,
-        user: {
-          displayName: "will",
-        },
-      },
-    });
-    expect(result.errors).toBeFalsy();
-    expect(result.data?.node.__typename).toBe("Organization");
-    if (result.data?.node.__typename === "Organization") {
-      expect(result.data.node.workers.totalCount).toBe(8);
-    }
+    expect(i).toBe(2); // 2 total, 1 per page
   });
 
   beforeAll(async () => {
+    process.env.X_TENDREL_USER = "user_2iADtxE5UonU4KO5lphsG59bkR9";
     const logs = await sql<{ op: string; id: string }[]>`
       select *
       from
@@ -92,6 +106,7 @@ describe("[console] workers", () => {
   });
 
   afterAll(async () => {
+    process.env.X_TENDREL_USER = undefined;
     const { id } = decodeGlobalId(ACCOUNT);
     process.stdout.write("Cleaning up... ");
     const [row] = await sql<[{ ok: string }]>`

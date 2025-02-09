@@ -1,6 +1,6 @@
 // Bun Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`[console] locations list locations 1`] = `
+exports[`[console] locations list 1`] = `
 {
   "node": {
     "__typename": "Organization",

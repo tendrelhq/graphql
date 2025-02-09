@@ -56,9 +56,13 @@ begin
   where lm.languagemasterid = c.customernamelanguagemasterid
   and c.customeruuid = ins_customer;
 
-  if not found then
-    raise exception 'invariant violated';
-  end if;
+  -- create a customerrequestedlanguage
+  perform 1
+  from i18n.add_language_to_customer(
+      customer_id := ins_customer,
+      language_code := language_type,
+      modified_by := modified_by
+  );
 
   return query select customerid as _id, customeruuid as id
                from public.customer

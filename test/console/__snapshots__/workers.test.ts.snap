@@ -1,6 +1,6 @@
 // Bun Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`[console] workers list workers 1`] = `
+exports[`[console] workers list 1`] = `
 {
   "node": {
     "__typename": "Organization",
