@@ -59,7 +59,7 @@ jobs:
       - run: |
           createdb tendrel
           pg_restore --verbose --exit-on-error --no-acl --no-owner \
-                     -d tendrel db.dump
+                     -d tendrel --clean --if-exists db.dump
         env:
           PGHOST: localhost
           PGPASSWORD: postgres
