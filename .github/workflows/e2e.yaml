@@ -36,7 +36,7 @@ jobs:
           PGUSER: postgres
       - uses: tailscale/github-action@v2
         with:
-          oauth-client-id: kGeLVZsNgA21CNTRL
+          oauth-client-id: ${{ secrets.TAILSCALE_OAUTH_CLIENT_ID }}
           oauth-secret: ${{ secrets.TAILSCALE_OAUTH_SECRET }}
           tags: tag:test
       - run: |
