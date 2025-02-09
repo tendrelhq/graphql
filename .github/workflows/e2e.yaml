@@ -57,9 +57,10 @@ jobs:
           path: ./db.dump
           key: ${{ runner.os }}-db-dump-2025-02-09+1
       - run: |
-          pg_restore -Fc -d tendrel  --disable-triggers --no-acl --no-owner \
-                     --clean --create --if-exists --exit-on-error           \
-                     --verbose ./db.dump
+          pg_restore --verbose -d tendrel --create --exit-on-error \
+                     --clean --if-exists --single-transaction      \
+                     --no-acl --no-owner                           \
+                     --format=c ./db.dump
         env:
           PGHOST: localhost
           PGPASSWORD: postgres
