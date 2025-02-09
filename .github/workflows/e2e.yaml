@@ -69,6 +69,8 @@ jobs:
           docker pull sqitch/sqitch
           curl -L https://git.io/JJKCn -o sqitch && chmod +x sqitch
           ./sqitch deploy --target ci
+      - uses: oven-sh/setup-bun@v2
+      - run: bun install --frozen-lockfile
       - run: bun test
         env:
           PGDATABASE: tendrel
