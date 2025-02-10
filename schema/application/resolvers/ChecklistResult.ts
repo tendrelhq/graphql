@@ -144,12 +144,12 @@ export const ChecklistResult: ChecklistResultResolvers = {
 
     switch (type) {
       case "workresult": {
-        const [row] = await sql<[{ order: number }]>`
+        const [row] = await sql<[{ order: bigint }]>`
             SELECT workresultorder AS order
             FROM public.workresult
             WHERE id = ${id}
         `;
-        return row.order;
+        return Number(row.order);
       }
       case "workresultinstance": {
         if (!suffix?.length) {
@@ -158,12 +158,12 @@ export const ChecklistResult: ChecklistResultResolvers = {
           );
           throw "invariant violated";
         }
-        const [row] = await sql<[{ order: number }]>`
+        const [row] = await sql<[{ order: bigint }]>`
             SELECT workresultorder AS order
             FROM public.workresult
             WHERE id = ${suffix[0]}
         `;
-        return row.order;
+        return Number(row.order);
       }
     }
 
