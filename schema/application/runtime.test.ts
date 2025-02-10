@@ -347,8 +347,9 @@ describe.skipIf(!!process.env.CI)("runtime demo", () => {
   test("end run", async () => {
     const t = await mostRecentlyInProgress(FSM);
     expect(t.id).toBe(FSM.id);
+    const h = (await t.hash()) as string;
 
-    const result = await execute(
+    const result0 = await execute(
       schema,
       TestRuntimeTransitionMutationDocument,
       {
@@ -356,17 +357,41 @@ describe.skipIf(!!process.env.CI)("runtime demo", () => {
         opts: {
           fsm: {
             id: t.id,
-            hash: (await t.hash()) as string,
+            hash: h,
           },
           task: {
             id: t.id,
-            hash: (await t.hash()) as string,
+            hash: h,
           },
         },
       },
     );
-    expect(result.errors).toBeFalsy();
-    expect(result.data).toMatchSnapshot();
+    expect(result0.errors).toBeFalsy();
+    expect(result0.data).toMatchSnapshot();
+
+    // Concurrency time! This time let's try to end and already closed task.
+    // FIXME: currently this will return a no_associated_fsm diagnostic which
+    // is sort of a lie. Really what we want here is a hash_mismatch diagnostic
+    // because that is the real root cause here.
+    const result1 = await execute(
+      schema,
+      TestRuntimeTransitionMutationDocument,
+      {
+        includeChain: true,
+        opts: {
+          fsm: {
+            id: t.id,
+            hash: h,
+          },
+          task: {
+            id: t.id,
+            hash: h,
+          },
+        },
+      },
+    );
+    expect(result1.errors).toBeFalsy();
+    expect(result1.data).toMatchSnapshot();
   });
 
   test("apply field edits retroactively", async () => {
@@ -533,7 +558,7 @@ describe.skipIf(!!process.env.CI)("runtime demo", () => {
     expect(r2.data?.trackables?.totalCount).toBe(1);
   });
 
-  test("no_associated_fsm", async () => {
+  test("garbage", async () => {
     const result = await execute(
       schema,
       TestRuntimeTransitionMutationDocument,

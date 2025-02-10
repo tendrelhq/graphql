@@ -2168,7 +2168,7 @@ exports[`runtime demo apply field edits retroactively 1`] = `
 }
 `;
 
-exports[`runtime demo no_associated_fsm 1`] = `
+exports[`runtime demo garbage 1`] = `
 {
   "advance": {
     "__typename": "AdvanceTaskStateMachineResult",
@@ -2181,6 +2181,94 @@ exports[`runtime demo no_associated_fsm 1`] = `
     "instantiations": null,
     "root": {
       "__typename": "Task",
+      "fsm": null,
+    },
+  },
+}
+`;
+
+exports[`runtime demo end run 2`] = `
+{
+  "advance": {
+    "__typename": "AdvanceTaskStateMachineResult",
+    "diagnostics": [
+      {
+        "__typename": "Diagnostic",
+        "code": "no_associated_fsm",
+      },
+    ],
+    "instantiations": null,
+    "root": {
+      "__typename": "Task",
+      "chain": {
+        "__typename": "TaskConnection",
+        "edges": [
+          {
+            "__typename": "TaskEdge",
+            "node": {
+              "__typename": "Task",
+              "displayName": {
+                "__typename": "DisplayName",
+                "name": {
+                  "__typename": "DynamicString",
+                  "value": "Run",
+                },
+              },
+              "state": {
+                "__typename": "Closed",
+              },
+            },
+          },
+          {
+            "__typename": "TaskEdge",
+            "node": {
+              "__typename": "Task",
+              "displayName": {
+                "__typename": "DisplayName",
+                "name": {
+                  "__typename": "DynamicString",
+                  "value": "Idle Time",
+                },
+              },
+              "state": {
+                "__typename": "Closed",
+              },
+            },
+          },
+          {
+            "__typename": "TaskEdge",
+            "node": {
+              "__typename": "Task",
+              "displayName": {
+                "__typename": "DisplayName",
+                "name": {
+                  "__typename": "DynamicString",
+                  "value": "Downtime",
+                },
+              },
+              "state": {
+                "__typename": "Closed",
+              },
+            },
+          },
+          {
+            "__typename": "TaskEdge",
+            "node": {
+              "__typename": "Task",
+              "displayName": {
+                "__typename": "DisplayName",
+                "name": {
+                  "__typename": "DynamicString",
+                  "value": "Idle Time",
+                },
+              },
+              "state": {
+                "__typename": "Closed",
+              },
+            },
+          },
+        ],
+      },
       "fsm": null,
     },
   },
