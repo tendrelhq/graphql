@@ -40,12 +40,12 @@ jobs:
       - id: check-cache
         uses: actions/cache@v4
         with:
-          path: ./db.dump
+          path: db.dump
           key: ${{ runner.os }}-db-dump-2025-02-09+1
       - if: steps.check-cache.outputs.cache-hit != 'true'
         run: |
           pg_dump --format=c --clean --if-exists --disable-triggers --no-acl \
-                  --no-owner --schema=public --verbose --file ./db.dump
+                  --no-owner --schema=public --verbose --file db.dump
         env:
           PGDATABASE: ${{ secrets.TEST_PGDATABASE }}
           PGHOST: ${{ secrets.TEST_PGHOST }}
