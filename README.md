@@ -7,18 +7,17 @@
 If you have [nix] installed (which I highly recommend you do) you can use the
 dev environment via `devenv up`. This will start:
 
-1. the graphql server
-2. postgresql
-3. a [ruru] graphiql instance
-4. a [pgweb] instance
+1. the graphql server at `localhost:4000`
+2. postgresql at `localhost:5432`
+3. a [ruru] graphiql instance at `localhost:1337`
 
 The first time you do this will require `syncdb`ing; I will fix this soon.
 
-Lastly, there are a bunch of sql scripts in [./sql]. I plan on manually keeping
+Lastly, there are a bunch of sql scripts in [./sql](./sql). I plan on manually keeping
 these things up to date in the production database. In development I've been
 using [sqitch] as a helpful little migration tool. Once installed, basically the
 only command you need is `sqitch rebase -y`. This will revert (if applicable)
-and deploy the scripts in [./sql] as per [./sql/sqitch.plan].
+and deploy the scripts in [./sql](./sql) as per [./sql/sqitch.plan](./sql/sqitch.plan).
 
 ### formatting
 

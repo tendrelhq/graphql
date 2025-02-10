@@ -64,11 +64,11 @@ jobs:
           PGHOST: localhost
           PGPASSWORD: postgres
           PGUSER: postgres
+      - uses: actions/checkout@v4
       - run: |
           docker pull sqitch/sqitch
           curl -L https://git.io/JJKCn -o sqitch && chmod +x sqitch
           ./sqitch deploy --target ci
-      - uses: actions/checkout@v4
       - uses: oven-sh/setup-bun@v2
       - run: bun install --frozen-lockfile
       - run: bun test
