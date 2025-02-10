@@ -114,12 +114,6 @@ declare
   default_timezone text := 'UTC';
   --
   ins_customer text;
-  ins_site text;
-  ins_location text[];
-  --
-  ins_template text;
-  --
-  loop0_x text;
 begin
   select t.id into ins_customer
   from
@@ -177,7 +171,7 @@ returns table(op text, id text)
 as $$
 declare
   ins_site text;
-  ins_location text[];
+  ins_locations text[];
   --
   ins_template text;
   --
@@ -201,6 +195,35 @@ begin
   end if;
   --
   return query select '+site', ins_site;
+
+  with
+      inputs(location_name, location_typename) as (
+          values
+              ('Mixing Line'::text, 'Runtime Location'::text),
+              ('Fill Line', 'Runtime Location'),
+              ('Assembly Line', 'Runtime Location'),
+              ('Cartoning Line', 'Runtime Location'),
+              ('Packaging Line', 'Runtime Location')
+      )
+  select array_agg(t.id) into ins_locations
+  from inputs
+  cross join
+      lateral runtime.create_location(
+          customer_id := customer_id,
+          language_type := language_type,
+          timezone := timezone,
+          location_name := inputs.location_name,
+          location_parent_id := ins_site,
+          location_typename := inputs.location_typename,
+          modified_by := modified_by
+      ) as t
+  ;
+  --
+  if not found then
+    raise exception 'failed to create locations';
+  end if;
+  --
+  return query select ' +location', t.id from unnest(ins_locations) as t (id);
 
   select t.id into ins_template
   from util.create_task_t(
@@ -278,6 +301,46 @@ begin
     raise exception 'failed to create canonical on-demand in-progress irule';
   end if;
 
+  -- Create the constraint for the root template at each child location.
+  <<loop0>>
+  foreach loop0_x in array ins_locations loop
+    return query
+      with
+          ins_constraint as (
+              select *
+              from util.create_template_constraint_on_location(
+                  template_id := ins_template,
+                  location_id := loop0_x,
+                  modified_by := modified_by
+              ) as t
+          ),
+
+          ins_instance as (
+              select *
+              from util.instantiate(
+                  template_id := ins_template,
+                  location_id := loop0_x,
+                  target_state := 'Open',
+                  target_type := 'On Demand',
+                  modified_by := modified_by
+              )
+          )
+
+      select '  +constraint', t.id
+      from ins_constraint as t
+      union all
+      (
+        select '   +instance', t.instance
+        from ins_instance as t
+        group by t.instance
+      )
+    ;
+  end loop loop0;
+  --
+  if not found then
+    raise exception 'failed to create location constraint/initial instance';
+  end if;
+
   -- Create the Idle Time template, which is a transition from Runtime.
   return query
     with
@@ -339,9 +402,21 @@ begin
                     type_tag := 'On Demand',
                     modified_by := modified_by
                 ) as t
+        ),
+
+        ins_constraint as (
+            select t.*
+            from
+                unnest(ins_locations) as ins_location(id),
+                ins_next,
+                util.create_template_constraint_on_location(
+                    template_id := ins_next.id,
+                    location_id := ins_location.id,
+                    modified_by := modified_by
+                ) as t
         )
 
-        select '  +task', ins_nt_rule.next
+        select '  +next', ins_nt_rule.next
         from ins_nt_rule
         union all
         select '   +type', ins_type.id
@@ -349,6 +424,9 @@ begin
         union all
         select '   +field', ins_field.id
         from ins_field
+        union all
+        select '   +constraint', ins_constraint.id
+        from ins_constraint
   ;
   --
   if not found then
@@ -416,9 +494,21 @@ begin
                     type_tag := 'On Demand',
                     modified_by := modified_by
                 ) as t
+        ),
+
+        ins_constraint as (
+            select t.*
+            from
+                unnest(ins_locations) as ins_location(id),
+                ins_next,
+                util.create_template_constraint_on_location(
+                    template_id := ins_next.id,
+                    location_id := ins_location.id,
+                    modified_by := modified_by
+                ) as t
         )
 
-        select '  +task', ins_nt_rule.next
+        select '  +next', ins_nt_rule.next
         from ins_nt_rule
         union all
         select '   +type', ins_type.id
@@ -426,75 +516,14 @@ begin
         union all
         select '   +field', ins_field.id
         from ins_field
+        union all
+        select '   +constraint', ins_constraint.id
+        from ins_constraint
   ;
   --
   if not found then
     raise exception 'failed to create next template (Downtime)';
   end if;
-
-  with
-      inputs(location_name, location_typename) as (
-          values
-              ('Mixing Line'::text, 'Runtime Location'::text),
-              ('Fill Line', 'Runtime Location'),
-              ('Assembly Line', 'Runtime Location'),
-              ('Cartoning Line', 'Runtime Location'),
-              ('Packaging Line', 'Runtime Location')
-      )
-  select array_agg(t.id) into ins_location
-  from inputs
-  cross join
-      lateral runtime.create_location(
-          customer_id := customer_id,
-          language_type := language_type,
-          timezone := timezone,
-          location_name := inputs.location_name,
-          location_parent_id := ins_site,
-          location_typename := inputs.location_typename,
-          modified_by := modified_by
-      ) as t
-  ;
-  --
-  if not found then
-    raise exception 'failed to create locations';
-  end if;
-
-  <<loop0>>
-  foreach loop0_x in array ins_location loop
-    return query
-      with
-          ins_constraint as (
-              select *
-              from util.create_template_constraint_on_location(
-                  template_id := ins_template,
-                  location_id := loop0_x,
-                  modified_by := modified_by
-              ) as t
-          ),
-
-          ins_instance as (
-              select *
-              from util.instantiate(
-                  template_id := ins_template,
-                  location_id := loop0_x,
-                  target_state := 'Open',
-                  target_type := 'On Demand',
-                  modified_by := modified_by
-              )
-          )
-
-      select ' +location', loop0_x
-      union all
-      select '  +constraint', t.id
-      from ins_constraint as t
-      union all
-      (
-        select '  +instance', t.instance
-        from ins_instance as t
-        group by t.instance
-      )
-    ;
-  end loop loop0;
 
   return;
 end $$
