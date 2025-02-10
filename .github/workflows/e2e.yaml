@@ -29,7 +29,6 @@ jobs:
         ports:
           - 5432:5432
     steps:
-      - uses: actions/checkout@v4
       - uses: tailscale/github-action@v2
         with:
           oauth-client-id: ${{ secrets.TAILSCALE_OAUTH_CLIENT_ID }}
@@ -39,7 +38,7 @@ jobs:
           sudo apt-get update
           sudo apt-get install --yes --no-install-recommends postgresql-client
       - id: check-cache
-        uses: actions/cache@v4
+        uses: actions/cache/restore@v4
         with:
           path: db.dump
           key: ${{ runner.os }}-db-dump-2025-02-09+1
@@ -52,6 +51,11 @@ jobs:
           PGHOST: ${{ secrets.TEST_PGHOST }}
           PGPASSWORD: ${{ secrets.TEST_PGPASSWORD }}
           PGUSER: ${{ secrets.TEST_PGUSER }}
+      - if: steps.check-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: db.dump
+          key: ${{ steps.check-cache.outputs.cache-primary-key }}
       - run: |
           createdb tendrel
           pg_restore --verbose --exit-on-error --no-acl --no-owner \
@@ -64,6 +68,7 @@ jobs:
           docker pull sqitch/sqitch
           curl -L https://git.io/JJKCn -o sqitch && chmod +x sqitch
           ./sqitch deploy --target ci
+      - uses: actions/checkout@v4
       - uses: oven-sh/setup-bun@v2
       - run: bun install --frozen-lockfile
       - run: bun test
