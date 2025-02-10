@@ -262,16 +262,12 @@ export async function copyFromWorkTemplate(
   if (options.autoAssign) {
     const result = await sql`
       update public.workresultinstance as t
-      set workresultinstancevalue = wi.workerinstanceid::text
-      from public.workerinstance as wi
+      set workresultinstancevalue = auth.current_identity(
+          parent := t.workresultinstancecustomerid,
+          identity := ${ctx.auth.userId}
+      )
       where
-          wi.workerinstancecustomerid = t.workresultinstancecustomerid
-          and wi.workerinstanceworkerid in (
-              select workerid
-              from public.worker
-              where workeridentityid = ${ctx.auth.userId}
-          )
-          and t.workresultinstanceworkinstanceid = ${row._key}
+          t.workresultinstanceworkinstanceid = ${row._key}
           and t.workresultinstanceworkresultid in (
               select workresultid
               from public.workresult

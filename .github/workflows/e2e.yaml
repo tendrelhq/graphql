@@ -51,11 +51,6 @@ jobs:
           PGHOST: ${{ secrets.TEST_PGHOST }}
           PGPASSWORD: ${{ secrets.TEST_PGPASSWORD }}
           PGUSER: ${{ secrets.TEST_PGUSER }}
-      - if: always() && steps.check-cache.outputs.cache-hit != 'true'
-        uses: actions/cache/save@v3
-        with:
-          path: ./db.dump
-          key: ${{ runner.os }}-db-dump-2025-02-09+1
       - run: |
           createdb tendrel
           pg_restore --verbose --exit-on-error --no-acl --no-owner \

@@ -581,7 +581,7 @@ describe.skipIf(!!process.env.CI)("runtime demo", () => {
     }
 
     // we get customer uuid back in the first row
-    const row1 = logs.at(0);
+    const row1 = logs.at(1 - 1);
     // but we can check the tag to be sure
     if (row1?.op?.trim() !== "+customer") {
       debugLogs();
@@ -592,32 +592,32 @@ describe.skipIf(!!process.env.CI)("runtime demo", () => {
       id: row1.id,
     });
 
-    // grab the first instance from the 26th row
-    const row25 = logs.at(25);
+    // grab the first instance from the 20th row
+    const row20 = logs.at(20 - 1);
     // but we can check the tag to be sure
-    if (row25?.op?.trim() !== "+instance") {
+    if (row20?.op?.trim() !== "+instance") {
       debugLogs();
       throw "setup failed to find 'Run' task instance";
     }
-    FSM = makeTask("workinstance", row25.id);
+    FSM = makeTask("workinstance", row20.id);
 
-    // we get 'Idle Time' in the 14th row
-    const row13 = logs.at(13);
+    // we get 'Idle Time' in the 29th row
+    const row29 = logs.at(29 - 1);
     // but we can check the tag to be sure
-    if (row13?.op?.trim() !== "+task") {
+    if (row29?.op?.trim() !== "+next") {
       debugLogs();
       throw "setup failed to find 'Idle Time' task template";
     }
-    IDLE_TIME = makeTask("worktemplate", row13.id);
+    IDLE_TIME = makeTask("worktemplate", row29.id);
 
-    // we get 'Downtime' in the 19th row
-    const row18 = logs.at(18);
+    // we get 'Downtime' in the 39th row
+    const row39 = logs.at(39 - 1);
     // but we can check the tag to be sure
-    if (row18?.op?.trim() !== "+task") {
+    if (row39?.op?.trim() !== "+next") {
       debugLogs();
       throw "setup failed to find 'Downtime' task template";
     }
-    DOWNTIME = makeTask("worktemplate", row18.id);
+    DOWNTIME = makeTask("worktemplate", row39.id);
   });
 
   afterAll(async () => {
