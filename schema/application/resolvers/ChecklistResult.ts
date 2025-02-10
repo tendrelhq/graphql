@@ -116,7 +116,7 @@ export const ChecklistResult: ChecklistResultResolvers = {
       hasPreviousPage: direction === "backward" && !!n1,
     };
 
-    const [{ count }] = await sql`
+    const [{ count }] = await sql<[{ count: bigint }]>`
       SELECT count(*)
       FROM public.workpictureinstance AS wpi
       INNER JOIN public.workinstance AS wi
@@ -133,7 +133,7 @@ export const ChecklistResult: ChecklistResultResolvers = {
     return {
       edges,
       pageInfo,
-      totalCount: count,
+      totalCount: Number(count),
     };
   },
   auditable(parent, _, ctx) {

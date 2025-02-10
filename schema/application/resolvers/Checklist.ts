@@ -185,7 +185,7 @@ export const Checklist: ChecklistResolvers = {
       hasPreviousPage: hasPrev,
     };
 
-    const [{ count }] = await sql<[{ count: number }]>`
+    const [{ count }] = await sql<[{ count: bigint }]>`
       SELECT count(*)
       FROM public.workpictureinstance
       WHERE ${join(
@@ -204,7 +204,7 @@ export const Checklist: ChecklistResolvers = {
     return {
       edges,
       pageInfo,
-      totalCount: count,
+      totalCount: Number(count),
     };
   },
   auditable(parent, _, ctx) {
