@@ -1,13 +1,17 @@
--- Deploy graphql:runtime to pg
--- requires: name
--- requires: location
--- requires: worker
--- requires: template
+-- Deploy graphql:005-runtime to pg
 begin
 ;
 
-create schema runtime
-;
+create schema runtime;
+
+do $$
+begin
+  if exists (select 1 from pg_roles where rolname = 'graphql') then
+    revoke all on schema runtime from graphql;
+    grant usage on schema runtime to graphql;
+    alter default privileges in schema runtime grant execute on routines to graphql;
+  end if;
+end $$;
 
 create function
     runtime.create_customer(customer_name text, language_type text, modified_by bigint)
@@ -20,7 +24,7 @@ begin
     select t.*
     from public.customer as c
     cross join
-        lateral util.create_name(
+        lateral public.create_name(
             customer_id := c.customeruuid,
             source_language := language_type,
             source_text := customer_name,
@@ -87,16 +91,17 @@ create function
 returns table(_id bigint, id text)
 as $$
 begin
-  return query select *
-               from util.create_location(
-                  customer_id := customer_id,
-                  language_type := language_type,
-                  location_name := location_name,
-                  location_parent_id := location_parent_id,
-                  location_timezone := timezone,
-                  location_typename := location_typename,
-                  modified_by := modified_by
-               );
+  return query
+    select *
+    from legacy0.create_location(
+        customer_id := customer_id,
+        language_type := language_type,
+        location_name := location_name,
+        location_parent_id := location_parent_id,
+        location_timezone := timezone,
+        location_typename := location_typename,
+        modified_by := modified_by
+    );
 
   return;
 end $$
@@ -128,9 +133,9 @@ begin
 
   return query
     select ' +worker', t.id
-    from public.worker as w
-    cross join
-        lateral util.create_worker(
+    from
+        public.worker as w,
+        legacy0.create_worker(
             customer_id := ins_customer,
             user_id := w.workeruuid,
             user_role := default_user_role,
@@ -179,7 +184,9 @@ declare
 begin
   select t.id into ins_site
   from
-      util.create_location(
+      -- NOTE: we use the internal function here since the runtime version does
+      -- not all creating top-level locations (i.e. no parent).
+      legacy0.create_location(
           customer_id := customer_id,
           language_type := language_type,
           location_name := 'Frozen Tendy Factory',
@@ -206,9 +213,9 @@ begin
               ('Packaging Line', 'Runtime Location')
       )
   select array_agg(t.id) into ins_locations
-  from inputs
-  cross join
-      lateral runtime.create_location(
+  from
+      inputs,
+      runtime.create_location(
           customer_id := customer_id,
           language_type := language_type,
           timezone := timezone,
@@ -226,7 +233,7 @@ begin
   return query select ' +location', t.id from unnest(ins_locations) as t (id);
 
   select t.id into ins_template
-  from util.create_task_t(
+  from legacy0.create_task_t(
       customer_id := customer_id,
       language_type := language_type,
       task_name := 'Run',
@@ -244,7 +251,7 @@ begin
     select '  +type', t.id
     from
         public.systag as s,
-        util.create_template_type(
+        legacy0.create_template_type(
             template_id := ins_template,
             systag_id := s.systaguuid,
             modified_by := modified_by
@@ -266,9 +273,9 @@ begin
             ('Comments', 'String', false, 99)
     )
     select '  +field', t.id
-    from field
-    cross join
-        lateral util.create_field_t(
+    from
+        field,
+        legacy0.create_field_t(
             customer_id := customer_id,
             language_type := language_type,
             template_id := ins_template,
@@ -289,7 +296,7 @@ begin
   -- Open task instance to be created when a task transitions to InProgress.
   return query
     select '  +irule', t.next
-    from util.create_instantiation_rule(
+    from legacy0.create_instantiation_rule(
         prev_template_id := ins_template,
         next_template_id := ins_template,
         state_condition := 'In Progress',
@@ -308,7 +315,7 @@ begin
       with
           ins_constraint as (
               select *
-              from util.create_template_constraint_on_location(
+              from legacy0.create_template_constraint_on_location(
                   template_id := ins_template,
                   location_id := loop0_x,
                   modified_by := modified_by
@@ -317,7 +324,7 @@ begin
 
           ins_instance as (
               select *
-              from util.instantiate(
+              from engine0.instantiate(
                   template_id := ins_template,
                   location_id := loop0_x,
                   target_state := 'Open',
@@ -353,7 +360,7 @@ begin
 
         ins_next as (
             select t.*
-            from util.create_task_t(
+            from legacy0.create_task_t(
                 customer_id := customer_id,
                 language_type := language_type,
                 task_name := 'Idle Time',
@@ -366,7 +373,7 @@ begin
         ins_type as (
             select t.*
             from ins_next, public.systag as s
-            cross join lateral util.create_template_type(
+            cross join lateral legacy0.create_template_type(
                 template_id := ins_next.id,
                 systag_id := s.systaguuid,
                 modified_by := modified_by
@@ -378,7 +385,7 @@ begin
             select t.*
             from field, ins_next
             cross join
-                lateral util.create_field_t(
+                lateral legacy0.create_field_t(
                     customer_id := customer_id,
                     language_type := language_type,
                     template_id := ins_next.id,
@@ -395,7 +402,7 @@ begin
             select t.*
             from ins_next
             cross join
-                lateral util.create_instantiation_rule(
+                lateral legacy0.create_instantiation_rule(
                     prev_template_id := ins_template,
                     next_template_id := ins_next.id,
                     state_condition := 'In Progress',
@@ -409,7 +416,7 @@ begin
             from
                 unnest(ins_locations) as ins_location(id),
                 ins_next,
-                util.create_template_constraint_on_location(
+                legacy0.create_template_constraint_on_location(
                     template_id := ins_next.id,
                     location_id := ins_location.id,
                     modified_by := modified_by
@@ -445,7 +452,7 @@ begin
 
         ins_next as (
             select t.*
-            from util.create_task_t(
+            from legacy0.create_task_t(
                 customer_id := customer_id,
                 language_type := language_type,
                 task_name := 'Downtime',
@@ -458,7 +465,7 @@ begin
         ins_type as (
             select t.*
             from ins_next, public.systag as s
-            cross join lateral util.create_template_type(
+            cross join lateral legacy0.create_template_type(
                 template_id := ins_next.id,
                 systag_id := s.systaguuid,
                 modified_by := modified_by
@@ -470,7 +477,7 @@ begin
             select t.*
             from field, ins_next
             cross join
-                lateral util.create_field_t(
+                lateral legacy0.create_field_t(
                     customer_id := customer_id,
                     language_type := language_type,
                     template_id := ins_next.id,
@@ -487,7 +494,7 @@ begin
             select t.*
             from ins_next
             cross join
-                lateral util.create_instantiation_rule(
+                lateral legacy0.create_instantiation_rule(
                     prev_template_id := ins_template,
                     next_template_id := ins_next.id,
                     state_condition := 'In Progress',
@@ -501,7 +508,7 @@ begin
             from
                 unnest(ins_locations) as ins_location(id),
                 ins_next,
-                util.create_template_constraint_on_location(
+                legacy0.create_template_constraint_on_location(
                     template_id := ins_next.id,
                     location_id := ins_location.id,
                     modified_by := modified_by
@@ -565,6 +572,7 @@ end $$
 language plpgsql
 strict
 ;
+
 
 commit
 ;

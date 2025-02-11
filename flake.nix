@@ -45,9 +45,7 @@
           containers = lib.mkForce {};
           env = {
             BIOME_BINARY = lib.getExe config.packages.biome;
-            # TODO: switch to dev, but I need to get a self contained test
-            # environment up and running first :/
-            PGDATABASE = "postgres";
+            PGDATABASE = "dev";
             # Janky af I know, but an easy way to silently fail successfully
             TREEFMT = "treefmt";
           };
@@ -92,7 +90,8 @@
               }
             ];
             initialScript = ''
-              CREATE EXTENSION IF NOT EXISTS ddlx SCHEMA pg_catalog;
+              create role graphql with login password 'graphql';
+              create extension ddlx schema pg_catalog;
             '';
             listen_addresses = "127.0.0.1";
             package = config.packages.postgres;

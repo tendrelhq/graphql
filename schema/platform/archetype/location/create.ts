@@ -59,13 +59,12 @@ export async function createLocation(
     .exhaustive();
 
   const result = await sql.begin(async tx => {
-    // FIXME: modified by
     const [row] = await tx<[{ id: string }]>`
       with parent as (${parentFragment})
       select t.id
       from
           parent,
-          util.create_location(
+          legacy0.create_location(
               customer_id := parent.authority,
               language_type := ${ctx.req.i18n.language},
               location_name := ${input.name},

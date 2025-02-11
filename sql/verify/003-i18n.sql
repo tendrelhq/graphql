@@ -1,4 +1,4 @@
--- Verify graphql:language on pg
+-- Verify graphql:003-i18n on pg
 begin
 ;
 

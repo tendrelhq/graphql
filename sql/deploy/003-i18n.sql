@@ -1,8 +1,17 @@
--- Deploy graphql:language to pg
+-- Deploy graphql:003-i18n to pg
 begin
 ;
 
 create schema i18n;
+
+do $$
+begin
+  if exists (select 1 from pg_roles where rolname = 'graphql') then
+    revoke all on schema i18n from graphql;
+    grant usage on schema i18n to graphql;
+    alter default privileges in schema i18n grant execute on routines to graphql;
+  end if;
+end $$;
 
 create function
     i18n.add_language_to_customer(

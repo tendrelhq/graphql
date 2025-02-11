@@ -1,49 +1,26 @@
-# Getting started
+# Stuff you'll probably want to know as a contributor
 
-## Prerequisites
+## sql
 
-1. install [bun]
+I am using [sqitch] at the moment. It's pretty nice.
+There are two target configured for use with sqitch:
 
-## Install
+1. the "dev" target, which deploys to postgres://localhost:5432/dev
+2. the "ci" target, which deploys to
+   postgres://postgres:postgres@localhost:5432/tendrel
 
-```sh
-bun install
-bun generate
-```
+Note that the latter target ("ci") is used in [github workflows](../.github/workflows/e2e.yaml).
 
-## Running the development server
+### local development
 
-There's a few ways:
+- `sqitch deploy` is as it says
+- `sqitch rebase -y` when you are making sql changes
+- `sqitch revert -y` removes everything
 
-1. via [bun]
-
-```sh
-bun start
-```
-
-2. via Docker
-
-This way mimics production, as it builds the Docker image from the same spec
-that is used in production. In fact, it even uses NODE_ENV=production.
+### deploy to production 🚀
 
 ```
-docker build -t tendrel-graphql-dev .
+sqitch deploy --target db:pg://$PGUSER:$PGPASS@$PGHOST:$PGPORT/$PGDATABASE
 ```
 
-3. via docker-compose
-
-This way bootstraps everything that is necessary to run a local graphql
-endpoint, including a Postgres database. Note that the Postgres container uses a
-Docker volume, which persists across containers. You can `syncdb` it with any
-other Postgres database that you have access to. Note that the Postgres
-container exposes the port _5433_ (rather than the default 5432), in case you
-have a locally running Postgres instance using the default port. The connection
-uri is thus: `postgresql://postgres:password@localhost:5433/postgres` (see [the
-Dockerfile](../Dockerfile) for reference).
-
-```
-docker compose up --detach
-docker compose logs -f
-```
-
-[bun]: https://github.com/oven-sh/bun
+[sqitch]: https://sqitch.org/

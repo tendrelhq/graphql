@@ -12,7 +12,7 @@ select plan(10)
 
 select
     is (
-        util.compute_rrule_next_occurrence(
+        engine0.compute_rrule_next_occurrence(
             freq := 'millisecond',
             interval_v := 1,
             dtstart := '2025-01-13 12:00:00.000+00'
@@ -24,7 +24,7 @@ select
 
 select
     is (
-        util.compute_rrule_next_occurrence(
+        engine0.compute_rrule_next_occurrence(
             freq := 'millisecond',
             interval_v := (1 / 100.0),
             dtstart := '2025-01-13 12:00:00.000+00'
@@ -36,7 +36,7 @@ select
 
 select
     is (
-        util.compute_rrule_next_occurrence(
+        engine0.compute_rrule_next_occurrence(
             freq := 'second', interval_v := 2, dtstart := '2025-01-13 12:00:00.000+00'
         ),
         '2025-01-13 12:00:00.500+00'::timestamptz,
@@ -46,7 +46,7 @@ select
 
 select
     is (
-        util.compute_rrule_next_occurrence(
+        engine0.compute_rrule_next_occurrence(
             freq := 'minute', interval_v := 4, dtstart := '2025-01-13 12:00:00.000+00'
         ),
         '2025-01-13 12:00:15.000+00'::timestamptz,
@@ -56,7 +56,7 @@ select
 
 select
     is (
-        util.compute_rrule_next_occurrence(
+        engine0.compute_rrule_next_occurrence(
             freq := 'hour', interval_v := 3, dtstart := '2025-01-13 12:00:00.000+00'
         ),
         '2025-01-13 12:20:00.000+00'::timestamptz,
@@ -66,7 +66,7 @@ select
 
 select
     is (
-        util.compute_rrule_next_occurrence(
+        engine0.compute_rrule_next_occurrence(
             freq := 'day', interval_v := 6, dtstart := '2025-01-13 12:00:00.000+00'
         ),
         '2025-01-13 16:00:00.000+00'::timestamptz,
@@ -76,7 +76,7 @@ select
 
 select
     is (
-        util.compute_rrule_next_occurrence(
+        engine0.compute_rrule_next_occurrence(
             freq := 'week', interval_v := 7, dtstart := '2025-01-13 12:00:00.000+00'
         ),
         '2025-01-14 12:00:00.000+00'::timestamptz,
@@ -86,7 +86,7 @@ select
 
 select
     is (
-        util.compute_rrule_next_occurrence(
+        engine0.compute_rrule_next_occurrence(
             freq := 'month', interval_v := 4, dtstart := '2025-01-13 12:00:00.000+00'
         ),
         -- Postgres's definition of a "month" is 30 days.
@@ -98,7 +98,7 @@ select
 
 select
     is (
-        util.compute_rrule_next_occurrence(
+        engine0.compute_rrule_next_occurrence(
             freq := 'quarter', interval_v := 3, dtstart := '2025-01-13 12:00:00.000+00'
         ),
         '2025-02-13 12:00:00.000+00'::timestamptz,
@@ -108,7 +108,7 @@ select
 
 select
     is (
-        util.compute_rrule_next_occurrence(
+        engine0.compute_rrule_next_occurrence(
             freq := 'year', interval_v := 3, dtstart := '2025-01-13 12:00:00.000+00'
         ),
         '2025-05-13 12:00:00.000+00'::timestamptz,

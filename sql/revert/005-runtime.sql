@@ -1,24 +1,19 @@
--- Revert graphql:runtime from pg
+-- Revert graphql:005-runtime from pg
 begin
 ;
 
 drop function if exists runtime.destroy_demo
 ;
-
 drop function if exists runtime.add_demo_to_customer
 ;
-
 drop function if exists runtime.create_demo
 ;
-
 drop function if exists runtime.create_location
 ;
-
 drop function if exists runtime.create_customer
 ;
 
-drop schema if exists runtime
-;
+drop schema if exists runtime;
 
 commit
 ;

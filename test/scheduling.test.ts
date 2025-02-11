@@ -20,7 +20,7 @@ describe("engine/scheduling", () => {
       from
           public.workinstance as i,
           public.worktemplate as t,
-          util.create_rrule(
+          legacy0.create_rrule(
               task_id := t.id,
               frequency_type := ${type},
               frequency_interval := ${interval},
