@@ -41,7 +41,7 @@ jobs:
         uses: actions/cache/restore@v4
         with:
           path: db.dump
-          key: ${{ runner.os }}-db-dump-2025-02-09+1
+          key: ${{ runner.os }}-db-dump-2025-02-09+2
       - if: steps.check-cache.outputs.cache-hit != 'true'
         run: |
           pg_dump --format=c --clean --if-exists --disable-triggers --no-acl \

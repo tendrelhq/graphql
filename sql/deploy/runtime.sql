@@ -249,7 +249,7 @@ begin
             systag_id := s.systaguuid,
             modified_by := modified_by
         ) as t
-    where s.systagtype in ('Trackable', 'Runtime')
+    where s.systagparentid = 882 and s.systagtype in ('Trackable', 'Runtime')
   ;
   --
   if not found then
@@ -534,26 +534,31 @@ strict
 create function runtime.destroy_demo(customer_id text)
 returns text
 as $$
+declare
+  _customer_id bigint;
 begin
+  select customerid into _customer_id
+  from public.customer
+  where customeruuid = customer_id;
+
+  -- FIXME: CASCADE deletes.
+  delete from public.apikey
+  where apikeycustomerid = _customer_id;
+
+  -- FIXME: CASCADE deletes.
+  delete from public.customerconfig
+  where customerconfigcustomeruuid = customer_id;
+
   -- FIXME: CASCADE deletes.
   delete from public.worktemplateconstraint
-  where worktemplateconstraintcustomerid = (
-      select customerid
-      from public.customer
-      where customeruuid = customer_id
-  );
+  where worktemplateconstraintcustomerid = _customer_id;
 
   -- FIXME: CASCADE deletes.
   delete from public.worktemplatetype
-  where worktemplatetypecustomerid = (
-      select customerid
-      from public.customer
-      where customeruuid = customer_id
-  );
+  where worktemplatetypecustomerid = _customer_id;
 
   delete from public.customer
-  where customeruuid = customer_id
-  ;
+  where customeruuid = customer_id;
 
   return 'ok';
 end $$

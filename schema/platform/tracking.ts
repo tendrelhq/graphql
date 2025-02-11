@@ -171,7 +171,7 @@ export async function trackables(
                         and wtt.worktemplatetypesystaguuid = (
                             select systaguuid
                             from public.systag
-                            where systagtype = 'Trackable'
+                            where systagparentid = 882 and systagtype = 'Trackable'
                         )
                         ${
                           !includeInactive

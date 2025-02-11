@@ -9,17 +9,17 @@ begin
 
 -- Create an 'Runtime' type tag.
 select *
-from util.create_type('Runtime', $1)
+from util.create_type('Runtime', 'Template Type', $1)
 ;
 
 -- Create an 'Idle Time' type tag.
 select *
-from util.create_type('Idle Time', $1)
+from util.create_type('Idle Time', 'Template Type', $1)
 ;
 
 -- Create a 'Downtime' type tag.
 select *
-from util.create_type('Downtime', $1)
+from util.create_type('Downtime', 'Template Type', $1)
 ;
 
 commit

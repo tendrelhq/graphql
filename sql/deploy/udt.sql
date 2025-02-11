@@ -68,7 +68,8 @@ language plpgsql
 strict
 ;
 
-create function util.create_type(type_name text, modified_by bigint)
+create function
+    util.create_type(type_name text, type_hierarchy text, modified_by bigint)
 returns table(_id bigint, id text)
 as $$
 begin
@@ -98,11 +99,12 @@ begin
     )
     select
         0 as customer, -- 'Tendrel'
-        1 as parent,   -- 'Tag'
+        p.systagid,
         type_name,
         ins_name._id,
         modified_by
     from ins_name
+    inner join public.systag as p on p.systagtype = type_hierarchy
     returning systagid as _id, systaguuid as id
   ;
   --

@@ -89,7 +89,7 @@ export class Location implements Component, Refetchable, Trackable {
                   and wtt.worktemplatetypesystaguuid in (
                       select systaguuid
                       from public.systag
-                      where systagparentid = 1 and systagtype = 'Trackable'
+                      where systagparentid = 882 and systagtype = 'Trackable'
                   )
               where l.locationuuid = ${this._id}
           ),

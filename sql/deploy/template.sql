@@ -126,29 +126,55 @@ returns table(id text)
 as $$
 begin
   return query
-    insert into public.worktemplateconstraint (
-        worktemplateconstraintcustomerid,
-        worktemplateconstrainttemplateid,
-        worktemplateconstraintconstrainedtypeid,
-        worktemplateconstraintconstraintid,
-        worktemplateconstraintmodifiedby
+    with ins as (
+        insert into public.worktemplateconstraint (
+            worktemplateconstraintcustomerid,
+            worktemplateconstrainttemplateid,
+            worktemplateconstraintconstrainedtypeid,
+            worktemplateconstraintconstraintid,
+            worktemplateconstraintmodifiedby
+        )
+        select
+            t.worktemplatecustomerid,
+            t.id,
+            s.systaguuid,
+            lt.custaguuid,
+            modified_by
+        from public.worktemplate as t
+        inner join public.systag as s
+            on s.systagparentid = 849 and s.systagtype = 'Location'
+        inner join public.location as l
+            on t.worktemplatesiteid = l.locationsiteid
+            and l.locationuuid = location_id
+        inner join public.custag as lt
+            on l.locationcategoryid = lt.custagid
+        where t.id = template_id
+        on conflict do nothing
+        returning worktemplateconstraintid as id
     )
-    select
-        t.worktemplatecustomerid,
-        t.id,
-        s.systaguuid,
-        lt.custaguuid,
-        modified_by
-    from public.worktemplate as t
-    inner join public.systag as s
-        on s.systagparentid = 849 and s.systagtype = 'Location'
+
+    select * from ins
+    union all
+    select wtc.worktemplateconstraintid as id
+    from public.worktemplateconstraint as wtc
+    inner join public.worktemplate as t
+        on t.id = template_id
+        and wtc.worktemplateconstrainttemplateid = t.id
     inner join public.location as l
         on t.worktemplatesiteid = l.locationsiteid
         and l.locationuuid = location_id
-    inner join public.custag as lt
-        on l.locationcategoryid = lt.custagid
-    where t.id = template_id
-    returning worktemplateconstraintid as id
+    where
+        wtc.worktemplateconstraintconstrainedtypeid = (
+            select systaguuid
+            from public.systag
+            where systagparentid = 849 and systagtype = 'Location'
+        )
+        and wtc.worktemplateconstraintconstraintid = (
+            select custaguuid
+            from public.custag
+            where custagid = l.locationcategoryid
+        )
+    limit 1
   ;
 
   if not found then
