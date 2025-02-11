@@ -1075,6 +1075,11 @@ export function getSchema(): GraphQLSchema {
           instantiations: {
             name: "instantiations",
             type: new GraphQLList(new GraphQLNonNull(TaskEdgeType)),
+            resolve(source, args, context, info) {
+              return assertNonNull(
+                defaultFieldResolver(source, args, context, info),
+              );
+            },
           },
           root: {
             name: "root",

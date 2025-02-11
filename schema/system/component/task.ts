@@ -579,7 +579,7 @@ export type AdvanceTaskOptions = {
 export type AdvanceTaskResult = {
   task: Task;
   diagnostics?: Diagnostic[] | null;
-  instantiations?: Edge<Task>[] | null;
+  instantiations: Edge<Task>[];
 };
 
 /**
@@ -617,6 +617,7 @@ export async function advanceTask(
           code: DiagnosticKind.feature_not_available,
         },
       ],
+      instantiations: [],
     };
   }
 
@@ -630,6 +631,7 @@ export async function advanceTask(
           code: DiagnosticKind.hash_is_required,
         },
       ],
+      instantiations: [],
     };
   }
 
@@ -647,6 +649,7 @@ export async function advanceTask(
           code: DiagnosticKind.hash_mismatch_precludes_operation,
         },
       ],
+      instantiations: [],
     };
   }
 
@@ -713,6 +716,7 @@ export async function advanceTask(
           code: DiagnosticKind.candidate_change_discarded,
         },
       ],
+      instantiations: [],
     };
   }
 
@@ -779,7 +783,7 @@ export async function advanceTask(
       cursor: i.id,
       node: new Task(i, ctx),
     })),
-  } satisfies AdvanceTaskResult;
+  };
 }
 
 export function applyAssignments$fragment(

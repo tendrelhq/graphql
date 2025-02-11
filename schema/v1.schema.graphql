@@ -224,7 +224,7 @@ input ValueInput @oneOf {
 
 type AdvanceTaskStateMachineResult {
   diagnostics: [Diagnostic!]
-  instantiations: [TaskEdge!]
+  instantiations: [TaskEdge!] @semanticNonNull
   root: Task @semanticNonNull
 }
 

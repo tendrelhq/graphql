@@ -856,7 +856,7 @@ exports[`runtime demo stale: start run (should fail) 1`] = `
         "code": "hash_mismatch_precludes_operation",
       },
     ],
-    "instantiations": null,
+    "instantiations": [],
     "root": {
       "__typename": "Task",
       "fsm": {
@@ -1070,7 +1070,7 @@ exports[`runtime demo production -> idle time 1`] = `
   "advance": {
     "__typename": "AdvanceTaskStateMachineResult",
     "diagnostics": null,
-    "instantiations": null,
+    "instantiations": [],
     "root": {
       "__typename": "Task",
       "fsm": {
@@ -1164,7 +1164,7 @@ exports[`runtime demo stale: production -> idle time (should fail) 1`] = `
         "code": "hash_mismatch_precludes_operation",
       },
     ],
-    "instantiations": null,
+    "instantiations": [],
     "root": {
       "__typename": "Task",
       "fsm": {
@@ -1472,7 +1472,7 @@ exports[`runtime demo end idle time 2`] = `
         "code": "candidate_choice_unavailable",
       },
     ],
-    "instantiations": null,
+    "instantiations": [],
     "root": {
       "__typename": "Task",
       "fsm": {
@@ -1686,7 +1686,7 @@ exports[`runtime demo production -> downtime 1`] = `
   "advance": {
     "__typename": "AdvanceTaskStateMachineResult",
     "diagnostics": null,
-    "instantiations": null,
+    "instantiations": [],
     "root": {
       "__typename": "Task",
       "fsm": {
@@ -2067,6 +2067,94 @@ exports[`runtime demo end run 1`] = `
 }
 `;
 
+exports[`runtime demo end run 2`] = `
+{
+  "advance": {
+    "__typename": "AdvanceTaskStateMachineResult",
+    "diagnostics": [
+      {
+        "__typename": "Diagnostic",
+        "code": "no_associated_fsm",
+      },
+    ],
+    "instantiations": [],
+    "root": {
+      "__typename": "Task",
+      "chain": {
+        "__typename": "TaskConnection",
+        "edges": [
+          {
+            "__typename": "TaskEdge",
+            "node": {
+              "__typename": "Task",
+              "displayName": {
+                "__typename": "DisplayName",
+                "name": {
+                  "__typename": "DynamicString",
+                  "value": "Run",
+                },
+              },
+              "state": {
+                "__typename": "Closed",
+              },
+            },
+          },
+          {
+            "__typename": "TaskEdge",
+            "node": {
+              "__typename": "Task",
+              "displayName": {
+                "__typename": "DisplayName",
+                "name": {
+                  "__typename": "DynamicString",
+                  "value": "Idle Time",
+                },
+              },
+              "state": {
+                "__typename": "Closed",
+              },
+            },
+          },
+          {
+            "__typename": "TaskEdge",
+            "node": {
+              "__typename": "Task",
+              "displayName": {
+                "__typename": "DisplayName",
+                "name": {
+                  "__typename": "DynamicString",
+                  "value": "Downtime",
+                },
+              },
+              "state": {
+                "__typename": "Closed",
+              },
+            },
+          },
+          {
+            "__typename": "TaskEdge",
+            "node": {
+              "__typename": "Task",
+              "displayName": {
+                "__typename": "DisplayName",
+                "name": {
+                  "__typename": "DynamicString",
+                  "value": "Idle Time",
+                },
+              },
+              "state": {
+                "__typename": "Closed",
+              },
+            },
+          },
+        ],
+      },
+      "fsm": null,
+    },
+  },
+}
+`;
+
 exports[`runtime demo apply field edits retroactively 1`] = `
 {
   "applyFieldEdits": {
@@ -2178,97 +2266,9 @@ exports[`runtime demo garbage 1`] = `
         "code": "no_associated_fsm",
       },
     ],
-    "instantiations": null,
+    "instantiations": [],
     "root": {
       "__typename": "Task",
-      "fsm": null,
-    },
-  },
-}
-`;
-
-exports[`runtime demo end run 2`] = `
-{
-  "advance": {
-    "__typename": "AdvanceTaskStateMachineResult",
-    "diagnostics": [
-      {
-        "__typename": "Diagnostic",
-        "code": "no_associated_fsm",
-      },
-    ],
-    "instantiations": null,
-    "root": {
-      "__typename": "Task",
-      "chain": {
-        "__typename": "TaskConnection",
-        "edges": [
-          {
-            "__typename": "TaskEdge",
-            "node": {
-              "__typename": "Task",
-              "displayName": {
-                "__typename": "DisplayName",
-                "name": {
-                  "__typename": "DynamicString",
-                  "value": "Run",
-                },
-              },
-              "state": {
-                "__typename": "Closed",
-              },
-            },
-          },
-          {
-            "__typename": "TaskEdge",
-            "node": {
-              "__typename": "Task",
-              "displayName": {
-                "__typename": "DisplayName",
-                "name": {
-                  "__typename": "DynamicString",
-                  "value": "Idle Time",
-                },
-              },
-              "state": {
-                "__typename": "Closed",
-              },
-            },
-          },
-          {
-            "__typename": "TaskEdge",
-            "node": {
-              "__typename": "Task",
-              "displayName": {
-                "__typename": "DisplayName",
-                "name": {
-                  "__typename": "DynamicString",
-                  "value": "Downtime",
-                },
-              },
-              "state": {
-                "__typename": "Closed",
-              },
-            },
-          },
-          {
-            "__typename": "TaskEdge",
-            "node": {
-              "__typename": "Task",
-              "displayName": {
-                "__typename": "DisplayName",
-                "name": {
-                  "__typename": "DynamicString",
-                  "value": "Idle Time",
-                },
-              },
-              "state": {
-                "__typename": "Closed",
-              },
-            },
-          },
-        ],
-      },
       "fsm": null,
     },
   },

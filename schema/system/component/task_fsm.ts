@@ -131,7 +131,7 @@ export type AdvanceTaskStateMachineResult = {
   /** @gqlField */
   diagnostics?: Diagnostic[] | null;
   /** @gqlField */
-  instantiations?: Edge<Task>[] | null;
+  instantiations: Edge<Task>[];
 };
 
 /** @gqlField */
@@ -155,6 +155,7 @@ export async function advance(
             code: DiagnosticKind.no_associated_fsm,
           },
         ],
+        instantiations: [],
       } satisfies AdvanceTaskStateMachineResult;
     }
 
@@ -168,6 +169,7 @@ export async function advance(
             code: DiagnosticKind.hash_is_required,
           },
         ],
+        instantiations: [],
       } satisfies AdvanceTaskStateMachineResult;
     }
 
@@ -185,6 +187,7 @@ export async function advance(
             code: DiagnosticKind.hash_mismatch_precludes_operation,
           },
         ],
+        instantiations: [],
       } satisfies AdvanceTaskStateMachineResult;
     }
 
@@ -203,6 +206,7 @@ export async function advance(
             code: DiagnosticKind.candidate_choice_unavailable,
           },
         ],
+        instantiations: [],
       } satisfies AdvanceTaskStateMachineResult;
     }
 
@@ -245,7 +249,8 @@ export async function advanceFsm(
             code: DiagnosticKind.expected_template_got_instance,
           },
         ],
-      };
+        instantiations: [],
+      } satisfies AdvanceTaskStateMachineResult;
     })
     .with("worktemplate", async () => {
       const _ = await copyFromWorkTemplate(
@@ -262,7 +267,10 @@ export async function advanceFsm(
         },
         ctx,
       );
-      return { root };
+      return {
+        root,
+        instantiations: [],
+      } satisfies AdvanceTaskStateMachineResult;
     })
     .otherwise(() => {
       assert(false, `unknown underlying type ${choice._type}`);
@@ -274,7 +282,8 @@ export async function advanceFsm(
             code: DiagnosticKind.invalid_type,
           },
         ],
-      };
+        instantiations: [],
+      } satisfies AdvanceTaskStateMachineResult;
     });
 }
 
