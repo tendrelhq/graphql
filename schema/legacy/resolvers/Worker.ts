@@ -5,7 +5,7 @@ import { decodeGlobalId } from "@/schema/system";
 export const Worker: WorkerResolvers = {
   async _hack_numeric_id(parent, _, ctx) {
     const hack = await ctx.orm.worker.load(decodeGlobalId(parent.id).id);
-    return hack._hack_numeric_id;
+    return Number(hack._hack_numeric_id); // this is a bigint
   },
   async active(parent) {
     const { id } = decodeGlobalId(parent.id);
