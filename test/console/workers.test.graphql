@@ -38,7 +38,6 @@ query PaginateWorkersTest($account: ID!, $first: Int, $after: String) {
 }
 
 fragment Worker_fragment on Worker {
-  _hack_numeric_id
   active {
     active
   }
