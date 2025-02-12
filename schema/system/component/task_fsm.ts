@@ -1,5 +1,4 @@
 import { type Sql, type TxSql, sql } from "@/datasources/postgres";
-import { copyFromWorkTemplate } from "@/schema/application/resolvers/Mutation/copyFrom";
 import { type Diagnostic, DiagnosticKind } from "@/schema/result";
 import type { Mutation } from "@/schema/root";
 import type { Context } from "@/schema/types";
@@ -10,7 +9,13 @@ import { match } from "ts-pattern";
 import { decodeGlobalId } from "..";
 import type { StateMachine } from "../fsm";
 import type { Edge } from "../pagination";
-import { type AdvanceTaskOptions, Task, advanceTask } from "./task";
+import {
+  type AdvanceTaskOptions,
+  Task,
+  advanceTask,
+  applyAssignments$fragment,
+  applyEdits$fragment,
+} from "./task";
 
 export function fsm$fragment(t: Task): Fragment {
   assert(t._type === "workinstance");
@@ -253,20 +258,64 @@ export async function advanceFsm(
       } satisfies AdvanceTaskStateMachineResult;
     })
     .with("worktemplate", async () => {
-      const _ = await copyFromWorkTemplate(
-        sql,
-        choice._id,
+      const result = await sql<[{ instance: ID }]>`
+        with options as (
+            select
+                w.id as previous_id,
+                auth.current_identity(w.workinstancecustomerid, ${ctx.auth.userId}) as modified_by,
+                (
+                  select l.id
+                  from legacy0.primary_location_for_instance(w.id) as l
+                ) as location_id
+            from public.workinstance as w
+            where w.id = ${decodeGlobalId(fsm.active).id}
+        )
+
+        select encode(('workinstance:' || t.instance)::bytea, 'base64') as instance
+        from
+            options,
+            engine0.instantiate(
+                template_id := ${choice._id},
+                location_id := options.location_id,
+                target_state := 'In Progress',
+                target_type := 'Task',
+                modified_by := options.modified_by,
+                chain_root_id := ${root._id},
+                chain_prev_id := options.previous_id
+            ) as t
+        group by t.instance;
+      `;
+      console.debug(`advance: engine.instantiate.count: ${result.length}`);
+
+      const ins = result.at(0)?.instance;
+      if (ins) {
+        const t = new Task({ id: ins }, ctx);
+
+        // In Progress must have a start date.
+        await sql`
+          update public.workinstance
+          set workinstancestartdate = now()
+          where id = ${t._id}
+        `;
+
+        // Auto-assign.
         {
-          chain: "continue",
-          previous: decodeGlobalId(fsm.active).id,
-          // some extra options
-          autoAssign: true,
-          carryOverAssignments: true,
-          fieldOverrides: opts.task.overrides,
-          withStatus: "inProgress",
-        },
-        ctx,
-      );
+          const ma = "replace";
+          const result = await sql`${applyAssignments$fragment(ctx, t, ma)}`;
+          console.debug(
+            `advance: applied ${result.count} assignments (mergeAction: ${ma})`,
+          );
+        }
+
+        if (opts.task.overrides) {
+          const f = applyEdits$fragment(ctx, t, opts.task.overrides);
+          if (f) {
+            const result = await sql`${f}`;
+            console.debug(`advance: applied ${result.count} field-level edits`);
+          }
+        }
+      }
+
       return {
         root,
         instantiations: [],

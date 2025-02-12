@@ -111,6 +111,11 @@ exports[`runtime demo entrypoint query 1`] = `
                           },
                         ],
                       },
+                      "parent": {
+                        "name": {
+                          "value": "Mixing Line",
+                        },
+                      },
                       "state": {
                         "__typename": "Open",
                       },
@@ -230,6 +235,11 @@ exports[`runtime demo entrypoint query 1`] = `
                             },
                           },
                         ],
+                      },
+                      "parent": {
+                        "name": {
+                          "value": "Fill Line",
+                        },
                       },
                       "state": {
                         "__typename": "Open",
@@ -351,6 +361,11 @@ exports[`runtime demo entrypoint query 1`] = `
                           },
                         ],
                       },
+                      "parent": {
+                        "name": {
+                          "value": "Assembly Line",
+                        },
+                      },
                       "state": {
                         "__typename": "Open",
                       },
@@ -470,6 +485,11 @@ exports[`runtime demo entrypoint query 1`] = `
                             },
                           },
                         ],
+                      },
+                      "parent": {
+                        "name": {
+                          "value": "Cartoning Line",
+                        },
                       },
                       "state": {
                         "__typename": "Open",
@@ -591,6 +611,11 @@ exports[`runtime demo entrypoint query 1`] = `
                           },
                         ],
                       },
+                      "parent": {
+                        "name": {
+                          "value": "Packaging Line",
+                        },
+                      },
                       "state": {
                         "__typename": "Open",
                       },
@@ -630,6 +655,13 @@ exports[`runtime demo start run 1`] = `
             "name": {
               "__typename": "DynamicString",
               "value": "Run",
+            },
+          },
+          "parent": {
+            "__typename": "Location",
+            "name": {
+              "__typename": "Name",
+              "value": "Mixing Line",
             },
           },
           "state": {
@@ -730,6 +762,11 @@ exports[`runtime demo start run 1`] = `
                 },
               },
             ],
+          },
+          "parent": {
+            "name": {
+              "value": "Mixing Line",
+            },
           },
           "state": {
             "__typename": "InProgress",
@@ -950,6 +987,11 @@ exports[`runtime demo stale: start run (should fail) 1`] = `
               },
             ],
           },
+          "parent": {
+            "name": {
+              "value": "Mixing Line",
+            },
+          },
           "state": {
             "__typename": "InProgress",
             "inProgressBy": {
@@ -1138,6 +1180,11 @@ exports[`runtime demo production -> idle time 1`] = `
               },
             ],
           },
+          "parent": {
+            "name": {
+              "value": "Mixing Line",
+            },
+          },
           "state": {
             "__typename": "InProgress",
             "inProgressBy": {
@@ -1231,6 +1278,11 @@ exports[`runtime demo stale: production -> idle time (should fail) 1`] = `
                 },
               },
             ],
+          },
+          "parent": {
+            "name": {
+              "value": "Mixing Line",
+            },
           },
           "state": {
             "__typename": "InProgress",
@@ -1346,6 +1398,11 @@ exports[`runtime demo end idle time 1`] = `
                 },
               },
             ],
+          },
+          "parent": {
+            "name": {
+              "value": "Mixing Line",
+            },
           },
           "state": {
             "__typename": "InProgress",
@@ -1566,6 +1623,11 @@ exports[`runtime demo end idle time 2`] = `
               },
             ],
           },
+          "parent": {
+            "name": {
+              "value": "Mixing Line",
+            },
+          },
           "state": {
             "__typename": "InProgress",
             "inProgressBy": {
@@ -1754,6 +1816,11 @@ exports[`runtime demo production -> downtime 1`] = `
               },
             ],
           },
+          "parent": {
+            "name": {
+              "value": "Mixing Line",
+            },
+          },
           "state": {
             "__typename": "InProgress",
             "inProgressBy": {
@@ -1868,6 +1935,11 @@ exports[`runtime demo end downtime 1`] = `
                 },
               },
             ],
+          },
+          "parent": {
+            "name": {
+              "value": "Mixing Line",
+            },
           },
           "state": {
             "__typename": "InProgress",

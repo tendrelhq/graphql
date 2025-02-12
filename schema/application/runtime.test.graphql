@@ -25,6 +25,13 @@ query TestRuntimeEntrypoint(
             }
           }
           hash
+          parent {
+            ... on Location {
+              name {
+                value
+              }
+            }
+          }
           state {
             __typename
             ... on Closed {
@@ -130,6 +137,13 @@ mutation TestRuntimeTransitionMutation(
             value
           }
         }
+        parent {
+          ... on Location {
+            name {
+              value
+            }
+          }
+        }
         state {
           __typename
         }
@@ -172,10 +186,6 @@ fragment Trackables_fragment on Trackable {
     edges {
       node {
         ... on Task {
-          # chainAgg(overType: ["Runtime", "Idle Time", "Downtime"]) {
-          #   group
-          #   value
-          # }
           displayName {
             name {
               value
@@ -226,6 +236,13 @@ fragment TaskFSM_fragment on TaskStateMachine {
             }
           }
           valueType
+        }
+      }
+    }
+    parent {
+      ... on Location {
+        name {
+          value
         }
       }
     }

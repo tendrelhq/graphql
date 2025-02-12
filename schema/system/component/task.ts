@@ -639,7 +639,7 @@ export async function advanceTask(
   if (hash !== opts.hash) {
     console.warn("WARNING: Hash mismatch precludes advancement");
     console.debug(`| task: ${t.id}`);
-    console.debug(`| ours:   ${hash}`);
+    console.debug(`| ours: ${hash}`);
     console.debug(`| theirs: ${opts.hash}`);
     return {
       task: t,
@@ -701,11 +701,20 @@ export async function advanceTask(
     select * from when_open
     union all
     select * from when_in_progress
+    limit 1
   `;
 
   if (!result) {
-    assert(false, "seemingly impossible no-op scenario");
-    console.warn(
+    // FIXME: this is possible under concurrency. We are doing OCC here after
+    // all! What we need to do better here is differentiate between an illegal
+    // action (e.g. advancing a closed task) and losing the race. If the action
+    // is legal then the only alternative is that we lost the race, and thus we
+    // can return a proper diagnostic indicative of this outcome.
+    //
+    // TODO: think about how we can remove the assumption inherent in our logic
+    // here. This would mean allowing for arbitrary task states via something
+    // like wtnt rather than assuming the canonical open -> in-prog -> closed.
+    console.error(
       `Discarding candidate change, presumably because the Task (${t}) is not in a state suitable to advancement.`,
     );
     return {
@@ -786,6 +795,9 @@ export async function advanceTask(
   };
 }
 
+/**
+ * @param mergeAction `replace` overwrites, `keep` does not
+ */
 export function applyAssignments$fragment(
   ctx: Context,
   t: Task,
@@ -807,15 +819,12 @@ export function applyAssignments$fragment(
     with cte as (
         select i.workinstancecustomerid as _parent, field.workresultinstanceid as _id
         from public.workinstance as i
-        inner join public.systag as i_state
-            on i.workinstancestatusid = i_state.systagid
         inner join public.workresultinstance as field
             on i.workinstanceid = field.workresultinstanceworkinstanceid
         inner join public.workresult as field_t
             on field.workresultinstanceworkresultid = field_t.workresultid
         where
             i.id = ${t._id}
-            and i_state.systagtype in ('In Progress', 'Complete')
             and field_t.workresulttypeid = 848
             and field_t.workresultentitytypeid = 850
             and field_t.workresultisprimary = true
