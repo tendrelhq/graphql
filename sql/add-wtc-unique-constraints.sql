@@ -1,7 +1,7 @@
 begin
 ;
 
-drop index if exists temp_wtc_idx;
+drop index temp_wtc_idx;
 
 create unique index temp_wtc_with_result_idx on public.worktemplateconstraint (
     worktemplateconstraintcustomerid,
