@@ -90,12 +90,17 @@ export async function copyFromWorkInstance(
   options: CopyFromOptions & CopyFromInstanceOptions,
   ctx: Context,
 ): Promise<Task> {
-  const [row] = await sql<[{ id: string }]>`
-      SELECT wt.id
-      FROM public.workinstance AS wi
-      INNER JOIN public.worktemplate AS wt
-          ON wi.workinstanceworktemplateid = wt.worktemplateid
-      WHERE wi.id = ${id};
+  const [row] = await sql<[{ id: string; location: string }]>`
+      select
+          wt.id, 
+          (
+              select t.id
+              from legacy0.primary_location_for_instance(wi.id) as t
+          ) as location
+      from public.workinstance as wi
+      inner join public.worktemplate as wt
+          on wi.workinstanceworktemplateid = wt.worktemplateid
+      where wi.id = ${id};
   `;
   // For now, we just do a template-based copy:
   return copyFromWorkTemplate(
@@ -103,6 +108,7 @@ export async function copyFromWorkInstance(
     row.id,
     {
       ...options,
+      location: row.location,
       previous: id,
     },
     ctx,
@@ -110,6 +116,10 @@ export async function copyFromWorkInstance(
 }
 
 type CopyFromWorkTemplateOptions = {
+  /**
+   * Specifies the location at which to instantiate the given template.
+   */
+  location?: string;
   /**
    * Specifies the "previous instance" for the new instance. Canonically,
    * previous is used in conjunction with originator to build chains.
@@ -257,6 +267,62 @@ export async function copyFromWorkTemplate(
       WHERE worktemplate.id = ${id};
   `;
   console.debug(`Created ${result.count} items.`);
+
+  if (options.location) {
+    const result = await sql`
+      update public.workresultinstance
+      set workresultinstancevalue = (
+          select locationid::text
+          from public.location
+          where locationuuid = ${options.location}
+      )
+      from public.workresult
+      where
+          workresultinstanceworkinstanceid = ${row._key}
+          and workresultinstanceworkresultid = workresultid
+          and workresulttypeid = (
+              select systagid
+              from public.systag
+              where systagparentid = 699 and systagtype = 'Entity'
+          )
+          and workresultentitytypeid = (
+              select systagid
+              from public.systag
+              where systagparentid = 849 and systagtype = 'Location'
+          )
+          and workresultisprimary = true
+    `;
+    console.debug(
+      `Set primary location to specified location (${result.count})`,
+    );
+  } else {
+    // instantiate at the template's site:
+    const result = await sql`
+      update public.workresultinstance
+      set workresultinstancevalue = (
+          select locationid::text
+          from public.worktemplate
+          inner join public.location on worktemplatesiteid = locationid
+          where worktemplate.id = ${id}
+      )
+      from public.workresult
+      where
+          workresultinstanceworkinstanceid = ${row._key}
+          and workresultinstanceworkresultid = workresultid
+          and workresulttypeid = (
+              select systagid
+              from public.systag
+              where systagparentid = 699 and systagtype = 'Entity'
+          )
+          and workresultentitytypeid = (
+              select systagid
+              from public.systag
+              where systagparentid = 849 and systagtype = 'Location'
+          )
+          and workresultisprimary = true
+    `;
+    console.debug(`Set primary location to template's site (${result.count})`);
+  }
 
   // Ensure any user-specified overrides are applied.
   if (options.autoAssign) {

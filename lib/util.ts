@@ -135,8 +135,14 @@ export function validatePaginationArgs(args: RawPaginationArgs) {
   }
 }
 
-export function map<T, R>(t: T | null | undefined, fn: (t: T) => R) {
-  return nullish(t) ? t : fn(t);
+export function map<T, R>(
+  t: T,
+  fn: (t: NonNullable<T>) => R,
+): T extends null | undefined ? T : R {
+  if (nullish(t)) {
+    return t as T extends null | undefined ? T : R;
+  }
+  return fn(t as NonNullable<T>) as T extends null | undefined ? T : R;
 }
 
 export function inspect<T>(t: T) {

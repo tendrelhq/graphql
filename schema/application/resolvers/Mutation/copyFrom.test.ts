@@ -1,37 +1,142 @@
-import { describe, expect, test } from "bun:test";
+import { afterAll, beforeAll, describe, expect, test } from "bun:test";
+import { sql } from "@/datasources/postgres";
 import { schema } from "@/schema/final";
-import { encodeGlobalId } from "@/schema/system";
-import { execute } from "@/test/prelude";
+import { decodeGlobalId } from "@/schema/system";
+import { Task } from "@/schema/system/component/task";
+import { createTestContext, execute, findAndEncode } from "@/test/prelude";
+import { assertNonNull, map } from "@/util";
 import { TestCopyFromDocument } from "./copyFrom.test.generated";
 
-describe.skip("copyFrom", () => {
+const ctx = await createTestContext();
+
+describe("copyFrom", () => {
+  let CUSTOMER: string;
+  let TEMPLATE: Task;
+  let INSTANCE: Task;
+
   test("when entity is a template", async () => {
     const result = await execute(schema, TestCopyFromDocument, {
-      entity: encodeGlobalId({
-        type: "worktemplate",
-        id: "work-template_77a55567-6b2b-4506-9d2b-f375e0c29e3f",
-      }),
+      entity: TEMPLATE.id,
       options: {
         withStatus: "open",
       },
     });
 
     expect(result.errors).toBeFalsy();
-    expect(result.data).toMatchSnapshot();
+    expect(result.data).toEqual({
+      copyFrom: {
+        __typename: "CopyFromPayload",
+        edge: {
+          __typename: "ChecklistEdge",
+          node: {
+            __typename: "Checklist",
+            id: expect.any(String),
+            name: {
+              __typename: "DisplayName",
+              name: {
+                __typename: "DynamicString",
+                value: "Run",
+              },
+            },
+            status: {
+              __typename: "ChecklistOpen",
+            },
+          },
+        },
+      },
+    });
+
+    // Check that the new instance's location is the same as the template's
+    // site. This is part of the default (template) instantiation rules.
+    const t = new Task(
+      { id: assertNonNull(result.data?.copyFrom.edge.node.id) },
+      ctx,
+    );
+    const p = await t.parent();
+    expect(p).toBeTruthy();
+    const s = await TEMPLATE.parent();
+    expect(s).toBeTruthy();
+    expect(p).toEqual(s);
   });
 
   test("when entity is an instance", async () => {
     const result = await execute(schema, TestCopyFromDocument, {
-      entity: encodeGlobalId({
-        type: "workinstance",
-        id: "work-instance_14162314-3e50-41f9-9902-74a0c186b922",
-      }),
+      entity: INSTANCE.id,
       options: {
         withStatus: "open",
       },
     });
-
     expect(result.errors).toBeFalsy();
-    expect(result.data).toMatchSnapshot();
+    expect(result.data).toEqual({
+      copyFrom: {
+        __typename: "CopyFromPayload",
+        edge: {
+          __typename: "ChecklistEdge",
+          node: {
+            __typename: "Checklist",
+            id: expect.any(String),
+            name: {
+              __typename: "DisplayName",
+              name: {
+                __typename: "DynamicString",
+                value: "Run",
+              },
+            },
+            status: {
+              __typename: "ChecklistOpen",
+            },
+          },
+        },
+      },
+    });
+
+    // Check that the new instance's location is the same as the previous
+    // instance's location. By default, when we create a new instance from an
+    // existing instance, we instantiate the new instance at the same location
+    // as the existing instance.
+    const t = new Task(
+      { id: assertNonNull(result.data?.copyFrom.edge.node.id) },
+      ctx,
+    );
+    const p = await t.parent();
+    expect(p).toBeTruthy();
+    const p2 = await INSTANCE.parent();
+    expect(p2).toBeTruthy();
+    expect(p).toEqual(p2);
+  });
+
+  beforeAll(async () => {
+    const logs = await sql<{ op: string; id: string }[]>`
+      select *
+      from
+          runtime.create_demo(
+              customer_name := 'Frozen Tendy Factory',
+              admins := (
+                  select array_agg(workeruuid)
+                  from public.worker
+                  where workeridentityid = ${ctx.auth.userId}
+              ),
+              modified_by := 895
+          )
+      ;
+    `;
+    CUSTOMER = findAndEncode("customer", "organization", logs);
+    TEMPLATE = map(
+      findAndEncode("task", "worktemplate", logs),
+      id => new Task({ id }, ctx),
+    );
+    INSTANCE = map(
+      findAndEncode("instance", "workinstance", logs),
+      id => new Task({ id }, ctx),
+    );
+  });
+
+  afterAll(async () => {
+    const { id } = decodeGlobalId(CUSTOMER);
+    process.stdout.write("Cleaning up... ");
+    const [row] = await sql<[{ ok: string }]>`
+      select runtime.destroy_demo(${id}) as ok;
+    `;
+    console.log(row.ok);
   });
 });

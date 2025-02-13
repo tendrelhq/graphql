@@ -1,7 +1,7 @@
 import { orm } from "@/datasources/postgres";
 import type { Context, InputMaybe } from "@/schema";
 import { encodeGlobalId } from "@/schema/system";
-import type { PageInfo } from "@/schema/system/pagination";
+import { assertNonNull, map } from "@/util";
 import type { TypedDocumentNode as DocumentNode } from "@graphql-typed-document-node/core";
 import {
   type ExecutionResult,
@@ -51,25 +51,37 @@ export function testGlobalId() {
 
 export const NOW = new Date(1725823905364);
 
-// biome-ignore lint/suspicious/noExplicitAny:
-type PaginateQueryOptions<R, V extends Record<any, any>> = {
+type PaginateQueryOptions<R> = {
   execute(cursor?: string): Promise<ExecutionResult<R>>;
   next(
     result: ExecutionResult<R>,
   ): Partial<{ endCursor?: string | null; hasNextPage?: boolean | null }>;
 };
 
-// biome-ignore lint/suspicious/noExplicitAny:
-export async function* paginateQuery<R, V extends Record<any, any>>(
-  opts: PaginateQueryOptions<R, V>,
-) {
+export async function* paginateQuery<R>(opts: PaginateQueryOptions<R>) {
   let cursor: InputMaybe<string> = undefined;
   let done = false;
   while (!done) {
     const result = await opts.execute(cursor);
     yield result;
     const { endCursor, hasNextPage } = opts.next(result);
+    // We should be able to handle `null`, even though InputMaybe says
+    // otherwise...
     cursor = endCursor as unknown as InputMaybe<string>;
     done = hasNextPage === false;
   }
+}
+
+export function findAndEncode(
+  op: string,
+  type: string,
+  logs: { op: string; id: string }[],
+) {
+  return assertNonNull(
+    map(
+      logs.find(l => l.op.trim() === `+${op}`),
+      ({ id }) => encodeGlobalId({ type, id }),
+    ),
+    `setup failed to find ${op} (${type})`,
+  );
 }

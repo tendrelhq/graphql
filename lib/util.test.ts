@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, test } from "bun:test";
 import { encodeGlobalId } from "@/schema/system";
-import { assert, buildPaginationArgs } from "./util";
+import { assert, buildPaginationArgs, map } from "./util";
 
 const CURSOR = encodeGlobalId({ type: "__test__", id: "1" });
 const NODE_ENV = process.env.NODE_ENV;
@@ -72,5 +72,31 @@ describe("assert", () => {
 
   afterEach(() => {
     process.env.NODE_ENV = NODE_ENV;
+  });
+});
+
+describe("map", () => {
+  // I am being intentionally verbose with all of these manual type
+  // annotations. We are testing both runtime execution and type inference.
+
+  test("over null", () => {
+    const r: null = map(null, (_: never) => "foo");
+    expect(r).toBeNull();
+  });
+
+  test("over undefined", () => {
+    const r: undefined = map(undefined, (_: never) => "foo");
+    expect(r).toBeUndefined();
+  });
+
+  test("over T", () => {
+    const r: string = map("hello", (s: string) => `${s} world`);
+    expect(r).toBe("hello world");
+  });
+
+  test("over nullable T", () => {
+    const s = "hello" as string | null | undefined;
+    const r: string | null | undefined = map(s, (s: string) => `${s} world`);
+    expect(r).toBe("hello world");
   });
 });
