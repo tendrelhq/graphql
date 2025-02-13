@@ -86,46 +86,57 @@ export class Task
    * @gqlField
    */
   async parent(): Promise<Refetchable | null> {
-    // We just punt on the worktemplate case for now.
-    if (this._type !== "workinstance") return null;
-
-    // We are primarily solving for the history screen at the moment anyways
-    // which operates solely on workinstances. As we know, instances are really
-    // just a template + a location (at least under our current world view).
-
-    const [row] = await sql<[LocationConstructorArgs?]>`
-      with parent as materialized (
-          select wri.workresultinstancevalue::bigint as _id
-          from public.workresultinstance as wri
-          inner join public.workresult as wr
-              on wri.workresultinstanceworkresultid = wr.workresultid
-          where
-              wri.workresultinstanceworkinstanceid in (
-                  select wi.workinstanceid
-                  from public.workinstance as wi
-                  where wi.id = ${this._id}
-              )
-              and wr.workresulttypeid = (
-                  select systagid
-                  from public.systag
-                  where systagparentid = 699 and systagtype = 'Entity'
-              )
-              and wr.workresultentitytypeid = (
-                  select systagid
-                  from public.systag
-                  where systagparentid = 849 and systagtype = 'Location'
-              )
-              and wr.workresultisprimary = true
+    const [row] = await match(this._type)
+      .with(
+        "workinstance",
+        () => sql<[LocationConstructorArgs]>`
+          with parent as materialized (
+              select wri.workresultinstancevalue::bigint as _id
+              from public.workresultinstance as wri
+              inner join public.workresult as wr
+                  on wri.workresultinstanceworkresultid = wr.workresultid
+              where
+                  wri.workresultinstanceworkinstanceid in (
+                      select wi.workinstanceid
+                      from public.workinstance as wi
+                      where wi.id = ${this._id}
+                  )
+                  and wr.workresulttypeid = (
+                      select systagid
+                      from public.systag
+                      where systagparentid = 699 and systagtype = 'Entity'
+                  )
+                  and wr.workresultentitytypeid = (
+                      select systagid
+                      from public.systag
+                      where systagparentid = 849 and systagtype = 'Location'
+                  )
+                  and wr.workresultisprimary = true
+          )
+          select encode(('location:' || l.locationuuid)::bytea, 'base64') as id
+          from parent
+          inner join public.location as l
+              on parent._id = l.locationid
+        `,
       )
-      select encode(('location:' || l.locationuuid)::bytea, 'base64') as id
-      from parent
-      inner join public.location as l
-          on parent._id = l.locationid
-    `;
+      .with(
+        "worktemplate",
+        () => sql<[LocationConstructorArgs]>`
+          select encode(('location:' || locationuuid)::bytea, 'base64') as id
+          from public.worktemplate
+          inner join public.location on worktemplatesiteid = locationid
+          where worktemplate.id = ${this._id}
+        `,
+      )
+      .otherwise(t => {
+        console.warn(`Unknown underlying type ${t} for Task`);
+        return [null];
+      });
 
-    if (!row) return null;
+    if (row) return new Location(row, this.ctx);
 
-    return new Location(row, this.ctx);
+    console.warn(`No parent for Task ${this}`);
+    return null;
   }
 
   // FIXME: We should probably implement this as a StateMachine<TaskState>?
