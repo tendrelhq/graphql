@@ -60,7 +60,6 @@ export const setValue: NonNullable<MutationResolvers["setValue"]> = async (
         return input.string?.value;
       case "temporal" in input: {
         if (!input.temporal.value) return null;
-
         if ("instant" in input.temporal.value) {
           return (
             Temporal.Instant
@@ -119,45 +118,101 @@ export const setValue: NonNullable<MutationResolvers["setValue"]> = async (
         throw "invariant violated";
       }
       return sql`
-        INSERT INTO public.workresultinstance AS wri (
+        with
+            instance as (
+                select *
+                from public.workinstance
+                where id = ${id}
+            ),
+
+            field_t as (
+                select
+                    workresult.*,
+                    (systagtype in ('String', 'Text')) as is_dynamic
+                from public.workresult
+                inner join public.systag on workresulttypeid = systagid
+                where id = ${suffix[0]}
+            ),
+
+            field as (
+                select f.*
+                from instance, field_t, public.workresultinstance as f
+                where
+                    f.workresultinstanceworkinstanceid = instance.workinstanceid
+                    and f.workresultinstanceworkresultid = field_t.workresultid
+            ),
+
+            ins_content as (
+                insert into public.languagemaster (
+                    languagemastercustomerid,
+                    languagemastersourcelanguagetypeid,
+                    languagemastersource,
+                    languagemastermodifiedby
+                )
+                select
+                    field_t.workresultcustomerid,
+                    lang.systagid,
+                    ${value ?? null},
+                    auth.current_identity(field_t.workresultcustomerid, ${ctx.auth.userId})
+                from field_t
+                inner join public.systag as lang
+                    on systagparentid = 2 and systagtype = ${ctx.req.i18n.language}
+                where
+                    not exists (
+                        select 1
+                        from field
+                        where workresultinstancevaluelanguagemasterid is not null
+                    )
+                    and field_t.is_dynamic
+                returning languagemasterid as _id, languagemastersourcelanguagetypeid as _language
+            ),
+
+            upd_content as (
+                update public.languagemaster
+                set languagemastersource = ${value ?? null},
+                    languagemastersourcelanguagetypeid = (
+                        select systagid
+                        from public.systag
+                        where systagparentid = 2 and systagtype = ${ctx.req.i18n.language}
+                    ),
+                    languagemasterstatus = 'NEEDS_COMPLETE_RETRANSLATION',
+                    languagemastermodifieddate = now(),
+                    languagemastermodifiedby = auth.current_identity(languagemastercustomerid, ${ctx.auth.userId})
+                from field
+                where languagemasterid = field.workresultinstancevaluelanguagemasterid
+            )
+
+        insert into public.workresultinstance as wri (
             workresultinstancecustomerid,
             workresultinstanceworkresultid,
             workresultinstanceworkinstanceid,
             workresultinstancevalue,
+            workresultinstancevaluelanguagemasterid,
+            workresultinstancevaluelanguagetypeid,
             workresultinstancemodifiedby
         )
         (
-          SELECT
-              wr.workresultcustomerid,
-              wr.workresultid,
-              wi.workinstanceid,
-              COALESCE(${value ?? null}::text, wr.workresultdefaultvalue),
-              (
-                  SELECT workerinstanceid
-                  FROM public.workerinstance
-                  WHERE
-                      workerinstancecustomerid = wi.workinstancecustomerid
-                      AND workerinstanceworkerid = (
-                          SELECT workerid
-                          FROM public.worker
-                          WHERE workeridentityid = ${ctx.auth.userId}
-                      )
-              )
-          FROM
-              public.workinstance AS wi,
-              public.workresult AS wr
-          WHERE
-              wi.id = ${id}
-              AND wr.id = ${suffix[0]}
+          select
+              instance.workinstancecustomerid,
+              field_t.workresultid,
+              instance.workinstanceid,
+              coalesce(${value ?? null}::text, field_t.workresultdefaultvalue),
+              ins_content._id,
+              ins_content._language,
+              auth.current_identity(instance.workinstancecustomerid, ${ctx.auth.userId})
+          from instance, field_t
+          left join ins_content on true
         )
-        ON CONFLICT (workresultinstanceworkresultid, workresultinstanceworkinstanceid)
-        DO UPDATE
-            SET
-                workresultinstancevalue = EXCLUDED.workresultinstancevalue,
+        on conflict (workresultinstanceworkresultid, workresultinstanceworkinstanceid)
+        do update
+            set
+                workresultinstancevalue = excluded.workresultinstancevalue,
+                workresultinstancevaluelanguagemasterid = excluded.workresultinstancevaluelanguagemasterid,
+                workresultinstancevaluelanguagetypeid = excluded.workresultinstancevaluelanguagetypeid,
                 workresultinstancemodifieddate = now(),
-                workresultinstancemodifiedby = EXCLUDED.workresultinstancemodifiedby
-            WHERE
-                wri.workresultinstancevalue IS DISTINCT FROM EXCLUDED.workresultinstancevalue
+                workresultinstancemodifiedby = excluded.workresultinstancemodifiedby
+            where
+                wri.workresultinstancevalue is distinct from excluded.workresultinstancevalue
       `;
     })
     .exhaustive();

@@ -1,7 +1,8 @@
 import { orm } from "@/datasources/postgres";
 import type { Context, InputMaybe } from "@/schema";
 import { encodeGlobalId } from "@/schema/system";
-import { assertNonNull, map } from "@/util";
+import type { Task } from "@/schema/system/component/task";
+import { assert, assertNonNull, map } from "@/util";
 import type { TypedDocumentNode as DocumentNode } from "@graphql-typed-document-node/core";
 import {
   type ExecutionResult,
@@ -9,6 +10,7 @@ import {
   graphql,
   print,
 } from "graphql";
+import type { ID } from "grats";
 
 // biome-ignore lint/suspicious/noExplicitAny:
 export async function execute<R, V extends Record<any, any>>(
@@ -84,4 +86,25 @@ export function findAndEncode(
     ),
     `setup failed to find ${op} (${type})`,
   );
+}
+
+export async function assertTaskIsNamed(
+  t: Task,
+  displayName: string,
+  ctx: Context,
+) {
+  const dn = await t.displayName();
+  const n = await dn.name(ctx);
+  return n.value === displayName;
+}
+
+export function assertNoDiagnostics<T, R extends { __typename?: T }>(
+  result?: R | null,
+) {
+  assert(result?.__typename !== "Diagnostic");
+}
+
+export async function getFieldByName(t: Task, name: string): Promise<ID> {
+  const field = await t.field({ byName: { value: name } });
+  return assertNonNull(field?.id, `no named field ${name}`);
 }

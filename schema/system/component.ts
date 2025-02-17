@@ -24,7 +24,7 @@ export interface Component {
   readonly id: ID;
 }
 
-const field$fragment: Fragment = sql`
+export const field$fragment: Fragment = sql`
 select
     f._name,
     f.id,
@@ -85,14 +85,7 @@ export async function fields(
   const rows = await match(parent._type)
     .with(
       "workinstance",
-      () => sql<
-        {
-          _name: string;
-          id: string;
-          value: Value;
-          valueType: ValueType;
-        }[]
-      >`
+      () => sql<Field[]>`
         with
             field as (
                 select
@@ -131,14 +124,7 @@ export async function fields(
     )
     .with(
       "worktemplate",
-      () => sql<
-        {
-          _name: string;
-          id: string;
-          value: Value;
-          valueType: ValueType;
-        }[]
-      >`
+      () => sql<Field[]>`
         with
             field as (
                 select

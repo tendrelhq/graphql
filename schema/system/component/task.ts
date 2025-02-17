@@ -12,9 +12,14 @@ import { GraphQLError } from "graphql/error";
 import type { ID, Int } from "grats";
 import type { Fragment } from "postgres";
 import { match } from "ts-pattern";
-import { decodeGlobalId } from "..";
+import { decodeGlobalId, encodeGlobalId } from "..";
 import type { Aggregate } from "../aggregation";
-import type { Component, FieldInput } from "../component";
+import {
+  type Component,
+  type Field,
+  type FieldInput,
+  field$fragment,
+} from "../component";
 import type { Refetchable } from "../node";
 import type { Overridable } from "../overridable";
 import type { Connection, Edge } from "../pagination";
@@ -24,6 +29,14 @@ import type { DisplayName, Named } from "./name";
 
 export type ConstructorArgs = {
   id: ID;
+};
+
+export type FieldOptions = {
+  byName?: {
+    // TODO: support localized byName lookup?
+    locale?: never;
+    value: string;
+  };
 };
 
 /**
@@ -57,9 +70,84 @@ export class Task
     this._id = id;
   }
 
+  static fromTypeId(type: string, id: string, ctx: Context) {
+    return new Task({ id: encodeGlobalId({ type, id }) }, ctx);
+  }
+
   /** @gqlField */
   async displayName(): Promise<DisplayName> {
     return await this.ctx.orm.displayName.load(this.id);
+  }
+
+  async field(opts: FieldOptions): Promise<Field | null> {
+    const [row] = await match(this._type)
+      .with(
+        "workinstance",
+        () => sql<[Field?]>`
+          with field as (
+              select
+                  encode(
+                      ('workresultinstance:' || wi.id || ':' || wr.id)::bytea, 'base64'
+                  ) as id,
+                  encode(('name:' || n.languagemasteruuid)::bytea, 'base64') as _name,
+                  wi.workinstanceid as _id,
+                  wr.workresultid as _field,
+                  t.systagtype as type,
+                  wri.workresultinstancevalue as value
+              from public.workinstance as wi
+              inner join
+                  public.workresultinstance as wri
+                  on wi.workinstanceid = wri.workresultinstanceworkinstanceid
+              inner join
+                  public.workresult as wr
+                  on wri.workresultinstanceworkresultid = wr.workresultid
+              inner join
+                  public.languagemaster as n
+                  on wr.workresultlanguagemasterid = n.languagemasterid
+                  ${
+                    opts.byName
+                      ? sql`and n.languagemastersource = ${opts.byName.value}`
+                      : sql``
+                  }
+              inner join public.systag as t on wr.workresulttypeid = t.systagid
+              where wi.id = ${this._id}
+          )
+
+          ${field$fragment}
+        `,
+      )
+      .with(
+        "worktemplate",
+        () => sql<[Field?]>`
+          with field as (
+              select
+                  encode(('workresult:' || wr.id)::bytea, 'base64') as id,
+                  encode(('name:' || n.languagemasteruuid)::bytea, 'base64') as "_name",
+                  wr.workresultid as _field,
+                  t.systagtype as type,
+                  wr.workresultdefaultvalue as value
+              from public.worktemplate as wt
+              inner join
+                  public.workresult as wr
+                  on wt.worktemplateid = wr.workresultworktemplateid
+              inner join
+                  public.languagemaster as n
+                  on wr.workresultlanguagemasterid = n.languagemasterid
+                  ${
+                    opts.byName
+                      ? sql`and n.languagemastersource = ${opts.byName.value}`
+                      : sql``
+                  }
+              inner join public.systag as t on wr.workresulttypeid = t.systagid
+              where wt.id = ${this._id}
+          )
+
+          ${field$fragment}
+        `,
+      )
+      .otherwise(() => []);
+
+    return row ?? null;
   }
 
   /**

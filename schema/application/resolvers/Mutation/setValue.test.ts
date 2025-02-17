@@ -1,37 +1,85 @@
-import { describe, expect, test } from "bun:test";
+import { afterAll, beforeAll, describe, expect, test } from "bun:test";
+import { sql } from "@/datasources/postgres";
 import { schema } from "@/schema/final";
-import { encodeGlobalId } from "@/schema/system";
-import { execute } from "@/test/prelude";
+import { decodeGlobalId, encodeGlobalId } from "@/schema/system";
+import { Task } from "@/schema/system/component/task";
+import {
+  createTestContext,
+  execute,
+  findAndEncode,
+  getFieldByName,
+} from "@/test/prelude";
+import { assertNonNull, map } from "@/util";
 import { TestSetValueDocument } from "./setValue.test.generated";
 
-describe.skip("setValue", () => {
-  test("no delta", async () => {
+const ctx = await createTestContext();
+
+describe("setValue", () => {
+  let CUSTOMER: string;
+  let TASK: Task;
+
+  test("set", async () => {
+    const field = await getFieldByName(TASK, "Run Output");
     const result = await execute(schema, TestSetValueDocument, {
-      parent:
-        "d29ya2luc3RhbmNlOndvcmstaW5zdGFuY2VfZDZjNTljM2EtOWQ1MS00MDc0LTllNjItZTkzZTgxOWIxZWFh",
-      entity: encodeGlobalId({
-        type: "workresultinstance",
-        id: "work-instance_d6c59c3a-9d51-4074-9e62-e93e819b1eaa",
-        suffix: "work-result_f8759c77-58c0-4ecf-b3c0-6cf76c4e22b4",
-      }),
+      parent: TASK.id,
+      entity: field,
       input: {
         number: {
-          // To test with delta:
-          // 1. run as is; will pass
-          // 2. increment to 43, run again; will fail with delta AND value diff
-          // 3. decrement to 42, run again; will fail with delta diff
-          // 4. run again; will pass
           value: 42,
         },
       },
     });
-    expect(result).toMatchSnapshot();
+
+    expect(result.errors).toBeFalsy();
+    expect(result.data).toMatchSnapshot();
+  });
+
+  test("set: dynamic content", async () => {
+    const field = await getFieldByName(TASK, "Comments");
+    const result = await execute(schema, TestSetValueDocument, {
+      parent: TASK.id,
+      entity: field,
+      input: {
+        string: {
+          value: "Hello world",
+        },
+      },
+    });
+
+    expect(result.errors).toBeFalsy();
+    expect(result.data).toMatchSnapshot();
+
+    // TODO: move to prelude
+    const { id, suffix } = decodeGlobalId(field);
+    const [row] = await sql`
+      select
+          languagemastersource as content,
+          languagemastersourcelanguagetypeid as language
+      from public.workresultinstance
+      inner join
+          public.languagemaster
+          on workresultinstancevaluelanguagemasterid = languagemasterid
+      where
+          workresultinstanceworkinstanceid = (
+              select workinstanceid
+              from public.workinstance
+              where id = ${id}
+          )
+          and workresultinstanceworkresultid = (
+              select workresultid
+              from public.workresult
+              where id = ${assertNonNull(suffix?.at(0))}
+          )
+    `;
+    expect(row).toEqual({
+      content: "Hello world",
+      language: 20n,
+    });
   });
 
   test("entity is not mutable", async () => {
     const result = await execute(schema, TestSetValueDocument, {
-      parent:
-        "d29ya2luc3RhbmNlOndvcmstaW5zdGFuY2VfZDZjNTljM2EtOWQ1MS00MDc0LTllNjItZTkzZTgxOWIxZWFh",
+      parent: TASK.id,
       entity: encodeGlobalId({
         type: "foo",
         id: "foo",
@@ -47,8 +95,7 @@ describe.skip("setValue", () => {
 
   test("global id invariant", async () => {
     const result = await execute(schema, TestSetValueDocument, {
-      parent:
-        "d29ya2luc3RhbmNlOndvcmstaW5zdGFuY2VfZDZjNTljM2EtOWQ1MS00MDc0LTllNjItZTkzZTgxOWIxZWFh",
+      parent: TASK.id,
       entity: encodeGlobalId({
         type: "workresultinstance",
         id: "foo",
@@ -60,5 +107,37 @@ describe.skip("setValue", () => {
       },
     });
     expect(result).toMatchSnapshot();
+  });
+
+  beforeAll(async () => {
+    const logs = await sql<{ op: string; id: string }[]>`
+      select *
+      from
+          runtime.create_demo(
+              customer_name := 'Frozen Tendy Factory',
+              admins := (
+                  select array_agg(workeruuid)
+                  from public.worker
+                  where workeridentityid = ${ctx.auth.userId}
+              ),
+              modified_by := 895
+          )
+      ;
+    `;
+    CUSTOMER = findAndEncode("customer", "organization", logs);
+    TASK = map(
+      findAndEncode("instance", "workinstance", logs),
+      id => new Task({ id }, ctx),
+    );
+    console.log(TASK._type, TASK._id);
+  });
+
+  afterAll(async () => {
+    const { id } = decodeGlobalId(CUSTOMER);
+    process.stdout.write("Cleaning up... ");
+    const [row] = await sql<[{ ok: string }]>`
+      select runtime.destroy_demo(${id}) as ok;
+    `;
+    console.log(row.ok);
   });
 });

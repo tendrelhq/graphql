@@ -1,26 +1,49 @@
 // Bun Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`setValue no delta 1`] = `
+exports[`setValue set 1`] = `
 {
-  "data": {
-    "setValue": {
-      "__typename": "SetValuePayload",
-      "delta": 0,
-      "node": {
-        "__typename": "ChecklistResult",
-        "status": {
-          "__typename": "ChecklistOpen",
-        },
-        "widget": {
-          "__typename": "NumberWidget",
-          "number": 42,
-        },
+  "setValue": {
+    "__typename": "SetValuePayload",
+    "delta": 1,
+    "node": {
+      "__typename": "ChecklistResult",
+      "status": {
+        "__typename": "ChecklistOpen",
       },
-      "parent": {
-        "__typename": "Checklist",
-        "status": {
-          "__typename": "ChecklistOpen",
-        },
+      "widget": {
+        "__typename": "NumberWidget",
+        "number": 42,
+      },
+    },
+    "parent": {
+      "__typename": "Checklist",
+      "status": {
+        "__typename": "ChecklistOpen",
+      },
+    },
+  },
+}
+`;
+
+exports[`setValue set: dynamic content 1`] = `
+{
+  "setValue": {
+    "__typename": "SetValuePayload",
+    "delta": 1,
+    "node": {
+      "__typename": "ChecklistResult",
+      "status": {
+        "__typename": "ChecklistOpen",
+      },
+      "widget": {
+        "__typename": "StringWidget",
+        "string": "Hello world",
+      },
+    },
+    "parent": {
+      "__typename": "Checklist",
+      "status": {
+        "__typename": "ChecklistOpen",
       },
     },
   },

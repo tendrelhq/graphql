@@ -213,7 +213,7 @@ export const ChecklistResult: ChecklistResultResolvers = {
   status(parent, _, ctx) {
     return ctx.orm.status.load(parent.id);
   },
-  async widget(parent) {
+  async widget(parent, _, ctx) {
     const { type, id, suffix } = decodeGlobalId(parent.id);
     // Note that currently we treat the following as "unknown":
     // - Calculated
@@ -225,10 +225,10 @@ export const ChecklistResult: ChecklistResultResolvers = {
     // Unknown types are eventually dropped.
     //
     // The following "Result Type"s are deprecated in favor of widget types:
-    // - Clicker -> Number (deprecated; use widget type)
-    // - Sentiment -> Number (deprecated; use widget type)
-    // - Text -> String (deprecated; use widget type)
-    // - Time at Task -> Duration (deprecated; use widget type)
+    // - Clicker -> Number
+    // - Sentiment -> Number
+    // - Text -> String
+    // - Time at Task -> Duration
     const [row] = await sql<[ResolversTypes["Widget"]]>`
         WITH cte AS (
         ${match(type)
@@ -292,7 +292,7 @@ export const ChecklistResult: ChecklistResultResolvers = {
                        WHEN wt.custagtype = 'Section' THEN 'SectionWidget'
                        ELSE null
                   END AS widget_type,
-                  nullif(wri.workresultinstancevalue, '') AS raw_value,
+                  coalesce(lt.languagetranslationvalue, lm.languagemastersource, wri.workresultinstancevalue) AS raw_value,
                   encode(('workresultinstance:' || wi.id || ':' || wr.id || ':' || coalesce(rt.systagtype, dt.systagtype))::bytea, 'base64') AS id
               FROM public.workinstance AS wi
               INNER JOIN public.workresult AS wr
@@ -306,6 +306,15 @@ export const ChecklistResult: ChecklistResultResolvers = {
                   ON wr.workresultentitytypeid = rt.systagid
               LEFT JOIN public.custag AS wt
                   ON wr.workresultwidgetid = wt.custagid
+              LEFT JOIN public.languagemaster AS lm
+                  ON  wri.workresultinstancevaluelanguagemasterid = lm.languagemasterid
+              LEFT JOIN public.languagetranslations AS lt
+                  ON  wri.workresultinstancevaluelanguagemasterid = lt.languagetranslationmasterid
+                  AND lt.languagetranslationtypeid = (
+                      SELECT systagid
+                      FROM public.systag
+                      WHERE systagparentid = 2 AND systagtype = ${ctx.req.i18n.language}
+                  )
               WHERE
                   wi.id = ${id}
                   AND wr.id = ${suffix?.at(0) ?? null}

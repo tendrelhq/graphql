@@ -2,8 +2,16 @@ import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 import { sql } from "@/datasources/postgres";
 import { schema } from "@/schema/final";
 import { decodeGlobalId, encodeGlobalId } from "@/schema/system";
-import { NOW, createTestContext, execute } from "@/test/prelude";
-import { assert, nullish } from "@/util";
+import {
+  NOW,
+  assertNoDiagnostics,
+  assertTaskIsNamed,
+  createTestContext,
+  execute,
+  findAndEncode,
+  getFieldByName,
+} from "@/test/prelude";
+import { assert, map, nullish } from "@/util";
 import { Task } from "../system/component/task";
 import {
   TestRuntimeApplyFieldEditsMutationDocument,
@@ -14,7 +22,7 @@ import {
 
 const ctx = await createTestContext();
 
-describe.skipIf(!!process.env.CI)("runtime demo", () => {
+describe("runtime demo", () => {
   // See beforeAll for initialization of these variables.
   let ACCOUNT: string; // customer
   let FSM: Task; // instance
@@ -46,7 +54,7 @@ describe.skipIf(!!process.env.CI)("runtime demo", () => {
             hash: h,
             overrides: [
               {
-                field: await overrideStartTimeField(FSM),
+                field: await getFieldByName(FSM, "Override Start Time"),
                 value: {
                   timestamp: NOW.toISOString(),
                 },
@@ -139,7 +147,7 @@ describe.skipIf(!!process.env.CI)("runtime demo", () => {
 
   test("end idle time", async () => {
     const t = await mostRecentlyInProgress(FSM);
-    await assertTaskIsNamed(t, "Idle Time");
+    await assertTaskIsNamed(t, "Idle Time", ctx);
     const h = (await t.hash()) as string;
 
     const result = await execute(
@@ -279,7 +287,7 @@ describe.skipIf(!!process.env.CI)("runtime demo", () => {
 
   test("end downtime", async () => {
     const t = await mostRecentlyInProgress(FSM);
-    assertTaskIsNamed(t, "Downtime");
+    await assertTaskIsNamed(t, "Downtime", ctx);
 
     const result = await execute(
       schema,
@@ -322,7 +330,7 @@ describe.skipIf(!!process.env.CI)("runtime demo", () => {
     expect(start.errors).toBeFalsy();
 
     const t0 = await mostRecentlyInProgress(FSM);
-    assertTaskIsNamed(t0, "Idle Time");
+    await assertTaskIsNamed(t0, "Idle Time", ctx);
 
     const end = await execute(schema, TestRuntimeTransitionMutationDocument, {
       includeChain: false,
@@ -402,7 +410,7 @@ describe.skipIf(!!process.env.CI)("runtime demo", () => {
         entity: FSM.id,
         edits: [
           {
-            field: await overrideStartTimeField(FSM),
+            field: await getFieldByName(FSM, "Override Start Time"),
             // Test null field-level overrides:
             value: undefined,
             valueType: "timestamp",
@@ -606,34 +614,15 @@ describe.skipIf(!!process.env.CI)("runtime demo", () => {
     }
 
     // we get customer uuid back in the first row
-    const row1 = logs.at(1 - 1);
-    // but we can check the tag to be sure
-    if (row1?.op?.trim() !== "+customer") {
-      debugLogs();
-      throw "setup failed to find customer";
-    }
-    ACCOUNT = encodeGlobalId({
-      type: "organization", // bleh
-      id: row1.id,
-    });
-
-    // grab the first instance from the 20th row
-    const row20 = logs.at(20 - 1);
-    // but we can check the tag to be sure
-    if (row20?.op?.trim() !== "+instance") {
-      debugLogs();
-      throw "setup failed to find 'Run' task instance";
-    }
-    FSM = makeTask("workinstance", row20.id);
-
-    // we get 'Idle Time' in the 29th row
-    const row29 = logs.at(29 - 1);
-    // but we can check the tag to be sure
-    if (row29?.op?.trim() !== "+next") {
-      debugLogs();
-      throw "setup failed to find 'Idle Time' task template";
-    }
-    IDLE_TIME = makeTask("worktemplate", row29.id);
+    ACCOUNT = findAndEncode("customer", "organization", logs);
+    FSM = map(
+      findAndEncode("instance", "workinstance", logs),
+      id => new Task({ id }, ctx),
+    );
+    IDLE_TIME = map(
+      findAndEncode("next", "worktemplate", logs),
+      id => new Task({ id }, ctx),
+    );
 
     // we get 'Downtime' in the 39th row
     const row39 = logs.at(39 - 1);
@@ -642,13 +631,13 @@ describe.skipIf(!!process.env.CI)("runtime demo", () => {
       debugLogs();
       throw "setup failed to find 'Downtime' task template";
     }
-    DOWNTIME = makeTask("worktemplate", row39.id);
+    DOWNTIME = Task.fromTypeId("worktemplate", row39.id, ctx);
   });
 
   afterAll(async () => {
     const rows = await sql`
-      update public.workinstance
-      set workinstancestatusid = 710
+      select id
+      from public.workinstance
       where
           workinstancecustomerid in (
               select customerid
@@ -656,7 +645,6 @@ describe.skipIf(!!process.env.CI)("runtime demo", () => {
               where customeruuid = ${decodeGlobalId(ACCOUNT).id}
           )
           and workinstancestatusid = 707
-      returning id
       ;
     `;
 
@@ -664,7 +652,7 @@ describe.skipIf(!!process.env.CI)("runtime demo", () => {
       console.warn(
         `
 ==========
-Test suite finished with ${rows.count} in progress instances lingering.
+Test suite finished with ${rows.length} in progress instances lingering.
 This should be considered a BUG!
 
 Linguine instances:
@@ -708,72 +696,9 @@ async function mostRecentlyInProgress(t: Task): Promise<Task> {
             where og.id = ${t._id}
         )
         and workinstancestatusid = 707
-    order by workinstanceid DESC
+    order by workinstanceid desc
     limit 1;
   `;
   assert(!nullish(row), "no in progress instance");
-  return makeTask("workinstance", row.id);
-}
-
-/**
- * HACK! Grabs the "Override Start Time" field (i.e. workresult) for the given
- * work instance.
- */
-async function overrideStartTimeField(t: Task): Promise<string> {
-  assert(t._type === "workinstance");
-  const [row] = await sql`
-    select encode(('workresult:' || wr.id)::bytea, 'base64') as id
-    from public.workresult as wr
-    where
-        wr.workresultorder = 0
-        and wr.workresultisprimary = true
-        and wr.workresulttypeid in (
-            select s.systagid
-            from public.systag as s
-            where s.systagparentid = 699 and s.systagtype = 'Date'
-        )
-        and wr.workresultworktemplateid in (
-            select wi.workinstanceworktemplateid
-            from public.workinstance as wi
-            where wi.id = ${t._id}
-        )
-  `;
-  assert(nullish(row) === false, "no override start time field");
-  return row.id;
-}
-
-async function getFieldByName(t: Task, name: string): Promise<string> {
-  assert(t._type === "workinstance");
-  const [row] = await sql`
-    select encode(('workresult:' || wr.id)::bytea, 'base64') as id
-    from public.workresult as wr
-    inner join public.languagemaster as lm
-        on wr.workresultlanguagemasterid = lm.languagemasterid
-    where
-        lm.languagemastersource = ${name}
-        and wr.workresultisprimary = false
-        and wr.workresultworktemplateid in (
-            select wi.workinstanceworktemplateid
-            from public.workinstance as wi
-            where wi.id = ${t._id}
-        )
-  `;
-  assert(nullish(row) === false, `no named field '${name}'`);
-  return row.id;
-}
-
-function makeTask(type: "worktemplate" | "workinstance", id: string) {
-  return new Task({ id: encodeGlobalId({ type, id }) }, ctx);
-}
-
-async function assertTaskIsNamed(t: Task, displayName: string) {
-  const dn = await t.displayName();
-  const n = await dn.name(ctx);
-  return n.value === displayName;
-}
-
-function assertNoDiagnostics<T, R extends { __typename?: T }>(
-  result?: R | null,
-) {
-  assert(result?.__typename !== "Diagnostic");
+  return Task.fromTypeId("workinstance", row.id, ctx);
 }
