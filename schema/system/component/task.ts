@@ -1,4 +1,4 @@
-import { type Sql, type TxSql, sql } from "@/datasources/postgres";
+import { type Sql, type TxSql, join, sql } from "@/datasources/postgres";
 import {
   Location,
   type ConstructorArgs as LocationConstructorArgs,
@@ -7,7 +7,7 @@ import type { Trackable } from "@/schema/platform/tracking";
 import { type Diagnostic, DiagnosticKind, type Result } from "@/schema/result";
 import type { Mutation } from "@/schema/root";
 import type { Context } from "@/schema/types";
-import { assert, assertNonNull } from "@/util";
+import { assert, assertNonNull, buildPaginationArgs } from "@/util";
 import { GraphQLError } from "graphql/error";
 import type { ID, Int } from "grats";
 import type { Fragment } from "postgres";
@@ -17,7 +17,7 @@ import type { Aggregate } from "../aggregation";
 import type { Component, FieldInput } from "../component";
 import type { Refetchable } from "../node";
 import type { Overridable } from "../overridable";
-import type { Connection, Edge } from "../pagination";
+import type { Connection, Edge, PageInfo } from "../pagination";
 import type { Timestamp } from "../temporal";
 import { type Assignable, Assignment } from "./assignee";
 import type { DisplayName, Named } from "./name";
@@ -73,6 +73,119 @@ export class Task
     if (this._type !== "workinstance") return "";
     const { hash } = await computeTaskHash(sql, this);
     return hash;
+  }
+
+  /** @gqlField */
+  async attachments(parent, args) {
+    // FIXME: not right. i guess parent is this.id, and idk about args
+    const { type, id } = decodeGlobalId(this.id);
+
+    // FIXME: does this comment apply to "Tasks"?
+    // Checklists can be either workinstance or worktemplate.
+    // The latter cannot have attachments.
+    if (type !== "workinstance") {
+      return {
+        edges: [],
+        pageInfo: {
+          hasNextPage: false,
+          hasPreviousPage: false,
+        },
+        totalCount: 0,
+      };
+    }
+
+    const { cursor, direction, limit } = buildPaginationArgs(args, {
+      defaultLimit: Number(
+        process.env.DEFAULT_ATTACHMENT_PAGINATION_LIMIT ?? 20,
+      ),
+      maxLimit: Number(process.env.MAX_ATTACHMENT_PAGINATION_LIMIT ?? 20),
+    });
+
+    // Our (default) order clause specifies:
+    // 1. workpictureinstancemodifieddate DESC
+    // 2. workpictureinstanceid DESC
+    // So, forward => < implies "recently modified first"
+    const cmp = direction === "forward" ? sql`<` : sql`>`;
+
+    // We are operating at the instance level here.
+    const rows = await sql<{ id: string }[]>`
+      ${
+        cursor
+          ? sql`
+      WITH cursor AS (
+          SELECT
+              workpictureinstanceid AS id,
+              workpictureinstancemodifieddate AS updated_at
+          FROM public.workpictureinstance
+          WHERE
+              workpictureinstanceuuid = ${cursor.id}
+      )`
+          : sql``
+      }
+      SELECT
+          encode(('workpictureinstance:' || workpictureinstanceuuid)::bytea, 'base64') AS id
+      FROM public.workpictureinstance
+      ${cursor ? sql`INNER JOIN cursor ON true` : sql``}
+      WHERE ${join(
+        [
+          ...(cursor
+            ? [
+                sql`(workpictureinstancemodifieddate, workpictureinstanceid) ${cmp} (cursor.updated_at, cursor.id)`,
+              ]
+            : []),
+          sql`workpictureinstanceworkinstanceid = (
+              SELECT workinstanceid
+              FROM public.workinstance
+              WHERE id = ${id}
+          )`,
+          sql`workpictureinstanceworkresultinstanceid IS null`,
+        ],
+        sql`AND`,
+      )}
+      ORDER BY
+          workpictureinstancemodifieddate DESC,
+          workpictureinstanceid DESC
+      LIMIT ${limit + 1};
+    `;
+
+    const n1 = rows.length > limit ? rows.pop() : undefined;
+    const hasNext = direction === "forward" && !!n1;
+    const hasPrev = direction === "backward" && !!n1;
+
+    const edges = rows.map(row => ({
+      cursor: row.id as string,
+      // biome-ignore lint/suspicious/noExplicitAny: defer to Attachment
+      node: row as any,
+    }));
+
+    const pageInfo: PageInfo = {
+      startCursor: edges.at(0)?.cursor,
+      endCursor: edges.at(-1)?.cursor,
+      hasNextPage: hasNext,
+      hasPreviousPage: hasPrev,
+    };
+
+    const [{ count }] = await sql<[{ count: bigint }]>`
+      SELECT count(*)
+      FROM public.workpictureinstance
+      WHERE ${join(
+        [
+          sql`workpictureinstanceworkinstanceid = (
+              SELECT workinstanceid
+              FROM public.workinstance
+              WHERE id = ${id}
+          )`,
+          sql`workpictureinstanceworkresultinstanceid IS null`,
+        ],
+        sql`AND`,
+      )}
+    `;
+
+    return {
+      edges,
+      pageInfo,
+      totalCount: Number(count),
+    };
   }
 
   /**
