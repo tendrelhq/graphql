@@ -76,8 +76,8 @@ export class Task
   }
 
   /** @gqlField */
+  // FIXME: props are not right. i guess parent is this.id, and idk about args
   async attachments(parent, args) {
-    // FIXME: not right. i guess parent is this.id, and idk about args
     const { type, id } = decodeGlobalId(this.id);
 
     // FIXME: does this comment apply to "Tasks"?
