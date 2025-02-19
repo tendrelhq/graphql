@@ -26,6 +26,7 @@ export default (_: Request) =>
           ON l.locationsiteid = s.locationid
       LEFT JOIN public.location AS p
           ON l.locationparentid = p.locationid
+          AND l.locationparentid != l.locationid
       WHERE l.locationuuid IN ${sql(keys)};
     `;
 

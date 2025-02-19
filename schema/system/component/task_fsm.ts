@@ -150,6 +150,8 @@ export async function advance(
   assert(root._type === "workinstance");
 
   return await sql.begin(async tx => {
+    await tx`select * from auth.set_actor(${ctx.auth.userId}, ${ctx.req.i18n.language})`;
+
     const [fsm] = await tx<[FSM?]>`${fsm$fragment(root)}`;
     if (!fsm) {
       return {
@@ -263,10 +265,7 @@ export async function advanceFsm(
             select
                 w.id as previous_id,
                 auth.current_identity(w.workinstancecustomerid, ${ctx.auth.userId}) as modified_by,
-                (
-                  select l.id
-                  from legacy0.primary_location_for_instance(w.id) as l
-                ) as location_id
+                (select l.id from legacy0.primary_location_for_instance(w.id) as l) as location_id
             from public.workinstance as w
             where w.id = ${decodeGlobalId(fsm.active).id}
         )
@@ -286,6 +285,10 @@ export async function advanceFsm(
         group by t.instance;
       `;
       console.debug(`advance: engine.instantiate.count: ${result.length}`);
+
+      // The only instantiation should be the choice, although the engine might
+      // cut us off, hence:
+      assert(result.length < 2);
 
       const ins = result.at(0)?.instance;
       if (ins) {

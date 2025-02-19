@@ -11,3 +11,5 @@
 
 create-user-type 2025-02-18T17:56:30Z Will Ruggiano <ruggiano@tendrel.io> # move create-user-type to own file
 create-location 2025-02-18T17:59:40Z Will Ruggiano <ruggiano@tendrel.io> # move create_location to own file
+apply-field-edits 2025-02-18T18:12:30Z Will Ruggiano <ruggiano@tendrel.io> # move field-level edits to sql
+@v0.1.1 2025-02-19T01:58:07Z Will Ruggiano <ruggiano@tendrel.io> # v0.1.1 - mainly a dynamic content patch

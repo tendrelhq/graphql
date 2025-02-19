@@ -20,10 +20,16 @@ export const copyFrom: NonNullable<MutationResolvers["copyFrom"]> = async (
   const { type, id } = decodeGlobalId(entity);
   const result = await match(type)
     .with("workinstance", () =>
-      sql.begin(tx => copyFromWorkInstance(tx, id, options, ctx)),
+      sql.begin(async tx => {
+        await tx`select * from auth.set_actor(${ctx.auth.userId}, ${ctx.req.i18n.language})`;
+        return await copyFromWorkInstance(tx, id, options, ctx);
+      }),
     )
     .with("worktemplate", () =>
-      sql.begin(tx => copyFromWorkTemplate(tx, id, options, ctx)),
+      sql.begin(async tx => {
+        await tx`select * from auth.set_actor(${ctx.auth.userId}, ${ctx.req.i18n.language})`;
+        return await copyFromWorkTemplate(tx, id, options, ctx);
+      }),
     )
     .otherwise(() => {
       console.debug(
@@ -480,6 +486,7 @@ export async function copyFromWorkTemplate(
   if (options.fieldOverrides?.length) {
     const edits = applyEdits$fragment(ctx, t, options.fieldOverrides);
     if (edits) {
+      await sql``;
       const result = await sql`${edits}`;
       console.log(`Applied ${result.count} field-level edits.`);
     }

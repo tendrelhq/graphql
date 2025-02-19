@@ -79,6 +79,7 @@ export class Task
     return await this.ctx.orm.displayName.load(this.id);
   }
 
+  // Not exposed via GraphQL, yet.
   async field(opts: FieldOptions): Promise<Field | null> {
     const [row] = await match(this._type)
       .with(
@@ -694,7 +695,10 @@ export async function advance(
   t: Task,
   opts: Omit<AdvanceTaskOptions, "id">,
 ): Promise<Result<AdvanceTaskResult>> {
-  return sql.begin(tx => advanceTask(tx, ctx, t, opts));
+  return sql.begin(async tx => {
+    await tx`select * from auth.set_actor(${ctx.auth.userId}, ${ctx.req.i18n.language})`;
+    return await advanceTask(tx, ctx, t, opts);
+  });
 }
 
 export async function advanceTask(
@@ -939,6 +943,134 @@ export function applyAssignments$fragment(
   `;
 }
 
+/**
+ * TODO: description.
+ *
+ * @gqlField
+ */
+export async function fields(
+  parent: Task,
+  ctx: Context,
+): Promise<Connection<Field>> {
+  if (parent._type !== "workinstance" && parent._type !== "worktemplate") {
+    console.warn(`Underlying type '${parent._type}' does not support fields`);
+    return {
+      edges: [],
+      pageInfo: {
+        hasNextPage: false,
+        hasPreviousPage: false,
+      },
+      totalCount: 0,
+    };
+  }
+
+  // FIXME: one last bit of jankiness down below: L114-118, L161-165.
+  // This hack is solely for the janky ass start/end time override "fields".
+  const rows = await match(parent._type)
+    .with(
+      "workinstance",
+      () => sql<Field[]>`
+        with
+            field as (
+                select
+                    encode(
+                        ('workresultinstance:' || wi.id || ':' || wr.id)::bytea, 'base64'
+                    ) as id,
+                    encode(('name:' || n.languagemasteruuid)::bytea, 'base64') as _name,
+                    wi.workinstanceid as _id,
+                    wr.workresultid as _field,
+                    t.systagtype as type,
+                    nullif(
+                        coalesce(vt.languagetranslationvalue, v.languagemastersource, wri.workresultinstancevalue),
+                        ''
+                    ) as value
+                from public.workinstance as wi
+                inner join
+                    public.workresultinstance as wri
+                    on wi.workinstanceid = wri.workresultinstanceworkinstanceid
+                inner join
+                    public.workresult as wr
+                    on wri.workresultinstanceworkresultid = wr.workresultid
+                    and (
+                        wr.workresultisprimary = false
+                        or (
+                            wr.workresultisprimary = true
+                            and wr.workresultentitytypeid is null
+                            and wr.workresulttypeid != 737
+                        )
+                    )
+                inner join
+                    public.languagemaster as n
+                    on wr.workresultlanguagemasterid = n.languagemasterid
+                inner join
+                    public.systag as t
+                    on wr.workresulttypeid = t.systagid
+                left join
+                    public.languagemaster as v
+                    on wri.workresultinstancevaluelanguagemasterid = v.languagemasterid
+                left join
+                    public.languagetranslations as vt
+                    on v.languagemasterid = vt.languagetranslationmasterid
+                    and vt.languagetranslationtypeid = (
+                        select systagid
+                        from public.systag
+                        where systagparentid = 2 and systagtype = ${ctx.req.i18n.language}
+                    )
+                where wi.id = ${parent._id}
+                order by wr.workresultorder asc, wr.workresultid asc
+            )
+        ${field$fragment}
+      `,
+    )
+    .with(
+      "worktemplate",
+      () => sql<Field[]>`
+        with
+            field as (
+                select
+                    encode(('workresult:' || wr.id)::bytea, 'base64') as id,
+                    encode(('name:' || n.languagemasteruuid)::bytea, 'base64') as "_name",
+                    wr.workresultid as _field,
+                    t.systagtype as type,
+                    wr.workresultdefaultvalue as value
+                from public.worktemplate as wt
+                inner join
+                    public.workresult as wr
+                    on wt.worktemplateid = wr.workresultworktemplateid
+                    and (wr.workresultenddate is null or wr.workresultenddate > now())
+                    and (
+                        wr.workresultisprimary = false
+                        or (
+                            wr.workresultisprimary = true
+                            and wr.workresultentitytypeid is null
+                            and wr.workresulttypeid != 737
+                        )
+                    )
+                inner join
+                    public.languagemaster as n
+                    on wr.workresultlanguagemasterid = n.languagemasterid
+                inner join
+                    public.systag as t
+                    on wr.workresulttypeid = t.systagid
+                where wt.id = ${parent._id}
+                order by wr.workresultorder asc, wr.workresultid asc
+            )
+        ${field$fragment}
+      `,
+    )
+    //
+    .otherwise((_: never) => []);
+
+  return {
+    edges: rows.map(row => ({ cursor: row.id, node: row })),
+    pageInfo: {
+      hasNextPage: false,
+      hasPreviousPage: false,
+    },
+    totalCount: rows.length,
+  };
+}
+
 /** @gqlField */
 export async function applyFieldEdits(
   _: Mutation,
@@ -949,6 +1081,7 @@ export async function applyFieldEdits(
   const t = new Task({ id: entity }, ctx);
 
   await sql.begin(async tx => {
+    await tx`select * from auth.set_actor(${ctx.auth.userId}, ${ctx.req.i18n.language})`;
     const f = applyEdits$fragment(ctx, t, edits);
     if (!f) return;
     await tx`${f}`;
@@ -1005,36 +1138,15 @@ export function applyEdits$fragment(
         values ${sql(edits_ as string[][])}
     )
 
-    insert into public.workresultinstance as t (
-        workresultinstancecustomerid,
-        workresultinstanceworkinstanceid,
-        workresultinstanceworkresultid,
-        workresultinstancetimezone,
-        workresultinstancevalue,
-        workresultinstancemodifiedby
-    )
-    select
-        wi.workinstancecustomerid,
-        wi.workinstanceid,
-        wr.workresultid,
-        wi.workinstancetimezone,
-        coalesce(nullif(edits.value, ''), wr.workresultdefaultvalue),
-        auth.current_identity(wi.workinstancecustomerid, ${ctx.auth.userId})
-    from edits
-    inner join public.workinstance as wi on wi.id = ${t._id}
-    inner join public.workresult as wr
-        on  edits.field = wr.id
-        and wi.workinstanceworktemplateid = wr.workresultworktemplateid
-    inner join public.systag as wrt
-        on  wr.workresulttypeid = wrt.systagid
-        and edits.type = wrt.systagtype
-    on conflict (workresultinstanceworkinstanceid, workresultinstanceworkresultid)
-    do update
-        set workresultinstancevalue = excluded.workresultinstancevalue,
-            workresultinstancemodifiedby = excluded.workresultinstancemodifiedby,
-            workresultinstancemodifieddate = now()
-        where
-            t.workresultinstancevalue is distinct from excluded.workresultinstancevalue
+    select count(*)
+    from
+        edits,
+        engine0.apply_field_edit(
+            entity := ${t._id},
+            field := edits.field,
+            field_v := edits.value,
+            field_vt := edits.type
+        )
   `;
 }
 

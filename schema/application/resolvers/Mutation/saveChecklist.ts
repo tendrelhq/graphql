@@ -744,7 +744,10 @@ export const saveChecklist: NonNullable<
     }
 
     // Create an Open instance of the newly created Checklist template.
-    await sql.begin(sql => copyFromWorkTemplate(sql, id, {}, ctx));
+    await sql.begin(async sql => {
+      await sql`select * from auth.set_actor(${ctx.auth.userId}, ${ctx.req.i18n.language})`;
+      return await copyFromWorkTemplate(sql, id, {}, ctx);
+    });
   }
 
   return {

@@ -24,14 +24,14 @@ const ctx = await createTestContext();
 
 describe("runtime demo", () => {
   // See beforeAll for initialization of these variables.
-  let ACCOUNT: string; // customer
+  let CUSTOMER: string;
   let FSM: Task; // instance
   let IDLE_TIME: Task; // template
   let DOWNTIME: Task; // template
 
   test("entrypoint query", async () => {
     const result = await execute(schema, TestRuntimeEntrypointDocument, {
-      root: ACCOUNT,
+      root: CUSTOMER,
     });
     expect(result.errors).toBeFalsy();
     expect(result.data).toMatchSnapshot();
@@ -536,21 +536,21 @@ describe("runtime demo", () => {
   });
 
   test("includeInactive", async () => {
-    // Deactivate all templates for ACCOUNT.
+    // Deactivate all templates for CUSTOMER.
     const r0 = await sql`
       update public.worktemplate
       set worktemplateenddate = now()
       where worktemplatecustomerid = (
           select customerid
           from public.customer
-          where customeruuid = ${decodeGlobalId(ACCOUNT).id}
+          where customeruuid = ${decodeGlobalId(CUSTOMER).id}
       )
     `;
     assert(r0.count > 0);
 
     // Without `includeInactive` we should get nothing back.
     const r1 = await execute(schema, TestRuntimeEntrypointDocument, {
-      root: ACCOUNT,
+      root: CUSTOMER,
       impl: "Task",
     });
     expect(r1.data?.trackables?.totalCount).toBe(0);
@@ -559,7 +559,7 @@ describe("runtime demo", () => {
     // previous test: "history query". We just assert on the count since we
     // already asserted on the content in the aforementioned test.
     const r2 = await execute(schema, TestRuntimeEntrypointDocument, {
-      root: ACCOUNT,
+      root: CUSTOMER,
       impl: "Task",
       includeInactive: true,
     });
@@ -614,7 +614,7 @@ describe("runtime demo", () => {
     }
 
     // we get customer uuid back in the first row
-    ACCOUNT = findAndEncode("customer", "organization", logs);
+    CUSTOMER = findAndEncode("customer", "organization", logs);
     FSM = map(
       findAndEncode("instance", "workinstance", logs),
       id => new Task({ id }, ctx),
@@ -642,7 +642,7 @@ describe("runtime demo", () => {
           workinstancecustomerid in (
               select customerid
               from public.customer
-              where customeruuid = ${decodeGlobalId(ACCOUNT).id}
+              where customeruuid = ${decodeGlobalId(CUSTOMER).id}
           )
           and workinstancestatusid = 707
       ;
@@ -662,7 +662,7 @@ ${rows.map(r => ` - ${r.id}`).join("\n")}
       );
     }
 
-    const { id } = decodeGlobalId(ACCOUNT);
+    const { id } = decodeGlobalId(CUSTOMER);
     // useful for debugging tests:
     if (process.env.SKIP_RUNTIME_CLEANUP) {
       console.log(

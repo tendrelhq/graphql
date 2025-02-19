@@ -150,12 +150,23 @@ export function inspect<T>(t: T) {
   return t;
 }
 
-const newlinePattern = /\n/g;
 /**
- * Use this function to compare base64 encoded strings for identity. This is
- * particularly important when comparing strings that were encoded by the
- * database, since Postgres will insert newlines every 76 characters.
+ * Use this function to compare base64 encoded strings for identity.
  */
 export function compareBase64(a: string, b: string): boolean {
-  return a.replace(newlinePattern, "") === b.replace(newlinePattern, "");
+  return normalizeBase64(a) === normalizeBase64(b);
+}
+
+// Postgres inserts newlines after 76 characters. Apparently it's a thing...
+const newlinePattern = /\n/g;
+
+/**
+ * Use this function to normalize a base64 encoded string, i.e. remove newline
+ * characters that are inserted by Postgres (for example) in certain cases.
+ *
+ * Note that most base64 implementations simply ignore these seemingly erroneous
+ * newlines. As such, this function is mainly useful for (printf) debugging.
+ */
+export function normalizeBase64(s: string) {
+  return s.replace(newlinePattern, "");
 }

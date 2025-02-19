@@ -19,10 +19,10 @@ import { createLocation as mutationCreateLocationResolver } from "./platform/arc
 import { updateLocation as mutationUpdateLocationResolver } from "./platform/archetype/location/update";
 import { trackables as queryTrackablesResolver } from "./platform/tracking";
 import { name as fieldNameResolver } from "./system/component";
-import { fields as taskFieldsResolver } from "./system/component";
 import { assignees as taskAssigneesResolver } from "./system/component/task";
 import { chain as taskChainResolver } from "./system/component/task";
 import { chainAgg as taskChainAggResolver } from "./system/component/task";
+import { fields as taskFieldsResolver } from "./system/component/task";
 import { applyFieldEdits as mutationApplyFieldEditsResolver } from "./system/component/task";
 import { fsm as taskFsmResolver } from "./system/component/task_fsm";
 import { advance as mutationAdvanceResolver } from "./system/component/task_fsm";

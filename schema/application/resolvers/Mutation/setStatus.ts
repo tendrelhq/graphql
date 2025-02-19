@@ -96,8 +96,8 @@ export const setStatus: NonNullable<MutationResolvers["setStatus"]> = async (
         sql`workinstancestatusid IS DISTINCT FROM inputs.status`,
       ];
 
-      return sql.begin(async tx => {
-        const r = await tx`
+      return sql.begin(async sql => {
+        const r = await sql`
           WITH inputs AS (
               SELECT systagid AS status
               FROM public.systag
@@ -115,7 +115,7 @@ export const setStatus: NonNullable<MutationResolvers["setStatus"]> = async (
         // HACK: Automatically assign the instance to the currently
         // authenticated identity it is otherwise unassigned.
         if (targetStatus === "In Progress" || targetStatus === "Complete") {
-          const result = await tx`
+          const result = await sql`
             with cte as (
                 select
                     wi.workinstancecustomerid as customerid,
@@ -146,7 +146,7 @@ export const setStatus: NonNullable<MutationResolvers["setStatus"]> = async (
 
         if (targetStatus === "Complete") {
           // Record Time at Task, if it exists.
-          const result = await tx`
+          const result = await sql`
             INSERT INTO public.workresultinstance AS wri (
                 workresultinstancecustomerid,
                 workresultinstanceworkresultid,
@@ -196,7 +196,7 @@ export const setStatus: NonNullable<MutationResolvers["setStatus"]> = async (
           // workresultinstances that already exist. Note also that we do not
           // set workresultinstancestatusid as this has semantic meaning. For
           // example in the checklist case status indicates completion.
-          const results = await tx`
+          const results = await sql`
             insert into public.workresultinstance (
                 workresultinstancecustomerid,
                 workresultinstanceworkresultid,
@@ -230,9 +230,10 @@ export const setStatus: NonNullable<MutationResolvers["setStatus"]> = async (
         }
 
         if (targetStatus === "In Progress") {
+          await sql`select * from auth.set_actor(${ctx.auth.userId}, ${ctx.req.i18n.language})`;
           // This is the "respawn" case: create an entirely new chain of work.
           await copyFromWorkInstance(
-            tx,
+            sql,
             id,
             {
               // The options are:,

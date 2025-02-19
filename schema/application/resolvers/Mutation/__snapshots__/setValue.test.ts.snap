@@ -54,7 +54,7 @@ exports[`setValue entity is not mutable 1`] = `
 {
   "data": null,
   "errors": [
-    [GraphQLError: Entity is not mutable: foo],
+    [GraphQLError: Field is not mutable: foo],
   ],
 }
 `;
@@ -63,7 +63,7 @@ exports[`setValue global id invariant 1`] = `
 {
   "data": null,
   "errors": [
-    [GraphQLError: Unexpected error value: "invariant violated"],
+    [GraphQLError: invariant violated],
   ],
 }
 `;
