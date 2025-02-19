@@ -21,7 +21,7 @@ const POST: express.RequestHandler = async (req, res, next) => {
   }
 
   const { filename, mimetype, size } = input;
-  console.log(
+  console.debug(
     `Requesting presigned upload url for ${filename} (${mimetype} ${size}B)`,
   );
 
@@ -29,7 +29,7 @@ const POST: express.RequestHandler = async (req, res, next) => {
     const Bucket = process.env.ATTACHMENT_BUCKET as string;
     const Key = `${randomUUID()}/${filename}`;
     const command = new PutObjectCommand({ Bucket, Key });
-    console.log(`Presigning upload url for s3://${Bucket}/${Key}`);
+    console.debug(`Presigning upload url for s3://${Bucket}/${Key}`);
     const url = await getSignedUrl(s3, command);
     res.json({ uri: `s3://${Bucket}/${Key}`, url: url });
   } catch (e) {

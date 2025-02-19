@@ -2,6 +2,7 @@ import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 import { sql } from "@/datasources/postgres";
 import { schema } from "@/schema/final";
 import { decodeGlobalId, encodeGlobalId } from "@/schema/system";
+import { Task } from "@/schema/system/component/task";
 import {
   NOW,
   assertNoDiagnostics,
@@ -12,7 +13,6 @@ import {
   getFieldByName,
 } from "@/test/prelude";
 import { assert, map, nullish } from "@/util";
-import { Task } from "../system/component/task";
 import {
   TestRuntimeApplyFieldEditsMutationDocument,
   TestRuntimeDetailDocument,
@@ -39,6 +39,8 @@ describe("runtime demo", () => {
 
   test("start run", async () => {
     const h = (await FSM.hash()) as string;
+    const ost = await getFieldByName(FSM, "Override Start Time");
+    const cs = await getFieldByName(FSM, "Comments");
     const result = await execute(
       schema,
       TestRuntimeTransitionMutationDocument,
@@ -54,14 +56,14 @@ describe("runtime demo", () => {
             hash: h,
             overrides: [
               {
-                field: await getFieldByName(FSM, "Override Start Time"),
+                field: ost.id,
                 value: {
                   timestamp: NOW.toISOString(),
                 },
                 valueType: "timestamp",
               },
               {
-                field: await getFieldByName(FSM, "Comments"),
+                field: cs.id,
                 // Test null field-level overrides:
                 value: undefined,
                 // value: {
@@ -149,7 +151,7 @@ describe("runtime demo", () => {
     const t = await mostRecentlyInProgress(FSM);
     await assertTaskIsNamed(t, "Idle Time", ctx);
     const h = (await t.hash()) as string;
-
+    const desc = await getFieldByName(t, "Description");
     const result = await execute(
       schema,
       TestRuntimeTransitionMutationDocument,
@@ -165,7 +167,7 @@ describe("runtime demo", () => {
             hash: h,
             overrides: [
               {
-                field: await getFieldByName(t, "Description"),
+                field: desc.id,
                 value: {
                   string: "We idled for awhile, twas a no wake zone...",
                 },
@@ -403,6 +405,8 @@ describe("runtime demo", () => {
   });
 
   test("apply field edits retroactively", async () => {
+    const ost = await getFieldByName(FSM, "Override Start Time");
+    const cs = await getFieldByName(FSM, "Comments");
     const result = await execute(
       schema,
       TestRuntimeApplyFieldEditsMutationDocument,
@@ -410,13 +414,13 @@ describe("runtime demo", () => {
         entity: FSM.id,
         edits: [
           {
-            field: await getFieldByName(FSM, "Override Start Time"),
+            field: ost.id,
             // Test null field-level overrides:
             value: undefined,
             valueType: "timestamp",
           },
           {
-            field: await getFieldByName(FSM, "Comments"),
+            field: cs.id,
             value: {
               string: "Don't mind me! Just leaving a comment :)",
             },
@@ -606,32 +610,31 @@ describe("runtime demo", () => {
       ;
     `;
 
-    function debugLogs() {
+    try {
+      CUSTOMER = findAndEncode("customer", "organization", logs);
+      FSM = map(
+        findAndEncode("instance", "workinstance", logs),
+        id => new Task({ id }, ctx),
+      );
+      IDLE_TIME = map(
+        findAndEncode("next", "worktemplate", logs),
+        id => new Task({ id }, ctx),
+      );
+
+      // we get 'Downtime' in the 39th row
+      const row39 = logs.at(39 - 1);
+      // but we can check the tag to be sure
+      if (row39?.op?.trim() !== "+next") {
+        throw "setup failed to find Downtime";
+      }
+      DOWNTIME = Task.fromTypeId("worktemplate", row39.id, ctx);
+    } catch (e) {
       let i = 0;
       for (const l of logs) {
         console.log(`${i++}: ${JSON.stringify(l)}`);
       }
+      throw e;
     }
-
-    // we get customer uuid back in the first row
-    CUSTOMER = findAndEncode("customer", "organization", logs);
-    FSM = map(
-      findAndEncode("instance", "workinstance", logs),
-      id => new Task({ id }, ctx),
-    );
-    IDLE_TIME = map(
-      findAndEncode("next", "worktemplate", logs),
-      id => new Task({ id }, ctx),
-    );
-
-    // we get 'Downtime' in the 39th row
-    const row39 = logs.at(39 - 1);
-    // but we can check the tag to be sure
-    if (row39?.op?.trim() !== "+next") {
-      debugLogs();
-      throw "setup failed to find 'Downtime' task template";
-    }
-    DOWNTIME = Task.fromTypeId("worktemplate", row39.id, ctx);
   });
 
   afterAll(async () => {

@@ -42,6 +42,8 @@ A date-time string in ISO 8601 format.
 scalar Timestamp
   @specifiedBy(url: "https://www.rfc-editor.org/rfc/rfc3339.html#section-5.6")
 
+scalar URL @specifiedBy(url: "https://www.ietf.org/rfc/rfc3986.txt")
+
 enum DiagnosticKind {
   candidate_change_discarded
   candidate_choice_unavailable
@@ -113,6 +115,10 @@ Components characterize Entities as possessing a particular trait.
 They are just simple structs, holding all data necessary to model that trait.
 """
 interface Component {
+  id: ID!
+}
+
+interface Identity implements Component {
   id: ID!
 }
 
@@ -275,6 +281,31 @@ type AssignmentEdge {
   node: Assignment @semanticNonNull
 }
 
+type Attachment implements Component & Node {
+  attachedBy: Identity
+  """
+  If you are using [Relay](https://relay.dev), make sure you annotate this
+  field with `@catch(to: RESULT)` to avoid intermittent S3 errors from
+  crashing the entire fragment.
+  """
+  attachment: URL @semanticNonNull
+  """
+  A globally unique opaque identifier for a node.
+  """
+  id: ID!
+}
+
+type AttachmentConnection {
+  edges: [AttachmentEdge!] @semanticNonNull
+  pageInfo: PageInfo @semanticNonNull
+  totalCount: Int @semanticNonNull
+}
+
+type AttachmentEdge {
+  cursor: String @semanticNonNull
+  node: Attachment @semanticNonNull
+}
+
 type BooleanValue {
   boolean: Boolean
 }
@@ -315,6 +346,15 @@ type EntityValue {
 }
 
 type Field {
+  """
+  Field attachments.
+  """
+  attachments(
+    after: String
+    before: String
+    first: Int
+    last: Int
+  ): AttachmentConnection @semanticNonNull
   """
   Unique identifier for this Field.
   """
@@ -373,6 +413,7 @@ type Mutation {
   advance(opts: AdvanceFsmOptions!): AdvanceTaskStateMachineResult
     @semanticNonNull
   applyFieldEdits(edits: [FieldInput!]!, entity: ID!): Task @semanticNonNull
+  attach(attachments: [URL!]!, entity: ID!): [AttachmentEdge!] @semanticNonNull
   createLocation(input: CreateLocationInput!): Location @semanticNonNull
   updateLocation(input: UpdateLocationInput!): Location @semanticNonNull
 }
@@ -452,6 +493,16 @@ type Task implements Assignable & Component & Node & Trackable {
   [object Object],[object Object],[object Object]
   """
   assignees: AssignmentConnection
+  """
+  Attachments associated with the Task as a whole.
+  Note that you can also have field-level attachments.
+  """
+  attachments(
+    after: String
+    before: String
+    first: Int
+    last: Int
+  ): AttachmentConnection @semanticNonNull
   """
   Inspect the chain (if any) in which the given Task exists.
   As it stands, this can only be used to perform a downwards search of the

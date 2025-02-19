@@ -201,25 +201,30 @@ type AssignmentPayload {
   entity: Assignable!
 }
 
-"""
-TODO
-"""
 type Attachment implements Component & Node {
   attachedBy: Identity
   attachedOn: Temporal @semanticNonNull
-  attachment: URL!
+  """
+  If you are using [Relay](https://relay.dev), make sure you annotate this
+  field with `@catch(to: RESULT)` to avoid intermittent S3 errors from
+  crashing the entire fragment.
+  """
+  attachment: URL @semanticNonNull
+  """
+  A globally unique opaque identifier for a node.
+  """
   id: ID!
 }
 
 type AttachmentConnection {
-  edges: [AttachmentEdge!]!
-  pageInfo: PageInfo!
-  totalCount: Int!
+  edges: [AttachmentEdge!] @semanticNonNull
+  pageInfo: PageInfo @semanticNonNull
+  totalCount: Int @semanticNonNull
 }
 
 type AttachmentEdge {
-  cursor: String!
-  node: Attachment!
+  cursor: String @semanticNonNull
+  node: Attachment @semanticNonNull
 }
 
 """
@@ -792,6 +797,15 @@ type EntityValue {
 
 type Field {
   """
+  Field attachments.
+  """
+  attachments(
+    after: String
+    before: String
+    first: Int
+    last: Int
+  ): AttachmentConnection @semanticNonNull
+  """
   Unique identifier for this Field.
   """
   id: ID @semanticNonNull
@@ -1026,7 +1040,7 @@ type Mutation {
   - E_ASSIGN_CONFLICT, if the entity is assigned to a different entity
   """
   assign(entity: ID!, to: ID!): AssignmentPayload!
-  attach(attachments: [URL!]!, entity: ID!): [AttachmentEdge!]!
+  attach(attachments: [URL!]!, entity: ID!): [AttachmentEdge!] @semanticNonNull
   copyFrom(entity: ID!, options: CopyFromOptions!): CopyFromPayload!
   createEntity(id: String, suffix: [String!], type: String!): ID!
   createInvitation(input: CreateInvitationInput!): Worker!
@@ -1470,6 +1484,16 @@ type Task implements Assignable & Component & Node & Trackable {
   """
   assignees: AssignmentConnection
   """
+  Attachments associated with the Task as a whole.
+  Note that you can also have field-level attachments.
+  """
+  attachments(
+    after: String
+    before: String
+    first: Int
+    last: Int
+  ): AttachmentConnection @semanticNonNull
+  """
   Inspect the chain (if any) in which the given Task exists.
   As it stands, this can only be used to perform a downwards search of the
   chain, i.e. the given Task is used as the "root" of the search tree.
@@ -1676,10 +1700,7 @@ type TrackableEdge {
   node: Trackable @semanticNonNull
 }
 
-"""
-A field whose value conforms to the standard URL format as specified in RFC3986: https://www.ietf.org/rfc/rfc3986.txt.
-"""
-scalar URL
+scalar URL @specifiedBy(url: "https://www.ietf.org/rfc/rfc3986.txt")
 
 type UnassignmentPayload {
   entity: Assignable!

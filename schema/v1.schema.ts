@@ -17,9 +17,12 @@ import {
 } from "graphql";
 import { createLocation as mutationCreateLocationResolver } from "./platform/archetype/location/create";
 import { updateLocation as mutationUpdateLocationResolver } from "./platform/archetype/location/update";
+import { attach as mutationAttachResolver } from "./platform/attachment";
 import { trackables as queryTrackablesResolver } from "./platform/tracking";
+import { attachments as fieldAttachmentsResolver } from "./system/component";
 import { name as fieldNameResolver } from "./system/component";
 import { assignees as taskAssigneesResolver } from "./system/component/task";
+import { attachments as taskAttachmentsResolver } from "./system/component/task";
 import { chain as taskChainResolver } from "./system/component/task";
 import { chainAgg as taskChainAggResolver } from "./system/component/task";
 import { fields as taskFieldsResolver } from "./system/component/task";
@@ -28,6 +31,7 @@ import { fsm as taskFsmResolver } from "./system/component/task_fsm";
 import { advance as mutationAdvanceResolver } from "./system/component/task_fsm";
 import { node as queryNodeResolver } from "./system/node";
 import { id as assignmentIdResolver } from "./system/node";
+import { id as attachmentIdResolver } from "./system/node";
 import { id as displayNameIdResolver } from "./system/node";
 import { id as taskIdResolver } from "./system/node";
 import { id as locationIdResolver } from "./system/node";
@@ -463,6 +467,115 @@ export function getSchema(): GraphQLSchema {
       };
     },
   });
+  const IdentityType: GraphQLInterfaceType = new GraphQLInterfaceType({
+    name: "Identity",
+    fields() {
+      return {
+        id: {
+          name: "id",
+          type: new GraphQLNonNull(GraphQLID),
+        },
+      };
+    },
+    interfaces() {
+      return [ComponentType];
+    },
+  });
+  const URLType: GraphQLScalarType = new GraphQLScalarType({
+    name: "URL",
+  });
+  const AttachmentType: GraphQLObjectType = new GraphQLObjectType({
+    name: "Attachment",
+    fields() {
+      return {
+        attachedBy: {
+          name: "attachedBy",
+          type: IdentityType,
+        },
+        attachment: {
+          description:
+            "If you are using [Relay](https://relay.dev), make sure you annotate this\nfield with `@catch(to: RESULT)` to avoid intermittent S3 errors from\ncrashing the entire fragment.",
+          name: "attachment",
+          type: URLType,
+          resolve(source, args, context, info) {
+            return assertNonNull(
+              defaultFieldResolver(source, args, context, info),
+            );
+          },
+        },
+        id: {
+          description: "A globally unique opaque identifier for a node.",
+          name: "id",
+          type: new GraphQLNonNull(GraphQLID),
+          resolve(source) {
+            return attachmentIdResolver(source);
+          },
+        },
+      };
+    },
+    interfaces() {
+      return [ComponentType, NodeType];
+    },
+  });
+  const AttachmentEdgeType: GraphQLObjectType = new GraphQLObjectType({
+    name: "AttachmentEdge",
+    fields() {
+      return {
+        cursor: {
+          name: "cursor",
+          type: GraphQLString,
+          resolve(source, args, context, info) {
+            return assertNonNull(
+              defaultFieldResolver(source, args, context, info),
+            );
+          },
+        },
+        node: {
+          name: "node",
+          type: AttachmentType,
+          resolve(source, args, context, info) {
+            return assertNonNull(
+              defaultFieldResolver(source, args, context, info),
+            );
+          },
+        },
+      };
+    },
+  });
+  const AttachmentConnectionType: GraphQLObjectType = new GraphQLObjectType({
+    name: "AttachmentConnection",
+    fields() {
+      return {
+        edges: {
+          name: "edges",
+          type: new GraphQLList(new GraphQLNonNull(AttachmentEdgeType)),
+          resolve(source, args, context, info) {
+            return assertNonNull(
+              defaultFieldResolver(source, args, context, info),
+            );
+          },
+        },
+        pageInfo: {
+          name: "pageInfo",
+          type: PageInfoType,
+          resolve(source, args, context, info) {
+            return assertNonNull(
+              defaultFieldResolver(source, args, context, info),
+            );
+          },
+        },
+        totalCount: {
+          name: "totalCount",
+          type: GraphQLInt,
+          resolve(source, args, context, info) {
+            return assertNonNull(
+              defaultFieldResolver(source, args, context, info),
+            );
+          },
+        },
+      };
+    },
+  });
   const TaskConnectionType: GraphQLObjectType = new GraphQLObjectType({
     name: "TaskConnection",
     fields() {
@@ -672,6 +785,34 @@ export function getSchema(): GraphQLSchema {
     name: "Field",
     fields() {
       return {
+        attachments: {
+          description: "Field attachments.",
+          name: "attachments",
+          type: AttachmentConnectionType,
+          args: {
+            after: {
+              name: "after",
+              type: GraphQLString,
+            },
+            before: {
+              name: "before",
+              type: GraphQLString,
+            },
+            first: {
+              name: "first",
+              type: GraphQLInt,
+            },
+            last: {
+              name: "last",
+              type: GraphQLInt,
+            },
+          },
+          resolve(source, args, context) {
+            return assertNonNull(
+              fieldAttachmentsResolver(source, context, args),
+            );
+          },
+        },
         id: {
           description: "Unique identifier for this Field.",
           name: "id",
@@ -916,6 +1057,35 @@ export function getSchema(): GraphQLSchema {
           type: AssignmentConnectionType,
           resolve(source, _args, context) {
             return taskAssigneesResolver(source, context);
+          },
+        },
+        attachments: {
+          description:
+            "Attachments associated with the Task as a whole.\nNote that you can also have field-level attachments.",
+          name: "attachments",
+          type: AttachmentConnectionType,
+          args: {
+            after: {
+              name: "after",
+              type: GraphQLString,
+            },
+            before: {
+              name: "before",
+              type: GraphQLString,
+            },
+            first: {
+              name: "first",
+              type: GraphQLInt,
+            },
+            last: {
+              name: "last",
+              type: GraphQLInt,
+            },
+          },
+          resolve(source, args, context) {
+            return assertNonNull(
+              taskAttachmentsResolver(source, context, args),
+            );
           },
         },
         chain: {
@@ -1380,6 +1550,32 @@ export function getSchema(): GraphQLSchema {
             );
           },
         },
+        attach: {
+          name: "attach",
+          type: new GraphQLList(new GraphQLNonNull(AttachmentEdgeType)),
+          args: {
+            attachments: {
+              name: "attachments",
+              type: new GraphQLNonNull(
+                new GraphQLList(new GraphQLNonNull(URLType)),
+              ),
+            },
+            entity: {
+              name: "entity",
+              type: new GraphQLNonNull(GraphQLID),
+            },
+          },
+          resolve(source, args, context) {
+            return assertNonNull(
+              mutationAttachResolver(
+                source,
+                args.entity,
+                args.attachments,
+                context,
+              ),
+            );
+          },
+        },
         createLocation: {
           name: "createLocation",
           type: LocationType,
@@ -1447,12 +1643,14 @@ export function getSchema(): GraphQLSchema {
     types: [
       LocaleType,
       TimestampType,
+      URLType,
       DiagnosticKindType,
       ValueTypeType,
       TaskStateType,
       ValueType,
       AssignableType,
       ComponentType,
+      IdentityType,
       NodeType,
       TrackableType,
       AdvanceFsmOptionsType,
@@ -1470,6 +1668,9 @@ export function getSchema(): GraphQLSchema {
       AssignmentType,
       AssignmentConnectionType,
       AssignmentEdgeType,
+      AttachmentType,
+      AttachmentConnectionType,
+      AttachmentEdgeType,
       BooleanValueType,
       ClosedType,
       DiagnosticType,

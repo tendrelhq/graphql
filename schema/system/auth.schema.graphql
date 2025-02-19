@@ -1,3 +1,0 @@
-interface Identity implements Component {
-  id: ID!
-}

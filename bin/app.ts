@@ -4,6 +4,7 @@ import http from "node:http";
 import auth from "@/auth";
 import { orm } from "@/datasources/postgres";
 import i18n from "@/i18n";
+import { Limits } from "@/limits";
 import type { Context } from "@/schema";
 import { schema } from "@/schema/final";
 import upload from "@/upload";
@@ -71,9 +72,10 @@ app.use(
       }
       return {
         auth: req.auth,
+        limits: new Limits(),
         orm: orm(req),
         req,
-      };
+      } satisfies Context;
     },
   }),
 );

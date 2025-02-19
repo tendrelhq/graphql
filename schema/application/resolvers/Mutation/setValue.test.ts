@@ -22,7 +22,7 @@ describe("setValue", () => {
     const field = await getFieldByName(TASK, "Run Output");
     const result = await execute(schema, TestSetValueDocument, {
       parent: TASK.id,
-      entity: field,
+      entity: field.id,
       input: {
         number: {
           value: 42,
@@ -38,7 +38,7 @@ describe("setValue", () => {
     const field = await getFieldByName(TASK, "Comments");
     const result = await execute(schema, TestSetValueDocument, {
       parent: TASK.id,
-      entity: field,
+      entity: field.id,
       input: {
         string: {
           value: "Hello world",

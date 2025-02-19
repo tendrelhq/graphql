@@ -3,11 +3,15 @@ import {
   Location,
   type ConstructorArgs as LocationConstructorArgs,
 } from "@/schema/platform/archetype/location";
+import {
+  Attachment,
+  type ConstructorArgs as AttachmentConstructorArgs,
+} from "@/schema/platform/attachment";
 import type { Trackable } from "@/schema/platform/tracking";
 import { type Diagnostic, DiagnosticKind, type Result } from "@/schema/result";
 import type { Mutation } from "@/schema/root";
 import type { Context } from "@/schema/types";
-import { assert, assertNonNull } from "@/util";
+import { assert, assertNonNull, buildPaginationArgs, mapOrElse } from "@/util";
 import { GraphQLError } from "graphql/error";
 import type { ID, Int } from "grats";
 import type { Fragment } from "postgres";
@@ -22,7 +26,7 @@ import {
 } from "../component";
 import type { Refetchable } from "../node";
 import type { Overridable } from "../overridable";
-import type { Connection, Edge } from "../pagination";
+import type { Connection, Edge, PageInfo } from "../pagination";
 import type { Timestamp } from "../temporal";
 import { type Assignable, Assignment } from "./assignee";
 import type { DisplayName, Named } from "./name";
@@ -476,6 +480,99 @@ export async function assignees(
       hasPreviousPage: false,
     },
     totalCount: rows.count,
+  };
+}
+
+/**
+ * Attachments associated with the Task as a whole.
+ * Note that you can also have field-level attachments.
+ *
+ * @gqlField
+ */
+export async function attachments(
+  t: Task,
+  ctx: Context,
+  args: {
+    first?: Int | null;
+    last?: Int | null;
+    before?: string | null;
+    after?: string | null;
+  },
+): Promise<Connection<Attachment>> {
+  // Only instances can have attachments.
+  if (t._type !== "workinstance") {
+    return {
+      edges: [],
+      pageInfo: {
+        hasNextPage: false,
+        hasPreviousPage: false,
+      },
+      totalCount: 0,
+    };
+  }
+
+  const p = buildPaginationArgs(args, {
+    defaultLimit: ctx.limits.attachmentPaginationDefaultLimit,
+    maxLimit: ctx.limits.attachmentPaginationMaxLimit,
+  });
+  const rows = await sql<AttachmentConstructorArgs[]>`
+    select
+        encode(('workpictureinstance:' || a.workpictureinstanceuuid)::bytea, 'base64') as id,
+        a.workpictureinstancestoragelocation as url
+    from public.workpictureinstance as a
+    where
+        a.workpictureinstanceworkinstanceid = (
+            select workinstanceid
+            from public.workinstance
+            where id = ${t._id}
+        )
+        and a.workpictureinstanceworkresultinstanceid is null
+        ${mapOrElse(
+          p.cursor,
+          cursor => sql`
+        and
+            (a.workpictureinstancemodifieddate, a.workpictureinstanceid)
+            ${p.direction === "forward" ? sql`<` : sql`>`}
+            (
+                select c.workpictureinstancemodifieddate, c.workpictureinstanceid
+                from public.workpictureinstance as c
+                where c.workpictureinstanceuuid = ${cursor.id}
+            )
+          `,
+          sql``,
+        )}
+    order by a.workpictureinstancemodifieddate desc, a.workpictureinstanceid desc
+    limit ${p.limit + 1};
+  `;
+
+  const n1 = rows.length > p.limit ? rows.pop() : undefined;
+  const edges: Edge<Attachment>[] = rows.map(row => ({
+    cursor: row.id,
+    node: new Attachment(row, ctx),
+  }));
+  const pageInfo: PageInfo = {
+    startCursor: edges.at(0)?.cursor,
+    endCursor: edges.at(-1)?.cursor,
+    hasNextPage: p.direction === "forward" && !!n1,
+    hasPreviousPage: p.direction === "backward" && !!n1,
+  };
+
+  const [{ count }] = await sql<[{ count: bigint }]>`
+    select count(*)
+    from public.workpictureinstance as a
+    where
+        a.workpictureinstanceworkinstanceid = (
+            select workinstanceid
+            from public.workinstance
+            where id = ${t._id}
+        )
+        and a.workpictureinstanceworkresultinstanceid is null
+  `;
+
+  return {
+    edges,
+    pageInfo,
+    totalCount: Number(count),
   };
 }
 
@@ -1098,7 +1195,7 @@ export async function applyFieldEdits(
  * - This operation does not affect field-level status.
  */
 export function applyEdits$fragment(
-  ctx: Context,
+  _ctx: Context,
   t: Task,
   edits: FieldInput[],
 ): Fragment | undefined {

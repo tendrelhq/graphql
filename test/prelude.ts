@@ -1,6 +1,8 @@
 import { orm } from "@/datasources/postgres";
+import { Limits } from "@/limits";
 import type { Context, InputMaybe } from "@/schema";
 import { encodeGlobalId } from "@/schema/system";
+import type { Field } from "@/schema/system/component";
 import type { Task } from "@/schema/system/component/task";
 import { assert, assertNonNull, map } from "@/util";
 import type { TypedDocumentNode as DocumentNode } from "@graphql-typed-document-node/core";
@@ -10,7 +12,6 @@ import {
   graphql,
   print,
 } from "graphql";
-import type { ID } from "grats";
 
 // biome-ignore lint/suspicious/noExplicitAny:
 export async function execute<R, V extends Record<any, any>>(
@@ -38,6 +39,7 @@ export async function createTestContext(): Promise<Context> {
   return {
     // biome-ignore lint/suspicious/noExplicitAny: i know i know...
     auth: { userId: process.env.X_TENDREL_USER } as any,
+    limits: new Limits(),
     // biome-ignore lint/suspicious/noExplicitAny: ...room for improvement...
     orm: orm(DEFAULT_REQUEST as any),
     // biome-ignore lint/suspicious/noExplicitAny: ...but whatever.
@@ -104,7 +106,17 @@ export function assertNoDiagnostics<T, R extends { __typename?: T }>(
   assert(result?.__typename !== "Diagnostic");
 }
 
-export async function getFieldByName(t: Task, name: string): Promise<ID> {
+export async function getFieldByName(t: Task, name: string): Promise<Field> {
   const field = await t.field({ byName: { value: name } });
-  return assertNonNull(field?.id, `no named field ${name}`);
+  return assertNonNull(field, `no named field ${name}`);
+}
+
+export function env(name: string, value?: { toString(): string }) {
+  const old = process.env[name];
+  process.env[name] = value?.toString();
+  return {
+    [Symbol.dispose]() {
+      process.env[name] = old;
+    },
+  };
 }

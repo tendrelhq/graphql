@@ -7,6 +7,7 @@ import type {
   ResolversTypes,
 } from "@/schema";
 import { decodeGlobalId } from "@/schema/system";
+import { Task, attachments } from "@/schema/system/component/task";
 import { buildPaginationArgs } from "@/util";
 import { match } from "ts-pattern";
 
@@ -98,114 +99,9 @@ export const Checklist: ChecklistResolvers = {
       totalCount: Number(count),
     };
   },
-  async attachments(parent, args) {
-    const { type, id } = decodeGlobalId(parent.id);
-
-    // Checklists can be either workinstance or worktemplate.
-    // The latter cannot have attachments.
-    if (type !== "workinstance") {
-      return {
-        edges: [],
-        pageInfo: {
-          hasNextPage: false,
-          hasPreviousPage: false,
-        },
-        totalCount: 0,
-      };
-    }
-
-    const { cursor, direction, limit } = buildPaginationArgs(args, {
-      defaultLimit: Number(
-        process.env.DEFAULT_ATTACHMENT_PAGINATION_LIMIT ?? 20,
-      ),
-      maxLimit: Number(process.env.MAX_ATTACHMENT_PAGINATION_LIMIT ?? 20),
-    });
-
-    // Our (default) order clause specifies:
-    // 1. workpictureinstancemodifieddate DESC
-    // 2. workpictureinstanceid DESC
-    // So, forward => < implies "recently modified first"
-    const cmp = direction === "forward" ? sql`<` : sql`>`;
-
-    // We are operating at the instance level here.
-    const rows = await sql<{ id: string }[]>`
-      ${
-        cursor
-          ? sql`
-      WITH cursor AS (
-          SELECT
-              workpictureinstanceid AS id,
-              workpictureinstancemodifieddate AS updated_at
-          FROM public.workpictureinstance
-          WHERE
-              workpictureinstanceuuid = ${cursor.id}
-      )`
-          : sql``
-      }
-      SELECT
-          encode(('workpictureinstance:' || workpictureinstanceuuid)::bytea, 'base64') AS id
-      FROM public.workpictureinstance
-      ${cursor ? sql`INNER JOIN cursor ON true` : sql``}
-      WHERE ${join(
-        [
-          ...(cursor
-            ? [
-                sql`(workpictureinstancemodifieddate, workpictureinstanceid) ${cmp} (cursor.updated_at, cursor.id)`,
-              ]
-            : []),
-          sql`workpictureinstanceworkinstanceid = (
-              SELECT workinstanceid
-              FROM public.workinstance
-              WHERE id = ${id}
-          )`,
-          sql`workpictureinstanceworkresultinstanceid IS null`,
-        ],
-        sql`AND`,
-      )}
-      ORDER BY
-          workpictureinstancemodifieddate DESC,
-          workpictureinstanceid DESC
-      LIMIT ${limit + 1};
-    `;
-
-    const n1 = rows.length > limit ? rows.pop() : undefined;
-    const hasNext = direction === "forward" && !!n1;
-    const hasPrev = direction === "backward" && !!n1;
-
-    const edges = rows.map(row => ({
-      cursor: row.id as string,
-      // biome-ignore lint/suspicious/noExplicitAny: defer to Attachment
-      node: row as any,
-    }));
-
-    const pageInfo: PageInfo = {
-      startCursor: edges.at(0)?.cursor,
-      endCursor: edges.at(-1)?.cursor,
-      hasNextPage: hasNext,
-      hasPreviousPage: hasPrev,
-    };
-
-    const [{ count }] = await sql<[{ count: bigint }]>`
-      SELECT count(*)
-      FROM public.workpictureinstance
-      WHERE ${join(
-        [
-          sql`workpictureinstanceworkinstanceid = (
-              SELECT workinstanceid
-              FROM public.workinstance
-              WHERE id = ${id}
-          )`,
-          sql`workpictureinstanceworkresultinstanceid IS null`,
-        ],
-        sql`AND`,
-      )}
-    `;
-
-    return {
-      edges,
-      pageInfo,
-      totalCount: Number(count),
-    };
+  async attachments(parent, args, ctx) {
+    const t = new Task({ id: parent.id as string }, ctx);
+    return await attachments(t, ctx, args);
   },
   auditable(parent, _, ctx) {
     return ctx.orm.auditable.load(parent.id);

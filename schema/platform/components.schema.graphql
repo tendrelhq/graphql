@@ -1,6 +1,3 @@
-# via graphql-scalars
-scalar URL
-
 """
 Identifies an entity as being either "active" or "inactive".
 Activatable entities have two operations: activate and deactivate.
@@ -125,29 +122,8 @@ type AssigneeEdge {
   node: Assignee!
 }
 
-"""
-TODO
-"""
-type Attachment implements Component & Node {
-  id: ID!
-  attachment: URL!
-  attachedBy: Identity
+extend type Attachment {
   attachedOn: Temporal @semanticNonNull
-}
-
-type AttachmentConnection {
-  edges: [AttachmentEdge!]!
-  pageInfo: PageInfo!
-  totalCount: Int!
-}
-
-type AttachmentEdge {
-  cursor: String!
-  node: Attachment!
-}
-
-extend type Mutation {
-  attach(entity: ID!, attachments: [URL!]!): [AttachmentEdge!]!
 }
 
 """

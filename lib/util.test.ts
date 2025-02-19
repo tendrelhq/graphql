@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, test } from "bun:test";
 import { encodeGlobalId } from "@/schema/system";
-import { assert, buildPaginationArgs, map } from "./util";
+import { assert, buildPaginationArgs, map, mapOrElse } from "./util";
 
 const CURSOR = encodeGlobalId({ type: "__test__", id: "1" });
 const NODE_ENV = process.env.NODE_ENV;
@@ -98,5 +98,33 @@ describe("map", () => {
     const s = "hello" as string | null | undefined;
     const r: string | null | undefined = map(s, (s: string) => `${s} world`);
     expect(r).toBe("hello world");
+  });
+});
+
+describe("mapOrElse", () => {
+  // Ditto note above above verbose type annotations.
+
+  test("over null", () => {
+    const r: string = mapOrElse(null, (_: never) => "foo", "bar");
+    expect(r).toBe("bar");
+  });
+
+  test("over undefined", () => {
+    const r = mapOrElse(undefined, (_: never) => "foo", "bar");
+    expect(r).toBe("bar");
+  });
+
+  test("over T", () => {
+    const r = mapOrElse("hello", (s: string) => `${s} world`, "bar");
+    expect(r).toBe("hello world");
+  });
+
+  test("orElse is a function", () => {
+    const r = mapOrElse(
+      null,
+      (_: never) => "foo",
+      () => "bar",
+    );
+    expect(r).toBe("bar");
   });
 });

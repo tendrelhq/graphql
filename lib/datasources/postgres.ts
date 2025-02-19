@@ -1,8 +1,8 @@
+import { mapOrElse } from "@/util";
 import type { Request } from "express";
 import z from "myzod";
 import postgres, { type Fragment } from "postgres";
 import { makeActiveLoader } from "./activatable";
-import makeAttachmentLoader from "./attachment";
 import { makeAuditableLoader } from "./auditable";
 import makeCustomerRequestedLanguageLoader from "./crl";
 import { makeDescriptionLoader } from "./description";
@@ -17,6 +17,7 @@ import {
 } from "./name";
 import makeOrganizationLoader from "./organization";
 import { makeRequirementLoader } from "./requirement";
+import makePresignedUrlLoader from "./s3";
 import { makeSopLoader } from "./sop";
 import { makeStatusLoader } from "./status";
 import makeTagLoader from "./tag";
@@ -65,10 +66,11 @@ export function unionAll(xs: readonly Fragment[]) {
   return join(xs, sql`UNION ALL`);
 }
 
+const DEFAULT_PRESIGNED_URL_EXPIRES_IN = 60 * 60 * 24; // 24 hours
+
 export function orm(req: Request) {
   return {
     active: makeActiveLoader(req),
-    attachment: makeAttachmentLoader(req),
     auditable: makeAuditableLoader(req),
     crl: makeCustomerRequestedLanguageLoader(req),
     description: makeDescriptionLoader(req),
@@ -86,6 +88,14 @@ export function orm(req: Request) {
     tag: makeTagLoader(req),
     user: makeUserLoader(req),
     worker: makeWorkerLoader(req),
+    // out of place but whatever
+    s3: makePresignedUrlLoader(req, {
+      expiresIn: mapOrElse(
+        process.env.PRESIGNED_URL_EXPIRES_IN,
+        Number.parseInt,
+        DEFAULT_PRESIGNED_URL_EXPIRES_IN,
+      ),
+    }),
   };
 }
 

@@ -1,7 +1,15 @@
 import { sql } from "@/datasources/postgres";
+import { assertNonNull, buildPaginationArgs, mapOrElse } from "@/util";
 import type { ID, Int } from "grats";
 import type { Fragment } from "postgres";
+import { decodeGlobalId } from ".";
+import {
+  Attachment,
+  type ConstructorArgs as AttachmentConstructorArgs,
+} from "../platform/attachment";
+import type { Context } from "../types";
 import { DisplayName } from "./component/name";
+import type { Connection, Edge, PageInfo } from "./pagination";
 import type { Timestamp } from "./temporal";
 
 /**
@@ -85,6 +93,113 @@ export type Field = {
    */
   valueType: ValueType;
 };
+
+/**
+ * Field attachments.
+ *
+ * @gqlField
+ */
+export async function attachments(
+  f: Field,
+  ctx: Context,
+  args: {
+    first?: Int | null;
+    last?: Int | null;
+    before?: string | null;
+    after?: string | null;
+  },
+): Promise<Connection<Attachment>> {
+  const { type, id, suffix } = decodeGlobalId(f.id);
+  // Only instances can have attachments.
+  if (type !== "workresultinstance") {
+    return {
+      edges: [],
+      pageInfo: {
+        hasNextPage: false,
+        hasPreviousPage: false,
+      },
+      totalCount: 0,
+    };
+  }
+
+  const p = buildPaginationArgs(args, {
+    defaultLimit: ctx.limits.fieldAttachmentPaginationDefaultLimit,
+    maxLimit: ctx.limits.fieldAttachmentPaginationMaxLimit,
+  });
+  const rows = await sql<AttachmentConstructorArgs[]>`
+    select
+        encode(('workpictureinstance:' || a.workpictureinstanceuuid)::bytea, 'base64') as id,
+        a.workpictureinstancestoragelocation as url
+    from public.workresultinstance as field
+    inner join public.workpictureinstance as a
+        on field.workresultinstanceworkinstanceid = a.workpictureinstanceworkinstanceid
+        and field.workresultinstanceid = a.workpictureinstanceworkresultinstanceid
+    where
+        field.workresultinstanceworkinstanceid = (
+            select workinstanceid
+            from public.workinstance
+            where id = ${id}
+        )
+        and field.workresultinstanceworkresultid = (
+            select workresultid
+            from public.workresult
+            where id = ${assertNonNull(suffix?.at(0), "invariant violated")}
+        )
+        ${mapOrElse(
+          p.cursor,
+          cursor => sql`
+        and
+            (a.workpictureinstancemodifieddate, a.workpictureinstanceid)
+            ${p.direction === "forward" ? sql`<` : sql`>`}
+            (
+                select c.workpictureinstancemodifieddate, c.workpictureinstanceid
+                from public.workpictureinstance as c
+                where c.workpictureinstanceuuid = ${cursor.id}
+            )
+          `,
+          sql``,
+        )}
+    order by a.workpictureinstancemodifieddate desc, a.workpictureinstanceid desc
+    limit ${p.limit + 1};
+  `;
+
+  const n1 = rows.length > p.limit ? rows.pop() : undefined;
+  const edges: Edge<Attachment>[] = rows.map(row => ({
+    cursor: row.id,
+    node: new Attachment(row, ctx),
+  }));
+  const pageInfo: PageInfo = {
+    startCursor: edges.at(0)?.cursor,
+    endCursor: edges.at(-1)?.cursor,
+    hasNextPage: p.direction === "forward" && !!n1,
+    hasPreviousPage: p.direction === "backward" && !!n1,
+  };
+
+  const [{ count }] = await sql<[{ count: bigint }]>`
+    select count(*)
+    from public.workresultinstance as field
+    inner join public.workpictureinstance as a
+        on field.workresultinstanceworkinstanceid = a.workpictureinstanceworkinstanceid
+        and field.workresultinstanceid = a.workpictureinstanceworkresultinstanceid
+    where
+        field.workresultinstanceworkinstanceid = (
+            select workinstanceid
+            from public.workinstance
+            where id = ${id}
+        )
+        and field.workresultinstanceworkresultid = (
+            select workresultid
+            from public.workresult
+            where id = ${assertNonNull(suffix?.at(0), "invariant violated")}
+        )
+  `;
+
+  return {
+    edges,
+    pageInfo,
+    totalCount: Number(count),
+  };
+}
 
 /**
  * Display name for a Field.

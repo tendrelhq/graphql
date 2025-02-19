@@ -9,6 +9,7 @@ mutation TestAttach($entity: ID!, $urls: [URL!]!) {
       attachedOn {
         epochMilliseconds
       }
+      attachment
     }
   }
 }

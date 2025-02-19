@@ -68,18 +68,18 @@ export function assertUnderlyingType(
 export type WithKey<T> = T & { _key: string };
 
 export type PaginationArgs = {
-  cursor?: GlobalId;
+  cursor?: GlobalId | null;
   direction: "forward" | "backward";
   limit: number;
 };
 
 type RawPaginationArgs = {
   // forward
-  first?: number;
-  after?: string;
+  first?: number | null;
+  after?: string | null;
   // backward
-  last?: number;
-  before?: string;
+  last?: number | null;
+  before?: string | null;
 };
 
 export function buildPaginationArgs(
@@ -93,7 +93,7 @@ export function buildPaginationArgs(
 
   if (args.first) {
     return {
-      cursor: args.after ? decodeGlobalId(args.after) : undefined,
+      cursor: map(args.after, decodeGlobalId),
       direction: "forward",
       limit: Math.min(args.first, opts.maxLimit),
     };
@@ -101,7 +101,7 @@ export function buildPaginationArgs(
 
   if (args.last) {
     return {
-      cursor: args.before ? decodeGlobalId(args.before) : undefined,
+      cursor: map(args.before, decodeGlobalId),
       direction: "backward",
       limit: Math.min(args.last, opts.maxLimit),
     };
@@ -113,7 +113,7 @@ export function buildPaginationArgs(
   };
 }
 
-export function sortOrder(s: SortOrder) {
+export function sortOrder(s: SortOrder): Fragment {
   switch (s) {
     case "asc":
       return sql`ASC`;
@@ -143,6 +143,18 @@ export function map<T, R>(
     return t as T extends null | undefined ? T : R;
   }
   return fn(t as NonNullable<T>) as T extends null | undefined ? T : R;
+}
+
+type OrElse<R> = () => R;
+export function mapOrElse<T, R>(
+  t: T,
+  fn: (t: NonNullable<T>) => R,
+  orElse: R | OrElse<R>,
+): R {
+  if (nullish(t)) {
+    return typeof orElse === "function" ? (orElse as OrElse<R>)() : orElse;
+  }
+  return fn(t as NonNullable<T>);
 }
 
 export function inspect<T>(t: T) {

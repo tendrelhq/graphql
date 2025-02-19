@@ -3,7 +3,6 @@ import {
   // GraphQLDuration,
   GraphQLLocale,
   GraphQLTimeZone,
-  GraphQLURL,
 } from "graphql-scalars";
 import { CronExpression } from "../resolvers/CronExpression";
 import { Duration } from "../resolvers/Duration";
@@ -16,7 +15,6 @@ export const resolvers: Record<string, GraphQLScalarType> = {
   Entity: Entity,
   Locale: GraphQLLocale,
   TimeZone: GraphQLTimeZone,
-  URL: GraphQLURL,
 };
 
 export {
@@ -32,8 +30,6 @@ export {
   GraphQLLocale as LocaleResolver,
   GraphQLTimeZone as TimeZone,
   GraphQLTimeZone as TimeZoneResolver,
-  GraphQLURL as URL,
-  GraphQLURL as URLResolver,
 };
 
 export const config = {
@@ -43,5 +39,4 @@ export const config = {
   Entity: Entity.extensions.codegenScalarType,
   Locale: GraphQLLocale.extensions.codegenScalarType,
   TimeZone: GraphQLTimeZone.extensions.codegenScalarType,
-  URL: GraphQLURL.extensions.codegenScalarType,
 };
