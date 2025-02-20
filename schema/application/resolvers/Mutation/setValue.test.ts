@@ -50,7 +50,7 @@ describe("setValue", () => {
     expect(result.data).toMatchSnapshot();
 
     // TODO: move to prelude
-    const { id, suffix } = decodeGlobalId(field);
+    const { id, suffix } = decodeGlobalId(field.id);
     const [row] = await sql`
       select
           languagemastersource as content,
