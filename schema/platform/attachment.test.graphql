@@ -1,6 +1,7 @@
 mutation TestAttach($entity: ID!, $urls: [URL!]!) {
   attach(entity: $entity, attachments: $urls) {
     node {
+      id
       attachedBy {
         ... on Worker {
           displayName
@@ -10,6 +11,22 @@ mutation TestAttach($entity: ID!, $urls: [URL!]!) {
         epochMilliseconds
       }
       attachment
+    }
+  }
+}
+
+query TestRefetchAttachment($node: ID!) {
+  node(id: $node) {
+    ... on Attachment {
+      id
+      attachedBy {
+        ... on Worker {
+          displayName
+        }
+      }
+      attachedOn {
+        epochMilliseconds
+      }
     }
   }
 }

@@ -3,6 +3,10 @@ import { GraphQLError } from "graphql";
 import type { ID } from "grats";
 import { decodeGlobalId, encodeGlobalId } from ".";
 import { Location } from "../platform/archetype/location";
+import {
+  Attachment,
+  type ConstructorArgs as AttachmentConstructorArgs,
+} from "../platform/attachment";
 import type { Query } from "../root";
 import type { Context } from "../types";
 import { Task } from "./component/task";
@@ -107,9 +111,16 @@ export async function node(
         id: args.id,
         // biome-ignore lint/suspicious/noExplicitAny:
       } as any;
-    case "workpictureinstance":
-      // biome-ignore lint/suspicious/noExplicitAny:
-      return ctx.orm.attachment.byId.load(args.id) as any;
+    case "workpictureinstance": {
+      const [row] = await sql<[AttachmentConstructorArgs]>`
+        select
+            encode(('workpictureinstance:' || workpictureinstanceuuid)::bytea, 'base64') as id,
+            workpictureinstancestoragelocation as url
+        from public.workpictureinstance
+        where workpictureinstanceuuid = ${id}
+      `;
+      return new Attachment(row, ctx);
+    }
     default: {
       console.warn(`Unknown node type: '${type}'`);
       throw new GraphQLError("Unknown node type", {

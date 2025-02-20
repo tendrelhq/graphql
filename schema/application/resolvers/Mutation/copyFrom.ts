@@ -486,7 +486,6 @@ export async function copyFromWorkTemplate(
   if (options.fieldOverrides?.length) {
     const edits = applyEdits$fragment(ctx, t, options.fieldOverrides);
     if (edits) {
-      await sql``;
       const result = await sql`${edits}`;
       console.log(`Applied ${result.count} field-level edits.`);
     }

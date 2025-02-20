@@ -8,10 +8,13 @@ import {
   findAndEncode,
   getFieldByName,
 } from "@/test/prelude";
-import { map } from "@/util";
+import { assert, assertNonNull, map } from "@/util";
 import type { Field } from "../system/component";
 import { Task } from "../system/component/task";
-import { TestAttachDocument } from "./attachment.test.generated";
+import {
+  TestAttachDocument,
+  TestRefetchAttachmentDocument,
+} from "./attachment.test.generated";
 
 const ctx = await createTestContext();
 
@@ -55,6 +58,22 @@ describe.skipIf(!!process.env.CI)("attach", () => {
         },
       ],
     });
+
+    const node = assertNonNull(result.data?.attach?.at(0)?.node);
+    // Test refetch of a entity-level attachment:
+    const refetch = await execute(schema, TestRefetchAttachmentDocument, {
+      node: node.id,
+    });
+    expect(refetch.errors).toBeFalsy();
+    expect(refetch.data?.node).toMatchObject({
+      id: node.id,
+      attachedBy: {
+        displayName: "Jerry Garcia",
+      },
+      attachedOn: {
+        epochMilliseconds: node.attachedOn?.epochMilliseconds,
+      },
+    });
   });
 
   test("to a result", async () => {
@@ -78,6 +97,22 @@ describe.skipIf(!!process.env.CI)("attach", () => {
             },
           },
         ],
+      },
+    });
+
+    const node = assertNonNull(result.data?.attach?.at(0)?.node);
+    // Test refetch of a field-level attachment:
+    const refetch = await execute(schema, TestRefetchAttachmentDocument, {
+      node: node.id,
+    });
+    expect(refetch.errors).toBeFalsy();
+    expect(refetch.data?.node).toMatchObject({
+      id: node.id,
+      attachedBy: {
+        displayName: "Jerry Garcia",
+      },
+      attachedOn: {
+        epochMilliseconds: node.attachedOn?.epochMilliseconds,
       },
     });
   });

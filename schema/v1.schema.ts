@@ -17,6 +17,7 @@ import {
 } from "graphql";
 import { createLocation as mutationCreateLocationResolver } from "./platform/archetype/location/create";
 import { updateLocation as mutationUpdateLocationResolver } from "./platform/archetype/location/update";
+import { attachedBy as attachmentAttachedByResolver } from "./platform/attachment";
 import { attach as mutationAttachResolver } from "./platform/attachment";
 import { trackables as queryTrackablesResolver } from "./platform/tracking";
 import { attachments as fieldAttachmentsResolver } from "./system/component";
@@ -491,6 +492,9 @@ export function getSchema(): GraphQLSchema {
         attachedBy: {
           name: "attachedBy",
           type: IdentityType,
+          resolve(source, _args, context) {
+            return attachmentAttachedByResolver(source, context);
+          },
         },
         attachment: {
           description:

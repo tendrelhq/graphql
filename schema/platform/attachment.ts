@@ -1,10 +1,5 @@
 import { sql } from "@/datasources/postgres";
-import {
-  assert,
-  assertNonNull,
-  assertUnderlyingType,
-  normalizeBase64,
-} from "@/util";
+import { assertNonNull, assertUnderlyingType, normalizeBase64 } from "@/util";
 import { GraphQLError } from "graphql";
 import type { ID } from "grats";
 import type { Fragment } from "postgres";
@@ -63,28 +58,31 @@ export class Attachment implements Component, Refetchable {
   async attachment(): Promise<GqlUrl> {
     return await this.ctx.orm.s3.load(this.#url);
   }
+}
 
-  /** @gqlField */
-  async attachedBy(): Promise<Identity | null> {
-    const [row] = await sql<[{ _key: string }?]>`
+/** @gqlField */
+export async function attachedBy(
+  a: Attachment,
+  ctx: Context,
+): Promise<Identity | null> {
+  const [row] = await sql<[{ _key: string }?]>`
     select wi.workerinstanceuuid as _key
     from public.workpictureinstance as wpi
     inner join
         public.workerinstance as wi
         on wpi.workpictureinstancemodifiedby = wi.workerinstanceid
-    where wpi.workpictureinstanceuuid = ${this._id}
+    where wpi.workpictureinstanceuuid = ${a._id}
   `;
 
-    if (row) {
-      const worker = await this.ctx.orm.worker.load(row._key);
-      return {
-        __typename: "Worker",
-        ...worker,
-      } as Identity;
-    }
-
-    return null;
+  if (row) {
+    const worker = await ctx.orm.worker.load(row._key);
+    return {
+      __typename: "Worker",
+      ...worker,
+    } as Identity;
   }
+
+  return null;
 }
 
 /** @gqlField */
