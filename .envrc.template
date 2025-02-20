@@ -1,22 +1,35 @@
-# vim: ft=bash
-# shellcheck disable=2148
+# vim: ft=sh
+
+dotenv_if_exits .env.local
+
+layout node
 
 if has nix; then
   use flake . --impure
 fi
 
-layout node
+# Only required if you are *not* using [nix](./flake.nix).
+# @see https://www.postgresql.org/docs/current/libpq-envars.html
+export PGDATABASE=postgres # or 'tendrel'
+export PGHOST=localhost
+export PGPORT=5432
+# These are usually the default for localhost:
+export PGUSERNAME=$USER
+export PGPASSWORD=$USER
 
-# https://www.postgresql.org/docs/current/libpq-envars.html
-export PGDATABASE=postgres
-# note that the following are not necessary when using the devenv:
-export PGHOST=
-export PGPORT=
-export PGUSERNAME=
-export PGPASSWORD=
+# Only required if you plan to manually deploy schema changes to test and/or
+# beta.
+# export SQITCH_TARGET_TEST="db:pg://$TEST_PGUSER:$TEST_PGPASS@$TEST_PGHOST:5432/tendrel"
+# export SQITCH_TARGET_BETA="db:pg://$BETA_PGUSER:$BETA_PGPASS@$BETA_PGHOST:5432/tendrel"
 
-# see ./copilot/environments/dev/manifest.yml
-# check the aws console for these ids
-export VPC_ID=
-export PUBLIC_SUBNET_ID_1=
-export PRIVATE_SUBNET_ID_1=
+# Only required if you plan to manually deploy infrastructure.
+# You should get these values from the AWS console.
+# @see ./copilot/environments/dev/manifest.yml
+# export VPC_ID=
+# export PUBLIC_SUBNET_ID_1=
+# export PRIVATE_SUBNET_ID_1=
+
+# For the end-to-end tests. Ensures that you get the same results as you would
+# in CI. This mainly applies to snapshots that reference the "current identity",
+# e.g. in ./test/app/runtime/runtime.test.ts
+export X_TENDREL_USER=user_2jJ7Xl0LFewQGKKNYwfFWAM0Lmc
