@@ -13,7 +13,7 @@ begin
   end if;
 end $$;
 
-create function
+create or replace function
     i18n.add_language_to_customer(
         customer_id text, language_code text, modified_by bigint
     )

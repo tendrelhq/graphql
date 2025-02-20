@@ -18,7 +18,7 @@ begin
 end $$;
 
 -- BEGIN auth utility functions
-create function auth.current_identity(parent bigint, identity text)
+create or replace function auth.current_identity(parent bigint, identity text)
 returns bigint
 as $$
   select workerinstanceid
@@ -51,7 +51,7 @@ $$;
 
 -- END auth utility functions
 -- BEGIN debugging utility functions
-create function debug.inspect(r anyelement)
+create or replace function debug.inspect(r anyelement)
 returns anyelement
 as $$
 begin
@@ -85,7 +85,7 @@ NOTICE:  inspect: 1009
 
 $$;
 
-create function debug.inspect_t(t text, r anyelement)
+create or replace function debug.inspect_t(t text, r anyelement)
 returns anyelement
 as $$
 begin
@@ -121,7 +121,7 @@ $$;
 
 -- END debugging utility functions
 -- BEGIN name utility functions
-create function
+create or replace function
     public.create_name(
         customer_id text, source_language text, source_text text, modified_by bigint
     )
@@ -169,7 +169,7 @@ begin
 end $$;
 
 -- BEGIN type constructor utility functions
-create function
+create or replace function
     ast.create_system_type(type_name text, type_hierarchy text, modified_by bigint)
 returns table(_id bigint, id text)
 as $$
@@ -215,7 +215,7 @@ language plpgsql
 strict
 ;
 
-create function
+create or replace function
     ast.create_user_type(
         customer_id text,
         language_type text,

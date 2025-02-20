@@ -13,7 +13,7 @@ begin
   end if;
 end $$;
 
-create function
+create or replace function
     runtime.create_customer(customer_name text, language_type text, modified_by bigint)
 returns table(_id bigint, id text)
 as $$
@@ -78,7 +78,7 @@ language plpgsql
 strict
 ;
 
-create function
+create or replace function
     runtime.create_location(
         customer_id text,
         modified_by bigint,
@@ -109,7 +109,7 @@ language plpgsql
 strict
 ;
 
-create function
+create or replace function
     runtime.create_demo(customer_name text, admins text[], modified_by bigint)
 returns table(op text, id text)
 as $$
@@ -168,7 +168,7 @@ language plpgsql
 strict
 ;
 
-create function
+create or replace function
     runtime.add_demo_to_customer(
         customer_id text, language_type text, modified_by bigint, timezone text
     )
@@ -538,7 +538,7 @@ language plpgsql
 strict
 ;
 
-create function runtime.destroy_demo(customer_id text)
+create or replace function runtime.destroy_demo(customer_id text)
 returns text
 as $$
 declare

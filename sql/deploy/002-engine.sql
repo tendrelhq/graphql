@@ -13,7 +13,7 @@ begin
   end if;
 end $$;
 
-create function engine0.execute(task_id text, modified_by bigint)
+create or replace function engine0.execute(task_id text, modified_by bigint)
 returns table(instance text)
 as $$
 begin
@@ -94,7 +94,7 @@ that we intend to invoke it with, via `ctx`.
 
 $$;
 
-create function engine0.invoke(x engine0.closure)
+create or replace function engine0.invoke(x engine0.closure)
 returns setof record
 as $$
 begin
@@ -105,7 +105,7 @@ strict
 ;
 
 -- fmt: off
-create function engine0.build_instantiation_plan(task_id text)
+create or replace function engine0.build_instantiation_plan(task_id text)
 returns
     table(
         count bigint,
@@ -293,7 +293,7 @@ Build an instantiation plan based on the current state of the system.
 
 $$;
 
-create function
+create or replace function
     engine0.evaluate_instantiation_plan(
         target text, target_type text, conditions engine0.closure[]
     )
@@ -323,7 +323,7 @@ Evaluate an instantiation plan.
 
 $$;
 
-create function engine0.eval_field_condition(ctx jsonb)
+create or replace function engine0.eval_field_condition(ctx jsonb)
 returns table(ok boolean)
 as $$
 begin
@@ -340,7 +340,7 @@ language plpgsql
 strict
 ;
 
-create function engine0.eval_state_condition(ctx jsonb)
+create or replace function engine0.eval_state_condition(ctx jsonb)
 returns table(ok boolean)
 as $$
 begin
@@ -359,7 +359,7 @@ language plpgsql
 strict
 ;
 
-create function engine0.eval_field_and_state_condition(ctx jsonb)
+create or replace function engine0.eval_field_and_state_condition(ctx jsonb)
 returns table(ok boolean)
 as $$
 begin
@@ -379,7 +379,7 @@ strict
 
 -- FIXME: ensure template is instantiable at location according to
 -- worktemplateconstraint.
-create function
+create or replace function
     engine0.instantiate(
         template_id text,
         location_id text,
@@ -565,7 +565,7 @@ from engine0.instantiate(
 
 $$;
 
-create function
+create or replace function
     engine0.evaluate_rrules(
         -- fmt: off
         task_id text,
@@ -611,7 +611,7 @@ stable
 ;
 
 -- fmt: off
-create function
+create or replace function
     engine0.compute_rrule_next_occurrence(
         freq text, interval_v numeric, dtstart timestamptz
     )

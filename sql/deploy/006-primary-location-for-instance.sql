@@ -2,7 +2,7 @@
 begin
 ;
 
-create function legacy0.primary_location_for_instance(instance_id text)
+create or replace function legacy0.primary_location_for_instance(instance_id text)
 returns table(id text, _id bigint)
 as $$
   with cte as materialized (

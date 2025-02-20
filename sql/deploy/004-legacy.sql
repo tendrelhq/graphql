@@ -14,7 +14,7 @@ begin
 end $$;
 
 -- fmt: off
-create function
+create or replace function
     legacy0.create_location(
         customer_id text,
         language_type text,
@@ -114,7 +114,7 @@ end $$
 language plpgsql
 ;
 
-create function
+create or replace function
     legacy0.create_worker(
         customer_id text, user_id text, user_role text, modified_by bigint
     )
@@ -155,7 +155,7 @@ language sql
 strict
 ;
 
-create function
+create or replace function
     legacy0.create_task_t(
         customer_id text,
         language_type text,
@@ -243,7 +243,7 @@ language plpgsql
 strict
 ;
 
-create function
+create or replace function
     legacy0.create_template_type(template_id text, systag_id text, modified_by bigint)
 returns table(id text)
 as $$
@@ -270,7 +270,7 @@ language sql
 strict
 ;
 
-create function
+create or replace function
     legacy0.create_template_constraint_on_location(
         template_id text, location_id text, modified_by bigint
     )
@@ -350,7 +350,7 @@ $$;
 
 -- TODO: I wonder if we should create a separate function for creating fields of
 -- reference type?
-create function
+create or replace function
     legacy0.create_field_t(
         customer_id text,
         language_type text,
@@ -429,7 +429,7 @@ $$
 language sql
 ;
 
-create function
+create or replace function
     legacy0.create_instantiation_rule(
         prev_template_id text,
         next_template_id text,
@@ -489,7 +489,7 @@ language plpgsql
 strict
 ;
 
-create function
+create or replace function
     legacy0.create_rrule(
         task_id text,
         frequency_type text,
