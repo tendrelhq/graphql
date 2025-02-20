@@ -51,8 +51,10 @@ describe("URL", () => {
   });
 
   describe("invalid", () => {
-    describe("not a URL", () => {
-      expect(() => url.serialize("invalidurlexample")).toThrow(/is not a URL/);
+    test("not a URL", () => {
+      expect(() => url.serialize("invalidurlexample")).toThrow(
+        /cannot be parsed as a URL/,
+      );
     });
 
     test("parseValue invalidurlexample", () => {
