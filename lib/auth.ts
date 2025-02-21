@@ -5,6 +5,7 @@ import {
   type StrictAuthProp,
 } from "@clerk/clerk-sdk-node";
 import type e from "express";
+import { GraphQLError } from "graphql";
 import { type TxSql, sql } from "./datasources/postgres";
 
 declare global {
@@ -55,25 +56,31 @@ export async function protect(
   allowed: ("Worker" | "Supervisor" | "Admin")[],
 ) {
   const rows = await sql`
-      SELECT 1
-      FROM public.workerinstance AS w
-      INNER JOIN public.systag AS s
-          ON w.workerinstanceuserroleid = s.systagid
-      WHERE
-          w.workerinstancecustomerid = (
-              SELECT customerid
-              FROM public.customer
-              WHERE customeruuid = ${decodeGlobalId(orgId).id}
-          )
-          AND w.workerinstanceworkerid = (
-              SELECT workerid
-              FROM public.worker
-              WHERE workeridentityid = ${userId}
-          )
-          AND s.systagtype IN (${sql(allowed)});
+    select 1
+    from public.workerinstance as w
+    inner join public.systag as s on w.workerinstanceuserroleid = s.systagid
+    where
+        w.workerinstancecustomerid = (
+            select customerid
+            from public.customer
+            where customeruuid = ${decodeGlobalId(orgId).id}
+        )
+        and w.workerinstanceworkerid = (
+            select workerid
+            from public.worker
+            where workeridentityid = ${userId}
+        )
+        and s.systagtype in (${sql(allowed)});
   `;
 
-  return rows.length > 0;
+  if (!rows.length) {
+    throw new GraphQLError("Not authorized", {
+      extensions: {
+        code: "UNAUTHORIZED",
+        hint: "You do not have the necessary permissions to perform this action",
+      },
+    });
+  }
 }
 
 export function setCurrentIdentity(sql: TxSql, ctx: Context) {
