@@ -200,6 +200,17 @@ input GeofenceInput {
   radius: Float
 }
 
+input InstantiateOptions {
+  fields: [FieldInput!]
+}
+
+input TemplateConstraintOptions {
+  """
+  Request eager instantiation of the given template.
+  """
+  instantiate: InstantiateOptions
+}
+
 input UpdateLocationInput {
   activatedAt: String
   deactivatedAt: String
@@ -320,8 +331,15 @@ type Closed {
   openedBy: Assignable
 }
 
+type CreateTemplateConstraintResult {
+  constraint: TemplateConstraint
+  diagnostics: [Diagnostic!] @semanticNonNull
+  instantiations: [TaskEdge!] @semanticNonNull
+}
+
 type Diagnostic {
   code: DiagnosticKind @semanticNonNull
+  message: String
 }
 
 type DisplayName implements Component & Node {
@@ -415,6 +433,14 @@ type Mutation {
   applyFieldEdits(edits: [FieldInput!]!, entity: ID!): Task @semanticNonNull
   attach(attachments: [URL!]!, entity: ID!): [AttachmentEdge!] @semanticNonNull
   createLocation(input: CreateLocationInput!): Location @semanticNonNull
+  """
+  Create a new template constraint.
+  """
+  createTemplateConstraint(
+    entity: ID!
+    options: TemplateConstraintOptions
+    template: ID!
+  ): CreateTemplateConstraintResult @semanticNonNull
   updateLocation(input: UpdateLocationInput!): Location @semanticNonNull
 }
 
@@ -603,6 +629,16 @@ type TaskStateMachine {
   active: Task
   hash: String @semanticNonNull
   transitions: TaskConnection
+}
+
+"""
+Template constraints allow you to constrain the *type* of thing that can go
+into a field. Currently, this is only supported for Locations (and by that I
+mean "primary locations") as a means of "enabling" a template for the given
+location.
+"""
+type TemplateConstraint {
+  id: ID @semanticNonNull
 }
 
 type TimestampOverridable {

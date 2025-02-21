@@ -14,7 +14,7 @@ import {
 } from "graphql";
 
 // biome-ignore lint/suspicious/noExplicitAny:
-export async function execute<R, V extends Record<any, any>>(
+export async function execute<R, V extends Record<string, any>>(
   schema: GraphQLSchema,
   query: DocumentNode<R, V>,
   ...[variables]: V extends Record<string, never> ? [] : [V]
@@ -100,10 +100,10 @@ export async function assertTaskIsNamed(
   return n.value === displayName;
 }
 
-export function assertNoDiagnostics<T, R extends { __typename?: T }>(
-  result?: R | null,
-) {
-  assert(result?.__typename !== "Diagnostic");
+export function assertNoDiagnostics<
+  T extends { diagnostics?: Array<unknown> | null },
+>(result?: T | null) {
+  assert(!result?.diagnostics?.length);
 }
 
 export async function getFieldByName(t: Task, name: string): Promise<Field> {

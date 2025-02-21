@@ -1,19 +1,12 @@
-/**
- * Let's be honest: errors in GraphQL suck. This is why Tendrel doesn't throw
- * errors, but rather returns them as "diagnostics". If an operation throws an
- * error, this should be considered a _bug in Tendrel_ and treated the same as
- * an "internal server error" (i.e. status code 500) in classical HTTP.
- *
- * @gqlUnion
- */
-export type Result<T> = T | Diagnostic;
-
 /** @gqlType */
 export type Diagnostic = {
   __typename: "Diagnostic";
 
   /** @gqlField */
   code: DiagnosticKind;
+
+  /** @gqlField */
+  message?: string | null;
 };
 
 /** @gqlEnum */

@@ -7,7 +7,7 @@ import type {
 } from "@/schema";
 import { decodeGlobalId } from "@/schema/system";
 import type { FieldInput } from "@/schema/system/component";
-import { Task, applyEdits$fragment } from "@/schema/system/component/task";
+import { Task, applyFieldEdits_ } from "@/schema/system/component/task";
 import { assert, type WithKey } from "@/util";
 import { GraphQLError } from "graphql";
 import { match } from "ts-pattern";
@@ -484,11 +484,8 @@ export async function copyFromWorkTemplate(
   const t = new Task(row, ctx);
 
   if (options.fieldOverrides?.length) {
-    const edits = applyEdits$fragment(ctx, t, options.fieldOverrides);
-    if (edits) {
-      const result = await sql`${edits}`;
-      console.log(`Applied ${result.count} field-level edits.`);
-    }
+    const result = await applyFieldEdits_(sql, ctx, t, options.fieldOverrides);
+    console.log(`copyFrom: applied ${result.count} field-level edits.`);
   }
 
   return t;

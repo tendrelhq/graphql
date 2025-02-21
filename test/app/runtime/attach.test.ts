@@ -24,6 +24,7 @@ const ctx = await createTestContext();
 
 const FAKE_S3_URI =
   "s3://tendrel-ruggiano-test-attachment-bucket/workpictureinstance/92286ae9-f9f0-4948-b9ed-128dd11ed95d/screenshot-2024-11-05T11:46:56-08:00.png";
+const SKIP = !process.env.ATTACHMENT_BUCKET;
 
 describe("[app/runtime] attach", () => {
   let CUSTOMER: string;
@@ -44,7 +45,7 @@ describe("[app/runtime] attach", () => {
     });
   });
 
-  test.skipIf(!!process.env.CI)("add, list, repeat (4x)", async () => {
+  test.skipIf(SKIP)("add, list, repeat (4x)", async () => {
     for (let i = 0; i < 4; i++) {
       const add = await execute(schema, TestAttachDocument, {
         attachment: FAKE_S3_URI,
@@ -77,7 +78,7 @@ describe("[app/runtime] attach", () => {
     }
   });
 
-  test.skipIf(!!process.env.CI)("attach to a field", async () => {
+  test.skipIf(SKIP)("attach to a field", async () => {
     const add = await execute(schema, TestAttachDocument, {
       attachment: FAKE_S3_URI,
       node: FIELD.id,
@@ -118,7 +119,7 @@ describe("[app/runtime] attach", () => {
     }
   });
 
-  test.skipIf(!!process.env.CI)("paginate", async () => {
+  test.skipIf(SKIP)("paginate", async () => {
     const seen = new Set<ID>();
     for await (const page of paginateQuery({
       async execute(cursor) {

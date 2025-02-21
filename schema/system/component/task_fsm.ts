@@ -14,7 +14,7 @@ import {
   Task,
   advanceTask,
   applyAssignments$fragment,
-  applyEdits$fragment,
+  applyFieldEdits_,
 } from "./task";
 
 export function fsm$fragment(t: Task): Fragment {
@@ -310,12 +310,14 @@ export async function advanceFsm(
           );
         }
 
-        if (opts.task.overrides) {
-          const f = applyEdits$fragment(ctx, t, opts.task.overrides);
-          if (f) {
-            const result = await sql`${f}`;
-            console.debug(`advance: applied ${result.count} field-level edits`);
-          }
+        if (opts.task.overrides?.length) {
+          const result = await applyFieldEdits_(
+            sql,
+            ctx,
+            t,
+            opts.task.overrides,
+          );
+          console.debug(`advance: applied ${result.count} field-level edits`);
         }
       }
 

@@ -8,7 +8,7 @@ import {
   findAndEncode,
   getFieldByName,
 } from "@/test/prelude";
-import { assert, assertNonNull, map } from "@/util";
+import { assertNonNull, map } from "@/util";
 import type { Field } from "../system/component";
 import { Task } from "../system/component/task";
 import {
@@ -21,7 +21,7 @@ const ctx = await createTestContext();
 const FAKE_S3_URI =
   "s3://tendrel-ruggiano-test-attachment-bucket/workpictureinstance/92286ae9-f9f0-4948-b9ed-128dd11ed95d/screenshot-2024-11-05T11:46:56-08:00.png";
 
-describe.skipIf(!!process.env.CI)("attach", () => {
+describe.skipIf(!process.env.ATTACHMENT_BUCKET)("attach", () => {
   let CUSTOMER: string;
   let INSTANCE: Task;
   let FIELD: Field;
