@@ -1,10 +1,11 @@
 import { decodeGlobalId } from "@/schema/system";
+import type { Context } from "@/schema/types";
 import {
   ClerkExpressRequireAuth,
   type StrictAuthProp,
 } from "@clerk/clerk-sdk-node";
 import type e from "express";
-import { sql } from "./datasources/postgres";
+import { type TxSql, sql } from "./datasources/postgres";
 
 declare global {
   namespace Express {
@@ -51,7 +52,7 @@ export default {
 
 export async function protect(
   { orgId, userId }: { orgId: string; userId: string },
-  allowed: string[],
+  allowed: ("Worker" | "Supervisor" | "Admin")[],
 ) {
   const rows = await sql`
       SELECT 1
@@ -73,4 +74,8 @@ export async function protect(
   `;
 
   return rows.length > 0;
+}
+
+export function setCurrentIdentity(sql: TxSql, ctx: Context) {
+  return sql`select * from auth.set_actor(${ctx.auth.userId}, ${ctx.req.i18n.language})`;
 }

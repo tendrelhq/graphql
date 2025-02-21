@@ -1,3 +1,4 @@
+import { setCurrentIdentity } from "@/auth";
 import { sql } from "@/datasources/postgres";
 import type {
   Checklist,
@@ -745,7 +746,7 @@ export const saveChecklist: NonNullable<
 
     // Create an Open instance of the newly created Checklist template.
     await sql.begin(async sql => {
-      await sql`select * from auth.set_actor(${ctx.auth.userId}, ${ctx.req.i18n.language})`;
+      await setCurrentIdentity(sql, ctx);
       return await copyFromWorkTemplate(sql, id, {}, ctx);
     });
   }

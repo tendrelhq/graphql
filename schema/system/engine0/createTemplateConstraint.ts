@@ -1,3 +1,4 @@
+import { setCurrentIdentity } from "@/auth";
 import { type TxSql, sql } from "@/datasources/postgres";
 import { type Diagnostic, DiagnosticKind } from "@/schema/result";
 import type { Mutation } from "@/schema/root";
@@ -97,7 +98,7 @@ export async function createTemplateConstraint(
   }
 
   const result = await sql.begin(async sql => {
-    await sql`select * from auth.set_actor(${ctx.auth.userId}, ${ctx.req.i18n.language})`;
+    await setCurrentIdentity(sql, ctx);
     return await createTemplateConstraint_(
       ctx,
       sql,

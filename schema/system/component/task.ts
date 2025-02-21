@@ -1,3 +1,4 @@
+import { setCurrentIdentity } from "@/auth";
 import { type Sql, type TxSql, sql } from "@/datasources/postgres";
 import {
   Location,
@@ -17,6 +18,7 @@ import {
   assertUnderlyingType,
   buildPaginationArgs,
   mapOrElse,
+  normalizeBase64,
 } from "@/util";
 import { GraphQLError } from "graphql/error";
 import type { ID, Int } from "grats";
@@ -72,9 +74,7 @@ export class Task
     args: ConstructorArgs,
     private ctx: Context,
   ) {
-    // Note that Postgres will sometimes add newlines when we `encode(...)`.
-    this.id = args.id.replace(/\n/g, "");
-    // Private.
+    this.id = normalizeBase64(args.id);
     const { type, id } = decodeGlobalId(this.id);
     this._type = type;
     this._id = id;
@@ -212,10 +212,9 @@ export class Task
                   )
                   and wr.workresultisprimary = true
           )
-          select encode(('location:' || l.locationuuid)::bytea, 'base64') as id
-          from parent
-          inner join public.location as l
-              on parent._id = l.locationid
+          select encode(('location:' || location.locationuuid)::bytea, 'base64') as id
+          from parent, public.location
+          where parent._id = location.locationid
         `,
       )
       .with(
@@ -440,7 +439,7 @@ export class Task
   }
 
   toString() {
-    return `'${this.id}' (${this._type}:${this._id})`;
+    return `${this.id} (${this._type}:${this._id})`;
   }
 }
 
@@ -798,9 +797,9 @@ export async function advance(
   t: Task,
   opts: Omit<AdvanceTaskOptions, "id">,
 ): Promise<AdvanceTaskResult> {
-  return await sql.begin(async tx => {
-    await tx`select * from auth.set_actor(${ctx.auth.userId}, ${ctx.req.i18n.language})`;
-    return await advanceTask(tx, ctx, t, opts);
+  return await sql.begin(async sql => {
+    await setCurrentIdentity(sql, ctx);
+    return await advanceTask(sql, ctx, t, opts);
   });
 }
 
@@ -936,9 +935,9 @@ export async function advanceTask(
   }
 
   {
-    /** @see {@link applyAssignments$fragment} */
+    /** @see {@link applyAssignments_} */
     const ma = "replace";
-    const result = await sql`${applyAssignments$fragment(ctx, t, ma)}`;
+    const result = await sql`${applyAssignments_(sql, ctx, t, ma)}`;
     console.debug(
       `advance: applied ${result.count} assignments (mergeAction: ${ma})`,
     );
@@ -1001,11 +1000,12 @@ export async function advanceTask(
 /**
  * @param mergeAction `replace` overwrites, `keep` does not
  */
-export function applyAssignments$fragment(
+export function applyAssignments_(
+  sql: TxSql,
   ctx: Context,
   t: Task,
   mergeAction: "keep" | "replace" = "replace",
-): Fragment {
+) {
   const ma: Fragment = match(mergeAction)
     // When keeping, we only perform the update when the value is null.
     .with("keep", () => sql`t.workresultinstancevalue is null`)
@@ -1182,7 +1182,7 @@ export async function applyFieldEdits(
 
   if (t._type === "workinstance" && edits.length > 0) {
     const result = await sql.begin(async sql => {
-      await sql`select * from auth.set_actor(${ctx.auth.userId}, ${ctx.req.i18n.language})`;
+      await setCurrentIdentity(sql, ctx);
       return await applyFieldEdits_(sql, ctx, t, edits);
     });
     console.debug(`applyFieldEdits: count: ${result.count}`);

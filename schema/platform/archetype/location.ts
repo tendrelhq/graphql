@@ -8,6 +8,7 @@ import {
 import type { Refetchable } from "@/schema/system/node";
 import type { Connection } from "@/schema/system/pagination";
 import type { Context } from "@/schema/types";
+import { normalizeBase64 } from "@/util";
 import type { ID, Int } from "grats";
 import type { Trackable } from "../tracking";
 
@@ -26,12 +27,10 @@ export class Location implements Component, Refetchable, Trackable {
     args: ConstructorArgs,
     private ctx: Context,
   ) {
-    // Note that Postgres will sometimes add newlines when we `encode(...)`.
-    this.id = args.id.replace(/\n/g, "");
-
-    const { type, ...identifier } = decodeGlobalId(this.id);
+    this.id = normalizeBase64(args.id);
+    const { type, id } = decodeGlobalId(this.id);
     this._type = type;
-    this._id = identifier.id;
+    this._id = id;
   }
 
   /**
