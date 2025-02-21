@@ -1,3 +1,4 @@
+import { setCurrentIdentity } from "@/auth";
 import { type Sql, type TxSql, sql } from "@/datasources/postgres";
 import { type Diagnostic, DiagnosticKind } from "@/schema/result";
 import type { Mutation } from "@/schema/root";
@@ -13,7 +14,7 @@ import {
   type AdvanceTaskOptions,
   Task,
   advanceTask,
-  applyAssignments$fragment,
+  applyAssignments_,
   applyFieldEdits_,
 } from "./task";
 
@@ -87,7 +88,7 @@ export async function fsm(
 }
 
 export async function fsm_(
-  tx: Sql | TxSql,
+  sql: Sql | TxSql,
   t: Task,
   ctx: Context,
 ): Promise<StateMachine<Task> | null> {
@@ -99,14 +100,14 @@ export async function fsm_(
     return null;
   }
 
-  const [fsm] = await tx<[FSM?]>`${fsm$fragment(t)}`;
+  const [fsm] = await sql<[FSM?]>`${fsm$fragment(t)}`;
   if (!fsm) {
     // This is most notably the case on task close.
     return null;
   }
 
   return {
-    hash: (await t.hash()) as string, // hash is only null when `t` is a template
+    hash: await t.hash(), // Note that this is currently unused.
     active: new Task({ id: fsm.active }, ctx),
     transitions: {
       edges:
@@ -149,10 +150,9 @@ export async function advance(
   console.debug(`fsm: ${root.id}`);
   assert(root._type === "workinstance");
 
-  return await sql.begin(async tx => {
-    await tx`select * from auth.set_actor(${ctx.auth.userId}, ${ctx.req.i18n.language})`;
-
-    const [fsm] = await tx<[FSM?]>`${fsm$fragment(root)}`;
+  return await sql.begin(async sql => {
+    await setCurrentIdentity(sql, ctx);
+    const [fsm] = await sql<[FSM?]>`${fsm$fragment(root)}`;
     if (!fsm) {
       return {
         root,
@@ -221,7 +221,7 @@ export async function advance(
       console.debug("advance: operating on the active task");
       // When the "choice" is the active task, we advance that task's internal
       // state machine as defined by its own `advance` implementation.
-      const r = await advanceTask(tx, ctx, choice, opts.task);
+      const r = await advanceTask(sql, ctx, choice, opts.task);
       return {
         root,
         ...r,
@@ -230,7 +230,7 @@ export async function advance(
 
     // Otherwise, the "choice" identifies a transition in the fsm.
     console.debug("advance: operating on the fsm");
-    return await advanceFsm(tx, root, fsm, choice, opts, ctx);
+    return await advanceFsm(sql, root, fsm, choice, opts, ctx);
   });
 }
 
@@ -304,7 +304,7 @@ export async function advanceFsm(
         // Auto-assign.
         {
           const ma = "replace";
-          const result = await sql`${applyAssignments$fragment(ctx, t, ma)}`;
+          const result = await applyAssignments_(sql, ctx, t, ma);
           console.debug(
             `advance: applied ${result.count} assignments (mergeAction: ${ma})`,
           );

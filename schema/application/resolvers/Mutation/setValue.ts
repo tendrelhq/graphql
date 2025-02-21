@@ -1,3 +1,4 @@
+import { setCurrentIdentity } from "@/auth";
 import { sql } from "@/datasources/postgres";
 import type { MutationResolvers } from "@/schema";
 import { decodeGlobalId } from "@/schema/system";
@@ -95,7 +96,7 @@ export const setValue: NonNullable<MutationResolvers["setValue"]> = async (
 
   const field = assertNonNull(suffix?.at(0), "invariant violated");
   const result = await sql.begin(async sql => {
-    await sql`select * from auth.set_actor(${ctx.auth.userId}, ${ctx.req.i18n.language})`;
+    await setCurrentIdentity(sql, ctx);
     return await sql`
       select *
       from engine0.apply_field_edit(

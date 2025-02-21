@@ -1,3 +1,4 @@
+import { setCurrentIdentity } from "@/auth";
 import { join, sql } from "@/datasources/postgres";
 import type { MutationResolvers, TemporalInput } from "@/schema";
 import { decodeGlobalId } from "@/schema/system";
@@ -230,7 +231,7 @@ export const setStatus: NonNullable<MutationResolvers["setStatus"]> = async (
         }
 
         if (targetStatus === "In Progress") {
-          await sql`select * from auth.set_actor(${ctx.auth.userId}, ${ctx.req.i18n.language})`;
+          await setCurrentIdentity(sql, ctx);
           // This is the "respawn" case: create an entirely new chain of work.
           await copyFromWorkInstance(
             sql,

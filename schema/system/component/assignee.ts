@@ -1,5 +1,6 @@
 import { sql } from "@/datasources/postgres";
 import type { Context } from "@/schema/types";
+import { normalizeBase64 } from "@/util";
 import type { ID } from "grats";
 import { decodeGlobalId } from "..";
 import type { Component } from "../component";
@@ -40,13 +41,11 @@ export class Assignment implements Refetchable {
     args: { id: ID },
     private ctx: Context,
   ) {
-    // Note that Postgres will sometimes add newlines when we `encode(...)`.
-    this.id = args.id.replace(/\n/g, "");
-    // Private.
-    const g = decodeGlobalId(this.id);
-    this._type = g.type;
-    this._id = g.id;
-    this._field = g.suffix?.at(0);
+    this.id = normalizeBase64(args.id);
+    const { type, id, suffix } = decodeGlobalId(this.id);
+    this._type = type;
+    this._id = id;
+    this._field = suffix?.at(0);
   }
 
   /**

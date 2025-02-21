@@ -1,3 +1,4 @@
+import { setCurrentIdentity } from "@/auth";
 import { type TxSql, sql } from "@/datasources/postgres";
 import type {
   ChecklistEdge,
@@ -8,7 +9,7 @@ import type {
 import { decodeGlobalId } from "@/schema/system";
 import type { FieldInput } from "@/schema/system/component";
 import { Task, applyFieldEdits_ } from "@/schema/system/component/task";
-import { assert, type WithKey } from "@/util";
+import { assert, type WithKey, normalizeBase64 } from "@/util";
 import { GraphQLError } from "graphql";
 import { match } from "ts-pattern";
 
@@ -20,15 +21,15 @@ export const copyFrom: NonNullable<MutationResolvers["copyFrom"]> = async (
   const { type, id } = decodeGlobalId(entity);
   const result = await match(type)
     .with("workinstance", () =>
-      sql.begin(async tx => {
-        await tx`select * from auth.set_actor(${ctx.auth.userId}, ${ctx.req.i18n.language})`;
-        return await copyFromWorkInstance(tx, id, options, ctx);
+      sql.begin(async sql => {
+        await setCurrentIdentity(sql, ctx);
+        return await copyFromWorkInstance(sql, id, options, ctx);
       }),
     )
     .with("worktemplate", () =>
-      sql.begin(async tx => {
-        await tx`select * from auth.set_actor(${ctx.auth.userId}, ${ctx.req.i18n.language})`;
-        return await copyFromWorkTemplate(tx, id, options, ctx);
+      sql.begin(async sql => {
+        await setCurrentIdentity(sql, ctx);
+        return await copyFromWorkTemplate(sql, id, options, ctx);
       }),
     )
     .otherwise(() => {
@@ -226,7 +227,7 @@ export async function copyFromWorkTemplate(
   }
 
   console.debug(
-    `Created Entity ${row.id.replace(/\n/g, "")} (workinstance:${row._key_uuid})`,
+    `Created Entity ${normalizeBase64(row.id)} (workinstance:${row._key_uuid})`,
   );
 
   // We must have an originator, even if it needlessly points right back at us.
