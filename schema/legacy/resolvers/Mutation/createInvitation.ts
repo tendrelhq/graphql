@@ -8,16 +8,7 @@ import { GraphQLError } from "graphql";
 export const createInvitation: NonNullable<
   MutationResolvers["createInvitation"]
 > = async (_, { input }, ctx) => {
-  if (
-    !(await protect({ orgId: input.orgId, userId: ctx.auth.userId }, ["Admin"]))
-  ) {
-    throw new GraphQLError("Not authorized", {
-      extensions: {
-        code: "UNAUTHORIZED",
-        hint: "You do not have the necessary permissions to perform this action",
-      },
-    });
-  }
+  await protect({ orgId: input.orgId, userId: ctx.auth.userId }, ["Admin"]);
 
   // HACK: This is pretty fucked. But I suppose ok for now.
   // Will be fixed when we (hopefully) integrate with Clerk organizations.
@@ -54,5 +45,5 @@ export const createInvitation: NonNullable<
     workerId: input.workerId,
   });
 
-  return ctx.orm.worker.load(decodeGlobalId(input.workerId).id);
+  return await ctx.orm.worker.load(decodeGlobalId(input.workerId).id);
 };
