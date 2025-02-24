@@ -8,10 +8,16 @@ import {
   type ConstructorArgs as AttachmentConstructorArgs,
 } from "@/schema/platform/attachment";
 import type { Trackable } from "@/schema/platform/tracking";
-import { type Diagnostic, DiagnosticKind, type Result } from "@/schema/result";
+import { type Diagnostic, DiagnosticKind } from "@/schema/result";
 import type { Mutation } from "@/schema/root";
 import type { Context } from "@/schema/types";
-import { assert, assertNonNull, buildPaginationArgs, mapOrElse } from "@/util";
+import {
+  assert,
+  assertNonNull,
+  assertUnderlyingType,
+  buildPaginationArgs,
+  mapOrElse,
+} from "@/util";
 import { GraphQLError } from "graphql/error";
 import type { ID, Int } from "grats";
 import type { Fragment } from "postgres";
@@ -791,8 +797,8 @@ export async function advance(
   ctx: Context,
   t: Task,
   opts: Omit<AdvanceTaskOptions, "id">,
-): Promise<Result<AdvanceTaskResult>> {
-  return sql.begin(async tx => {
+): Promise<AdvanceTaskResult> {
+  return await sql.begin(async tx => {
     await tx`select * from auth.set_actor(${ctx.auth.userId}, ${ctx.req.i18n.language})`;
     return await advanceTask(tx, ctx, t, opts);
   });
@@ -938,12 +944,9 @@ export async function advanceTask(
     );
   }
 
-  {
-    const frag = applyEdits$fragment(ctx, t, opts?.overrides ?? []);
-    if (frag) {
-      const result = await sql`${frag}`;
-      console.debug(`advance: applied ${result.count} field-level edits`);
-    }
+  if (opts?.overrides?.length) {
+    const result = await applyFieldEdits_(sql, ctx, t, opts.overrides);
+    console.debug(`advance: applied ${result.count} field-level edits`);
   }
 
   if (result._hack_needs_tat) {
@@ -1177,12 +1180,13 @@ export async function applyFieldEdits(
 ): Promise<Task> {
   const t = new Task({ id: entity }, ctx);
 
-  await sql.begin(async tx => {
-    await tx`select * from auth.set_actor(${ctx.auth.userId}, ${ctx.req.i18n.language})`;
-    const f = applyEdits$fragment(ctx, t, edits);
-    if (!f) return;
-    await tx`${f}`;
-  });
+  if (t._type === "workinstance" && edits.length > 0) {
+    const result = await sql.begin(async sql => {
+      await sql`select * from auth.set_actor(${ctx.auth.userId}, ${ctx.req.i18n.language})`;
+      return await applyFieldEdits_(sql, ctx, t, edits);
+    });
+    console.debug(`applyFieldEdits: count: ${result.count}`);
+  }
 
   return t;
 }
@@ -1194,20 +1198,18 @@ export async function applyFieldEdits(
  * - This is an UPSERT operation; it will create workresultinstances if necessary.
  * - This operation does not affect field-level status.
  */
-export function applyEdits$fragment(
+export function applyFieldEdits_(
+  sql: TxSql,
   _ctx: Context,
   t: Task,
   edits: FieldInput[],
-): Fragment | undefined {
-  if (t._type !== "workinstance") {
-    assert(t._type === "workinstance", `cannot apply edits to a '${t._type}'`);
-    return;
-  }
-
-  if (!edits.length) return;
+) {
+  assert(t._type === "workinstance", `cannot apply edits to a '${t._type}'`);
+  assert(edits.length > 0, "must supply at least one edit");
 
   const edits_ = edits.flatMap(e => {
     const { type, id, suffix } = decodeGlobalId(e.field);
+    assertUnderlyingType(["workresult", "workresultinstance"], type);
     switch (type) {
       case "workresult": {
         return [[id, valueInputToSql(e), valueInputTypeToSql(e)]];
@@ -1228,14 +1230,13 @@ export function applyEdits$fragment(
     }
   });
 
-  if (!edits_.length) return;
-
+  // N.B. no `await` so we can use the return value as a `sql.Fragment`.
   return sql`
     with edits (field, value, type) as (
         values ${sql(edits_ as string[][])}
     )
 
-    select count(*)
+    select t.*
     from
         edits,
         engine0.apply_field_edit(
@@ -1243,7 +1244,7 @@ export function applyEdits$fragment(
             field := edits.field,
             field_v := edits.value,
             field_vt := edits.type
-        )
+        ) as t
   `;
 }
 

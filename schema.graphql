@@ -606,6 +606,12 @@ input CreateNameInput {
   value: String!
 }
 
+type CreateTemplateConstraintResult {
+  constraint: TemplateConstraint
+  diagnostics: [Diagnostic!] @semanticNonNull
+  instantiations: [TaskEdge!] @semanticNonNull
+}
+
 input CreateUserInput {
   active: Boolean!
   displayName: String
@@ -664,6 +670,7 @@ input DescriptionInput {
 
 type Diagnostic {
   code: DiagnosticKind @semanticNonNull
+  message: String
 }
 
 enum DiagnosticKind {
@@ -920,6 +927,10 @@ input InstantToStringOptions {
   timeZone: TimeZone
 }
 
+input InstantiateOptions {
+  fields: [FieldInput!]
+}
+
 type Invitation {
   createdAt: String!
   emailAddress: String!
@@ -1045,6 +1056,14 @@ type Mutation {
   createEntity(id: String, suffix: [String!], type: String!): ID!
   createInvitation(input: CreateInvitationInput!): Worker!
   createLocation(input: CreateLocationInput!): Location @semanticNonNull
+  """
+  Create a new template constraint.
+  """
+  createTemplateConstraint(
+    entity: ID!
+    options: TemplateConstraintOptions
+    template: ID!
+  ): CreateTemplateConstraintResult @semanticNonNull
   createUser(input: CreateUserInput!): User!
   createWorker(input: CreateWorkerInput!): WorkerEdge!
   """
@@ -1595,6 +1614,23 @@ type TaskStateMachine {
   active: Task
   hash: String @semanticNonNull
   transitions: TaskConnection
+}
+
+"""
+Template constraints allow you to constrain the *type* of thing that can go
+into a field. Currently, this is only supported for Locations (and by that I
+mean "primary locations") as a means of "enabling" a template for the given
+location.
+"""
+type TemplateConstraint {
+  id: ID @semanticNonNull
+}
+
+input TemplateConstraintOptions {
+  """
+  Request eager instantiation of the given template.
+  """
+  instantiate: InstantiateOptions
 }
 
 interface Temporal {

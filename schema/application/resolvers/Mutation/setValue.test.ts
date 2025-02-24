@@ -129,7 +129,6 @@ describe("setValue", () => {
       findAndEncode("instance", "workinstance", logs),
       id => new Task({ id }, ctx),
     );
-    console.log(TASK._type, TASK._id);
   });
 
   afterAll(async () => {

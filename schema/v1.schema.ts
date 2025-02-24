@@ -17,25 +17,36 @@ import {
 } from "graphql";
 import { createLocation as mutationCreateLocationResolver } from "./platform/archetype/location/create";
 import { updateLocation as mutationUpdateLocationResolver } from "./platform/archetype/location/update";
-import { attachedBy as attachmentAttachedByResolver } from "./platform/attachment";
-import { attach as mutationAttachResolver } from "./platform/attachment";
+import {
+  attachedBy as attachmentAttachedByResolver,
+  attach as mutationAttachResolver,
+} from "./platform/attachment";
 import { trackables as queryTrackablesResolver } from "./platform/tracking";
-import { attachments as fieldAttachmentsResolver } from "./system/component";
-import { name as fieldNameResolver } from "./system/component";
-import { assignees as taskAssigneesResolver } from "./system/component/task";
-import { attachments as taskAttachmentsResolver } from "./system/component/task";
-import { chain as taskChainResolver } from "./system/component/task";
-import { chainAgg as taskChainAggResolver } from "./system/component/task";
-import { fields as taskFieldsResolver } from "./system/component/task";
-import { applyFieldEdits as mutationApplyFieldEditsResolver } from "./system/component/task";
-import { fsm as taskFsmResolver } from "./system/component/task_fsm";
-import { advance as mutationAdvanceResolver } from "./system/component/task_fsm";
-import { node as queryNodeResolver } from "./system/node";
-import { id as assignmentIdResolver } from "./system/node";
-import { id as attachmentIdResolver } from "./system/node";
-import { id as displayNameIdResolver } from "./system/node";
-import { id as taskIdResolver } from "./system/node";
-import { id as locationIdResolver } from "./system/node";
+import {
+  attachments as fieldAttachmentsResolver,
+  name as fieldNameResolver,
+} from "./system/component";
+import {
+  applyFieldEdits as mutationApplyFieldEditsResolver,
+  assignees as taskAssigneesResolver,
+  attachments as taskAttachmentsResolver,
+  chainAgg as taskChainAggResolver,
+  chain as taskChainResolver,
+  fields as taskFieldsResolver,
+} from "./system/component/task";
+import {
+  advance as mutationAdvanceResolver,
+  fsm as taskFsmResolver,
+} from "./system/component/task_fsm";
+import { createTemplateConstraint as mutationCreateTemplateConstraintResolver } from "./system/engine0/createTemplateConstraint";
+import {
+  id as assignmentIdResolver,
+  id as attachmentIdResolver,
+  id as displayNameIdResolver,
+  id as locationIdResolver,
+  node as queryNodeResolver,
+  id as taskIdResolver,
+} from "./system/node";
 async function assertNonNull<T>(value: T | Promise<T>): Promise<T> {
   const awaited = await value;
   if (awaited == null)
@@ -313,6 +324,10 @@ export function getSchema(): GraphQLSchema {
               defaultFieldResolver(source, args, context, info),
             );
           },
+        },
+        message: {
+          name: "message",
+          type: GraphQLString,
         },
       };
     },
@@ -1430,6 +1445,79 @@ export function getSchema(): GraphQLSchema {
         };
       },
     });
+  const TemplateConstraintType: GraphQLObjectType = new GraphQLObjectType({
+    name: "TemplateConstraint",
+    description:
+      'Template constraints allow you to constrain the *type* of thing that can go\ninto a field. Currently, this is only supported for Locations (and by that I\nmean "primary locations") as a means of "enabling" a template for the given\nlocation.',
+    fields() {
+      return {
+        id: {
+          name: "id",
+          type: GraphQLID,
+          resolve(source, args, context, info) {
+            return assertNonNull(
+              defaultFieldResolver(source, args, context, info),
+            );
+          },
+        },
+      };
+    },
+  });
+  const CreateTemplateConstraintResultType: GraphQLObjectType =
+    new GraphQLObjectType({
+      name: "CreateTemplateConstraintResult",
+      fields() {
+        return {
+          constraint: {
+            name: "constraint",
+            type: TemplateConstraintType,
+          },
+          diagnostics: {
+            name: "diagnostics",
+            type: new GraphQLList(new GraphQLNonNull(DiagnosticType)),
+            resolve(source, args, context, info) {
+              return assertNonNull(
+                defaultFieldResolver(source, args, context, info),
+              );
+            },
+          },
+          instantiations: {
+            name: "instantiations",
+            type: new GraphQLList(new GraphQLNonNull(TaskEdgeType)),
+            resolve(source, args, context, info) {
+              return assertNonNull(
+                defaultFieldResolver(source, args, context, info),
+              );
+            },
+          },
+        };
+      },
+    });
+  const InstantiateOptionsType: GraphQLInputObjectType =
+    new GraphQLInputObjectType({
+      name: "InstantiateOptions",
+      fields() {
+        return {
+          fields: {
+            name: "fields",
+            type: new GraphQLList(new GraphQLNonNull(FieldInputType)),
+          },
+        };
+      },
+    });
+  const TemplateConstraintOptionsType: GraphQLInputObjectType =
+    new GraphQLInputObjectType({
+      name: "TemplateConstraintOptions",
+      fields() {
+        return {
+          instantiate: {
+            description: "Request eager instantiation of the given template.",
+            name: "instantiate",
+            type: InstantiateOptionsType,
+          },
+        };
+      },
+    });
   const GeofenceInputType: GraphQLInputObjectType = new GraphQLInputObjectType({
     name: "GeofenceInput",
     fields() {
@@ -1595,6 +1683,36 @@ export function getSchema(): GraphQLSchema {
             );
           },
         },
+        createTemplateConstraint: {
+          description: "Create a new template constraint.",
+          name: "createTemplateConstraint",
+          type: CreateTemplateConstraintResultType,
+          args: {
+            entity: {
+              name: "entity",
+              type: new GraphQLNonNull(GraphQLID),
+            },
+            options: {
+              name: "options",
+              type: TemplateConstraintOptionsType,
+            },
+            template: {
+              name: "template",
+              type: new GraphQLNonNull(GraphQLID),
+            },
+          },
+          resolve(source, args, context) {
+            return assertNonNull(
+              mutationCreateTemplateConstraintResolver(
+                source,
+                context,
+                args.template,
+                args.entity,
+                args.options,
+              ),
+            );
+          },
+        },
         updateLocation: {
           name: "updateLocation",
           type: LocationType,
@@ -1664,6 +1782,8 @@ export function getSchema(): GraphQLSchema {
       DynamicStringInputType,
       FieldInputType,
       GeofenceInputType,
+      InstantiateOptionsType,
+      TemplateConstraintOptionsType,
       UpdateLocationInputType,
       UpdateNameInputType,
       ValueInputType,
@@ -1677,6 +1797,7 @@ export function getSchema(): GraphQLSchema {
       AttachmentEdgeType,
       BooleanValueType,
       ClosedType,
+      CreateTemplateConstraintResultType,
       DiagnosticType,
       DisplayNameType,
       DynamicStringType,
@@ -1696,6 +1817,7 @@ export function getSchema(): GraphQLSchema {
       TaskConnectionType,
       TaskEdgeType,
       TaskStateMachineType,
+      TemplateConstraintType,
       TimestampOverridableType,
       TimestampOverrideType,
       TimestampValueType,
