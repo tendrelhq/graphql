@@ -1,19 +1,24 @@
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 import { sql } from "@/datasources/postgres";
 import { schema } from "@/schema/final";
-import { decodeGlobalId, encodeGlobalId } from "@/schema/system";
-import { execute } from "@/test/prelude";
+import { decodeGlobalId } from "@/schema/system";
+import { createTestContext, execute, findAndEncode } from "@/test/prelude";
+import { map } from "@/util";
+import { Location } from "../location";
 import { TestCreateLocationDocument } from "./create.test.generated";
 
-describe.skip("createLocation", () => {
-  let ACCOUNT: string; // customer
+const ctx = await createTestContext();
+
+describe("createLocation", () => {
+  let CUSTOMER: string;
+  let SITE: Location;
 
   test("only required inputs; parent == customer", async () => {
     const result = await execute(schema, TestCreateLocationDocument, {
       input: {
         category: "asdf",
-        name: "ASDF",
-        parent: ACCOUNT,
+        name: "test only required inputs",
+        parent: CUSTOMER,
         timeZone: "America/Denver",
       },
     });
@@ -24,8 +29,8 @@ describe.skip("createLocation", () => {
     const result = await execute(schema, TestCreateLocationDocument, {
       input: {
         category: "asdf",
-        name: "ASDF",
-        parent: ACCOUNT,
+        name: "test optional inputs",
+        parent: CUSTOMER,
         scanCode: "asdf", // <-- optional
         timeZone: "America/Denver",
       },
@@ -34,21 +39,11 @@ describe.skip("createLocation", () => {
   });
 
   test("parent == location", async () => {
-    const [parent] = await sql`
-      select encode(('location:' || locationuuid)::bytea, 'base64') as id
-      from public.location
-      where locationcustomerid = (
-          select customerid
-          from public.customer
-          where customeruuid = ${decodeGlobalId(ACCOUNT).id}
-      )
-      limit 1;
-    `;
     const result = await execute(schema, TestCreateLocationDocument, {
       input: {
         category: "asdf",
-        name: "ASDF",
-        parent: parent.id,
+        name: "test child location",
+        parent: SITE.id,
         timeZone: "America/Denver",
       },
     });
@@ -56,35 +51,32 @@ describe.skip("createLocation", () => {
   });
 
   beforeAll(async () => {
-    const [row] = await sql`
-      select id
+    const logs = await sql<{ op: string; id: string }[]>`
+      select *
       from
-          mft.create_customer(
-              customer_name := 'ASDF', language_type := 'en', modified_by := 895
+          runtime.create_demo(
+              customer_name := 'Frozen Tendy Factory',
+              admins := (
+                  select array_agg(workeruuid)
+                  from public.worker
+                  where workeridentityid = ${ctx.auth.userId}
+              ),
+              modified_by := 895
           )
       ;
-
     `;
-    ACCOUNT = encodeGlobalId({
-      type: "organization",
-      id: row.id,
-    });
+    CUSTOMER = findAndEncode("customer", "organization", logs);
+    SITE = map(
+      findAndEncode("site", "location", logs),
+      id => new Location({ id }, ctx),
+    );
   });
 
   afterAll(async () => {
-    const { id } = decodeGlobalId(ACCOUNT);
-    // useful for debugging tests:
-    if (process.env.SKIP_LOCATION_CRUD_CLEANUP) {
-      console.log(
-        "Skipping clean up... don't forget to cleanup after yourself!",
-      );
-      console.debug(`select mft.destroy_demo(${id})`);
-      return;
-    }
-
+    const { id } = decodeGlobalId(CUSTOMER);
     process.stdout.write("Cleaning up... ");
     const [row] = await sql<[{ ok: string }]>`
-      select mft.destroy_demo(${id}) as ok;
+      select runtime.destroy_demo(${id}) as ok;
     `;
     console.log(row.ok);
   });

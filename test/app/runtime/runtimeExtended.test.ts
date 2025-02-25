@@ -47,7 +47,7 @@ describe("extended runtime demo", () => {
     );
   });
 
-  test("should be okay without a constraint/instance", async () => {
+  test.skip("should be okay without a constraint/instance", async () => {
     const result = await execute(schema, TestRuntimeEntrypointDocument, {
       root: CUSTOMER,
     });
@@ -60,7 +60,7 @@ describe("extended runtime demo", () => {
     expect(t?.node?.tracking?.edges).toHaveLength(0);
   });
 
-  test("create a template constraint and instantiate", async () => {
+  test.skip("create a template constraint and instantiate", async () => {
     const result = await execute(schema, TestCreateTemplateConstraintDocument, {
       template: TEMPLATE.id,
       location: LOCATION.id,

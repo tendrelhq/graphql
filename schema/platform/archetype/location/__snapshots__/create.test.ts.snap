@@ -7,7 +7,7 @@ exports[`createLocation only required inputs; parent == customer 1`] = `
       "__typename": "Location",
       "name": {
         "__typename": "Name",
-        "value": "ASDF",
+        "value": "test only required inputs",
       },
       "parent": null,
       "scanCode": null,
@@ -15,7 +15,7 @@ exports[`createLocation only required inputs; parent == customer 1`] = `
         "__typename": "Location",
         "name": {
           "__typename": "Name",
-          "value": "ASDF",
+          "value": "test only required inputs",
         },
       },
       "tags": [],
@@ -32,7 +32,7 @@ exports[`createLocation with optional inputs 1`] = `
       "__typename": "Location",
       "name": {
         "__typename": "Name",
-        "value": "ASDF",
+        "value": "test optional inputs",
       },
       "parent": null,
       "scanCode": "asdf",
@@ -40,7 +40,7 @@ exports[`createLocation with optional inputs 1`] = `
         "__typename": "Location",
         "name": {
           "__typename": "Name",
-          "value": "ASDF",
+          "value": "test optional inputs",
         },
       },
       "tags": [],
@@ -57,13 +57,13 @@ exports[`createLocation parent == location 1`] = `
       "__typename": "Location",
       "name": {
         "__typename": "Name",
-        "value": "ASDF",
+        "value": "test child location",
       },
       "parent": {
         "__typename": "Location",
         "name": {
           "__typename": "Name",
-          "value": "ASDF",
+          "value": "Frozen Tendy Factory",
         },
       },
       "scanCode": null,
@@ -71,7 +71,7 @@ exports[`createLocation parent == location 1`] = `
         "__typename": "Location",
         "name": {
           "__typename": "Name",
-          "value": "ASDF",
+          "value": "Frozen Tendy Factory",
         },
       },
       "tags": [],

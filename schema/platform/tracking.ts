@@ -1,5 +1,4 @@
 import { sql } from "@/datasources/postgres";
-import { GraphQLError } from "graphql";
 import type { ID, Int } from "grats";
 import { match } from "ts-pattern";
 import type { Query } from "../root";
