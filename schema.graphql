@@ -1579,6 +1579,11 @@ type Task implements Assignable & Component & Node & Trackable {
   type is a worktemplate will **always have a null parent**.
   """
   parent: Node
+  """
+  Get the previous Task, which may represent an altogether different chain
+  than the current Task.
+  """
+  previous: Task
   state: TaskState
   """
   Entrypoint into the "tracking system(s)" for the given Task.
