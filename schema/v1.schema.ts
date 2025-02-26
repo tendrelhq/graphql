@@ -1198,6 +1198,12 @@ export function getSchema(): GraphQLSchema {
           name: "parent",
           type: NodeType,
         },
+        previous: {
+          description:
+            "Get the previous Task, which may represent an altogether different chain\nthan the current Task.",
+          name: "previous",
+          type: TaskType,
+        },
         state: {
           name: "state",
           type: TaskStateType,

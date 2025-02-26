@@ -237,6 +237,30 @@ export class Task
     return null;
   }
 
+  /**
+   * Get the previous Task, which may represent an altogether different chain
+   * than the current Task.
+   *
+   * @gqlField
+   */
+  async previous(): Promise<Task | null> {
+    if (this._type !== "workinstance") return null;
+
+    // Note: explicitly NOT joining on originator because the previous *might*
+    // be in a different chain.
+    const [row] = await sql<[ConstructorArgs?]>`
+      select encode(('workinstance:' || prev.id)::bytea, 'base64') as id
+      from public.workinstance as t
+      inner join public.workinstance as prev
+          on t.workinstancepreviousid = prev.workinstanceid
+      where t.id = ${this._id}
+    `;
+
+    if (!row) return null;
+
+    return new Task(row, this.ctx);
+  }
+
   // FIXME: We should probably implement this as a StateMachine<TaskState>?
   // This would allow the frontend to disambiguate start vs end, i.e. not have
   // to infer the valid action(s) based on the TaskState.
