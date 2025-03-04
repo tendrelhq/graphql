@@ -747,6 +747,9 @@ export async function chainAgg(
 /** @gqlUnion */
 export type TaskState = Open | InProgress | Closed;
 
+/** @gqlEnum */
+export type TaskStateName = "Open" | "InProgress" | "Closed";
+
 /** @gqlType */
 export type Open = {
   __typename: "Open";

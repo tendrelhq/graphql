@@ -982,7 +982,11 @@ type Location implements Component & Node & Referenceable & Trackable {
   """
   Entrypoint into the "tracking system(s)" for the given Location.
   """
-  tracking(after: ID, first: Int): TrackableConnection @semanticNonNull
+  tracking(
+    after: ID
+    first: Int
+    withStatus: [TaskStateName!]
+  ): TrackableConnection @semanticNonNull
 }
 
 type LocationConnection {
@@ -1619,6 +1623,12 @@ type TaskStateMachine {
   active: Task
   hash: String @semanticNonNull
   transitions: TaskConnection
+}
+
+enum TaskStateName {
+  Closed
+  InProgress
+  Open
 }
 
 """

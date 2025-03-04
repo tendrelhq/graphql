@@ -85,6 +85,12 @@ enum DiagnosticKind {
   no_associated_fsm
 }
 
+enum TaskStateName {
+  Closed
+  InProgress
+  Open
+}
+
 enum ValueType {
   boolean
   entity
@@ -424,7 +430,11 @@ type Location implements Component & Node & Trackable {
   """
   Entrypoint into the "tracking system(s)" for the given Location.
   """
-  tracking(after: ID, first: Int): TrackableConnection @semanticNonNull
+  tracking(
+    after: ID
+    first: Int
+    withStatus: [TaskStateName!]
+  ): TrackableConnection @semanticNonNull
 }
 
 type Mutation {
