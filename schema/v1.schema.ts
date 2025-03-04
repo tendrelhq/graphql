@@ -1376,6 +1376,20 @@ export function getSchema(): GraphQLSchema {
         };
       },
     });
+  const TaskStateNameType: GraphQLEnumType = new GraphQLEnumType({
+    name: "TaskStateName",
+    values: {
+      Closed: {
+        value: "Closed",
+      },
+      InProgress: {
+        value: "InProgress",
+      },
+      Open: {
+        value: "Open",
+      },
+    },
+  });
   const LocationType: GraphQLObjectType = new GraphQLObjectType({
     name: "Location",
     fields() {
@@ -1412,9 +1426,15 @@ export function getSchema(): GraphQLSchema {
               name: "first",
               type: GraphQLInt,
             },
+            withStatus: {
+              name: "withStatus",
+              type: new GraphQLList(new GraphQLNonNull(TaskStateNameType)),
+            },
           },
           resolve(source, args) {
-            return assertNonNull(source.tracking(args.first, args.after));
+            return assertNonNull(
+              source.tracking(args.first, args.after, args.withStatus),
+            );
           },
         },
       };
@@ -1773,6 +1793,7 @@ export function getSchema(): GraphQLSchema {
       TimestampType,
       URLType,
       DiagnosticKindType,
+      TaskStateNameType,
       ValueTypeType,
       TaskStateType,
       ValueType,

@@ -4,12 +4,14 @@ import type { Component } from "@/schema/system/component";
 import {
   Task,
   type ConstructorArgs as TaskConstructorArgs,
+  type TaskStateName,
 } from "@/schema/system/component/task";
 import type { Refetchable } from "@/schema/system/node";
 import type { Connection } from "@/schema/system/pagination";
 import type { Context } from "@/schema/types";
-import { normalizeBase64 } from "@/util";
+import { assert, normalizeBase64 } from "@/util";
 import type { ID, Int } from "grats";
+import { match } from "ts-pattern";
 import type { Trackable } from "../tracking";
 
 export type ConstructorArgs = {
@@ -53,7 +55,17 @@ export class Location implements Component, Refetchable, Trackable {
   async tracking(
     first?: Int | null,
     after?: ID | null,
+    withStatus?: TaskStateName[] | null,
   ): Promise<Connection<Trackable>> {
+    const statuses = withStatus?.map(s =>
+      match(s)
+        .with("Open", () => "Open")
+        .with("InProgress", () => "In Progress")
+        .with("Closed", () => "Complete")
+        .exhaustive(),
+    ) ?? ["Open", "In Progress"];
+    assert(statuses.length > 0, "must provided at least one status");
+
     // At a given location, the "tracking systems" correspond to worktemplates
     // with a worktemplatetype tag of `Trackable`. This tag is a system-defined
     // type tag used specifically for identifying templates that are "opted
@@ -118,13 +130,12 @@ export class Location implements Component, Refetchable, Trackable {
                   and field.workresultinstanceworkinstanceid = task.workinstanceid
               inner join public.systag as task_state
                   on task.workinstancestatusid = task_state.systagid
-                  and task_state.systagtype in ('Open', 'In Progress')
+                  and task_state.systagtype in ${sql(statuses)}
           )
 
       select encode(('workinstance:' || og.id)::bytea, 'base64') as id
       from active_chain as c
       inner join public.workinstance as og on c._id = og.workinstanceid
-      ;
     `;
 
     return {
