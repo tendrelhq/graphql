@@ -1,14 +1,8 @@
--- noqa: disable=AM04,LT06
-begin
-;
+begin;
+set local client_min_messages to 'notice';
+set local search_path to tap;
 
-set local client_min_messages to 'notice'
-;
-set local search_path to tap
-;
-
-select plan(10)
-;
+select plan(10);
 
 select
     is (
@@ -116,9 +110,5 @@ select
     )
 ;
 
-select *
-from finish()
-;
-
-rollback
-;
+select * from finish();
+rollback;

@@ -1,7 +1,7 @@
 import "dotenv/config";
 
 import http from "node:http";
-import auth from "@/auth";
+import * as auth from "@/auth";
 import { orm } from "@/datasources/postgres";
 import i18n from "@/i18n";
 import { Limits } from "@/limits";
@@ -50,6 +50,26 @@ app.use((req, _, next) => {
   }
   next();
 });
+
+if (process.env.NODE_ENV === "development") {
+  const swaggerUi = await import("swagger-ui-express");
+  app.use(
+    "/docs",
+    swaggerUi.serve,
+    swaggerUi.setup(null, {
+      swaggerOptions: {
+        url: "http://localhost:3000",
+      },
+    }),
+  );
+}
+
+app.post(
+  "/login",
+  auth.clerk(), // Temporary.
+  express.json(),
+  auth.login,
+);
 
 app.post("/upload", auth.clerk(), express.json(), upload.POST);
 

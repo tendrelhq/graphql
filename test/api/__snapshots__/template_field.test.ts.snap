@@ -1,0 +1,275 @@
+// Bun Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`/api/template_field read 1`] = `
+[
+  {
+    "default_value": "Test",
+    "display_name": {
+      "value": "fieldname2025-02-28 17:41:24.634851+00",
+    },
+    "id": "0ae109a5-9ea9-4d60-aa63-dee867901bed",
+    "type": {
+      "display_name": {
+        "value": "System Tag",
+      },
+      "id": "2de2bbde-6319-4886-a58d-bf9d369fc677",
+    },
+  },
+  {
+    "default_value": null,
+    "display_name": {
+      "value": "displayname",
+    },
+    "id": "10b3fb5e-4179-4976-80ec-cb7895d654c4",
+    "type": {
+      "display_name": {
+        "value": "System Tag",
+      },
+      "id": "82292605-5671-488c-9f8c-e821d5d7eb4e",
+    },
+  },
+  {
+    "default_value": null,
+    "display_name": {
+      "value": "custagdisplayname",
+    },
+    "id": "1b29e7b0-0800-4366-b79e-424dd9bafa71",
+    "type": {
+      "display_name": {
+        "value": "System Tag",
+      },
+      "id": "82292605-5671-488c-9f8c-e821d5d7eb4e",
+    },
+  },
+  {
+    "default_value": null,
+    "display_name": {
+      "value": "displayname",
+    },
+    "id": "25652077-06ec-443f-903b-7804a002d9c1",
+    "type": {
+      "display_name": {
+        "value": "System Tag",
+      },
+      "id": "82292605-5671-488c-9f8c-e821d5d7eb4e",
+    },
+  },
+  {
+    "default_value": "Test",
+    "display_name": {
+      "value": "fieldname2025-02-28 17:40:31.076587+00",
+    },
+    "id": "2643d95c-65cf-4e3d-bffa-5e7fbc45f74a",
+    "type": {
+      "display_name": {
+        "value": "System Tag",
+      },
+      "id": "2de2bbde-6319-4886-a58d-bf9d369fc677",
+    },
+  },
+  {
+    "default_value": null,
+    "display_name": {
+      "value": "systagabbreviationentityuuid",
+    },
+    "id": "29b180af-e230-4e6c-9f56-42bcd0c03ce5",
+    "type": {
+      "display_name": {
+        "value": "System Tag",
+      },
+      "id": "2de2bbde-6319-4886-a58d-bf9d369fc677",
+    },
+  },
+  {
+    "default_value": null,
+    "display_name": {
+      "value": "locationtimezone",
+    },
+    "id": "2a69677c-b23a-4407-b2ae-1905f0640579",
+    "type": {
+      "display_name": {
+        "value": "System Tag",
+      },
+      "id": "82292605-5671-488c-9f8c-e821d5d7eb4e",
+    },
+  },
+  {
+    "default_value": "Test",
+    "display_name": {
+      "value": "fieldname2025-02-28 17:11:25.199597+00",
+    },
+    "id": "2b54f7d5-e051-4bf9-b894-54be4d67a182",
+    "type": {
+      "display_name": {
+        "value": "System Tag",
+      },
+      "id": "2de2bbde-6319-4886-a58d-bf9d369fc677",
+    },
+  },
+  {
+    "default_value": null,
+    "display_name": {
+      "value": "locationlongitude",
+    },
+    "id": "37e49e9e-9700-432f-a384-2e68f2279b50",
+    "type": {
+      "display_name": {
+        "value": "System Tag",
+      },
+      "id": "950dcdeb-e5e7-4e71-a532-78f4a02978d0",
+    },
+  },
+  {
+    "default_value": null,
+    "display_name": {
+      "value": "locationradius",
+    },
+    "id": "421b26da-1529-4951-a0ef-9dfb0d18e413",
+    "type": {
+      "display_name": {
+        "value": "System Tag",
+      },
+      "id": "950dcdeb-e5e7-4e71-a532-78f4a02978d0",
+    },
+  },
+  {
+    "default_value": null,
+    "display_name": {
+      "value": "displayname",
+    },
+    "id": "47ebdd86-1f13-4a95-8315-f1559d9f8471",
+    "type": {
+      "display_name": {
+        "value": "System Tag",
+      },
+      "id": "82292605-5671-488c-9f8c-e821d5d7eb4e",
+    },
+  },
+  {
+    "default_value": null,
+    "display_name": {
+      "value": "locationname",
+    },
+    "id": "53350733-73c3-4f6e-8dee-a3581ac1b8a4",
+    "type": {
+      "display_name": {
+        "value": "System Tag",
+      },
+      "id": "82292605-5671-488c-9f8c-e821d5d7eb4e",
+    },
+  },
+  {
+    "default_value": null,
+    "display_name": {
+      "value": "systagtype",
+    },
+    "id": "62a0f163-0f7a-40ae-a345-a1258700d755",
+    "type": {
+      "display_name": {
+        "value": "System Tag",
+      },
+      "id": "82292605-5671-488c-9f8c-e821d5d7eb4e",
+    },
+  },
+  {
+    "default_value": null,
+    "display_name": {
+      "value": "custagname",
+    },
+    "id": "7530f263-324e-4ca1-8c08-6b6d31ab2802",
+    "type": {
+      "display_name": {
+        "value": "System Tag",
+      },
+      "id": "82292605-5671-488c-9f8c-e821d5d7eb4e",
+    },
+  },
+  {
+    "default_value": null,
+    "display_name": {
+      "value": "locationdisplayname",
+    },
+    "id": "7bba0fd0-19f4-4984-b8e2-431a5f6c70d0",
+    "type": {
+      "display_name": {
+        "value": "System Tag",
+      },
+      "id": "82292605-5671-488c-9f8c-e821d5d7eb4e",
+    },
+  },
+  {
+    "default_value": "Test",
+    "display_name": {
+      "value": "fieldname2025-02-28 16:58:35.48333+00",
+    },
+    "id": "7ec63e60-f3cb-4418-943a-7d239d445295",
+    "type": {
+      "display_name": {
+        "value": "System Tag",
+      },
+      "id": "2de2bbde-6319-4886-a58d-bf9d369fc677",
+    },
+  },
+  {
+    "default_value": null,
+    "display_name": {
+      "value": "displayname",
+    },
+    "id": "8a3e0862-173d-4b12-80b0-f21dceefbe0d",
+    "type": {
+      "display_name": {
+        "value": "System Tag",
+      },
+      "id": "82292605-5671-488c-9f8c-e821d5d7eb4e",
+    },
+  },
+  {
+    "default_value": null,
+    "display_name": {
+      "value": "customername",
+    },
+    "id": "ba834ca4-84cd-49a5-81a7-5676d1df3fbd",
+    "type": {
+      "display_name": {
+        "value": "System Tag",
+      },
+      "id": "82292605-5671-488c-9f8c-e821d5d7eb4e",
+    },
+  },
+  {
+    "default_value": "7ebd10ee-5018-4e11-9525-80ab5c6aebee",
+    "display_name": {
+      "value": "customerlanguagetypeentityuuid",
+    },
+    "id": "c51fbd4a-dbf5-40a2-892c-edaf81bee4ad",
+    "type": {
+      "display_name": {
+        "value": "System Tag",
+      },
+      "id": "2de2bbde-6319-4886-a58d-bf9d369fc677",
+    },
+  },
+  {
+    "default_value": "Test",
+    "display_name": {
+      "value": "fieldname2025-03-02 01:41:01.075416+00",
+    },
+    "id": "c77db174-7b16-4f47-b138-b56766375449",
+    "type": {
+      "display_name": {
+        "value": "System Tag",
+      },
+      "id": "2de2bbde-6319-4886-a58d-bf9d369fc677",
+    },
+  },
+]
+`;
+
+exports[`/api/template_field delete 1`] = `
+[
+  {
+    "_deleted": false,
+    "id": "0ae109a5-9ea9-4d60-aa63-dee867901bed",
+  },
+]
+`;

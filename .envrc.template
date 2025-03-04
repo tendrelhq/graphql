@@ -17,6 +17,12 @@ export PGPORT=5432
 export PGUSERNAME=$USER
 export PGPASSWORD=$USER
 
+# PostgREST configuration variables.
+# @see https://docs.postgrest.org/en/v12/references/configuration.html
+export PGRST_OPENAPI_SERVER_PROXY_URI=http://localhost:3000
+export PGRST_JWT_SECRET=$JWT_SECRET # see .env.local.template
+export PGRST_JWT_SECRET_IS_BASE64=true
+
 # Only required if you plan to manually deploy schema changes to test and/or
 # beta.
 # export SQITCH_TARGET_TEST="db:pg://$TEST_PGUSER:$TEST_PGPASS@$TEST_PGHOST:5432/tendrel"

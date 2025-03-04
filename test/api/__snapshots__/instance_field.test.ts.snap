@@ -1,0 +1,275 @@
+// Bun Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`/api/instance_field read 1`] = `
+[
+  {
+    "display_name": {
+      "value": "locationdisplayname",
+    },
+    "id": "0000af74-b950-4353-89d6-e9590a288049",
+    "template": {
+      "display_name": {
+        "value": "locationdisplayname",
+      },
+      "id": "7bba0fd0-19f4-4984-b8e2-431a5f6c70d0",
+    },
+    "value": "E Row 522",
+  },
+  {
+    "display_name": {
+      "value": "locationlatitude",
+    },
+    "id": "0000ed40-2fa8-465f-b011-4905245ee6a4",
+    "template": {
+      "display_name": {
+        "value": "locationlatitude",
+      },
+      "id": "db4dfca7-2a2c-45d1-a4ec-f749c48d5ddf",
+    },
+    "value": null,
+  },
+  {
+    "display_name": {
+      "value": "locationdisplayname",
+    },
+    "id": "000203de-2f69-42d3-a1ff-10defe3d0ce4",
+    "template": {
+      "display_name": {
+        "value": "locationdisplayname",
+      },
+      "id": "7bba0fd0-19f4-4984-b8e2-431a5f6c70d0",
+    },
+    "value": "Path 2023",
+  },
+  {
+    "display_name": {
+      "value": "locationlongitude",
+    },
+    "id": "00021e51-f694-4765-980e-bf642204de3e",
+    "template": {
+      "display_name": {
+        "value": "locationlongitude",
+      },
+      "id": "37e49e9e-9700-432f-a384-2e68f2279b50",
+    },
+    "value": null,
+  },
+  {
+    "display_name": {
+      "value": "locationradius",
+    },
+    "id": "0002edbb-6445-4294-8520-9abb1118c50b",
+    "template": {
+      "display_name": {
+        "value": "locationradius",
+      },
+      "id": "421b26da-1529-4951-a0ef-9dfb0d18e413",
+    },
+    "value": null,
+  },
+  {
+    "display_name": {
+      "value": "locationlatitude",
+    },
+    "id": "00034950-6b7e-4d20-9f98-aba663f376d0",
+    "template": {
+      "display_name": {
+        "value": "locationlatitude",
+      },
+      "id": "db4dfca7-2a2c-45d1-a4ec-f749c48d5ddf",
+    },
+    "value": null,
+  },
+  {
+    "display_name": {
+      "value": "locationtimezone",
+    },
+    "id": "00035e1f-748c-4c39-b2d8-108fdd1f447e",
+    "template": {
+      "display_name": {
+        "value": "locationtimezone",
+      },
+      "id": "2a69677c-b23a-4407-b2ae-1905f0640579",
+    },
+    "value": "Europe/London",
+  },
+  {
+    "display_name": {
+      "value": "locationlongitude",
+    },
+    "id": "000378d8-ce5c-4df0-98c3-88674ac1ad11",
+    "template": {
+      "display_name": {
+        "value": "locationlongitude",
+      },
+      "id": "37e49e9e-9700-432f-a384-2e68f2279b50",
+    },
+    "value": null,
+  },
+  {
+    "display_name": {
+      "value": "locationradius",
+    },
+    "id": "0003c3b2-d9fc-45ac-99bb-d484dc86e036",
+    "template": {
+      "display_name": {
+        "value": "locationradius",
+      },
+      "id": "421b26da-1529-4951-a0ef-9dfb0d18e413",
+    },
+    "value": null,
+  },
+  {
+    "display_name": {
+      "value": "locationlatitude",
+    },
+    "id": "00042469-b4ec-44e4-a52d-e09227c7bb2c",
+    "template": {
+      "display_name": {
+        "value": "locationlatitude",
+      },
+      "id": "db4dfca7-2a2c-45d1-a4ec-f749c48d5ddf",
+    },
+    "value": null,
+  },
+  {
+    "display_name": {
+      "value": "locationtimezone",
+    },
+    "id": "0004cc3b-aff4-4f40-bd11-92358de81b25",
+    "template": {
+      "display_name": {
+        "value": "locationtimezone",
+      },
+      "id": "2a69677c-b23a-4407-b2ae-1905f0640579",
+    },
+    "value": "America/New_York",
+  },
+  {
+    "display_name": {
+      "value": "locationdisplayname",
+    },
+    "id": "00050cec-c953-4d99-b2e3-fccc99808c13",
+    "template": {
+      "display_name": {
+        "value": "locationdisplayname",
+      },
+      "id": "7bba0fd0-19f4-4984-b8e2-431a5f6c70d0",
+    },
+    "value": "6303",
+  },
+  {
+    "display_name": {
+      "value": "locationtimezone",
+    },
+    "id": "0005b59c-eece-45ef-8068-4fbd8bf28a33",
+    "template": {
+      "display_name": {
+        "value": "locationtimezone",
+      },
+      "id": "2a69677c-b23a-4407-b2ae-1905f0640579",
+    },
+    "value": "America/Mexico_City",
+  },
+  {
+    "display_name": {
+      "value": "locationlongitude",
+    },
+    "id": "0005c406-052a-49f0-a05e-1f98ba793210",
+    "template": {
+      "display_name": {
+        "value": "locationlongitude",
+      },
+      "id": "37e49e9e-9700-432f-a384-2e68f2279b50",
+    },
+    "value": null,
+  },
+  {
+    "display_name": {
+      "value": "locationradius",
+    },
+    "id": "0006fc91-d847-4b6e-8926-999accc18691",
+    "template": {
+      "display_name": {
+        "value": "locationradius",
+      },
+      "id": "421b26da-1529-4951-a0ef-9dfb0d18e413",
+    },
+    "value": null,
+  },
+  {
+    "display_name": {
+      "value": "locationtimezone",
+    },
+    "id": "00070940-ab32-4010-a5c1-427102030cae",
+    "template": {
+      "display_name": {
+        "value": "locationtimezone",
+      },
+      "id": "2a69677c-b23a-4407-b2ae-1905f0640579",
+    },
+    "value": "America/Mexico_City",
+  },
+  {
+    "display_name": {
+      "value": "locationlongitude",
+    },
+    "id": "00071371-f44f-431b-a46c-e9011c69f1af",
+    "template": {
+      "display_name": {
+        "value": "locationlongitude",
+      },
+      "id": "37e49e9e-9700-432f-a384-2e68f2279b50",
+    },
+    "value": null,
+  },
+  {
+    "display_name": {
+      "value": "locationdisplayname",
+    },
+    "id": "000815ae-f2f8-435a-aa3c-17de2e622020",
+    "template": {
+      "display_name": {
+        "value": "locationdisplayname",
+      },
+      "id": "7bba0fd0-19f4-4984-b8e2-431a5f6c70d0",
+    },
+    "value": "T-INT-N2-13",
+  },
+  {
+    "display_name": {
+      "value": "locationlatitude",
+    },
+    "id": "00083b73-cb90-4515-b07b-0c674f554e65",
+    "template": {
+      "display_name": {
+        "value": "locationlatitude",
+      },
+      "id": "db4dfca7-2a2c-45d1-a4ec-f749c48d5ddf",
+    },
+    "value": null,
+  },
+  {
+    "display_name": {
+      "value": "locationradius",
+    },
+    "id": "0008b165-af2d-4290-91c3-f84459f32acc",
+    "template": {
+      "display_name": {
+        "value": "locationradius",
+      },
+      "id": "421b26da-1529-4951-a0ef-9dfb0d18e413",
+    },
+    "value": null,
+  },
+]
+`;
+
+exports[`/api/instance_field delete 1`] = `
+[
+  {
+    "_deleted": false,
+    "id": "28e66975-b0d8-4420-ad44-8a4173e4e64f",
+  },
+]
+`;

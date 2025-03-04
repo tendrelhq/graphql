@@ -16,3 +16,6 @@ apply-field-edits 2025-02-18T18:12:30Z Will Ruggiano <ruggiano@tendrel.io> # mov
 
 create-template-constraint 2025-02-20T23:37:31Z Will Ruggiano <ruggiano@tendrel.io> # set more columns
 @v0.2.0 2025-02-21T00:54:43Z Will Ruggiano <ruggiano@tendrel.io> # v0.2.0 - template constraints
+
+jwt 2025-03-04T23:33:01Z Will Ruggiano <ruggiano@tendrel.io> # add pg_jwt extension
+public-rest-api 2025-03-11T23:11:55Z Will Ruggiano <ruggiano@tendrel.io>

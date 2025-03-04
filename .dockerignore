@@ -2,11 +2,14 @@
 /.*
 !.env.*
 
+/*.dump
+/config
 /copilot
+/data
 /docs
+/nix
 /node_modules
 /out
-/Dockerfile
 /README.md
 /biome.json
 /docker-compose.yaml

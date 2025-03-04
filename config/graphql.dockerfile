@@ -30,4 +30,4 @@ COPY --from=prerelease /usr/src/app .
 
 # run the app
 EXPOSE 4000/tcp
-CMD ["bun", "start+tracing"]
+CMD ["bun", "start"]

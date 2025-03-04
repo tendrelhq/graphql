@@ -1,52 +1,52 @@
 import {
+  node as queryNodeResolver,
+  id as assignmentIdResolver,
+  id as attachmentIdResolver,
+  id as displayNameIdResolver,
+  id as taskIdResolver,
+  id as locationIdResolver,
+} from "./system/node";
+import {
+  defaultFieldResolver,
+  GraphQLSchema,
+  GraphQLObjectType,
+  GraphQLNonNull,
+  GraphQLInterfaceType,
+  GraphQLID,
+  GraphQLList,
+  GraphQLString,
+  GraphQLInt,
   GraphQLBoolean,
   GraphQLEnumType,
-  GraphQLFloat,
-  GraphQLID,
-  GraphQLInputObjectType,
-  GraphQLInt,
-  GraphQLInterfaceType,
-  GraphQLList,
-  GraphQLNonNull,
-  GraphQLObjectType,
   GraphQLScalarType,
-  GraphQLSchema,
-  GraphQLString,
   GraphQLUnionType,
-  defaultFieldResolver,
+  GraphQLInputObjectType,
+  GraphQLFloat,
 } from "graphql";
-import { createLocation as mutationCreateLocationResolver } from "./platform/archetype/location/create";
-import { updateLocation as mutationUpdateLocationResolver } from "./platform/archetype/location/update";
+import { trackables as queryTrackablesResolver } from "./platform/tracking";
+import {
+  assignees as taskAssigneesResolver,
+  attachments as taskAttachmentsResolver,
+  chain as taskChainResolver,
+  chainAgg as taskChainAggResolver,
+  fields as taskFieldsResolver,
+  applyFieldEdits as mutationApplyFieldEditsResolver,
+} from "./system/component/task";
 import {
   attachedBy as attachmentAttachedByResolver,
   attach as mutationAttachResolver,
 } from "./platform/attachment";
-import { trackables as queryTrackablesResolver } from "./platform/tracking";
 import {
   attachments as fieldAttachmentsResolver,
   name as fieldNameResolver,
 } from "./system/component";
 import {
-  applyFieldEdits as mutationApplyFieldEditsResolver,
-  assignees as taskAssigneesResolver,
-  attachments as taskAttachmentsResolver,
-  chainAgg as taskChainAggResolver,
-  chain as taskChainResolver,
-  fields as taskFieldsResolver,
-} from "./system/component/task";
-import {
-  advance as mutationAdvanceResolver,
   fsm as taskFsmResolver,
+  advance as mutationAdvanceResolver,
 } from "./system/component/task_fsm";
+import { createLocation as mutationCreateLocationResolver } from "./platform/archetype/location/create";
 import { createTemplateConstraint as mutationCreateTemplateConstraintResolver } from "./system/engine0/createTemplateConstraint";
-import {
-  id as assignmentIdResolver,
-  id as attachmentIdResolver,
-  id as displayNameIdResolver,
-  id as locationIdResolver,
-  node as queryNodeResolver,
-  id as taskIdResolver,
-} from "./system/node";
+import { updateLocation as mutationUpdateLocationResolver } from "./platform/archetype/location/update";
 async function assertNonNull<T>(value: T | Promise<T>): Promise<T> {
   const awaited = await value;
   if (awaited == null)

@@ -2,7 +2,7 @@ import { $ } from "bun";
 import pattycake from "pattycake";
 
 // clean
-await $`rimraf lib/schema/__generated__ out`;
+await $`rimraf **/*.generated.ts out`;
 
 // codegen
 await $`bun generate`;

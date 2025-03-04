@@ -10,7 +10,6 @@
     "generate": "bunx grats && bun ./scripts/generate-legacy-schema.ts && bun ./scripts/print-schema.ts",
     "postgenerate": "eval $TREEFMT",
     "start": "bun ./bin/app.ts",
-    "start+tracing": "bun -r ./lib/instrument.ts ./bin/app.ts",
     "postinstall": "bun generate"
   },
   "devDependencies": {
@@ -31,6 +30,7 @@
     "@types/cors": "^2.8.17",
     "@types/morgan": "^1.9.9",
     "@types/negotiator": "^0.6.3",
+    "@types/swagger-ui-express": "^4.1.8",
     "@vtsls/language-server": "^0.2.5",
     "dedent": "^1.5.3",
     "fast-check": "^3.23.2",
@@ -39,6 +39,7 @@
     "merge-anything": "^6.0.2",
     "prettier": "^3.4.1",
     "rimraf": "^5.0.7",
+    "swagger-ui-express": "^5.0.1",
     "typescript-language-server": "^4.3.3"
   },
   "peerDependencies": {
@@ -52,14 +53,6 @@
     "@clerk/shared": "^2.3.1",
     "@formatjs/intl-localematcher": "^0.5.4",
     "@js-temporal/polyfill": "^0.4.4",
-    "@opentelemetry/api": "^1.9.0",
-    "@opentelemetry/exporter-trace-otlp-http": "^0.52.1",
-    "@opentelemetry/instrumentation-dataloader": "^0.10.0",
-    "@opentelemetry/instrumentation-express": "^0.40.1",
-    "@opentelemetry/instrumentation-graphql": "^0.41.0",
-    "@opentelemetry/instrumentation-http": "^0.52.1",
-    "@opentelemetry/resource-detector-aws": "^1.5.1",
-    "@opentelemetry/sdk-node": "^0.52.1",
     "cors": "^2.8.5",
     "dataloader": "^2.2.2",
     "dotenv": "^16.4.5",
@@ -67,6 +60,7 @@
     "graphql": "^16.9.0",
     "graphql-scalars": "^1.23.0",
     "graphql-tag": "^2.12.6",
+    "jose": "^6.0.9",
     "morgan": "^1.10.0",
     "myzod": "^1.11.0",
     "negotiator": "^0.6.3",

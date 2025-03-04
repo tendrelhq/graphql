@@ -1,11 +1,6 @@
 ### bun ###
 /out/
 
-### direnv ###
-/.devenv/
-/.direnv/
-/.envrc
-
 ### db ###
 *.dump
 
@@ -20,6 +15,7 @@
 
 ### nix ###
 /.pre-commit-config.yaml
+/data
 /result
 
 ### typescript ###
@@ -27,9 +23,3 @@
 *.d.ts
 *.generated.ts
 **/__generated__/**
-
-### macOS ###
-.DS_Store
-
-### jetbrains ###
-.idea

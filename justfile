@@ -11,7 +11,7 @@ deploy:
     copilot deploy --env {{deploy_env}}
 
 package:
-    docker build -t {{image_name}} .
+    docker build --file copilot/graphql/Dockerfile -t {{image_name}} .
 
 tap:
     pg_prove ./test/*.test.sql
