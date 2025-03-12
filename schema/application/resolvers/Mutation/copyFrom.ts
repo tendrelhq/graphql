@@ -1,15 +1,15 @@
 import { setCurrentIdentity } from "@/auth";
 import { type TxSql, sql } from "@/datasources/postgres";
 import type {
-  ChecklistEdge,
+  Checklist,
   Context,
   CopyFromOptions,
   MutationResolvers,
 } from "@/schema";
-import { decodeGlobalId } from "@/schema/system";
+import { decodeGlobalId, encodeGlobalId } from "@/schema/system";
 import type { FieldInput } from "@/schema/system/component";
 import { Task, applyFieldEdits_ } from "@/schema/system/component/task";
-import { assert, type WithKey, normalizeBase64 } from "@/util";
+import { assert, normalizeBase64 } from "@/util";
 import { GraphQLError } from "graphql";
 import { match } from "ts-pattern";
 
@@ -42,14 +42,19 @@ export const copyFrom: NonNullable<MutationResolvers["copyFrom"]> = async (
         },
       });
     });
+
+  if (!result.ok) {
+    throw result.error;
+  }
+
   return {
     edge: {
-      cursor: result.id,
+      cursor: result.data.id,
       node: {
         __typename: "Checklist",
-        id: result.id,
-      },
-    } as ChecklistEdge,
+        id: result.data.id,
+      } as Checklist,
+    },
   };
 };
 
@@ -88,6 +93,16 @@ export type CopyFromInstanceOptions = {
   fieldOverrides?: FieldInput[] | null;
 };
 
+type CopyFromResult =
+  | {
+      ok: true;
+      data: Task;
+    }
+  | {
+      ok: false;
+      error: Error;
+    };
+
 /**
  * Create a new workinstance from an existing workinstance.
  */
@@ -96,7 +111,7 @@ export async function copyFromWorkInstance(
   id: string,
   options: CopyFromOptions & CopyFromInstanceOptions,
   ctx: Context,
-): Promise<Task> {
+): Promise<CopyFromResult> {
   const [row] = await sql<[{ id: string; location: string }]>`
       select
           wt.id, 
@@ -110,7 +125,7 @@ export async function copyFromWorkInstance(
       where wi.id = ${id};
   `;
   // For now, we just do a template-based copy:
-  return copyFromWorkTemplate(
+  return await copyFromWorkTemplate(
     sql,
     row.id,
     {
@@ -149,8 +164,8 @@ export async function copyFromWorkTemplate(
     CopyFromInstanceOptions &
     CopyFromWorkTemplateOptions,
   ctx: Context,
-): Promise<Task> {
-  const [row] = await sql<[WithKey<{ _key_uuid: string; id: string }>?]>`
+): Promise<CopyFromResult> {
+  const [row] = await sql<[{ id: string }?]>`
       INSERT INTO public.workinstance (
           workinstancecustomerid,
           workinstancesiteid,
@@ -205,42 +220,41 @@ export async function copyFromWorkTemplate(
           ON previous.id = ${options.previous ?? null}
       WHERE
           worktemplate.id = ${id}
+          AND worktemplatedeleted = false
+          AND worktemplatedraft = false
           AND (
               worktemplateenddate IS null
               OR worktemplateenddate > now()
           )
-      RETURNING
-          workinstance.workinstanceid AS "_key",
-          workinstance.id AS "_key_uuid",
-          encode(('workinstance:' || workinstance.id)::bytea, 'base64') AS id
+      RETURNING id
   `;
 
   if (!row) {
-    throw new GraphQLError(
-      "Cannot copy a Checklist that is inactive. Activate the Checklist and then try again.",
-      {
-        extensions: {
-          code: "E_NOT_COPYABLE",
+    return {
+      ok: false,
+      error: new GraphQLError(
+        "Failed to copy the Checklist. Ensure that it is neither inactive or in draft mode.",
+        {
+          extensions: {
+            code: "E_NOT_COPYABLE",
+          },
         },
-      },
-    );
+      ),
+    };
   }
 
-  console.debug(
-    `Created Entity ${normalizeBase64(row.id)} (workinstance:${row._key_uuid})`,
-  );
+  console.debug(`Created instance ${row.id}`);
 
   // We must have an originator, even if it needlessly points right back at us.
   // All hail the datawarehouse :heavy sigh:
   await sql`
-      UPDATE public.workinstance
-      SET workinstanceoriginatorworkinstanceid = workinstanceid
-      WHERE
-          workinstanceid = ${row._key}
-          AND workinstanceoriginatorworkinstanceid IS null;
+    UPDATE public.workinstance
+    SET workinstanceoriginatorworkinstanceid = workinstanceid
+    WHERE id = ${row.id} AND workinstanceoriginatorworkinstanceid IS null;
   `;
 
   // Create all workresultinstances, based on workresult.
+  // Only active results are instantiated, i.e. no inactive, no draft, no deleted.
   const result = await sql`
       INSERT INTO public.workresultinstance (
           workresultinstancecompleteddate,
@@ -256,24 +270,22 @@ export async function copyFromWorkTemplate(
           worktemplatecustomerid,
           workinstancestartdate,
           workresultdefaultvalue,
-          ${row._key}::bigint AS workresultinstanceworkinstanceid,
+          workinstanceid,
           workresultid,
           workinstancetimezone
       FROM public.worktemplate
       INNER JOIN public.workresult
-          ON
-              worktemplateid = workresultworktemplateid
-              AND (
-                  workresultenddate IS null
-                  OR workresultenddate < now()
-              )
-      INNER JOIN public.workinstance
-          ON workinstance.workinstanceid = ${row._key}
-      LEFT JOIN public.systag AS entity_type
-          ON workresultentitytypeid = systagid
+          ON worktemplateid = workresultworktemplateid
+          AND workresultdeleted = false
+          AND workresultdraft = false
+          AND (
+              workresultenddate IS null
+              OR workresultenddate < now()
+          )
+      INNER JOIN public.workinstance ON workinstance.id = ${row.id}
       WHERE worktemplate.id = ${id};
   `;
-  console.debug(`Created ${result.count} items.`);
+  console.debug(`Instantiated ${result.count} results.`);
 
   if (options.location) {
     const result = await sql`
@@ -285,7 +297,11 @@ export async function copyFromWorkTemplate(
       )
       from public.workresult
       where
-          workresultinstanceworkinstanceid = ${row._key}
+          workresultinstanceworkinstanceid = (
+              select workinstanceid
+              from public.workinstance
+              where id = ${row.id}
+          )
           and workresultinstanceworkresultid = workresultid
           and workresulttypeid = (
               select systagid
@@ -314,7 +330,11 @@ export async function copyFromWorkTemplate(
       )
       from public.workresult
       where
-          workresultinstanceworkinstanceid = ${row._key}
+          workresultinstanceworkinstanceid = (
+              select workinstanceid
+              from public.workinstance
+              where id = ${row.id}
+          )
           and workresultinstanceworkresultid = workresultid
           and workresulttypeid = (
               select systagid
@@ -340,7 +360,11 @@ export async function copyFromWorkTemplate(
           identity := ${ctx.auth.userId}
       )
       where
-          t.workresultinstanceworkinstanceid = ${row._key}
+          t.workresultinstanceworkinstanceid = (
+              select workinstanceid
+              from public.workinstance
+              where id = ${row.id}
+          )
           and t.workresultinstanceworkresultid in (
               select workresultid
               from public.workresult
@@ -412,7 +436,11 @@ export async function copyFromWorkTemplate(
         FROM previous
         WHERE
             previous.value IS NOT null
-            AND t.workresultinstanceworkinstanceid = ${row._key}
+            AND t.workresultinstanceworkinstanceid = (
+                select workinstanceid
+                from public.workinstance
+                where id = ${row.id}
+            )
             AND t.workresultinstanceworkresultid IN (
                 SELECT workresultid
                 FROM public.workresult
@@ -457,7 +485,11 @@ export async function copyFromWorkTemplate(
             )}
         ) s
         WHERE
-            t.workresultinstanceworkinstanceid = ${row._key}
+            t.workresultinstanceworkinstanceid = (
+                select workinstanceid
+                from public.workinstance
+                where id = ${row.id}
+            )
             AND t.workresultinstanceworkresultid IN (
                 SELECT workresultid
                 FROM public.workresult
@@ -482,12 +514,18 @@ export async function copyFromWorkTemplate(
     }
   }
 
-  const t = new Task(row, ctx);
+  const t = new Task(
+    { id: encodeGlobalId({ type: "workinstance", id: row.id }) },
+    ctx,
+  );
 
   if (options.fieldOverrides?.length) {
     const result = await applyFieldEdits_(sql, ctx, t, options.fieldOverrides);
     console.log(`copyFrom: applied ${result.count} field-level edits.`);
   }
 
-  return t;
+  return {
+    ok: true,
+    data: t,
+  };
 }

@@ -156,6 +156,19 @@ export const Checklist: ChecklistResolvers = {
   async description(parent, _, ctx) {
     return (await ctx.orm.description.load(parent.id)) as Description;
   },
+  async draft(parent) {
+    const { type, id } = decodeGlobalId(parent.id);
+    if (type === "worktemplate") {
+      const [row] = await sql<[{ draft: boolean }]>`
+        select worktemplatedraft as draft
+        from public.worktemplate
+        where id = ${id}
+      `;
+      return row.draft;
+    }
+    // Only templates can be in the draft state.
+    return false;
+  },
   async items(parent, args) {
     const { type: parentType, id: parentId } = decodeGlobalId(parent.id);
 
@@ -191,12 +204,16 @@ export const Checklist: ChecklistResolvers = {
                 encode(('workresultinstance:' || wi.id || ':' || wr.id)::bytea, 'base64') AS id
             FROM public.workinstance AS wi
             ${cursor?.suffix?.length ? sql`INNER JOIN cursor ON true` : sql``}
+            INNER JOIN public.workresultinstance AS wri
+                ON wi.workinstanceid = wri.workresultinstanceworkinstanceid
             INNER JOIN public.workresult AS wr
-                ON wi.workinstanceworktemplateid = wr.workresultworktemplateid
+                ON wri.workresultinstanceworkresultid = wr.workresultid
+                AND wr.workresultdeleted = false
+                AND wr.workresultisprimary = false
             WHERE ${join(
               [
                 sql`wi.id = ${parentId}`,
-                sql`wr.workresultisprimary = false`,
+                ...(args.withDraft ? [] : [sql`wr.workresultdraft = false`]),
                 ...(cursor
                   ? [
                       sql`(wr.workresultorder, wr.workresultid) ${cmp} (cursor.order, cursor.id)`,
@@ -247,10 +264,12 @@ export const Checklist: ChecklistResolvers = {
             ${cursor ? sql`INNER JOIN cursor ON true` : sql``}
             INNER JOIN public.workresult AS wr
                 ON wt.worktemplateid = wr.workresultworktemplateid
+                AND wr.workresultdeleted = false
+                AND wr.workresultdraft = ${args.withDraft ?? false}
+                AND wr.workresultisprimary = false
             WHERE ${join(
               [
                 sql`wt.id = ${parentId}`,
-                sql`wr.workresultisprimary = false`,
                 ...(cursor
                   ? [
                       sql`(wr.workresultorder, wr.workresultid) ${cmp} (cursor.order, cursor.id)`,
@@ -309,6 +328,8 @@ export const Checklist: ChecklistResolvers = {
                     FROM public.workinstance
                     WHERE id = ${parentId}
                 )
+                AND wr.workresultdeleted = false
+                AND wr.workresultdraft = ${args.withDraft ?? false}
                 AND wr.workresultisprimary = false
                 ${match(args.withActive)
                   .with(
@@ -339,6 +360,8 @@ export const Checklist: ChecklistResolvers = {
                     FROM public.worktemplate
                     WHERE id = ${parentId}
                 )
+                AND wr.workresultdeleted = false
+                AND wr.workresultdraft = ${args.withDraft ?? false}
                 AND wr.workresultisprimary = false
                 ${match(args.withActive)
                   .with(

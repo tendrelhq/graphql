@@ -5,6 +5,7 @@ import {
   id as displayNameIdResolver,
   id as taskIdResolver,
   id as locationIdResolver,
+  deleteNode as mutationDeleteNodeResolver,
 } from "./system/node";
 import {
   defaultFieldResolver,
@@ -1736,6 +1737,23 @@ export function getSchema(): GraphQLSchema {
                 args.entity,
                 args.options,
               ),
+            );
+          },
+        },
+        deleteNode: {
+          description:
+            "Delete a Node.\nThis operation is a no-op if the node has already been deleted.",
+          name: "deleteNode",
+          type: new GraphQLList(new GraphQLNonNull(GraphQLID)),
+          args: {
+            node: {
+              name: "node",
+              type: new GraphQLNonNull(GraphQLID),
+            },
+          },
+          resolve(source, args, context) {
+            return assertNonNull(
+              mutationDeleteNodeResolver(source, context, args.node),
             );
           },
         },

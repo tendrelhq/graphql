@@ -108,6 +108,7 @@
           enable = true;
           includes = ["*.yml"];
         };
+        shfmt.enable = true;
       };
       settings = {
         # formatter.sqlfmt = {
@@ -118,6 +119,8 @@
         # };
         global.excludes = [
           "*.conf"
+          "*.dockerfile"
+          "*.http"
           "*.lockb"
           "*.plan"
           "*.snap"
@@ -125,8 +128,8 @@
           "*.toml"
           ".*" # hidden files
           "copilot/.workspace"
-          "Dockerfile"
           "justfile"
+          "tests-to-fix.txt"
         ];
       };
     };

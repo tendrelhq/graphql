@@ -23,6 +23,7 @@ type Query {
     sortBy: [ChecklistSortOrder!]
     withActive: Boolean
     withAssignee: [ID!]
+    withDraft: Boolean
     withDueDate: TemporalRangeInput
     withName: String
     withStatus: [ChecklistStatusStates!]
@@ -67,12 +68,14 @@ type Checklist implements Component & Activatable & Assignable & Node {
   ): AttachmentConnection!
   auditable: Auditable
   description: Description
+  draft: Boolean
   items(
     first: Int
     last: Int
     before: String
     after: String
     withActive: Boolean
+    withDraft: Boolean
   ): ChecklistItemConnection!
   name: DisplayName!
   required: Boolean
@@ -116,6 +119,7 @@ input ChecklistInput {
   auditable: AuditableInput
   customerId: ID!
   description: DescriptionInput
+  draft: Boolean
   items: [ChecklistItemInput!]
   name: DisplayNameInput!
   required: Boolean
@@ -185,6 +189,7 @@ type ChecklistResult implements Component & Activatable & Node {
     before: String
     after: String
   ): AttachmentConnection!
+  draft: Boolean
   name: DisplayName!
   order: Int!
   parent: Checklist!
@@ -200,6 +205,7 @@ input ChecklistResultInput {
   id: ID!
   assignees: [AssigneeInput!]
   auditable: AuditableInput
+  draft: Boolean
   name: DisplayNameInput!
   required: Boolean
   status: ChecklistStatusInput

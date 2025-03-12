@@ -1,13 +1,14 @@
 import { sql } from "@/datasources/postgres";
 import { GraphQLError } from "graphql";
 import type { ID } from "grats";
+import { match } from "ts-pattern";
 import { decodeGlobalId, encodeGlobalId } from ".";
 import { Location } from "../platform/archetype/location";
 import {
   Attachment,
   type ConstructorArgs as AttachmentConstructorArgs,
 } from "../platform/attachment";
-import type { Query } from "../root";
+import type { Mutation, Query } from "../root";
 import type { Context } from "../types";
 import { Task } from "./component/task";
 
@@ -45,6 +46,52 @@ export function id(node: Refetchable): ID {
     type: node._type,
     id: node._id,
   });
+}
+
+/**
+ * Delete a Node.
+ * This operation is a no-op if the node has already been deleted.
+ *
+ * @gqlField
+ */
+export async function deleteNode(
+  _: Mutation,
+  ctx: Context,
+  node: ID,
+): Promise<ID[]> {
+  const { type, id } = decodeGlobalId(node);
+
+  if (type !== "workresult" && type !== "worktemplate") {
+    // No-op.
+    return [];
+  }
+
+  const [row] = await match(type)
+    .with(
+      "workresult",
+      () => sql<[{ id: ID }?]>`
+        update public.workresult
+        set workresultdeleted = true,
+            workresultmodifieddate = now(),
+            workresultmodifiedby = auth.current_identity(workresultcustomerid, ${ctx.auth.userId})
+        where id = ${id}
+        returning encode(('workresult:' || id)::bytea, 'base64') as id
+      `,
+    )
+    .with(
+      "worktemplate",
+      () => sql<[{ id: ID }?]>`
+        update public.worktemplate
+        set worktemplatedeleted = true,
+            worktemplatemodifieddate = now(),
+            worktemplatemodifiedby = auth.current_identity(worktemplatecustomerid, ${ctx.auth.userId})
+        where id = ${id}
+        returning encode(('worktemplate:' || id)::bytea, 'base64') as id
+      `,
+    )
+    .exhaustive();
+
+  return row ? [row.id] : [];
 }
 
 /**

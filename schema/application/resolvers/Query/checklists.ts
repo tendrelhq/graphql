@@ -63,7 +63,10 @@ export const checklists: NonNullable<QueryResolvers["checklists"]> = async (
 };
 
 type Args = {
-  f: Pick<QuerychecklistsArgs, "withActive" | "withName" | "withStatus">;
+  f: Pick<
+    QuerychecklistsArgs,
+    "withActive" | "withDraft" | "withName" | "withStatus"
+  >;
   p: PaginationArgs;
   s: Pick<QuerychecklistsArgs, "sortBy">;
 };
@@ -148,6 +151,8 @@ function buildAstFilterFragments(args: Args, parent: Parent) {
         FROM public.customer
         WHERE customeruuid = ${parent.id}
     )`,
+    sql`node.worktemplatedeleted = false`,
+    sql`node.worktemplatedraft = ${args.f.withDraft ?? false}`,
     sql`EXISTS (
         SELECT 1
         FROM public.worktemplatetype
@@ -387,6 +392,11 @@ function buildEcsFilterFragments({ f }: Args, parent: Parent): Fragment {
       break;
     }
   }
+
+  fs.push(
+    sql`ast.worktemplatedeleted = false`,
+    sql`ast.worktemplatedraft = ${f.withDraft ?? false}`,
+  );
 
   fs.push(
     sql`EXISTS (

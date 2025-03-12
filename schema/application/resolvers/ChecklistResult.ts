@@ -25,6 +25,19 @@ export const ChecklistResult: ChecklistResultResolvers = {
   auditable(parent, _, ctx) {
     return ctx.orm.auditable.load(parent.id);
   },
+  async draft(parent) {
+    const { type, id } = decodeGlobalId(parent.id);
+    if (type === "workresult") {
+      const [row] = await sql<[{ draft: boolean }]>`
+        select workresultdraft as draft
+        from public.workresult
+        where id = ${id}
+      `;
+      return row.draft;
+    }
+    // Only templates can be in the draft state.
+    return false;
+  },
   async order(parent) {
     const { id, type, suffix } = decodeGlobalId(parent.id);
 

@@ -42,13 +42,13 @@ unmanaged=(
   'func_test_template_field'
 )
 
-if [[ "$1" != "--apply" ]]; then
+if [[ $1 != "--apply" ]]; then
   for f in "${unmanaged[@]}"; do
     psql -c "\\sf entity.${f}" >./sql/unmanaged/"$f".sql
   done
 fi
 
-if [[ "$1" == "--apply" ]]; then
+if [[ $1 == "--apply" ]]; then
   for f in "${unmanaged[@]}"; do
     psql -f ./sql/unmanaged/"$f".sql
   done

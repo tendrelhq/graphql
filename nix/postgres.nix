@@ -21,6 +21,7 @@
     };
 
     packages = {
+      inherit (pkgs) postgresql_14; # beta is on 14.12
       postgresql = pkgs.postgresql_16;
       pgddl = pkgs.stdenv.mkDerivation rec {
         name = "pgddl";

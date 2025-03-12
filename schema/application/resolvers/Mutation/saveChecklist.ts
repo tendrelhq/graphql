@@ -8,6 +8,7 @@ import type {
   MutationResolvers,
 } from "@/schema";
 import { decodeGlobalId } from "@/schema/system";
+import { GraphQLError } from "graphql";
 import { P, match } from "ts-pattern";
 import { copyFromWorkTemplate } from "./copyFrom";
 
@@ -27,10 +28,24 @@ export const saveChecklist: NonNullable<
     throw new Error("Can only modify templates right now");
   }
 
-  const { count: exists } =
-    await sql`SELECT 1 FROM public.worktemplate WHERE id = ${id}`;
+  const [existing] = await sql<[{ deleted: boolean }?]>`
+    select worktemplatedeleted as deleted
+    from public.worktemplate
+    where id = ${id}
+  `;
 
-  if (exists) {
+  if (existing?.deleted === true) {
+    throw new GraphQLError(
+      "The Checklist you are trying to modify has been deleted.",
+      {
+        extensions: {
+          code: "BAD_REQUEST",
+        },
+      },
+    );
+  }
+
+  if (existing) {
     // update.
     const result = await sql.begin(tx => [
       tx`
@@ -157,6 +172,18 @@ export const saveChecklist: NonNullable<
                 AND
                 worktemplatedescriptionid IS NOT null
         `,
+      // You can't go back into draft.
+      ...(input.draft === true
+        ? []
+        : // You can only come out of draft.
+          // Keller said so.
+          [
+            tx`
+              update public.worktemplate
+              set worktemplatedraft = false
+              where id = ${id} and worktemplatedraft = true
+            `,
+          ]),
       tx`
         WITH
             inputs AS (
@@ -246,7 +273,7 @@ export const saveChecklist: NonNullable<
     // else: create
     const result = await sql.begin(async tx => {
       const r0 = await tx`
-        WITH inputs (customer, source, locale, auditable, sop, description) AS (
+        WITH inputs (customer, source, locale, auditable, sop, description, draft) AS (
             VALUES (
                 (
                     SELECT customerid
@@ -264,7 +291,8 @@ export const saveChecklist: NonNullable<
                 ),
                 ${input.auditable?.enabled ?? false}::boolean,
                 nullif(${input.sop?.link.toString() ?? null}, '')::text,
-                nullif(${input.description?.value?.value ?? null}, '')::text
+                nullif(${input.description?.value?.value ?? null}, '')::text,
+                ${input.draft ?? false}::boolean
             )
         ),
 
@@ -311,6 +339,7 @@ export const saveChecklist: NonNullable<
             worktemplateallowondemand,
             worktemplatecustomerid,
             worktemplatedescriptionid,
+            worktemplatedraft,
             worktemplateisauditable,
             worktemplatenameid,
             worktemplatesiteid,
@@ -322,6 +351,7 @@ export const saveChecklist: NonNullable<
             true,
             inputs.customer,
             description.id,
+            inputs.draft,
             inputs.auditable,
             name.id,
             site.id,
@@ -745,10 +775,11 @@ export const saveChecklist: NonNullable<
     }
 
     // Create an Open instance of the newly created Checklist template.
-    await sql.begin(async sql => {
+    const r = await sql.begin(async sql => {
       await setCurrentIdentity(sql, ctx);
       return await copyFromWorkTemplate(sql, id, {}, ctx);
     });
+    console.debug(`Created Open instance? ${r.ok ? "yes" : "no"}`);
   }
 
   return {
@@ -789,7 +820,6 @@ async function saveChecklistResults(
             i.result
               ? [
                   // update
-                  // TODO: i.result.assignees
                   i.result.auditable
                     ? tx`
                         WITH inputs (auditable) AS (
@@ -815,6 +845,21 @@ async function saveChecklistResults(
                             id = ${decodeGlobalId(i.result.id).id}
                             AND workresultforaudit = true
                     `,
+                  // You can't go back into draft.
+                  ...(i.result.draft === true
+                    ? []
+                    : // You can only come out of draft.
+                      // Keller said so.
+                      [
+                        tx`
+                          update public.workresult
+                          set workresultdraft = false,
+                              workresultmodifieddate = now()
+                          where
+                              id = ${decodeGlobalId(i.result.id).id}
+                              and workresultdraft = true
+                        `,
+                      ]),
                   tx`
                     WITH
                         inputs AS (
@@ -1328,6 +1373,7 @@ async function saveChecklistResults(
                     INSERT INTO public.workresult (
                         workresultcustomerid,
                         workresultdefaultvalue,
+                        workresultdraft,
                         workresultentitytypeid,
                         workresultforaudit,
                         workresultfortask,
@@ -1343,6 +1389,7 @@ async function saveChecklistResults(
                     SELECT
                         p.customer,
                         v.value,
+                        ${i.result.draft ?? false},
                         t.entity,
                         c.auditable,
                         true,

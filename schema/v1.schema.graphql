@@ -451,6 +451,11 @@ type Mutation {
     options: TemplateConstraintOptions
     template: ID!
   ): CreateTemplateConstraintResult @semanticNonNull
+  """
+  Delete a Node.
+  This operation is a no-op if the node has already been deleted.
+  """
+  deleteNode(node: ID!): [ID!] @semanticNonNull
   updateLocation(input: UpdateLocationInput!): Location @semanticNonNull
 }
 
