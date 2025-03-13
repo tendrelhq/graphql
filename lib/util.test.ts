@@ -1,6 +1,12 @@
 import { afterEach, describe, expect, test } from "bun:test";
 import { encodeGlobalId } from "@/schema/system";
-import { assert, buildPaginationArgs, map, mapOrElse } from "./util";
+import {
+  assert,
+  buildPaginationArgs,
+  map,
+  mapOrElse,
+  type Exact,
+} from "./util";
 
 const CURSOR = encodeGlobalId({ type: "__test__", id: "1" });
 const NODE_ENV = process.env.NODE_ENV;
@@ -126,5 +132,20 @@ describe("mapOrElse", () => {
       () => "bar",
     );
     expect(r).toBe("bar");
+  });
+});
+
+describe("type assertions", () => {
+  test("Exact<T, U>", () => {
+    true satisfies Exact<string, string>;
+    true satisfies Exact<number, number>;
+    true satisfies Exact<{ foo: "bar" }, { foo: "bar" }>;
+    false satisfies Exact<string, number>;
+    false satisfies Exact<{ bar: "foo" }, { foo: "bar" }>;
+    false satisfies Exact<{ foo: "bar"; bar: 42 }, { foo: "bar" }>;
+    false satisfies Exact<
+      { foo: "bar"; bar: { baz: 42 } },
+      { foo: "bar"; bar: { baz: "foo" } }
+    >;
   });
 });

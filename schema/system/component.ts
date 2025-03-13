@@ -215,10 +215,10 @@ export type FieldInput = {
   field: ID;
   value?: ValueInput | null;
   /**
-   * Must match the type of the `value`, e.g.:
+   * Must match the type of the `value`, e.g.
    * ```typescript
    * if (field.valueType === "string") {
-   *   assert("string" in field.value);
+   *   assert(field.value === null || "string" in field.value);
    * }
    * ```
    */
@@ -304,7 +304,7 @@ export type ValueInput =
   | {
       string: string;
     }
-  // Temporal
+  // Timestamp
   | {
       /**
        * Date in either ISO or epoch millisecond format.

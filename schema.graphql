@@ -96,7 +96,7 @@ type AdvanceTaskStateMachineResult {
 type Aggregate {
   """
   The group, or bucket, that uniquely identifies this aggregate.
-  For example, this will be one of the `groupByTag`s passed to `trackingAgg`.
+  For example, this will be one of the `overType`s passed to `chainAgg`.
   """
   group: String @semanticNonNull
   """
@@ -105,7 +105,8 @@ type Aggregate {
   Currently, this will always be a string value representing a duration in
   seconds, e.g. "360" -> 360 seconds. `null` will be returned when no such
   aggregate can be computed, e.g. "time in planned downtime" when no "planned
-  downtime" events exist.
+  downtime" events exist. Note also that `null` will be returned if a
+  duration cannot be computed, e.g. because there is no end date.
   """
   value: String
 }
@@ -724,7 +725,13 @@ type DisplayName implements Component & Node {
   A globally unique opaque identifier for a node.
   """
   id: ID!
-  name: DynamicString @semanticNonNull
+  locale: String @semanticNonNull
+  name: DynamicString
+    @deprecated(
+      reason: "Use the DisplayName.value and/or DisplayName.locale instead."
+    )
+    @semanticNonNull
+  value: String @semanticNonNull
 }
 
 """
@@ -853,10 +860,10 @@ input FieldInput {
   field: ID!
   value: ValueInput
   """
-  Must match the type of the `value`, e.g.:
+  Must match the type of the `value`, e.g.
   ```typescript
   if (field.valueType === "string") {
-    assert("string" in field.value);
+    assert(field.value === null || "string" in field.value);
   }
   ```
   """
@@ -1559,14 +1566,23 @@ type Task implements Assignable & Component & Node & Trackable {
     },
   ]
   ```
+
+  Note that this aggregation uses the given Task as the *root* of the chain.
+  Chains are tree-like structures, which means you can chainAgg over a subtree
+  by choosing a different root node. Note also that this means you may need to
+  do some math depending on the structure of your chain, e.g. in the above
+  example it may be that "Foo" remains "InProgress" while "Bar" happens, and
+  therefore the aggregate for "Foo" *includes* time spent in "Bar".
   """
   chainAgg(
     """
-    Which sub-type-hierarchies you are interested in aggregating over.
+    Which subtype-hierarchies you are interested in aggregating over.
     """
     overType: [String!]!
   ): [Aggregate!] @semanticNonNull
-  displayName: DisplayName @semanticNonNull
+  displayName: DisplayName
+    @deprecated(reason: "Use Task.name instead.")
+    @semanticNonNull
   """
   TODO: description.
   """
@@ -1585,6 +1601,7 @@ type Task implements Assignable & Component & Node & Trackable {
   A globally unique opaque identifier for a node.
   """
   id: ID!
+  name: DisplayName @semanticNonNull
   """
   Identifies the parent of the current Task.
 

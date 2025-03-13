@@ -27,11 +27,22 @@ export class DisplayName implements Component, Refetchable {
   }
 
   /** @gqlField */
+  async locale(ctx: Context): Promise<string> {
+    const s = await ctx.orm.dynamicString.load(this.id);
+    return s.locale;
+  }
+
+  /**
+   * @deprecated Use the DisplayName.value and/or DisplayName.locale instead.
+   * @gqlField
+   */
   name(ctx: Context): Promise<DynamicString> {
     return ctx.orm.dynamicString.load(this.id);
   }
-}
 
-export interface Named {
-  displayName(): Promise<DisplayName>;
+  /** @gqlField */
+  async value(ctx: Context): Promise<string> {
+    const s = await ctx.orm.dynamicString.load(this.id);
+    return s.value;
+  }
 }

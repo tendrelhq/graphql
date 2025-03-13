@@ -79,27 +79,27 @@ environments:
       alias: beta.graphql.tendrel.io
     variables:
       ATTACHMENT_BUCKET: beta-lambdastack-photostoragebucketcc7aea4f-1ang3xq3j0cqv
-
-sidecars:
-  postgrest:
-    port: 3000
-    image: postgrest/postgrest:v12.2.8
-    secrets:
-      PGUSERNAME:
-        secretsmanager: "/database/service/graphql:username::"
-      PGPASSWORD:
-        secretsmanager: "/database/service/graphql:password::"
-      PGHOST:
-        secretsmanager: "/database/service/graphql:host::"
-      PGPORT:
-        secretsmanager: "/database/service/graphql:port::"
-      PGDATABASE:
-        secretsmanager: "/database/service/graphql:dbname::"
-      PGRST_JWT_SECRET: /copilot/${COPILOT_APPLICATION_NAME}/${COPILOT_ENVIRONMENT_NAME}/secrets/jwt-secret
-    variables:
-      PGRST_ADMIN_SEVER_PORT: 3001
-      # PGRST_DB_ANON_ROLE: anon
-      PGRST_DB_PLAN_ENABLED: true
-      PGRST_DB_SCHEMAS: api
-      PGRST_DB_TX_END: commit-allow-override
-      PGRST_JWT_SECRET_IS_BASE64: true
+# # Coming soon!
+# sidecars:
+#   postgrest:
+#     port: 3000
+#     image: postgrest/postgrest:v12.2.8
+#     secrets:
+#       PGUSERNAME:
+#         secretsmanager: "/database/service/graphql:username::"
+#       PGPASSWORD:
+#         secretsmanager: "/database/service/graphql:password::"
+#       PGHOST:
+#         secretsmanager: "/database/service/graphql:host::"
+#       PGPORT:
+#         secretsmanager: "/database/service/graphql:port::"
+#       PGDATABASE:
+#         secretsmanager: "/database/service/graphql:dbname::"
+#       PGRST_JWT_SECRET: /copilot/${COPILOT_APPLICATION_NAME}/${COPILOT_ENVIRONMENT_NAME}/secrets/jwt-secret
+#     variables:
+#       PGRST_ADMIN_SEVER_PORT: 3001
+#       # PGRST_DB_ANON_ROLE: anon
+#       PGRST_DB_PLAN_ENABLED: true
+#       PGRST_DB_SCHEMAS: api
+#       PGRST_DB_TX_END: commit-allow-override
+#       PGRST_JWT_SECRET_IS_BASE64: true

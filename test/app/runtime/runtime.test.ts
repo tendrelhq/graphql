@@ -229,11 +229,8 @@ describe("runtime demo", () => {
           edges: [
             {
               node: {
-                displayName: {
-                  name: {
-                    value: "Run",
-                    __typename: "DynamicString",
-                  },
+                name: {
+                  value: "Run",
                   __typename: "DisplayName",
                 },
                 state: {
@@ -245,11 +242,8 @@ describe("runtime demo", () => {
             },
             {
               node: {
-                displayName: {
-                  name: {
-                    value: "Idle Time",
-                    __typename: "DynamicString",
-                  },
+                name: {
+                  value: "Idle Time",
                   __typename: "DisplayName",
                 },
                 state: {
@@ -454,12 +448,9 @@ describe("runtime demo", () => {
               __typename: "TaskEdge",
               node: {
                 __typename: "Task",
-                displayName: {
+                name: {
                   __typename: "DisplayName",
-                  name: {
-                    __typename: "DynamicString",
-                    value: "Run",
-                  },
+                  value: "Run",
                 },
                 state: {
                   __typename: "Closed",
@@ -470,12 +461,9 @@ describe("runtime demo", () => {
               __typename: "TaskEdge",
               node: {
                 __typename: "Task",
-                displayName: {
+                name: {
                   __typename: "DisplayName",
-                  name: {
-                    __typename: "DynamicString",
-                    value: "Idle Time",
-                  },
+                  value: "Idle Time",
                 },
                 state: {
                   __typename: "Closed",
@@ -486,12 +474,9 @@ describe("runtime demo", () => {
               __typename: "TaskEdge",
               node: {
                 __typename: "Task",
-                displayName: {
+                name: {
                   __typename: "DisplayName",
-                  name: {
-                    __typename: "DynamicString",
-                    value: "Downtime",
-                  },
+                  value: "Downtime",
                 },
                 state: {
                   __typename: "Closed",
@@ -502,12 +487,9 @@ describe("runtime demo", () => {
               __typename: "TaskEdge",
               node: {
                 __typename: "Task",
-                displayName: {
+                name: {
                   __typename: "DisplayName",
-                  name: {
-                    __typename: "DynamicString",
-                    value: "Idle Time",
-                  },
+                  value: "Idle Time",
                 },
                 state: {
                   __typename: "Closed",

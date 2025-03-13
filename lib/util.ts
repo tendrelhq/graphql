@@ -182,3 +182,11 @@ const newlinePattern = /\n/g;
 export function normalizeBase64(s: string) {
   return s.replace(newlinePattern, "");
 }
+
+// biome-ignore format:
+/**
+ * Check that two types are structurally identical.
+ */
+export type Exact<X, Y> = 
+  (<T>() => T extends X ? 1 : 2) extends
+  (<T>() => T extends Y ? 1 : 2) ? true : false;

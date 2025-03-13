@@ -19,10 +19,8 @@ query TestRuntimeEntrypoint(
           timeZone
         }
         ... on Task {
-          displayName {
-            name {
-              value
-            }
+          displayName: name {
+            value
           }
           hash
           parent {
@@ -77,10 +75,8 @@ query TestRuntimeDetail($node: ID!) {
       chain {
         edges {
           node {
-            displayName {
-              name {
-                value
-              }
+            name {
+              value
             }
             state {
               __typename
@@ -112,10 +108,8 @@ mutation TestRuntimeTransitionMutation(
       chain @include(if: $includeChain) {
         edges {
           node {
-            displayName {
-              name {
-                value
-              }
+            name {
+              value
             }
             state {
               __typename
@@ -132,10 +126,8 @@ mutation TestRuntimeTransitionMutation(
         chain {
           totalCount
         }
-        displayName {
-          name {
-            value
-          }
+        name {
+          value
         }
         parent {
           ... on Location {
@@ -161,9 +153,7 @@ mutation TestRuntimeApplyFieldEditsMutation(
       edges {
         node {
           name {
-            name {
-              value
-            }
+            value
           }
           value {
             __typename
@@ -186,10 +176,8 @@ fragment Trackables_fragment on Trackable {
     edges {
       node {
         ... on Task {
-          displayName {
-            name {
-              value
-            }
+          name {
+            value
           }
           fsm {
             ...TaskFSM_fragment
@@ -213,18 +201,14 @@ fragment TaskFSM_fragment on TaskStateMachine {
         }
       }
     }
-    displayName {
-      name {
-        value
-      }
+    name {
+      value
     }
     fields {
       edges {
         node {
           name {
-            name {
-              value
-            }
+            value
           }
           value {
             __typename
@@ -260,18 +244,14 @@ fragment TaskFSM_fragment on TaskStateMachine {
   transitions {
     edges {
       node {
-        displayName {
-          name {
-            value
-          }
+        name {
+          value
         }
         fields {
           edges {
             node {
               name {
-                name {
-                  value
-                }
+                value
               }
               value {
                 __typename

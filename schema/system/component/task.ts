@@ -37,7 +37,7 @@ import type { Overridable } from "../overridable";
 import type { Connection, Edge, PageInfo } from "../pagination";
 import type { Timestamp } from "../temporal";
 import { type Assignable, Assignment } from "./assignee";
-import type { DisplayName, Named } from "./name";
+import type { DisplayName } from "./name";
 
 export type ConstructorArgs = {
   id: ID;
@@ -62,9 +62,7 @@ export type FieldOptions = {
  *
  * @gqlType
  */
-export class Task
-  implements Assignable, Component, Named, Refetchable, Trackable
-{
+export class Task implements Assignable, Component, Refetchable, Trackable {
   readonly __typename = "Task" as const;
   readonly _type: string;
   readonly _id: string;
@@ -84,7 +82,10 @@ export class Task
     return new Task({ id: encodeGlobalId({ type, id }) }, ctx);
   }
 
-  /** @gqlField */
+  /**
+   * @deprecated Use Task.name instead.
+   * @gqlField
+   */
   async displayName(): Promise<DisplayName> {
     return await this.ctx.orm.displayName.load(this.id);
   }
@@ -259,6 +260,13 @@ export class Task
     if (!row) return null;
 
     return new Task(row, this.ctx);
+  }
+
+  /**
+   * @gqlField
+   */
+  async name(): Promise<DisplayName> {
+    return await this.ctx.orm.displayName.load(this.id);
   }
 
   // FIXME: We should probably implement this as a StateMachine<TaskState>?
@@ -688,13 +696,20 @@ export async function chain(
  * ]
  * ```
  *
+ * Note that this aggregation uses the given Task as the *root* of the chain.
+ * Chains are tree-like structures, which means you can chainAgg over a subtree
+ * by choosing a different root node. Note also that this means you may need to
+ * do some math depending on the structure of your chain, e.g. in the above
+ * example it may be that "Foo" remains "InProgress" while "Bar" happens, and
+ * therefore the aggregate for "Foo" *includes* time spent in "Bar".
+ *
  * @gqlField
  */
 export async function chainAgg(
   t: Task,
   _ctx: Context,
   /**
-   * Which sub-type-hierarchies you are interested in aggregating over.
+   * Which subtype-hierarchies you are interested in aggregating over.
    */
   overType: string[],
 ): Promise<Aggregate[]> {

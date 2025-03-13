@@ -68,10 +68,9 @@ export const ChecklistResult: ChecklistResultResolvers = {
 
     throw "invariant violated";
   },
+  // @ts-expect-error: temporary under migration
   async name(parent, _, ctx) {
-    return (await ctx.orm.displayName.load(
-      parent.id,
-    )) as ResolversTypes["DisplayName"];
+    return await ctx.orm.displayName.load(parent.id);
   },
   async parent(parent) {
     const { type, id } = decodeGlobalId(parent.id);

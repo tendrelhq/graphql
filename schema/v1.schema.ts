@@ -636,7 +636,7 @@ export function getSchema(): GraphQLSchema {
       return {
         group: {
           description:
-            "The group, or bucket, that uniquely identifies this aggregate.\nFor example, this will be one of the `groupByTag`s passed to `trackingAgg`.",
+            "The group, or bucket, that uniquely identifies this aggregate.\nFor example, this will be one of the `overType`s passed to `chainAgg`.",
           name: "group",
           type: GraphQLString,
           resolve(source, args, context, info) {
@@ -647,7 +647,7 @@ export function getSchema(): GraphQLSchema {
         },
         value: {
           description:
-            'The computed aggregate value.\n\nCurrently, this will always be a string value representing a duration in\nseconds, e.g. "360" -> 360 seconds. `null` will be returned when no such\naggregate can be computed, e.g. "time in planned downtime" when no "planned\ndowntime" events exist.',
+            'The computed aggregate value.\n\nCurrently, this will always be a string value representing a duration in\nseconds, e.g. "360" -> 360 seconds. `null` will be returned when no such\naggregate can be computed, e.g. "time in planned downtime" when no "planned\ndowntime" events exist. Note also that `null` will be returned if a\nduration cannot be computed, e.g. because there is no end date.',
           name: "value",
           type: GraphQLString,
         },
@@ -698,11 +698,27 @@ export function getSchema(): GraphQLSchema {
             return displayNameIdResolver(source);
           },
         },
+        locale: {
+          name: "locale",
+          type: GraphQLString,
+          resolve(source, _args, context) {
+            return assertNonNull(source.locale(context));
+          },
+        },
         name: {
+          deprecationReason:
+            "Use the DisplayName.value and/or DisplayName.locale instead.",
           name: "name",
           type: DynamicStringType,
           resolve(source, _args, context) {
             return assertNonNull(source.name(context));
+          },
+        },
+        value: {
+          name: "value",
+          type: GraphQLString,
+          resolve(source, _args, context) {
+            return assertNonNull(source.value(context));
           },
         },
       };
@@ -1129,13 +1145,13 @@ export function getSchema(): GraphQLSchema {
         },
         chainAgg: {
           description:
-            'Given a Task identifying as a node in a chain, create an aggregate view of\nsaid chain over the type tags given in `overType`. The result is a set of\naggregates representing the *sum total duration* of nodes tagged with any of\nthe given `overType` tags, *including* the given Task (if it is so tagged).\n\nColloquially: `chainAgg(overType: ["Foo", "Bar"])` will compute the total\ntime spent in all "Foo" or "Bar" tasks in the given chain;\n\n```json\n[\n  {\n    "group": "Foo",\n    "value": "26.47", // 26.47 seconds spent doing "Foo" tasks\n  },\n  {\n    "group": "Bar",\n    "value": "5.82", // 5.82 seconds spent doing "Bar" tasks\n  },\n]\n```',
+            'Given a Task identifying as a node in a chain, create an aggregate view of\nsaid chain over the type tags given in `overType`. The result is a set of\naggregates representing the *sum total duration* of nodes tagged with any of\nthe given `overType` tags, *including* the given Task (if it is so tagged).\n\nColloquially: `chainAgg(overType: ["Foo", "Bar"])` will compute the total\ntime spent in all "Foo" or "Bar" tasks in the given chain;\n\n```json\n[\n  {\n    "group": "Foo",\n    "value": "26.47", // 26.47 seconds spent doing "Foo" tasks\n  },\n  {\n    "group": "Bar",\n    "value": "5.82", // 5.82 seconds spent doing "Bar" tasks\n  },\n]\n```\n\nNote that this aggregation uses the given Task as the *root* of the chain.\nChains are tree-like structures, which means you can chainAgg over a subtree\nby choosing a different root node. Note also that this means you may need to\ndo some math depending on the structure of your chain, e.g. in the above\nexample it may be that "Foo" remains "InProgress" while "Bar" happens, and\ntherefore the aggregate for "Foo" *includes* time spent in "Bar".',
           name: "chainAgg",
           type: new GraphQLList(new GraphQLNonNull(AggregateType)),
           args: {
             overType: {
               description:
-                "Which sub-type-hierarchies you are interested in aggregating over.",
+                "Which subtype-hierarchies you are interested in aggregating over.",
               name: "overType",
               type: new GraphQLNonNull(
                 new GraphQLList(new GraphQLNonNull(GraphQLString)),
@@ -1149,6 +1165,7 @@ export function getSchema(): GraphQLSchema {
           },
         },
         displayName: {
+          deprecationReason: "Use Task.name instead.",
           name: "displayName",
           type: DisplayNameType,
           resolve(source, args, context, info) {
@@ -1191,6 +1208,15 @@ export function getSchema(): GraphQLSchema {
           type: new GraphQLNonNull(GraphQLID),
           resolve(source) {
             return taskIdResolver(source);
+          },
+        },
+        name: {
+          name: "name",
+          type: DisplayNameType,
+          resolve(source, args, context, info) {
+            return assertNonNull(
+              defaultFieldResolver(source, args, context, info),
+            );
           },
         },
         parent: {
@@ -1332,7 +1358,7 @@ export function getSchema(): GraphQLSchema {
         },
         valueType: {
           description:
-            'Must match the type of the `value`, e.g.:\n```typescript\nif (field.valueType === "string") {\n  assert("string" in field.value);\n}\n```',
+            'Must match the type of the `value`, e.g.\n```typescript\nif (field.valueType === "string") {\n  assert(field.value === null || "string" in field.value);\n}\n```',
           name: "valueType",
           type: new GraphQLNonNull(ValueTypeType),
         },
