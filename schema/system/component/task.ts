@@ -738,11 +738,7 @@ export async function chainAgg(
         )
         select
             tt.systagtype as "group",
-            sum(
-                extract(
-                    epoch from (chain.workinstancecompleteddate - chain.workinstancestartdate)
-                )
-            ) as value
+            sum(extract(epoch from (legacy0.compute_time_at_task(chain.workinstanceid)))) as value
         from chain
         inner join public.worktemplatetype as t
             on chain.workinstanceworktemplateid = t.worktemplatetypeworktemplateid

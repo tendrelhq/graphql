@@ -22,6 +22,8 @@ import {
 
 const ctx = await createTestContext();
 
+const NOW_PLUS_24H = new Date(NOW.valueOf() + 24 * 60 * 60 * 1000);
+
 describe("runtime demo", () => {
   // See beforeAll for initialization of these variables.
   let CUSTOMER: string;
@@ -39,7 +41,7 @@ describe("runtime demo", () => {
 
   test("start run", async () => {
     const h = (await FSM.hash()) as string;
-    const ost = await getFieldByName(FSM, "Override Start Time");
+    const ov = await getFieldByName(FSM, "Override Start Time");
     const cs = await getFieldByName(FSM, "Comments");
     const result = await execute(
       schema,
@@ -56,7 +58,7 @@ describe("runtime demo", () => {
             hash: h,
             overrides: [
               {
-                field: ost.id,
+                field: ov.id,
                 value: {
                   timestamp: NOW.toISOString(),
                 },
@@ -358,6 +360,7 @@ describe("runtime demo", () => {
     const t = await mostRecentlyInProgress(FSM);
     expect(t.id).toBe(FSM.id);
     const h = (await t.hash()) as string;
+    const ov = await getFieldByName(FSM, "Override End Time");
 
     const result0 = await execute(
       schema,
@@ -372,6 +375,15 @@ describe("runtime demo", () => {
           task: {
             id: t.id,
             hash: h,
+            overrides: [
+              {
+                field: ov.id,
+                value: {
+                  timestamp: NOW_PLUS_24H.toISOString(),
+                },
+                valueType: "timestamp",
+              },
+            ],
           },
         },
       },
@@ -405,7 +417,6 @@ describe("runtime demo", () => {
   });
 
   test("apply field edits retroactively", async () => {
-    const ost = await getFieldByName(FSM, "Override Start Time");
     const cs = await getFieldByName(FSM, "Comments");
     const result = await execute(
       schema,
@@ -413,12 +424,6 @@ describe("runtime demo", () => {
       {
         entity: FSM.id,
         edits: [
-          {
-            field: ost.id,
-            // Test null field-level overrides:
-            value: undefined,
-            valueType: "timestamp",
-          },
           {
             field: cs.id,
             value: {
@@ -513,7 +518,7 @@ describe("runtime demo", () => {
           {
             __typename: "Aggregate",
             group: "Runtime",
-            value: expect.any(String),
+            value: "86400.000000", // overrides are taken into account
           },
         ],
         parent: {
