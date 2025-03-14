@@ -5,7 +5,7 @@ WORKDIR /usr/src/app
 # This will will cache them and speed up future builds.
 FROM base AS install
 RUN mkdir -p /tmp/dev
-COPY package.json bun.lockb .env* /tmp/dev
+COPY package.json bun.lockb /tmp/dev
 RUN cd /tmp/dev && bun install --frozen-lockfile --ignore-scripts
 
 # Production build.

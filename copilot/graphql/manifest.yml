@@ -48,6 +48,7 @@ secrets:
     secretsmanager: "/database/service/graphql:dbname::"
 
 variables:
+  CLERK_PUBLISHABLE_KEY: pk_live_Y2xlcmsudGVuZHJlbC5pbyQ
   NODE_ENV: production
   STAGE: ${COPILOT_ENVIRONMENT_NAME}
 
