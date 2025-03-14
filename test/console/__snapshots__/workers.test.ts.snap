@@ -216,13 +216,32 @@ exports[`[console] workers list 1`] = `
             "scanCode": null,
           },
         },
+        {
+          "__typename": "WorkerEdge",
+          "node": {
+            "__typename": "Worker",
+            "active": {
+              "active": true,
+            },
+            "displayName": "Will Twait",
+            "firstName": "Will",
+            "language": {
+              "code": "en",
+            },
+            "lastName": "Twait",
+            "role": {
+              "type": "Admin",
+            },
+            "scanCode": null,
+          },
+        },
       ],
       "pageInfo": {
         "__typename": "PageInfo",
         "hasNextPage": false,
         "hasPreviousPage": false,
       },
-      "totalCount": 11,
+      "totalCount": 12,
     },
   },
 }

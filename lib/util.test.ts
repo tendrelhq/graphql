@@ -2,10 +2,10 @@ import { afterEach, describe, expect, test } from "bun:test";
 import { encodeGlobalId } from "@/schema/system";
 import {
   assert,
+  type Exact,
   buildPaginationArgs,
   map,
   mapOrElse,
-  type Exact,
 } from "./util";
 
 const CURSOR = encodeGlobalId({ type: "__test__", id: "1" });

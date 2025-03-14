@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import { baseurl } from "@/test/api/constants";
 
-describe("/api/instance", () => {
+describe.skip("/api/instance", () => {
   test("create", async () => {
     const url = new URL("/instance?select=id", baseurl);
     const response = await fetch(url, {

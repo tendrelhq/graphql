@@ -52,11 +52,6 @@ exports[`extended runtime demo it should show up in the app 1`] = `
       "edges": [
         {
           "node": {
-            "displayName": {
-              "name": {
-                "value": "Run",
-              },
-            },
             "fsm": {
               "active": {
                 "assignees": {
@@ -68,19 +63,12 @@ exports[`extended runtime demo it should show up in the app 1`] = `
                     },
                   ],
                 },
-                "displayName": {
-                  "name": {
-                    "value": "Run",
-                  },
-                },
                 "fields": {
                   "edges": [
                     {
                       "node": {
                         "name": {
-                          "name": {
-                            "value": "Override Start Time",
-                          },
+                          "value": "Override Start Time",
                         },
                         "value": {
                           "__typename": "TimestampValue",
@@ -92,9 +80,7 @@ exports[`extended runtime demo it should show up in the app 1`] = `
                     {
                       "node": {
                         "name": {
-                          "name": {
-                            "value": "Override End Time",
-                          },
+                          "value": "Override End Time",
                         },
                         "value": {
                           "__typename": "TimestampValue",
@@ -106,9 +92,7 @@ exports[`extended runtime demo it should show up in the app 1`] = `
                     {
                       "node": {
                         "name": {
-                          "name": {
-                            "value": "Run Output",
-                          },
+                          "value": "Run Output",
                         },
                         "value": {
                           "__typename": "NumberValue",
@@ -119,9 +103,7 @@ exports[`extended runtime demo it should show up in the app 1`] = `
                     {
                       "node": {
                         "name": {
-                          "name": {
-                            "value": "Reject Count",
-                          },
+                          "value": "Reject Count",
                         },
                         "value": {
                           "__typename": "NumberValue",
@@ -132,9 +114,7 @@ exports[`extended runtime demo it should show up in the app 1`] = `
                     {
                       "node": {
                         "name": {
-                          "name": {
-                            "value": "Comments",
-                          },
+                          "value": "Comments",
                         },
                         "value": {
                           "__typename": "StringValue",
@@ -144,6 +124,9 @@ exports[`extended runtime demo it should show up in the app 1`] = `
                       },
                     },
                   ],
+                },
+                "name": {
+                  "value": "Run",
                 },
                 "parent": {
                   "name": {
@@ -157,6 +140,9 @@ exports[`extended runtime demo it should show up in the app 1`] = `
               "transitions": {
                 "edges": [],
               },
+            },
+            "name": {
+              "value": "Run",
             },
           },
         },

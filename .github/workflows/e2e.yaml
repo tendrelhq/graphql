@@ -73,6 +73,7 @@ jobs:
       - run: bun install --frozen-lockfile
       - run: bun test
         env:
+          BASE_URL: http://localhost:3001/api/v1
           PGDATABASE: tendrel
           PGHOST: localhost
           PGPASSWORD: postgres

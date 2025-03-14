@@ -1,7 +1,0 @@
-### List entity templates
-GET {{BASE_URL}}/template HTTP/1.1
-Range: 0-19
-
-### List entity instances
-GET {{BASE_URL}}/instance HTTP/1.1
-Range: 0-19

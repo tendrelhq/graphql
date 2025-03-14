@@ -106,7 +106,7 @@
         };
         prettier = {
           enable = true;
-          includes = ["*.yml"];
+          includes = ["*.yaml" "*.yml"];
         };
         shfmt.enable = true;
       };

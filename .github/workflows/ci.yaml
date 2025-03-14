@@ -12,8 +12,7 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  lint:
-    name: lint
+  check:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -22,19 +21,9 @@ jobs:
           github_access_token: ${{ secrets.GITHUB_TOKEN }}
           extra_nix_config: |
             accept-flake-config = true
-      - run: nix develop .#ci --command bun install --frozen-lockfile
-      # This step performs several checks, all of which are configured through
-      # flake.nix. If you are reading this because your GitHub PR workflow
-      # failed, it is almost certainly due to formatting. Formatting is done
-      # with `treefmt` and configured in flake.nix:
-      # - alejandra: nix
-      # - biome: graphql, json, typescript
-      # - prettier: markdown, yaml
-      # - sqlfmt: sql
-      - run: nix flake check --impure .
-
-  package:
-    name: packaging
+      - run: nix flake check
+  build:
+    needs: check
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4

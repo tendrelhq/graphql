@@ -18,16 +18,15 @@ RUN cd /tmp/prod && bun install --frozen-lockfile --ignore-scripts --production
 # then copy all (non-ignored) project files into the image
 FROM base AS prerelease
 COPY --from=install /tmp/dev/node_modules node_modules
-COPY . .
-
-# test and build
-ARG NODE_ENV=production
-RUN bun compile
 
 # copy production dependencies and source code into final image.
 FROM base AS release
 COPY --from=prerelease /usr/src/app .
+COPY . .
+RUN bun generate
 
 # run the app
+ARG NODE_ENV=production
+ENV NODE_ENV=${NODE_ENV}
 EXPOSE 4000/tcp
 CMD ["bun", "start"]

@@ -4,8 +4,9 @@
   "module": "schema/index.ts",
   "type": "module",
   "scripts": {
-    "check": "tsc --pretty && biome check --write",
-    "clean": "rimraf **/__generated__/** **/*.generated.ts node_modules out",
+    "check": "biome check --write && tsc --pretty",
+    "ci:check": "biome check && tsc",
+    "clean": "git clean -dfx -e .direnv -e .env.local -e .envrc -e .pre-commit-config.yaml -e /data",
     "compile": "bun build.ts",
     "generate": "bunx grats && bun ./scripts/generate-legacy-schema.ts && bun ./scripts/print-schema.ts",
     "postgenerate": "eval $TREEFMT",

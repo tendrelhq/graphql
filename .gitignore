@@ -1,25 +1,12 @@
-### bun ###
-/out/
+!.env.production
+!.env.local.template
+!.envrc.template
 
-### db ###
 *.dump
-
-### dotenv ###
-/.env*.local
-
-### generated ###
-# /schema.graphql Keep this for now. Need to have better bundling.
-
-### neovim ###
-/.db.json
-
-### nix ###
-/.pre-commit-config.yaml
-/data
-/result
-
-### typescript ###
-/node_modules/
-*.d.ts
 *.generated.ts
-**/__generated__/**
+.*
+.pre-commit-config.yaml
+data
+node_modules
+out
+result

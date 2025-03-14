@@ -64,12 +64,13 @@ if (process.env.NODE_ENV === "development") {
   );
 }
 
-app.post(
-  "/login",
-  auth.clerk(), // Temporary.
-  express.json(),
-  auth.login,
-);
+// Coming soon!
+// app.post(
+//   "/login",
+//   auth.clerk(), // Temporary.
+//   express.json(),
+//   auth.login,
+// );
 
 app.post("/upload", auth.clerk(), express.json(), upload.POST);
 
