@@ -19,10 +19,10 @@ http: false
 nlb:
   port: 443/tls
   target_port: 4000
-  additional_listeners:
-    - port: 3000/tls
-      target_container: postgrest
-      target_port: 3000
+  # additional_listeners:
+  #   - port: 3000/tls
+  #     target_container: postgrest
+  #     target_port: 3000
 
 network:
   vpc:

@@ -6,7 +6,6 @@
 *.generated.ts
 .*
 .pre-commit-config.yaml
-data
-node_modules
-out
-result
+data/
+dist/
+node_modules/

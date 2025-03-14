@@ -1,8 +1,11 @@
 # @tendrelhq/graphql
 
+Development requires bun. Running locally requires docker (and optionally [just]).
+
 1. `cp .envrc.template .envrc` and fill in the blanks.
 2. `cp .env.local.template .env.local` and fill in the blanks.
-3. Run `bun install` per usual, then `bun start` to start the server.
+3. for development, run `bun install`
+4. to run locally, run `just start`[^1]
 
 If you have [nix] installed (which I highly recommend you do) you can use the
 dev environment via `devenv up`. This will start:
@@ -34,23 +37,20 @@ options = []
 [formatter.biome]
 command = "biome"
 excludes = []
-includes = ["*.graphql", "*.json", "*.ts"]
+includes = ["*.graphql", "*.json", "*.md", "*.ts"]
 options = ["check", "--write"]
 
 [formatter.prettier]
 command = "prettier"
 excludes = []
-includes = ["*.md", "*.yaml", "*.yml"]
+includes = ["*.yaml", "*.yml"]
 options = ["--write"]
 
-[formatter.sqlfmt]
-command = "sqlfmt"
+[formatter.shfmt]
+command = "shfmt"
 excludes = []
-includes = ["*.sql"]
-options = ["-"]
-
-[global]
-excludes = ["*.lock", "*.patch", "package-lock.json", "go.mod", "go.sum", ".gitignore", ".gitmodules", ".hgignore", ".svnignore", "*.conf", "*.lockb", "*.plan", "*.snap", "*.toml", ".*", "copilot/.workspace", "Dockerfile", "justfile"]
+includes = ["*.sh", "*.bash", "*.envrc", "*.envrc.*"]
+options = ["-s", "-w", "-i", "2"]
 ```
 
 You can derive the correct commands from there, e.g.
@@ -71,6 +71,12 @@ $ sqlfmt **/*.sql
 28 files left unchanged.
 ```
 
+[^1]:
+    If you don't have [just] installed, you can either install it or run the
+    underlying command directly by looking at [./justfile]
+
+[bun]: https://github.com/oven-sh/bun
+[just]: https://github.com/casey/just
 [nix]: https://nixos.org/download/
 [ruru]: https://github.com/graphile/crystal/tree/main/grafast/ruru
 [pgweb]: https://github.com/sosedoff/pgweb
