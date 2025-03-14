@@ -20,3 +20,4 @@ create-template-constraint 2025-02-20T23:37:31Z Will Ruggiano <ruggiano@tendrel.
 jwt 2025-03-04T23:33:01Z Will Ruggiano <ruggiano@tendrel.io> # add pg_jwt extension
 public-rest-api 2025-03-11T23:11:55Z Will Ruggiano <ruggiano@tendrel.io>
 legacy-time-at-task 2025-03-13T21:54:04Z Will Ruggiano <ruggiano@tendrel.io> # compute tat with overrides
+@v0.27.1 2025-03-14T21:53:26Z Will Ruggiano <ruggiano@tendrel.io> # sync tags with package.json
