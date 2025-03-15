@@ -73,7 +73,7 @@ $ sqlfmt **/*.sql
 
 [^1]:
     If you don't have [just] installed, you can either install it or run the
-    underlying command directly by looking at [./justfile]
+    underlying command directly by looking at [./justfile](./justfile)
 
 [bun]: https://github.com/oven-sh/bun
 [just]: https://github.com/casey/just

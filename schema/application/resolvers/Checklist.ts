@@ -209,6 +209,7 @@ export const Checklist: ChecklistResolvers = {
             INNER JOIN public.workresult AS wr
                 ON wri.workresultinstanceworkresultid = wr.workresultid
                 AND wr.workresultdeleted = false
+                AND wr.workresultdraft = ${args.withDraft ?? false}
                 AND wr.workresultisprimary = false
             WHERE ${join(
               [
