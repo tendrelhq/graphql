@@ -48,10 +48,9 @@ describe("copyFrom", () => {
 
     // Check that the new instance's location is the same as the template's
     // site. This is part of the default (template) instantiation rules.
-    const t = new Task(
-      { id: assertNonNull(result.data?.copyFrom.edge.node.id) },
-      ctx,
-    );
+    const t = new Task({
+      id: assertNonNull(result.data?.copyFrom.edge.node.id),
+    });
     const p = await t.parent();
     expect(p).toBeTruthy();
     const s = await TEMPLATE.parent();
@@ -94,10 +93,9 @@ describe("copyFrom", () => {
     // instance's location. By default, when we create a new instance from an
     // existing instance, we instantiate the new instance at the same location
     // as the existing instance.
-    const t = new Task(
-      { id: assertNonNull(result.data?.copyFrom.edge.node.id) },
-      ctx,
-    );
+    const t = new Task({
+      id: assertNonNull(result.data?.copyFrom.edge.node.id),
+    });
     const p = await t.parent();
     expect(p).toBeTruthy();
     const p2 = await INSTANCE.parent();
@@ -123,11 +121,11 @@ describe("copyFrom", () => {
     CUSTOMER = findAndEncode("customer", "organization", logs);
     TEMPLATE = map(
       findAndEncode("task", "worktemplate", logs),
-      id => new Task({ id }, ctx),
+      id => new Task({ id }),
     );
     INSTANCE = map(
       findAndEncode("instance", "workinstance", logs),
-      id => new Task({ id }, ctx),
+      id => new Task({ id }),
     );
   });
 

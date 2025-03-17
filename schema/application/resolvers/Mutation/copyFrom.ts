@@ -9,7 +9,7 @@ import type {
 import { decodeGlobalId, encodeGlobalId } from "@/schema/system";
 import type { FieldInput } from "@/schema/system/component";
 import { Task, applyFieldEdits_ } from "@/schema/system/component/task";
-import { assert, normalizeBase64 } from "@/util";
+import { assert } from "@/util";
 import { GraphQLError } from "graphql";
 import { match } from "ts-pattern";
 
@@ -514,10 +514,9 @@ export async function copyFromWorkTemplate(
     }
   }
 
-  const t = new Task(
-    { id: encodeGlobalId({ type: "workinstance", id: row.id }) },
-    ctx,
-  );
+  const t = new Task({
+    id: encodeGlobalId({ type: "workinstance", id: row.id }),
+  });
 
   if (options.fieldOverrides?.length) {
     const result = await applyFieldEdits_(sql, ctx, t, options.fieldOverrides);

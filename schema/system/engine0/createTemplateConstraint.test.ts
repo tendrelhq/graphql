@@ -119,11 +119,11 @@ describe("createTemplateConstraint", () => {
     CUSTOMER = findAndEncode("customer", "organization", logs);
     TEMPLATE = map(
       findAndEncode("next", "worktemplate", logs),
-      id => new Task({ id }, ctx),
+      id => new Task({ id }),
     );
     LOCATION = map(
       findAndEncode("location", "location", logs),
-      id => new Location({ id }, ctx),
+      id => new Location({ id }),
     );
 
     // Delete all constraints. FIXME: don't create a Runtime customer every time.

@@ -182,7 +182,7 @@ input CreateLocationInput {
 }
 
 input DescriptionInput {
-  id: ID!
+  id: ID
   value: DynamicStringInput!
 }
 

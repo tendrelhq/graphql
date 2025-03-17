@@ -672,7 +672,7 @@ type Description implements Component & Node {
 }
 
 input DescriptionInput {
-  id: ID!
+  id: ID
   value: DynamicStringInput!
 }
 

@@ -97,7 +97,7 @@ export async function createLocation(
     {
       const result = await sql`
         with to_instantiate as (
-            select
+            select distinct
                 wt.id as template_id,
                 loc.locationuuid as location_id,
                 tt.systagtype as target_type,
@@ -161,5 +161,5 @@ export async function createLocation(
     });
   });
 
-  return new Location({ id: result }, ctx);
+  return new Location({ id: result });
 }

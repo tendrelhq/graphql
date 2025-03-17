@@ -31,7 +31,6 @@ export interface Component {
 
 export const field$fragment: Fragment = sql`
 select
-    f._name,
     f.id,
     case
         when f.type = 'Boolean'
@@ -68,8 +67,6 @@ from field as f
 
 /** @gqlType */
 export type Field = {
-  _name: ID;
-
   /**
    * Unique identifier for this Field.
    *
@@ -219,8 +216,8 @@ export async function description(
  *
  * @gqlField
  */
-export function name(field: Field): DisplayName {
-  return new DisplayName(field._name);
+export async function name(field: Field, ctx: Context): Promise<DisplayName> {
+  return await ctx.orm.displayName.load(field.id);
 }
 
 /** @gqlInput */

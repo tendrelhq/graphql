@@ -45,11 +45,12 @@ export type ConstructorArgs = {
 };
 
 export type FieldOptions = {
-  byName?: {
-    // TODO: support localized byName lookup?
-    locale?: never;
-    value: string;
-  };
+  /**
+   * Query for a Field by its canonical name (i.e. non-localized).
+   * This is, most often, the name that is given to the Field when it is first
+   * created.
+   */
+  byName?: string;
 };
 
 /**
@@ -69,33 +70,30 @@ export class Task implements Assignable, Component, Refetchable, Trackable {
   readonly _id: string;
   readonly id: ID;
 
-  constructor(
-    args: ConstructorArgs,
-    private ctx: Context,
-  ) {
+  constructor(args: ConstructorArgs) {
     this.id = normalizeBase64(args.id);
     const { type, id } = decodeGlobalId(this.id);
     this._type = type;
     this._id = id;
   }
 
-  static fromTypeId(type: string, id: string, ctx: Context) {
-    return new Task({ id: encodeGlobalId({ type, id }) }, ctx);
+  static fromTypeId(type: string, id: string) {
+    return new Task({ id: encodeGlobalId({ type, id }) });
   }
 
   /**
    * @gqlField
    */
-  async description(): Promise<Description | null> {
-    return await this.ctx.orm.description.load(this.id);
+  async description(ctx: Context): Promise<Description | null> {
+    return await ctx.orm.description.load(this.id);
   }
 
   /**
    * @deprecated Use Task.name instead.
    * @gqlField
    */
-  async displayName(): Promise<DisplayName> {
-    return await this.ctx.orm.displayName.load(this.id);
+  async displayName(ctx: Context): Promise<DisplayName> {
+    return await ctx.orm.displayName.load(this.id);
   }
 
   // Not exposed via GraphQL, yet.
@@ -109,9 +107,6 @@ export class Task implements Assignable, Component, Refetchable, Trackable {
                   encode(
                       ('workresultinstance:' || wi.id || ':' || wr.id)::bytea, 'base64'
                   ) as id,
-                  encode(('name:' || n.languagemasteruuid)::bytea, 'base64') as _name,
-                  wi.workinstanceid as _id,
-                  wr.workresultid as _field,
                   t.systagtype as type,
                   wri.workresultinstancevalue as value
               from public.workinstance as wi
@@ -126,7 +121,7 @@ export class Task implements Assignable, Component, Refetchable, Trackable {
                   on wr.workresultlanguagemasterid = n.languagemasterid
                   ${
                     opts.byName
-                      ? sql`and n.languagemastersource = ${opts.byName.value}`
+                      ? sql`and n.languagemastersource = ${opts.byName}`
                       : sql``
                   }
               inner join public.systag as t on wr.workresulttypeid = t.systagid
@@ -142,8 +137,6 @@ export class Task implements Assignable, Component, Refetchable, Trackable {
           with field as (
               select
                   encode(('workresult:' || wr.id)::bytea, 'base64') as id,
-                  encode(('name:' || n.languagemasteruuid)::bytea, 'base64') as "_name",
-                  wr.workresultid as _field,
                   t.systagtype as type,
                   wr.workresultdefaultvalue as value
               from public.worktemplate as wt
@@ -155,7 +148,7 @@ export class Task implements Assignable, Component, Refetchable, Trackable {
                   on wr.workresultlanguagemasterid = n.languagemasterid
                   ${
                     opts.byName
-                      ? sql`and n.languagemastersource = ${opts.byName.value}`
+                      ? sql`and n.languagemastersource = ${opts.byName}`
                       : sql``
                   }
               inner join public.systag as t on wr.workresulttypeid = t.systagid
@@ -240,7 +233,7 @@ export class Task implements Assignable, Component, Refetchable, Trackable {
         return [null];
       });
 
-    if (row) return new Location(row, this.ctx);
+    if (row) return new Location(row);
 
     console.warn(`No parent for Task ${this}`);
     return null;
@@ -267,21 +260,21 @@ export class Task implements Assignable, Component, Refetchable, Trackable {
 
     if (!row) return null;
 
-    return new Task(row, this.ctx);
+    return new Task(row);
   }
 
   /**
    * @gqlField
    */
-  async name(): Promise<DisplayName> {
-    return await this.ctx.orm.displayName.load(this.id);
+  async name(ctx: Context): Promise<DisplayName> {
+    return await ctx.orm.displayName.load(this.id);
   }
 
   // FIXME: We should probably implement this as a StateMachine<TaskState>?
   // This would allow the frontend to disambiguate start vs end, i.e. not have
   // to infer the valid action(s) based on the TaskState.
   /** @gqlField */
-  async state(): Promise<TaskState | null> {
+  async state(ctx: Context): Promise<TaskState | null> {
     // Only workinstances have statuses.
     if (this._type !== "workinstance") return null;
 
@@ -352,7 +345,7 @@ export class Task implements Assignable, Component, Refetchable, Trackable {
     }
 
     // HACK: not great, but ok for now.
-    const ass = await assignees(this, this.ctx); // n.b. db call
+    const ass = await assignees(this, ctx); // n.b. db call
 
     return match(row.status)
       .with(
@@ -630,7 +623,6 @@ export async function attachments(
  */
 export async function chain(
   t: Task,
-  ctx: Context,
   /**
    * For use in pagination. Specifies the limit for "forward pagination".
    */
@@ -672,7 +664,7 @@ export async function chain(
   return {
     edges: rows.map(row => ({
       cursor: row.id,
-      node: new Task(row, ctx),
+      node: new Task(row),
     })),
     pageInfo: {
       hasNextPage: false,
@@ -1038,7 +1030,7 @@ export async function advanceTask(
     task: t,
     instantiations: instantiations.map(i => ({
       cursor: i.id,
-      node: new Task(i, ctx),
+      node: new Task(i),
     })),
   };
 }
@@ -1224,7 +1216,7 @@ export async function applyFieldEdits(
   entity: ID,
   edits: FieldInput[],
 ): Promise<Task> {
-  const t = new Task({ id: entity }, ctx);
+  const t = new Task({ id: entity });
 
   if (t._type === "workinstance" && edits.length > 0) {
     const result = await sql.begin(async sql => {

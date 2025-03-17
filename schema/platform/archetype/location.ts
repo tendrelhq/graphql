@@ -8,7 +8,6 @@ import {
 } from "@/schema/system/component/task";
 import type { Refetchable } from "@/schema/system/node";
 import type { Connection } from "@/schema/system/pagination";
-import type { Context } from "@/schema/types";
 import { assert, normalizeBase64 } from "@/util";
 import type { ID, Int } from "grats";
 import { match } from "ts-pattern";
@@ -25,10 +24,7 @@ export class Location implements Component, Refetchable, Trackable {
   readonly _id: string;
   readonly id: ID;
 
-  constructor(
-    args: ConstructorArgs,
-    private ctx: Context,
-  ) {
+  constructor(args: ConstructorArgs) {
     this.id = normalizeBase64(args.id);
     const { type, id } = decodeGlobalId(this.id);
     this._type = type;
@@ -141,7 +137,7 @@ export class Location implements Component, Refetchable, Trackable {
     return {
       edges: nodes.map(node => ({
         cursor: node.id,
-        node: new Task(node, this.ctx),
+        node: new Task(node),
       })),
       pageInfo: {
         hasNextPage: false,

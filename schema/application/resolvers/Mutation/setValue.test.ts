@@ -127,7 +127,7 @@ describe("setValue", () => {
     CUSTOMER = findAndEncode("customer", "organization", logs);
     TASK = map(
       findAndEncode("instance", "workinstance", logs),
-      id => new Task({ id }, ctx),
+      id => new Task({ id }),
     );
   });
 

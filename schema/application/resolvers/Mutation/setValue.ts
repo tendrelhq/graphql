@@ -20,7 +20,7 @@ export const setValue: NonNullable<MutationResolvers["setValue"]> = async (
     });
   }
 
-  const p = new Task({ id: parent }, ctx);
+  const p = new Task({ id: parent });
   if (p._type !== "workinstance" && p._type !== "worktemplate") {
     throw new GraphQLError(
       `Type '${p._type}' is an invalid parent type for type '${type}'`,

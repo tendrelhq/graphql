@@ -106,7 +106,7 @@ export async function node(
   const { type, id } = decodeGlobalId(args.id);
   switch (type) {
     case "location":
-      return new Location(args, ctx);
+      return new Location(args);
     case "name":
       return {
         __typename: "Name",
@@ -148,7 +148,7 @@ export async function node(
             // biome-ignore lint/suspicious/noExplicitAny:
           } as any;
         default:
-          return new Task({ id: args.id }, ctx);
+          return new Task({ id: args.id });
       }
     }
     case "workresult":

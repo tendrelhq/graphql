@@ -95,8 +95,7 @@ export async function assertTaskIsNamed(
   displayName: string,
   ctx: Context,
 ) {
-  const name = await (await t.name()).value(ctx);
-  return assert(name === displayName);
+  return assert(displayName === (await n.value(ctx)));
 }
 
 export function assertNoDiagnostics<
@@ -106,10 +105,24 @@ export function assertNoDiagnostics<
 }
 
 export async function getFieldByName(t: Task, name: string): Promise<Field> {
-  const field = await t.field({ byName: { value: name } });
+  const field = await t.field({ byName: name });
   return assertNonNull(field, `no named field ${name}`);
 }
 
+/**
+ * Set an environment variable for the current scope, and automatically revert
+ * it to its original value on (scope) exit.
+ *
+ * @example
+ * ```typescript
+ * process.env.MY_VAR = "false";
+ * {
+ *   using _ = env("MY_VAR", true);
+ *   assert(process.env.MY_VAR === "true");
+ * }
+ * assert(process.env.MY_VAR === "false");
+ * ```
+ */
 export function env(name: string, value?: { toString(): string }) {
   const old = process.env[name];
   process.env[name] = value?.toString();

@@ -913,8 +913,8 @@ export function getSchema(): GraphQLSchema {
           description: "Display name for a Field.",
           name: "name",
           type: DisplayNameType,
-          resolve(source) {
-            return assertNonNull(fieldNameResolver(source));
+          resolve(source, _args, context) {
+            return assertNonNull(fieldNameResolver(source, context));
           },
         },
         value: {
@@ -1187,10 +1187,8 @@ export function getSchema(): GraphQLSchema {
               type: GraphQLInt,
             },
           },
-          resolve(source, args, context) {
-            return assertNonNull(
-              taskChainResolver(source, context, args.first),
-            );
+          resolve(source, args) {
+            return assertNonNull(taskChainResolver(source, args.first));
           },
         },
         chainAgg: {
@@ -1217,15 +1215,16 @@ export function getSchema(): GraphQLSchema {
         description: {
           name: "description",
           type: DescriptionType,
+          resolve(source, _args, context) {
+            return source.description(context);
+          },
         },
         displayName: {
           deprecationReason: "Use Task.name instead.",
           name: "displayName",
           type: DisplayNameType,
-          resolve(source, args, context, info) {
-            return assertNonNull(
-              defaultFieldResolver(source, args, context, info),
-            );
+          resolve(source, _args, context) {
+            return assertNonNull(source.displayName(context));
           },
         },
         fields: {
@@ -1241,8 +1240,8 @@ export function getSchema(): GraphQLSchema {
             "Tasks can have an associated StateMachine, which defines a finite set of\nstates that the given Task can be in at any given time.",
           name: "fsm",
           type: TaskStateMachineType,
-          resolve(source, _args, context) {
-            return taskFsmResolver(source, context);
+          resolve(source) {
+            return taskFsmResolver(source);
           },
         },
         hash: {
@@ -1267,10 +1266,8 @@ export function getSchema(): GraphQLSchema {
         name: {
           name: "name",
           type: DisplayNameType,
-          resolve(source, args, context, info) {
-            return assertNonNull(
-              defaultFieldResolver(source, args, context, info),
-            );
+          resolve(source, _args, context) {
+            return assertNonNull(source.name(context));
           },
         },
         parent: {
@@ -1288,6 +1285,9 @@ export function getSchema(): GraphQLSchema {
         state: {
           name: "state",
           type: TaskStateType,
+          resolve(source, _args, context) {
+            return source.state(context);
+          },
         },
         tracking: {
           description:
@@ -1890,7 +1890,7 @@ export function getSchema(): GraphQLSchema {
         return {
           id: {
             name: "id",
-            type: new GraphQLNonNull(GraphQLID),
+            type: GraphQLID,
           },
           value: {
             name: "value",

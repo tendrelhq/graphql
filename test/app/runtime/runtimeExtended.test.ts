@@ -39,12 +39,9 @@ describe("extended runtime demo", () => {
     );
     expect(result.errors).toBeFalsy();
 
-    LOCATION = new Location(
-      {
-        id: assertNonNull(result.data?.createLocation?.id),
-      },
-      ctx,
-    );
+    LOCATION = new Location({
+      id: assertNonNull(result.data?.createLocation?.id),
+    });
   });
 
   test.skip("should be okay without a constraint/instance", async () => {
@@ -128,11 +125,11 @@ describe("extended runtime demo", () => {
     CUSTOMER = findAndEncode("customer", "organization", logs);
     SITE = map(
       findAndEncode("site", "location", logs),
-      id => new Location({ id }, ctx),
+      id => new Location({ id }),
     );
     TEMPLATE = map(
       findAndEncode("task", "worktemplate", logs),
-      id => new Task({ id }, ctx),
+      id => new Task({ id }),
     );
   });
 

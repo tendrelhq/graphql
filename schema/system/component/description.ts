@@ -55,6 +55,6 @@ export class Description implements Component, Refetchable {
  * @gqlInput
  */
 export type DescriptionInput = {
-  id: ID;
+  id?: ID | null;
   value: DynamicStringInput;
 };

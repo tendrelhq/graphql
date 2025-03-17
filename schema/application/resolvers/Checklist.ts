@@ -99,7 +99,7 @@ export const Checklist: ChecklistResolvers = {
     };
   },
   async attachments(parent, args, ctx) {
-    const t = new Task({ id: parent.id as string }, ctx);
+    const t = new Task({ id: parent.id as string });
     return await attachments(t, ctx, args);
   },
   auditable(parent, _, ctx) {

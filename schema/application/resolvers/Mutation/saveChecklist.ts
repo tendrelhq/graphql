@@ -11,6 +11,7 @@ import { decodeGlobalId } from "@/schema/system";
 import { GraphQLError } from "graphql";
 import { P, match } from "ts-pattern";
 import { copyFromWorkTemplate } from "./copyFrom";
+import { map, mapOrElse } from "@/util";
 
 export const saveChecklist: NonNullable<
   MutationResolvers["saveChecklist"]
@@ -44,6 +45,21 @@ export const saveChecklist: NonNullable<
       },
     );
   }
+
+  // We want to encode our operations here such that we can implement a generic
+  // entrypoint (in sql) to handle everything. This is leading us towards an
+  // engine0 but for templates. What we are crucially missing here is a clear
+  // boundary between components, so we are going to need to reconstruct the
+  // component updates first. TaskUpdate will be one struct. Descriptions,
+  // Auditable, Assignees, Schedule, etc will all be distinct structs which
+  // mirror how we represent them currently. We can use the presence (or
+  // absence) of IDs to indicate an update (or creation) of the underlying
+  // resource, although note that the update case will actually be an upsert in
+  // case the ID that we get is only known to the client.
+  const ops = [
+    //
+    ...mapOrElse(input.active, active => [], []),
+  ];
 
   if (existing) {
     // update.

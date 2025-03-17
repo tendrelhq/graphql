@@ -41,13 +41,17 @@ describe("createLocation", () => {
   test("parent == location", async () => {
     const result = await execute(schema, TestCreateLocationDocument, {
       input: {
-        category: "asdf",
+        category: "Runtime Location",
         name: "test child location",
         parent: SITE.id,
         timeZone: "America/Denver",
       },
     });
     expect(result).toMatchSnapshot();
+    // Our expects aren't as comprehensive as we'd like here due to our messed
+    // up return type for this mutation. You should see a log line:
+    // > createLocation: engine.instantiate.count: 1
+    // as a result of running this test.
   });
 
   beforeAll(async () => {
@@ -68,7 +72,7 @@ describe("createLocation", () => {
     CUSTOMER = findAndEncode("customer", "organization", logs);
     SITE = map(
       findAndEncode("site", "location", logs),
-      id => new Location({ id }, ctx),
+      id => new Location({ id }),
     );
   });
 

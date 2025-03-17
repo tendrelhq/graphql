@@ -608,15 +608,15 @@ describe("runtime demo", () => {
       CUSTOMER = findAndEncode("customer", "organization", logs);
       FSM_T = map(
         findAndEncode("task", "worktemplate", logs),
-        id => new Task({ id }, ctx),
+        id => new Task({ id }),
       );
       FSM_I = map(
         findAndEncode("instance", "workinstance", logs),
-        id => new Task({ id }, ctx),
+        id => new Task({ id }),
       );
       IDLE_TIME = map(
         findAndEncode("next", "worktemplate", logs),
-        id => new Task({ id }, ctx),
+        id => new Task({ id }),
       );
 
       // we get 'Downtime' in the 39th row
@@ -625,7 +625,7 @@ describe("runtime demo", () => {
       if (row39?.op?.trim() !== "+next") {
         throw "setup failed to find Downtime";
       }
-      DOWNTIME = Task.fromTypeId("worktemplate", row39.id, ctx);
+      DOWNTIME = Task.fromTypeId("worktemplate", row39.id);
     } catch (e) {
       let i = 0;
       for (const l of logs) {
@@ -663,7 +663,7 @@ describe("runtime demo", () => {
     `;
     assert(d0.count === 1);
 
-    const f = await FSM_T.field({ byName: { value: "Comments" } });
+    const f = await FSM_T.field({ byName: "Comments" });
     const d1 = await sql`
       with content as (
           select *
@@ -768,7 +768,7 @@ async function mostRecentlyInProgress(t: Task): Promise<Task> {
     limit 1;
   `;
   assert(!nullish(row), "no in progress instance");
-  return Task.fromTypeId("workinstance", row.id, ctx);
+  return Task.fromTypeId("workinstance", row.id);
 }
 
 async function newlyInstantiatedChainFrom(t: Task): Promise<Task | null> {
@@ -785,5 +785,5 @@ async function newlyInstantiatedChainFrom(t: Task): Promise<Task | null> {
         and workinstancestatusid = 706
   `;
   if (!row) return null;
-  return Task.fromTypeId("workinstance", row.id, ctx);
+  return Task.fromTypeId("workinstance", row.id);
 }

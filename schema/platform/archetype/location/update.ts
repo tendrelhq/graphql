@@ -65,5 +65,5 @@ export async function updateLocation(
   // Clear the dataloader to pick up new changes.
   ctx.orm.location.clear(id);
 
-  return new Location(input, ctx);
+  return new Location(input);
 }

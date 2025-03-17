@@ -146,11 +146,11 @@ describe("engine0", () => {
     CUSTOMER = findAndEncode("customer", "organization", logs);
     TEMPLATE = map(
       findAndEncode("task", "worktemplate", logs),
-      id => new Task({ id }, ctx),
+      id => new Task({ id }),
     );
     INSTANCE = map(
       findAndEncode("instance", "workinstance", logs),
-      id => new Task({ id }, ctx),
+      id => new Task({ id }),
     );
   });
 

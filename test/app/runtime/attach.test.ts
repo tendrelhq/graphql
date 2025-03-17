@@ -165,7 +165,7 @@ describe("[app/runtime] attach", () => {
     CUSTOMER = findAndEncode("customer", "organization", logs);
     INSTANCE = map(
       findAndEncode("instance", "workinstance", logs),
-      id => new Task({ id }, ctx),
+      id => new Task({ id }),
     );
     FIELD = await getFieldByName(INSTANCE, "Comments");
   });
