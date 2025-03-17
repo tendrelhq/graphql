@@ -11,6 +11,7 @@ import type { Context } from "../types";
 import { DisplayName } from "./component/name";
 import type { Connection, Edge, PageInfo } from "./pagination";
 import type { Timestamp } from "./temporal";
+import type { Description } from "./component/description";
 
 /**
  * Components characterize Entities as possessing a particular trait.
@@ -199,6 +200,18 @@ export async function attachments(
     pageInfo,
     totalCount: Number(count),
   };
+}
+
+/**
+ * Description of a Field.
+ *
+ * @gqlField
+ */
+export async function description(
+  field: Field,
+  ctx: Context,
+): Promise<Description | null> {
+  return await ctx.orm.description.load(field.id);
 }
 
 /**

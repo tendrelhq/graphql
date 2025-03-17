@@ -38,6 +38,7 @@ import type { Connection, Edge, PageInfo } from "../pagination";
 import type { Timestamp } from "../temporal";
 import { type Assignable, Assignment } from "./assignee";
 import type { DisplayName } from "./name";
+import type { Description } from "./description";
 
 export type ConstructorArgs = {
   id: ID;
@@ -80,6 +81,13 @@ export class Task implements Assignable, Component, Refetchable, Trackable {
 
   static fromTypeId(type: string, id: string, ctx: Context) {
     return new Task({ id: encodeGlobalId({ type, id }) }, ctx);
+  }
+
+  /**
+   * @gqlField
+   */
+  async description(): Promise<Description | null> {
+    return await this.ctx.orm.description.load(this.id);
   }
 
   /**

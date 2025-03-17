@@ -27,7 +27,8 @@ const NOW_PLUS_24H = new Date(NOW.valueOf() + 24 * 60 * 60 * 1000);
 describe("runtime demo", () => {
   // See beforeAll for initialization of these variables.
   let CUSTOMER: string;
-  let FSM: Task; // instance
+  let FSM_T: Task; // template
+  let FSM_I: Task; // instance
   let IDLE_TIME: Task; // template
   let DOWNTIME: Task; // template
 
@@ -40,9 +41,9 @@ describe("runtime demo", () => {
   });
 
   test("start run", async () => {
-    const h = (await FSM.hash()) as string;
-    const ov = await getFieldByName(FSM, "Override Start Time");
-    const cs = await getFieldByName(FSM, "Comments");
+    const h = (await FSM_I.hash()) as string;
+    const ov = await getFieldByName(FSM_I, "Override Start Time");
+    const cs = await getFieldByName(FSM_I, "Comments");
     const result = await execute(
       schema,
       TestRuntimeTransitionMutationDocument,
@@ -50,11 +51,11 @@ describe("runtime demo", () => {
         includeChain: false,
         opts: {
           fsm: {
-            id: FSM.id,
+            id: FSM_I.id,
             hash: h,
           },
           task: {
-            id: FSM.id,
+            id: FSM_I.id,
             hash: h,
             overrides: [
               {
@@ -91,11 +92,11 @@ describe("runtime demo", () => {
         includeChain: false,
         opts: {
           fsm: {
-            id: FSM.id,
-            hash: (await FSM.hash()) as string,
+            id: FSM_I.id,
+            hash: (await FSM_I.hash()) as string,
           },
           task: {
-            id: FSM.id,
+            id: FSM_I.id,
             hash: "alienz r real",
           },
         },
@@ -106,9 +107,9 @@ describe("runtime demo", () => {
   });
 
   test("sanity check: engine sets previous", async () => {
-    const newChain = await newlyInstantiatedChainFrom(FSM);
+    const newChain = await newlyInstantiatedChainFrom(FSM_I);
     const newChainPrevious = await newChain?.previous();
-    expect(newChainPrevious?.id).toBe(FSM.id);
+    expect(newChainPrevious?.id).toBe(FSM_I.id);
   });
 
   test("production -> idle time", async () => {
@@ -119,8 +120,8 @@ describe("runtime demo", () => {
         includeChain: false,
         opts: {
           fsm: {
-            id: FSM.id,
-            hash: (await FSM.hash()) as string,
+            id: FSM_I.id,
+            hash: (await FSM_I.hash()) as string,
           },
           task: {
             id: IDLE_TIME.id,
@@ -141,7 +142,7 @@ describe("runtime demo", () => {
         includeChain: false,
         opts: {
           fsm: {
-            id: FSM.id,
+            id: FSM_I.id,
             hash: "fake it till you make it",
           },
           task: {
@@ -156,7 +157,7 @@ describe("runtime demo", () => {
   });
 
   test("end idle time", async () => {
-    const t = await mostRecentlyInProgress(FSM);
+    const t = await mostRecentlyInProgress(FSM_I);
     await assertTaskIsNamed(t, "Idle Time", ctx);
     const h = (await t.hash()) as string;
     const desc = await getFieldByName(t, "Description");
@@ -167,8 +168,8 @@ describe("runtime demo", () => {
         includeChain: false,
         opts: {
           fsm: {
-            id: FSM.id,
-            hash: (await FSM.hash()) as string,
+            id: FSM_I.id,
+            hash: (await FSM_I.hash()) as string,
           },
           task: {
             id: t.id,
@@ -194,8 +195,8 @@ describe("runtime demo", () => {
       includeChain: false,
       opts: {
         fsm: {
-          id: FSM.id,
-          hash: (await FSM.hash()) as string,
+          id: FSM_I.id,
+          hash: (await FSM_I.hash()) as string,
         },
         task: {
           id: t.id,
@@ -209,7 +210,7 @@ describe("runtime demo", () => {
 
   test("detail query", async () => {
     const result = await execute(schema, TestRuntimeDetailDocument, {
-      node: FSM.id,
+      node: FSM_I.id,
     });
 
     expect(result.errors).toBeFalsy();
@@ -265,8 +266,8 @@ describe("runtime demo", () => {
   });
 
   test("production -> downtime", async () => {
-    const t = await mostRecentlyInProgress(FSM);
-    expect(t.id).toBe(FSM.id);
+    const t = await mostRecentlyInProgress(FSM_I);
+    expect(t.id).toBe(FSM_I.id);
 
     const result = await execute(
       schema,
@@ -290,7 +291,7 @@ describe("runtime demo", () => {
   });
 
   test("end downtime", async () => {
-    const t = await mostRecentlyInProgress(FSM);
+    const t = await mostRecentlyInProgress(FSM_I);
     await assertTaskIsNamed(t, "Downtime", ctx);
 
     const result = await execute(
@@ -300,8 +301,8 @@ describe("runtime demo", () => {
         includeChain: false,
         opts: {
           fsm: {
-            id: FSM.id,
-            hash: (await FSM.hash()) as string,
+            id: FSM_I.id,
+            hash: (await FSM_I.hash()) as string,
           },
           task: {
             id: t.id,
@@ -315,8 +316,8 @@ describe("runtime demo", () => {
   });
 
   test("another idle run", async () => {
-    const t = await mostRecentlyInProgress(FSM);
-    expect(t.id).toBe(FSM.id);
+    const t = await mostRecentlyInProgress(FSM_I);
+    expect(t.id).toBe(FSM_I.id);
 
     const start = await execute(schema, TestRuntimeTransitionMutationDocument, {
       includeChain: false,
@@ -333,15 +334,15 @@ describe("runtime demo", () => {
     });
     expect(start.errors).toBeFalsy();
 
-    const t0 = await mostRecentlyInProgress(FSM);
+    const t0 = await mostRecentlyInProgress(FSM_I);
     await assertTaskIsNamed(t0, "Idle Time", ctx);
 
     const end = await execute(schema, TestRuntimeTransitionMutationDocument, {
       includeChain: false,
       opts: {
         fsm: {
-          id: FSM.id,
-          hash: (await FSM.hash()) as string,
+          id: FSM_I.id,
+          hash: (await FSM_I.hash()) as string,
         },
         task: {
           id: t0.id,
@@ -352,15 +353,15 @@ describe("runtime demo", () => {
     expect(end.errors).toBeFalsy();
     assertNoDiagnostics(end.data?.advance);
 
-    const t1 = await mostRecentlyInProgress(FSM);
-    expect(t1.id).toBe(FSM.id);
+    const t1 = await mostRecentlyInProgress(FSM_I);
+    expect(t1.id).toBe(FSM_I.id);
   });
 
   test("end run", async () => {
-    const t = await mostRecentlyInProgress(FSM);
-    expect(t.id).toBe(FSM.id);
+    const t = await mostRecentlyInProgress(FSM_I);
+    expect(t.id).toBe(FSM_I.id);
     const h = (await t.hash()) as string;
-    const ov = await getFieldByName(FSM, "Override End Time");
+    const ov = await getFieldByName(FSM_I, "Override End Time");
 
     const result0 = await execute(
       schema,
@@ -417,12 +418,12 @@ describe("runtime demo", () => {
   });
 
   test("apply field edits retroactively", async () => {
-    const cs = await getFieldByName(FSM, "Comments");
+    const cs = await getFieldByName(FSM_I, "Comments");
     const result = await execute(
       schema,
       TestRuntimeApplyFieldEditsMutationDocument,
       {
-        entity: FSM.id,
+        entity: FSM_I.id,
         edits: [
           {
             field: cs.id,
@@ -440,7 +441,7 @@ describe("runtime demo", () => {
 
   test("history query", async () => {
     const result = await execute(schema, TestRuntimeDetailDocument, {
-      node: FSM.id,
+      node: FSM_I.id,
     });
     expect(result.errors).toBeFalsy();
     expect(result.data).toMatchObject({
@@ -605,7 +606,11 @@ describe("runtime demo", () => {
 
     try {
       CUSTOMER = findAndEncode("customer", "organization", logs);
-      FSM = map(
+      FSM_T = map(
+        findAndEncode("task", "worktemplate", logs),
+        id => new Task({ id }, ctx),
+      );
+      FSM_I = map(
         findAndEncode("instance", "workinstance", logs),
         id => new Task({ id }, ctx),
       );
@@ -628,6 +633,65 @@ describe("runtime demo", () => {
       }
       throw e;
     }
+
+    // We don't currently have a mechanism to specify descriptions during
+    // customer create. We'll do it manually for now.
+    const d0 = await sql`
+      with content as (
+          select *
+          from public.create_name(
+              customer_id := ${decodeGlobalId(CUSTOMER).id},
+              source_language := 'en',
+              source_text := 'This is a really important task. Please do your best :)',
+              modified_by := 895
+          )
+      )
+
+      insert into public.workdescription (
+          workdescriptioncustomerid,
+          workdescriptionworktemplateid,
+          workdescriptionlanguagemasterid,
+          workdescriptionlanguagetypeid
+      )
+      select
+          worktemplate.worktemplatecustomerid,
+          worktemplate.worktemplateid,
+          content._id,
+          20
+      from content, public.worktemplate
+      where worktemplate.id = ${FSM_T._id}
+    `;
+    assert(d0.count === 1);
+
+    const f = await FSM_T.field({ byName: { value: "Comments" } });
+    const d1 = await sql`
+      with content as (
+          select *
+          from public.create_name(
+              customer_id := ${decodeGlobalId(CUSTOMER).id},
+              source_language := 'en',
+              source_text := 'If anything goes wrong, this is the place to note it down',
+              modified_by := 895
+          )
+      )
+
+      insert into public.workdescription (
+          workdescriptioncustomerid,
+          workdescriptionworktemplateid,
+          workdescriptionworkresultid,
+          workdescriptionlanguagemasterid,
+          workdescriptionlanguagetypeid
+      )
+      select
+          workresult.workresultcustomerid,
+          workresult.workresultworktemplateid,
+          workresult.workresultid,
+          content._id,
+          20
+      from content, public.workresult
+      where workresult.id = ${decodeGlobalId(f!.id).id}
+    `;
+    assert(d1.count === 1);
   });
 
   afterAll(async () => {
@@ -669,6 +733,14 @@ ${rows.map(r => ` - ${r.id}`).join("\n")}
     }
 
     process.stdout.write("Cleaning up... ");
+    await sql`
+      delete from public.workdescription
+      where workdescriptioncustomerid = (
+          select customerid
+          from public.customer
+          where customeruuid = ${id}
+      )
+    `;
     const [row] = await sql<[{ ok: string }]>`
       select runtime.destroy_demo(${id}) as ok;
     `;

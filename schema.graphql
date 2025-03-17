@@ -478,6 +478,7 @@ type ChecklistResult implements Activatable & Component & Node {
     last: Int
   ): AttachmentConnection!
   auditable: Auditable
+  description: Description
   draft: Boolean
   id: ID!
   name: DisplayName!
@@ -658,17 +659,18 @@ type DebugInfo {
   updatedBy: Identity
 }
 
-"""
-TODO
-"""
-type Description implements Component {
-  description: DynamicString!
+type Description implements Component & Node {
+  description: DynamicString
+    @deprecated(reason: "Use Description.locale and/or Description.value.")
+    @semanticNonNull
+  """
+  A globally unique opaque identifier for a node.
+  """
   id: ID!
+  locale: String @semanticNonNull
+  value: String @semanticNonNull
 }
 
-"""
-TODO
-"""
 input DescriptionInput {
   id: ID!
   value: DynamicStringInput!
@@ -824,6 +826,10 @@ type Field {
     first: Int
     last: Int
   ): AttachmentConnection @semanticNonNull
+  """
+  Description of a Field.
+  """
+  description: Description
   """
   Unique identifier for this Field.
   """
@@ -1580,6 +1586,7 @@ type Task implements Assignable & Component & Node & Trackable {
     """
     overType: [String!]!
   ): [Aggregate!] @semanticNonNull
+  description: Description
   displayName: DisplayName
     @deprecated(reason: "Use Task.name instead.")
     @semanticNonNull

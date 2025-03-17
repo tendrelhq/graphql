@@ -181,6 +181,11 @@ input CreateLocationInput {
   timeZone: String!
 }
 
+input DescriptionInput {
+  id: ID!
+  value: DynamicStringInput!
+}
+
 input DynamicStringInput {
   locale: Locale!
   value: String!
@@ -344,6 +349,18 @@ type CreateTemplateConstraintResult {
   instantiations: [TaskEdge!] @semanticNonNull
 }
 
+type Description implements Component & Node {
+  description: DynamicString
+    @deprecated(reason: "Use Description.locale and/or Description.value.")
+    @semanticNonNull
+  """
+  A globally unique opaque identifier for a node.
+  """
+  id: ID!
+  locale: String @semanticNonNull
+  value: String @semanticNonNull
+}
+
 type Diagnostic {
   code: DiagnosticKind @semanticNonNull
   message: String
@@ -386,6 +403,10 @@ type Field {
     first: Int
     last: Int
   ): AttachmentConnection @semanticNonNull
+  """
+  Description of a Field.
+  """
+  description: Description
   """
   Unique identifier for this Field.
   """
@@ -597,6 +618,7 @@ type Task implements Assignable & Component & Node & Trackable {
     """
     overType: [String!]!
   ): [Aggregate!] @semanticNonNull
+  description: Description
   displayName: DisplayName
     @deprecated(reason: "Use Task.name instead.")
     @semanticNonNull

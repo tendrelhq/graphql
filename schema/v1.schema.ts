@@ -1,53 +1,55 @@
 import {
+  node as queryNodeResolver,
+  id as assignmentIdResolver,
+  id as attachmentIdResolver,
+  id as descriptionIdResolver,
+  id as displayNameIdResolver,
+  id as taskIdResolver,
+  id as locationIdResolver,
+  deleteNode as mutationDeleteNodeResolver,
+} from "./system/node";
+import {
+  defaultFieldResolver,
+  GraphQLSchema,
+  GraphQLObjectType,
+  GraphQLNonNull,
+  GraphQLInterfaceType,
+  GraphQLID,
+  GraphQLList,
+  GraphQLString,
+  GraphQLInt,
   GraphQLBoolean,
   GraphQLEnumType,
-  GraphQLFloat,
-  GraphQLID,
-  GraphQLInputObjectType,
-  GraphQLInt,
-  GraphQLInterfaceType,
-  GraphQLList,
-  GraphQLNonNull,
-  GraphQLObjectType,
   GraphQLScalarType,
-  GraphQLSchema,
-  GraphQLString,
   GraphQLUnionType,
-  defaultFieldResolver,
+  GraphQLInputObjectType,
+  GraphQLFloat,
 } from "graphql";
-import { createLocation as mutationCreateLocationResolver } from "./platform/archetype/location/create";
-import { updateLocation as mutationUpdateLocationResolver } from "./platform/archetype/location/update";
+import { trackables as queryTrackablesResolver } from "./platform/tracking";
+import {
+  assignees as taskAssigneesResolver,
+  attachments as taskAttachmentsResolver,
+  chain as taskChainResolver,
+  chainAgg as taskChainAggResolver,
+  fields as taskFieldsResolver,
+  applyFieldEdits as mutationApplyFieldEditsResolver,
+} from "./system/component/task";
 import {
   attachedBy as attachmentAttachedByResolver,
   attach as mutationAttachResolver,
 } from "./platform/attachment";
-import { trackables as queryTrackablesResolver } from "./platform/tracking";
 import {
   attachments as fieldAttachmentsResolver,
+  description as fieldDescriptionResolver,
   name as fieldNameResolver,
 } from "./system/component";
 import {
-  applyFieldEdits as mutationApplyFieldEditsResolver,
-  assignees as taskAssigneesResolver,
-  attachments as taskAttachmentsResolver,
-  chainAgg as taskChainAggResolver,
-  chain as taskChainResolver,
-  fields as taskFieldsResolver,
-} from "./system/component/task";
-import {
-  advance as mutationAdvanceResolver,
   fsm as taskFsmResolver,
+  advance as mutationAdvanceResolver,
 } from "./system/component/task_fsm";
+import { createLocation as mutationCreateLocationResolver } from "./platform/archetype/location/create";
 import { createTemplateConstraint as mutationCreateTemplateConstraintResolver } from "./system/engine0/createTemplateConstraint";
-import {
-  id as assignmentIdResolver,
-  id as attachmentIdResolver,
-  id as displayNameIdResolver,
-  id as locationIdResolver,
-  deleteNode as mutationDeleteNodeResolver,
-  node as queryNodeResolver,
-  id as taskIdResolver,
-} from "./system/node";
+import { updateLocation as mutationUpdateLocationResolver } from "./platform/archetype/location/update";
 async function assertNonNull<T>(value: T | Promise<T>): Promise<T> {
   const awaited = await value;
   if (awaited == null)
@@ -686,6 +688,46 @@ export function getSchema(): GraphQLSchema {
       };
     },
   });
+  const DescriptionType: GraphQLObjectType = new GraphQLObjectType({
+    name: "Description",
+    fields() {
+      return {
+        description: {
+          deprecationReason: "Use Description.locale and/or Description.value.",
+          name: "description",
+          type: DynamicStringType,
+          resolve(source, _args, context) {
+            return assertNonNull(source.description(context));
+          },
+        },
+        id: {
+          description: "A globally unique opaque identifier for a node.",
+          name: "id",
+          type: new GraphQLNonNull(GraphQLID),
+          resolve(source) {
+            return descriptionIdResolver(source);
+          },
+        },
+        locale: {
+          name: "locale",
+          type: GraphQLString,
+          resolve(source, _args, context) {
+            return assertNonNull(source.locale(context));
+          },
+        },
+        value: {
+          name: "value",
+          type: GraphQLString,
+          resolve(source, _args, context) {
+            return assertNonNull(source.value(context));
+          },
+        },
+      };
+    },
+    interfaces() {
+      return [ComponentType, NodeType];
+    },
+  });
   const DisplayNameType: GraphQLObjectType = new GraphQLObjectType({
     name: "DisplayName",
     fields() {
@@ -847,6 +889,14 @@ export function getSchema(): GraphQLSchema {
             return assertNonNull(
               fieldAttachmentsResolver(source, context, args),
             );
+          },
+        },
+        description: {
+          description: "Description of a Field.",
+          name: "description",
+          type: DescriptionType,
+          resolve(source, _args, context) {
+            return fieldDescriptionResolver(source, context);
           },
         },
         id: {
@@ -1163,6 +1213,10 @@ export function getSchema(): GraphQLSchema {
               taskChainAggResolver(source, context, args.overType),
             );
           },
+        },
+        description: {
+          name: "description",
+          type: DescriptionType,
         },
         displayName: {
           deprecationReason: "Use Task.name instead.",
@@ -1829,6 +1883,22 @@ export function getSchema(): GraphQLSchema {
         };
       },
     });
+  const DescriptionInputType: GraphQLInputObjectType =
+    new GraphQLInputObjectType({
+      name: "DescriptionInput",
+      fields() {
+        return {
+          id: {
+            name: "id",
+            type: new GraphQLNonNull(GraphQLID),
+          },
+          value: {
+            name: "value",
+            type: new GraphQLNonNull(DynamicStringInputType),
+          },
+        };
+      },
+    });
   return new GraphQLSchema({
     query: QueryType,
     mutation: MutationType,
@@ -1850,6 +1920,7 @@ export function getSchema(): GraphQLSchema {
       AdvanceTaskOptionsType,
       AssignmentInputType,
       CreateLocationInputType,
+      DescriptionInputType,
       DynamicStringInputType,
       FieldInputType,
       GeofenceInputType,
@@ -1869,6 +1940,7 @@ export function getSchema(): GraphQLSchema {
       BooleanValueType,
       ClosedType,
       CreateTemplateConstraintResultType,
+      DescriptionType,
       DiagnosticType,
       DisplayNameType,
       DynamicStringType,
