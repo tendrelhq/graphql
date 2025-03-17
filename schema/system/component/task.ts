@@ -30,6 +30,7 @@ import {
   type Component,
   type Field,
   type FieldInput,
+  type FieldQuery,
   field$fragment,
 } from "../component";
 import type { Refetchable } from "../node";
@@ -37,20 +38,11 @@ import type { Overridable } from "../overridable";
 import type { Connection, Edge, PageInfo } from "../pagination";
 import type { Timestamp } from "../temporal";
 import { type Assignable, Assignment } from "./assignee";
-import type { DisplayName } from "./name";
 import type { Description } from "./description";
+import type { DisplayName } from "./name";
 
 export type ConstructorArgs = {
   id: ID;
-};
-
-export type FieldOptions = {
-  /**
-   * Query for a Field by its canonical name (i.e. non-localized).
-   * This is, most often, the name that is given to the Field when it is first
-   * created.
-   */
-  byName?: string;
 };
 
 /**
@@ -97,7 +89,7 @@ export class Task implements Assignable, Component, Refetchable, Trackable {
   }
 
   // Not exposed via GraphQL, yet.
-  async field(opts: FieldOptions): Promise<Field | null> {
+  async field(query: FieldQuery): Promise<Field | null> {
     const [row] = await match(this._type)
       .with(
         "workinstance",
@@ -110,21 +102,20 @@ export class Task implements Assignable, Component, Refetchable, Trackable {
                   t.systagtype as type,
                   wri.workresultinstancevalue as value
               from public.workinstance as wi
-              inner join
-                  public.workresultinstance as wri
+              inner join public.workresultinstance as wri
                   on wi.workinstanceid = wri.workresultinstanceworkinstanceid
-              inner join
-                  public.workresult as wr
+              inner join public.workresult as wr
                   on wri.workresultinstanceworkresultid = wr.workresultid
-              inner join
-                  public.languagemaster as n
-                  on wr.workresultlanguagemasterid = n.languagemasterid
-                  ${
-                    opts.byName
-                      ? sql`and n.languagemastersource = ${opts.byName}`
-                      : sql``
-                  }
               inner join public.systag as t on wr.workresulttypeid = t.systagid
+              ${
+                query.byName
+                  ? sql`
+              inner join public.languagemaster as n
+                  on wr.workresultlanguagemasterid = n.languagemasterid
+                  and n.languagemastersource = ${query.byName}
+                  `
+                  : sql``
+              }
               where wi.id = ${this._id}
           )
 
@@ -143,15 +134,17 @@ export class Task implements Assignable, Component, Refetchable, Trackable {
               inner join
                   public.workresult as wr
                   on wt.worktemplateid = wr.workresultworktemplateid
+              inner join public.systag as t on wr.workresulttypeid = t.systagid
+              ${
+                query.byName
+                  ? sql`
               inner join
                   public.languagemaster as n
                   on wr.workresultlanguagemasterid = n.languagemasterid
-                  ${
-                    opts.byName
-                      ? sql`and n.languagemastersource = ${opts.byName}`
-                      : sql``
-                  }
-              inner join public.systag as t on wr.workresulttypeid = t.systagid
+                  and n.languagemastersource = ${query.byName}
+                  `
+                  : sql``
+              }
               where wt.id = ${this._id}
           )
 

@@ -8,10 +8,10 @@ import {
   type ConstructorArgs as AttachmentConstructorArgs,
 } from "../platform/attachment";
 import type { Context } from "../types";
-import { DisplayName } from "./component/name";
+import type { Description } from "./component/description";
+import type { DisplayName } from "./component/name";
 import type { Connection, Edge, PageInfo } from "./pagination";
 import type { Timestamp } from "./temporal";
-import type { Description } from "./component/description";
 
 /**
  * Components characterize Entities as possessing a particular trait.
@@ -90,6 +90,16 @@ export type Field = {
    * @gqlField
    */
   valueType: ValueType;
+};
+
+// Not exposed via GraphQL, yet.
+export type FieldQuery = {
+  /**
+   * Query for a Field by its canonical name (i.e. non-localized).
+   * This is, most often, the name that is given to the Field when it is first
+   * created.
+   */
+  byName?: string;
 };
 
 /**
