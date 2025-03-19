@@ -33,6 +33,7 @@ import {
   chainAgg as taskChainAggResolver,
   fields as taskFieldsResolver,
   applyFieldEdits as mutationApplyFieldEditsResolver,
+  operateOnTask as mutationOperateOnTaskResolver,
 } from "./system/component/task";
 import {
   attachedBy as attachmentAttachedByResolver,
@@ -1134,7 +1135,7 @@ export function getSchema(): GraphQLSchema {
   const TaskType: GraphQLObjectType = new GraphQLObjectType({
     name: "Task",
     description:
-      'A system-level component that identifies an Entity as being applicable to\ntendrel\'s internal "task processing pipeline". In practice, Tasks most often\nrepresent "jobs" performed by humans. However, this need not always be the\ncase.\n\nTechnically speaking, a Task represents a (1) *named asynchronous process*\nthat (2) exists in one of three states: open, in progress, or closed.',
+      'A system-level component that identifies an Entity as being applicable to\nTendrel\'s internal "task processing pipeline". In practice, Tasks most often\nrepresent "jobs" performed by humans. However, this need not always be the\ncase.\n\nTechnically speaking, a Task represents a (1) *named asynchronous process*\nthat (2) exists in one of three states: open, in progress, or closed.',
     fields() {
       return {
         assignees: {
@@ -1625,6 +1626,428 @@ export function getSchema(): GraphQLSchema {
         };
       },
     });
+  const TaskOperationErrType: GraphQLObjectType = new GraphQLObjectType({
+    name: "TaskOperationErr",
+    fields() {
+      return {
+        errors: {
+          description:
+            "Fatal errors that caused the batch operation to atomically fail.",
+          name: "errors",
+          type: new GraphQLList(new GraphQLNonNull(DiagnosticType)),
+          resolve(source, args, context, info) {
+            return assertNonNull(
+              defaultFieldResolver(source, args, context, info),
+            );
+          },
+        },
+      };
+    },
+  });
+  const TaskOperationOkType: GraphQLObjectType = new GraphQLObjectType({
+    name: "TaskOperationOk",
+    fields() {
+      return {
+        count: {
+          description:
+            "The total count of operations applied as part of this batch operation.",
+          name: "count",
+          type: GraphQLInt,
+          resolve(source, args, context, info) {
+            return assertNonNull(
+              defaultFieldResolver(source, args, context, info),
+            );
+          },
+        },
+        created: {
+          description: "Nodes that were created by this batch operation.",
+          name: "created",
+          type: new GraphQLList(new GraphQLNonNull(NodeType)),
+          resolve(source, args, context, info) {
+            return assertNonNull(
+              defaultFieldResolver(source, args, context, info),
+            );
+          },
+        },
+        deleted: {
+          description: "Nodes that were deleted by this batch operation.",
+          name: "deleted",
+          type: new GraphQLList(new GraphQLNonNull(GraphQLID)),
+          resolve(source, args, context, info) {
+            return assertNonNull(
+              defaultFieldResolver(source, args, context, info),
+            );
+          },
+        },
+        updated: {
+          description: "Nodes that were updated by this batch operation.",
+          name: "updated",
+          type: new GraphQLList(new GraphQLNonNull(NodeType)),
+          resolve(source, args, context, info) {
+            return assertNonNull(
+              defaultFieldResolver(source, args, context, info),
+            );
+          },
+        },
+      };
+    },
+  });
+  const TaskOperationResultType: GraphQLUnionType = new GraphQLUnionType({
+    name: "TaskOperationResult",
+    types() {
+      return [TaskOperationErrType, TaskOperationOkType];
+    },
+  });
+  const AddFieldOperationType: GraphQLInputObjectType =
+    new GraphQLInputObjectType({
+      name: "AddFieldOperation",
+      fields() {
+        return {
+          field: {
+            name: "field",
+            type: GraphQLID,
+          },
+          parent: {
+            name: "parent",
+            type: new GraphQLNonNull(GraphQLID),
+          },
+          value: {
+            name: "value",
+            type: ValueInputType,
+          },
+          valueType: {
+            name: "valueType",
+            type: new GraphQLNonNull(ValueTypeType),
+          },
+        };
+      },
+    });
+  const SetFieldOperationType: GraphQLInputObjectType =
+    new GraphQLInputObjectType({
+      name: "SetFieldOperation",
+      fields() {
+        return {
+          field: {
+            name: "field",
+            type: GraphQLID,
+          },
+          parent: {
+            name: "parent",
+            type: GraphQLID,
+          },
+          value: {
+            name: "value",
+            type: ValueInputType,
+          },
+          valueType: {
+            name: "valueType",
+            type: new GraphQLNonNull(ValueTypeType),
+          },
+        };
+      },
+    });
+  const FieldOperationsType: GraphQLInputObjectType =
+    new GraphQLInputObjectType({
+      name: "FieldOperations",
+      fields() {
+        return {
+          add: {
+            name: "add",
+            type: AddFieldOperationType,
+          },
+          set: {
+            name: "set",
+            type: SetFieldOperationType,
+          },
+        };
+      },
+      isOneOf: true,
+    });
+  const ActivateNodeOperationType: GraphQLInputObjectType =
+    new GraphQLInputObjectType({
+      name: "ActivateNodeOperation",
+      fields() {
+        return {
+          active: {
+            name: "active",
+            type: new GraphQLNonNull(GraphQLBoolean),
+          },
+          node: {
+            name: "node",
+            type: new GraphQLNonNull(GraphQLID),
+          },
+        };
+      },
+    });
+  const DeleteNodeOperationType: GraphQLInputObjectType =
+    new GraphQLInputObjectType({
+      name: "DeleteNodeOperation",
+      fields() {
+        return {
+          node: {
+            name: "node",
+            type: new GraphQLNonNull(GraphQLID),
+          },
+        };
+      },
+    });
+  const PublishNodeOperationType: GraphQLInputObjectType =
+    new GraphQLInputObjectType({
+      name: "PublishNodeOperation",
+      fields() {
+        return {
+          node: {
+            name: "node",
+            type: new GraphQLNonNull(GraphQLID),
+          },
+        };
+      },
+    });
+  const RenameNodeOperationType: GraphQLInputObjectType =
+    new GraphQLInputObjectType({
+      name: "RenameNodeOperation",
+      fields() {
+        return {
+          name: {
+            name: "name",
+            type: new GraphQLNonNull(GraphQLString),
+          },
+          node: {
+            name: "node",
+            type: new GraphQLNonNull(GraphQLID),
+          },
+        };
+      },
+    });
+  const NodeOperationsType: GraphQLInputObjectType = new GraphQLInputObjectType(
+    {
+      name: "NodeOperations",
+      fields() {
+        return {
+          activate: {
+            name: "activate",
+            type: ActivateNodeOperationType,
+          },
+          delete: {
+            name: "delete",
+            type: DeleteNodeOperationType,
+          },
+          publish: {
+            name: "publish",
+            type: PublishNodeOperationType,
+          },
+          rename: {
+            name: "rename",
+            type: RenameNodeOperationType,
+          },
+        };
+      },
+      isOneOf: true,
+    },
+  );
+  const AdvanceTaskOperationType: GraphQLInputObjectType =
+    new GraphQLInputObjectType({
+      name: "AdvanceTaskOperation",
+      fields() {
+        return {
+          hash: {
+            name: "hash",
+            type: new GraphQLNonNull(GraphQLString),
+          },
+          task: {
+            name: "task",
+            type: new GraphQLNonNull(GraphQLID),
+          },
+        };
+      },
+    });
+  const AssignTaskOperationType: GraphQLInputObjectType =
+    new GraphQLInputObjectType({
+      name: "AssignTaskOperation",
+      fields() {
+        return {
+          assignTo: {
+            name: "assignTo",
+            type: new GraphQLList(new GraphQLNonNull(GraphQLID)),
+          },
+          task: {
+            name: "task",
+            type: new GraphQLNonNull(GraphQLID),
+          },
+          unassignFrom: {
+            name: "unassignFrom",
+            type: new GraphQLList(new GraphQLNonNull(GraphQLID)),
+          },
+        };
+      },
+    });
+  const ClosedInputType: GraphQLInputObjectType = new GraphQLInputObjectType({
+    name: "ClosedInput",
+    fields() {
+      return {
+        closedAt: {
+          name: "closedAt",
+          type: TimestampType,
+        },
+        closedBecause: {
+          name: "closedBecause",
+          type: GraphQLString,
+        },
+        closedBy: {
+          name: "closedBy",
+          type: GraphQLID,
+        },
+        inProgressAt: {
+          name: "inProgressAt",
+          type: TimestampType,
+        },
+        inProgressBy: {
+          name: "inProgressBy",
+          type: GraphQLID,
+        },
+        openedAt: {
+          name: "openedAt",
+          type: TimestampType,
+        },
+        openedBy: {
+          name: "openedBy",
+          type: GraphQLID,
+        },
+      };
+    },
+  });
+  const InProgressInputType: GraphQLInputObjectType =
+    new GraphQLInputObjectType({
+      name: "InProgressInput",
+      fields() {
+        return {
+          inProgressAt: {
+            name: "inProgressAt",
+            type: TimestampType,
+          },
+          inProgressBy: {
+            name: "inProgressBy",
+            type: GraphQLID,
+          },
+          openedAt: {
+            name: "openedAt",
+            type: TimestampType,
+          },
+          openedBy: {
+            name: "openedBy",
+            type: GraphQLID,
+          },
+        };
+      },
+    });
+  const OpenInputType: GraphQLInputObjectType = new GraphQLInputObjectType({
+    name: "OpenInput",
+    fields() {
+      return {
+        openedAt: {
+          name: "openedAt",
+          type: TimestampType,
+        },
+        openedBy: {
+          name: "openedBy",
+          type: GraphQLID,
+        },
+      };
+    },
+  });
+  const TaskStateInputType: GraphQLInputObjectType = new GraphQLInputObjectType(
+    {
+      name: "TaskStateInput",
+      fields() {
+        return {
+          closed: {
+            name: "closed",
+            type: ClosedInputType,
+          },
+          inProgress: {
+            name: "inProgress",
+            type: InProgressInputType,
+          },
+          open: {
+            name: "open",
+            type: OpenInputType,
+          },
+        };
+      },
+      isOneOf: true,
+    },
+  );
+  const InstantiateTaskOperationType: GraphQLInputObjectType =
+    new GraphQLInputObjectType({
+      name: "InstantiateTaskOperation",
+      fields() {
+        return {
+          assignees: {
+            description:
+              "Immediately assign the newly instantiated Task to the given identities.",
+            name: "assignees",
+            type: new GraphQLList(new GraphQLNonNull(GraphQLID)),
+          },
+          fields: {
+            description:
+              "Apply the given field overrides to the newly instantiated Task.",
+            name: "fields",
+            type: new GraphQLList(new GraphQLNonNull(FieldInputType)),
+          },
+          state: {
+            description: "Instantiate the Task into the given TaskState.",
+            name: "state",
+            type: TaskStateInputType,
+          },
+          task: {
+            name: "task",
+            type: new GraphQLNonNull(GraphQLID),
+          },
+        };
+      },
+    });
+  const TaskOperationsType: GraphQLInputObjectType = new GraphQLInputObjectType(
+    {
+      name: "TaskOperations",
+      fields() {
+        return {
+          advance: {
+            name: "advance",
+            type: AdvanceTaskOperationType,
+          },
+          assign: {
+            name: "assign",
+            type: AssignTaskOperationType,
+          },
+          instantiate: {
+            name: "instantiate",
+            type: InstantiateTaskOperationType,
+          },
+        };
+      },
+      isOneOf: true,
+    },
+  );
+  const TaskOperationType: GraphQLInputObjectType = new GraphQLInputObjectType({
+    name: "TaskOperation",
+    fields() {
+      return {
+        field: {
+          name: "field",
+          type: FieldOperationsType,
+        },
+        node: {
+          name: "node",
+          type: NodeOperationsType,
+        },
+        task: {
+          name: "task",
+          type: TaskOperationsType,
+        },
+      };
+    },
+    isOneOf: true,
+  });
   const GeofenceInputType: GraphQLInputObjectType = new GraphQLInputObjectType({
     name: "GeofenceInput",
     fields() {
@@ -1837,6 +2260,21 @@ export function getSchema(): GraphQLSchema {
             );
           },
         },
+        operateOnTask: {
+          name: "operateOnTask",
+          type: TaskOperationResultType,
+          args: {
+            ops: {
+              name: "ops",
+              type: new GraphQLNonNull(
+                new GraphQLList(new GraphQLNonNull(TaskOperationType)),
+              ),
+            },
+          },
+          resolve(_source, args) {
+            return assertNonNull(mutationOperateOnTaskResolver(args.ops));
+          },
+        },
         updateLocation: {
           name: "updateLocation",
           type: LocationType,
@@ -1909,6 +2347,7 @@ export function getSchema(): GraphQLSchema {
       DiagnosticKindType,
       TaskStateNameType,
       ValueTypeType,
+      TaskOperationResultType,
       TaskStateType,
       ValueType,
       AssignableType,
@@ -1916,15 +2355,32 @@ export function getSchema(): GraphQLSchema {
       IdentityType,
       NodeType,
       TrackableType,
+      ActivateNodeOperationType,
+      AddFieldOperationType,
       AdvanceFsmOptionsType,
+      AdvanceTaskOperationType,
       AdvanceTaskOptionsType,
+      AssignTaskOperationType,
       AssignmentInputType,
+      ClosedInputType,
       CreateLocationInputType,
+      DeleteNodeOperationType,
       DescriptionInputType,
       DynamicStringInputType,
       FieldInputType,
+      FieldOperationsType,
       GeofenceInputType,
+      InProgressInputType,
       InstantiateOptionsType,
+      InstantiateTaskOperationType,
+      NodeOperationsType,
+      OpenInputType,
+      PublishNodeOperationType,
+      RenameNodeOperationType,
+      SetFieldOperationType,
+      TaskOperationType,
+      TaskOperationsType,
+      TaskStateInputType,
       TemplateConstraintOptionsType,
       UpdateLocationInputType,
       UpdateNameInputType,
@@ -1959,6 +2415,8 @@ export function getSchema(): GraphQLSchema {
       TaskType,
       TaskConnectionType,
       TaskEdgeType,
+      TaskOperationErrType,
+      TaskOperationOkType,
       TaskStateMachineType,
       TemplateConstraintType,
       TimestampOverridableType,

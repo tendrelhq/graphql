@@ -100,6 +100,8 @@ enum ValueType {
   unknown
 }
 
+union TaskOperationResult = TaskOperationErr | TaskOperationOk
+
 union TaskState = Closed | InProgress | Open
 
 union Value =
@@ -154,9 +156,26 @@ interface Trackable implements Component {
   tracking(after: ID, first: Int): TrackableConnection
 }
 
+input ActivateNodeOperation {
+  active: Boolean!
+  node: ID!
+}
+
+input AddFieldOperation {
+  field: ID
+  parent: ID!
+  value: ValueInput
+  valueType: ValueType!
+}
+
 input AdvanceFsmOptions {
   fsm: AdvanceTaskOptions!
   task: AdvanceTaskOptions!
+}
+
+input AdvanceTaskOperation {
+  hash: String!
+  task: ID!
 }
 
 input AdvanceTaskOptions {
@@ -169,8 +188,24 @@ input AdvanceTaskOptions {
   overrides: [FieldInput!]
 }
 
+input AssignTaskOperation {
+  assignTo: [ID!]
+  task: ID!
+  unassignFrom: [ID!]
+}
+
 input AssignmentInput {
   assignedTo: ID!
+}
+
+input ClosedInput {
+  closedAt: Timestamp
+  closedBecause: String
+  closedBy: ID
+  inProgressAt: Timestamp
+  inProgressBy: ID
+  openedAt: Timestamp
+  openedBy: ID
 }
 
 input CreateLocationInput {
@@ -179,6 +214,10 @@ input CreateLocationInput {
   parent: ID!
   scanCode: String
   timeZone: String!
+}
+
+input DeleteNodeOperation {
+  node: ID!
 }
 
 input DescriptionInput {
@@ -205,14 +244,88 @@ input FieldInput {
   valueType: ValueType!
 }
 
+input FieldOperations @oneOf {
+  add: AddFieldOperation
+  set: SetFieldOperation
+}
+
 input GeofenceInput {
   latitude: String
   longitude: String
   radius: Float
 }
 
+input InProgressInput {
+  inProgressAt: Timestamp
+  inProgressBy: ID
+  openedAt: Timestamp
+  openedBy: ID
+}
+
 input InstantiateOptions {
   fields: [FieldInput!]
+}
+
+input InstantiateTaskOperation {
+  """
+  Immediately assign the newly instantiated Task to the given identities.
+  """
+  assignees: [ID!]
+  """
+  Apply the given field overrides to the newly instantiated Task.
+  """
+  fields: [FieldInput!]
+  """
+  Instantiate the Task into the given TaskState.
+  """
+  state: TaskStateInput
+  task: ID!
+}
+
+input NodeOperations @oneOf {
+  activate: ActivateNodeOperation
+  delete: DeleteNodeOperation
+  publish: PublishNodeOperation
+  rename: RenameNodeOperation
+}
+
+input OpenInput {
+  openedAt: Timestamp
+  openedBy: ID
+}
+
+input PublishNodeOperation {
+  node: ID!
+}
+
+input RenameNodeOperation {
+  name: String!
+  node: ID!
+}
+
+input SetFieldOperation {
+  field: ID
+  parent: ID
+  value: ValueInput
+  valueType: ValueType!
+}
+
+input TaskOperation @oneOf {
+  field: FieldOperations
+  node: NodeOperations
+  task: TaskOperations
+}
+
+input TaskOperations @oneOf {
+  advance: AdvanceTaskOperation
+  assign: AssignTaskOperation
+  instantiate: InstantiateTaskOperation
+}
+
+input TaskStateInput @oneOf {
+  closed: ClosedInput
+  inProgress: InProgressInput
+  open: OpenInput
 }
 
 input TemplateConstraintOptions {
@@ -484,6 +597,7 @@ type Mutation {
   This operation is a no-op if the node has already been deleted.
   """
   deleteNode(node: ID!): [ID!] @semanticNonNull
+  operateOnTask(ops: [TaskOperation!]!): TaskOperationResult @semanticNonNull
   updateLocation(input: UpdateLocationInput!): Location @semanticNonNull
 }
 
@@ -550,7 +664,7 @@ type StringValue {
 
 """
 A system-level component that identifies an Entity as being applicable to
-tendrel's internal "task processing pipeline". In practice, Tasks most often
+Tendrel's internal "task processing pipeline". In practice, Tasks most often
 represent "jobs" performed by humans. However, this need not always be the
 case.
 
@@ -673,6 +787,32 @@ type TaskConnection {
 type TaskEdge {
   cursor: String @semanticNonNull
   node: Task @semanticNonNull
+}
+
+type TaskOperationErr {
+  """
+  Fatal errors that caused the batch operation to atomically fail.
+  """
+  errors: [Diagnostic!] @semanticNonNull
+}
+
+type TaskOperationOk {
+  """
+  The total count of operations applied as part of this batch operation.
+  """
+  count: Int @semanticNonNull
+  """
+  Nodes that were created by this batch operation.
+  """
+  created: [Node!] @semanticNonNull
+  """
+  Nodes that were deleted by this batch operation.
+  """
+  deleted: [ID!] @semanticNonNull
+  """
+  Nodes that were updated by this batch operation.
+  """
+  updated: [Node!] @semanticNonNull
 }
 
 """

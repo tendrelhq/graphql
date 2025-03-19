@@ -23,3 +23,4 @@ legacy-time-at-task 2025-03-13T21:54:04Z Will Ruggiano <ruggiano@tendrel.io> # c
 @v0.27.1 2025-03-14T21:53:26Z Will Ruggiano <ruggiano@tendrel.io> # sync tags with package.json
 
 engine0t 2025-03-14T23:35:42Z Will Ruggiano <ruggiano@tendrel.io> # add engine for templates
+nodeops 2025-03-18T19:35:03Z Will Ruggiano <ruggiano@tendrel.io> # node-level engine1 operations

@@ -31,6 +31,8 @@ import {
   type Field,
   type FieldInput,
   type FieldQuery,
+  type ValueInput,
+  type ValueType,
   field$fragment,
 } from "../component";
 import type { Refetchable } from "../node";
@@ -46,8 +48,202 @@ export type ConstructorArgs = {
 };
 
 /**
+ * @gqlInput
+ * @oneOf
+ */
+type NodeOperations =
+  | {
+      activate: ActivateNodeOperation;
+    }
+  | {
+      delete: DeleteNodeOperation;
+    }
+  | {
+      publish: PublishNodeOperation;
+    }
+  | {
+      rename: RenameNodeOperation;
+    };
+
+/** @gqlInput */
+type ActivateNodeOperation = {
+  node: ID;
+  active: boolean;
+};
+
+/** @gqlInput */
+type DeleteNodeOperation = {
+  node: ID;
+};
+
+/** @gqlInput */
+type PublishNodeOperation = {
+  node: ID;
+};
+
+/** @gqlInput */
+type RenameNodeOperation = {
+  node: ID;
+  name: string;
+};
+
+/**
+ * @gqlInput
+ * @oneOf
+ */
+type FieldOperations =
+  | {
+      add: AddFieldOperation;
+    }
+  | {
+      field: NodeOperations;
+    }
+  | {
+      set: SetFieldOperation;
+    };
+
+/** @gqlInput */
+type AddFieldOperation = {
+  parent: ID;
+  field?: ID | null;
+  value?: ValueInput | null;
+  valueType: ValueType;
+};
+
+/** @gqlInput */
+type SetFieldOperation = {
+  parent?: ID | null;
+  field?: ID | null;
+  value?: ValueInput | null;
+  valueType: ValueType;
+};
+
+/**
+ * @gqlInput
+ * @oneOf
+ */
+type TaskOperations =
+  | {
+      advance: AdvanceTaskOperation;
+    }
+  | {
+      assign: AssignTaskOperation;
+    }
+  | {
+      instantiate: InstantiateTaskOperation;
+    };
+
+/** @gqlInput */
+type AdvanceTaskOperation = {
+  task: ID;
+  hash: string;
+  /// If not provided, then advance the Task in accordance with its internal
+  /// state machine. Typically this means: Open -> InProgress -> Closed.
+  // targetState?: TaskState | null;
+};
+
+/** @gqlInput */
+type AssignTaskOperation = {
+  task: ID;
+  assignTo?: ID[] | null;
+  unassignFrom?: ID[] | null;
+};
+
+/** @gqlInput */
+type InstantiateTaskOperation = {
+  task: ID;
+  /**
+   * Immediately assign the newly instantiated Task to the given identities.
+   */
+  assignees?: ID[] | null;
+  /**
+   * Apply the given field overrides to the newly instantiated Task.
+   */
+  fields?: FieldInput[] | null;
+  /**
+   * Instantiate the Task into the given TaskState.
+   */
+  state?: TaskStateInput | null;
+};
+
+/**
+ * @gqlInput
+ * @oneOf
+ */
+type TaskOperation =
+  | {
+      field: FieldOperations;
+    }
+  | {
+      node: NodeOperations;
+    }
+  | {
+      task: TaskOperations;
+    };
+
+/** @gqlUnion */
+type TaskOperationResult = TaskOperationOk | TaskOperationErr;
+
+/** @gqlType */
+type TaskOperationOk = {
+  __typename: "TaskOperationOk";
+  /**
+   * The total count of operations applied as part of this operation.
+   *
+   * @gqlField
+   */
+  count: Int;
+  /**
+   * Nodes that were created as a result of this operation.
+   *
+   * @gqlField
+   */
+  created: Refetchable[];
+  /**
+   * Nodes that were deleted as a result of this operation.
+   *
+   * @gqlField
+   */
+  deleted: ID[];
+  /**
+   * Nodes that were updated as a result of this operation.
+   *
+   * @gqlField
+   */
+  updated: Refetchable[];
+};
+
+/** @gqlType */
+type TaskOperationErr = {
+  __typename: "TaskOperationErr";
+  /**
+   * Fatal errors that caused the operation to fail.
+   *
+   * @gqlField
+   */
+  errors: Diagnostic[];
+};
+
+/**
+ * @gqlMutationField
+ */
+export async function operateOnTask(
+  ops: TaskOperation[],
+): Promise<TaskOperationResult> {
+  return {
+    __typename: "TaskOperationErr",
+    errors: [
+      {
+        __typename: "Diagnostic",
+        code: DiagnosticKind.feature_not_available,
+      },
+    ],
+  };
+}
+
+/**
  * A system-level component that identifies an Entity as being applicable to
- * tendrel's internal "task processing pipeline". In practice, Tasks most often
+ * Tendrel's internal "task processing pipeline". In practice, Tasks most often
  * represent "jobs" performed by humans. However, this need not always be the
  * case.
  *
@@ -751,6 +947,21 @@ export async function chainAgg(
 /** @gqlUnion */
 export type TaskState = Open | InProgress | Closed;
 
+/**
+ * @gqlInput
+ * @oneOf
+ */
+export type TaskStateInput =
+  | {
+      open: OpenInput;
+    }
+  | {
+      inProgress: InProgressInput;
+    }
+  | {
+      closed: ClosedInput;
+    };
+
 /** @gqlEnum */
 export type TaskStateName = "Open" | "InProgress" | "Closed";
 
@@ -762,6 +973,14 @@ export type Open = {
   openedAt: Overridable<Timestamp>;
   /** @gqlField */
   openedBy?: Assignable | null;
+};
+
+/** @gqlInput */
+export type OpenInput = {
+  // TODO: probably want this to be overridable? Ugh. I hate the concept of
+  // overrides.
+  openedAt?: Timestamp | null;
+  openedBy?: ID | null;
 };
 
 /** @gqlType */
@@ -776,6 +995,14 @@ export type InProgress = {
   inProgressAt: Overridable<Timestamp>;
   /** @gqlField */
   inProgressBy?: Assignable | null;
+};
+
+/** @gqlInput */
+export type InProgressInput = {
+  openedAt?: Timestamp | null;
+  openedBy?: ID | null;
+  inProgressAt?: Timestamp | null;
+  inProgressBy?: ID | null;
 };
 
 /** @gqlType */
@@ -796,6 +1023,17 @@ export type Closed = {
   closedBecause?: string | null;
   /** @gqlField */
   closedBy?: Assignable | null;
+};
+
+/** @gqlInput */
+export type ClosedInput = {
+  openedAt?: Timestamp | null;
+  openedBy?: ID | null;
+  inProgressAt?: Timestamp | null;
+  inProgressBy?: ID | null;
+  closedAt?: Timestamp | null;
+  closedBecause?: string | null;
+  closedBy?: ID | null;
 };
 
 /** @gqlInput */

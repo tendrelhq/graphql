@@ -482,6 +482,8 @@ begin
       on i.workinstanceworktemplateid = f.workresultworktemplateid
   where
       i.id = ins_instance
+      and f.workresultdeleted = false
+      and f.workresultdraft = false
       and (f.workresultenddate is null or f.workresultenddate > now())
   on conflict do nothing
   ;

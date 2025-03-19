@@ -11,6 +11,7 @@ import {
 import type { Mutation, Query } from "../root";
 import type { Context } from "../types";
 import { Task } from "./component/task";
+import { assert } from "@/util";
 
 /**
  * Indicates an object that is "refetchable".
@@ -48,50 +49,67 @@ export function id(node: Refetchable): ID {
   });
 }
 
+type OperationOk = {
+  ok: true;
+  /**
+   * The total count of operations applied as part of this operation.
+   *
+   * @gqlField
+   */
+  count: number;
+  /**
+   * Nodes that were created as a result of this operation.
+   *
+   * @gqlField
+   */
+  created: Refetchable[];
+  /**
+   * Nodes that were deleted as a result of this operation.
+   *
+   * @gqlField
+   */
+  deleted: ID[];
+  /**
+   * Nodes that were updated as a result of this operation.
+   *
+   * @gqlField
+   */
+  updated: Refetchable[];
+};
+
+type OperationErr = {
+  ok: false;
+  /**
+   * Fatal errors that caused the operation to fail.
+   *
+   * @gqlField
+   */
+  errors: string[];
+};
+
 /**
  * Delete a Node.
  * This operation is a no-op if the node has already been deleted.
  *
  * @gqlField
  */
-export async function deleteNode(
-  _: Mutation,
-  ctx: Context,
-  node: ID,
-): Promise<ID[]> {
+export async function deleteNode(_: Mutation, node: ID): Promise<ID[]> {
   const { type, id } = decodeGlobalId(node);
+  const [result] = await sql<[OperationOk | OperationErr]>`
+    select exe.*
+    from engine1.delete_node(${type}, ${id}) as ops,
+         engine1.execute(ops.*) as exe
+    ;
+  `;
 
-  if (type !== "workresult" && type !== "worktemplate") {
-    // No-op.
-    return [];
+  if (result.ok) {
+    // For now we enforce that deletes have no visible side-effects.
+    assert(result.created.length === 0);
+    assert(result.updated.length === 0);
+    return result.deleted;
   }
 
-  const [row] = await match(type)
-    .with(
-      "workresult",
-      () => sql<[{ id: ID }?]>`
-        update public.workresult
-        set workresultdeleted = true,
-            workresultmodifieddate = now(),
-            workresultmodifiedby = auth.current_identity(workresultcustomerid, ${ctx.auth.userId})
-        where id = ${id}
-        returning encode(('workresult:' || id)::bytea, 'base64') as id
-      `,
-    )
-    .with(
-      "worktemplate",
-      () => sql<[{ id: ID }?]>`
-        update public.worktemplate
-        set worktemplatedeleted = true,
-            worktemplatemodifieddate = now(),
-            worktemplatemodifiedby = auth.current_identity(worktemplatecustomerid, ${ctx.auth.userId})
-        where id = ${id}
-        returning encode(('worktemplate:' || id)::bytea, 'base64') as id
-      `,
-    )
-    .exhaustive();
-
-  return row ? [row.id] : [];
+  throw new AggregateError(result.errors, "Operation failed");
 }
 
 /**

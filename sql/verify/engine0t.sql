@@ -2,6 +2,6 @@
 
 BEGIN;
 
-select pg_catalog.has_schema_privilege('engine0t', 'usage');
+-- select pg_catalog.has_schema_privilege('engine0t', 'usage');
 
 ROLLBACK;

@@ -556,6 +556,9 @@ begin
   delete from public.customerconfig
   where customerconfigcustomeruuid = customer_id;
 
+  delete from public.workdescription
+  where workdescriptioncustomerid = _customer_id;
+
   -- FIXME: CASCADE deletes.
   delete from public.worktemplateconstraint
   where worktemplateconstraintcustomerid = _customer_id;
