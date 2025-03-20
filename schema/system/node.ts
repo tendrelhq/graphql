@@ -1,17 +1,14 @@
 import { sql } from "@/datasources/postgres";
 import { GraphQLError } from "graphql";
 import type { ID } from "grats";
-import { match } from "ts-pattern";
 import { decodeGlobalId, encodeGlobalId } from ".";
 import { Location } from "../platform/archetype/location";
 import {
   Attachment,
   type ConstructorArgs as AttachmentConstructorArgs,
 } from "../platform/attachment";
-import type { Mutation, Query } from "../root";
 import type { Context } from "../types";
 import { Task } from "./component/task";
-import { assert } from "@/util";
 
 /**
  * Indicates an object that is "refetchable".
@@ -49,75 +46,35 @@ export function id(node: Refetchable): ID {
   });
 }
 
-type OperationOk = {
-  ok: true;
-  /**
-   * The total count of operations applied as part of this operation.
-   *
-   * @gqlField
-   */
-  count: number;
-  /**
-   * Nodes that were created as a result of this operation.
-   *
-   * @gqlField
-   */
-  created: Refetchable[];
-  /**
-   * Nodes that were deleted as a result of this operation.
-   *
-   * @gqlField
-   */
-  deleted: ID[];
-  /**
-   * Nodes that were updated as a result of this operation.
-   *
-   * @gqlField
-   */
-  updated: Refetchable[];
-};
-
-type OperationErr = {
-  ok: false;
-  /**
-   * Fatal errors that caused the operation to fail.
-   *
-   * @gqlField
-   */
-  errors: string[];
-};
-
 /**
  * Delete a Node.
  * This operation is a no-op if the node has already been deleted.
  *
- * @gqlField
+ * @gqlMutationField
  */
-export async function deleteNode(_: Mutation, node: ID): Promise<ID[]> {
+export async function deleteNode(node: ID): Promise<ID[]> {
   const { type, id } = decodeGlobalId(node);
-  const [result] = await sql<[OperationOk | OperationErr]>`
+  const rows = await sql`
     select exe.*
     from engine1.delete_node(${type}, ${id}) as ops,
          engine1.execute(ops.*) as exe
     ;
   `;
 
-  if (result.ok) {
-    // For now we enforce that deletes have no visible side-effects.
-    assert(result.created.length === 0);
-    assert(result.updated.length === 0);
-    return result.deleted;
+  console.debug("engine1.execution.result:\n", JSON.stringify(rows, null, 2));
+
+  if (!rows.length) {
+    return [node];
   }
 
-  throw new AggregateError(result.errors, "Operation failed");
+  throw new GraphQLError("Failed to delete Node");
 }
 
 /**
- * @gqlField
+ * @gqlQueryField
  * @killsParentOnException
  */
 export async function node(
-  _: Query,
   args: { id: ID },
   ctx: Context,
 ): Promise<Refetchable> {
@@ -127,6 +84,7 @@ export async function node(
       return new Location(args);
     case "name":
       return {
+        // FIXME: Can we switch to DisplayName without breaking anything?
         __typename: "Name",
         ...(await ctx.orm.name.load(id)),
         // biome-ignore lint/suspicious/noExplicitAny:

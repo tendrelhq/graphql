@@ -63,10 +63,12 @@ exports[`extended runtime demo it should show up in the app 1`] = `
                     },
                   ],
                 },
+                "description": null,
                 "fields": {
                   "edges": [
                     {
                       "node": {
+                        "description": null,
                         "name": {
                           "value": "Override Start Time",
                         },
@@ -79,6 +81,7 @@ exports[`extended runtime demo it should show up in the app 1`] = `
                     },
                     {
                       "node": {
+                        "description": null,
                         "name": {
                           "value": "Override End Time",
                         },
@@ -91,6 +94,7 @@ exports[`extended runtime demo it should show up in the app 1`] = `
                     },
                     {
                       "node": {
+                        "description": null,
                         "name": {
                           "value": "Run Output",
                         },
@@ -102,6 +106,7 @@ exports[`extended runtime demo it should show up in the app 1`] = `
                     },
                     {
                       "node": {
+                        "description": null,
                         "name": {
                           "value": "Reject Count",
                         },
@@ -113,6 +118,7 @@ exports[`extended runtime demo it should show up in the app 1`] = `
                     },
                     {
                       "node": {
+                        "description": null,
                         "name": {
                           "value": "Comments",
                         },

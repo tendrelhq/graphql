@@ -2,7 +2,7 @@ begin;
 set local client_min_messages to 'notice';
 set local search_path to tap;
 
-select plan(13);
+select plan(12);
 
 select set_config('user.id', 'user_2jJ7Xl0LFewQGKKNYwfFWAM0Lmc', true);
 select set_config('user.locale', 'en', true);
@@ -66,19 +66,16 @@ set worktemplatedeleted = false, worktemplatedraft = true
 where id = current_setting('test.template');
 
 -- Simulate template results in draft state:
-with cte as (
-  update public.workresult
-  set workresultdraft = true
-  where
-      workresultworktemplateid = (
-          select worktemplateid
-          from public.worktemplate
-          where id = current_setting('test.template')
-      )
-      and workresultisprimary = false
-  returning 1
-)
-select is(count(*), 3::bigint) from cte;
+update public.workresult
+set workresultdraft = true
+where
+    workresultworktemplateid = (
+        select worktemplateid
+        from public.worktemplate
+        where id = current_setting('test.template')
+    )
+    and workresultisprimary = false
+;
 
 select is(count(*), 3::bigint) -- Comments, Reject Count, Run Output
 from public.workresult
@@ -91,7 +88,7 @@ where
     and workresultdraft = true
 ;
 
-select is(count(*), 5::bigint) -- Location, Worker, TAT, Override State, Override End
+select is(count(*), 5::bigint) -- Location, Worker, TAT, Override Start, Override End
 from public.workresult
 where
     workresultworktemplateid = (

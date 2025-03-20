@@ -6,6 +6,7 @@ import { decodeGlobalId } from "@/schema/system";
 import { Task } from "@/schema/system/component/task";
 import { TestCreateTemplateConstraintDocument } from "@/schema/system/engine0/createTemplateConstraint.test.generated";
 import {
+  cleanup,
   createTestContext,
   execute,
   findAndEncode,
@@ -135,10 +136,6 @@ describe("extended runtime demo", () => {
 
   afterAll(async () => {
     const { id } = decodeGlobalId(CUSTOMER);
-    process.stdout.write("Cleaning up... ");
-    const [row] = await sql<[{ ok: string }]>`
-      select runtime.destroy_demo(${id}) as ok;
-    `;
-    console.log(row.ok);
+    await cleanup(id);
   });
 });

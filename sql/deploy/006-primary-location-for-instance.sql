@@ -1,6 +1,7 @@
 -- Deploy graphql:006-primary-location-for-instance to pg
-begin
-;
+begin;
+
+-- No GRANTs required :)
 
 create or replace function legacy0.primary_location_for_instance(instance_id text)
 returns table(id text, _id bigint)
@@ -33,8 +34,6 @@ as $$
 $$
 language sql
 stable
-strict
-;
+strict;
 
-commit
-;
+commit;

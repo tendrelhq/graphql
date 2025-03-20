@@ -1,6 +1,7 @@
 -- Deploy graphql:create-location to pg
-begin
-;
+begin;
+
+-- No GRANTs required :)
 
 create or replace function
     legacy0.create_location(
@@ -14,7 +15,6 @@ create or replace function
     )
 returns table(_id bigint, id text)
 as $$
--- fmt: on
 declare
   ins_location text;
 begin
@@ -111,8 +111,6 @@ begin
 
   return;
 end $$
-language plpgsql
-;
+language plpgsql;
 
-commit
-;
+commit;

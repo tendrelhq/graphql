@@ -11,46 +11,13 @@ begin
     grant usage on schema engine1 to graphql;
     alter default privileges in schema engine1 grant execute on routines to graphql;
   end if;
+
+  if exists (select 1 from pg_roles where rolname = 'tendrelservice') then
+    revoke all on schema engine1 from tendrelservice;
+    grant usage on schema engine1 to tendrelservice;
+    alter default privileges in schema engine1 grant execute on routines to tendrelservice;
+  end if;
 end $$;
-
--- create or replace function jsonb_deep_merge(jsonb, jsonb)
--- returns jsonb
--- as $$
--- declare
---   result jsonb := $1;
---   key text;
---   value jsonb;
--- begin
---   if jsonb_typeof($1) != 'object' or jsonb_typeof($2) != 'object' then
---     raise exception 'can only deep merge objects but got %, %', jsonb_typeof($1), jsonb_typeof($2);
---   end if;
---
---   for key, value in select * from jsonb_each($2)
---   loop
---     if value is not null then
---       if $1 ? key and jsonb_typeof($1 -> key) = 'object' and jsonb_typeof($2 -> key) = 'object' then
---         result := result || jsonb_build_object(key, jsonb_deep_merge($1 -> key, value));
---       elsif $1 ? key and jsonb_typeof($1 -> key) = 'array' and jsonb_typeof($2 -> key) = 'array' then
---         result := result || jsonb_build_object(key, $1 -> key || value);
---       else
---         result := result || jsonb_build_object(key, value);
---       end if;
---     end if;
---   end loop;
---
---   return result;
--- end $$
--- language plpgsql
--- immutable
--- parallel safe
--- strict;
-
--- create or replace aggregate jsonb_deep_agg(jsonb)
--- (
---   sfunc = jsonb_deep_merge,
---   stype = jsonb,
---   initcond = '{}'
--- );
 
 create type engine1.closure as (
     f regproc,

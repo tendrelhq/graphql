@@ -2,6 +2,8 @@
 
 BEGIN;
 
+-- No GRANTs required :)
+
 --
 -- DELETE operations
 --

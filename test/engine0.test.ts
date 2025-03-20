@@ -1,9 +1,10 @@
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 import { sql } from "@/datasources/postgres";
 import { assert, map } from "@/util";
-import { createTestContext, findAndEncode } from "./prelude";
+import { cleanup, createTestContext, findAndEncode } from "./prelude";
 import { Task } from "@/schema/system/component/task";
 import { setCurrentIdentity } from "@/auth";
+import { decodeGlobalId } from "@/schema/system";
 
 const ctx = await createTestContext();
 
@@ -87,48 +88,6 @@ describe("engine0", () => {
     });
   });
 
-  test("on_template_deleted", async () => {
-    // no-op when not deleted
-    const r0 = await sql`
-      select t.*
-      from
-          public.worktemplate,
-          engine0t.on_template_deleted(worktemplate.*) as t
-      where worktemplate.id = ${TEMPLATE._id}
-    `;
-    expect(r0).toHaveLength(0);
-
-    // manually mark it as deleted
-    await sql`
-      update public.worktemplate
-      set worktemplatedeleted = true
-      where id = ${TEMPLATE._id}
-    `;
-
-    // reaps all Open instances (of which there are 5, one for each location)
-    const r1 = await sql.begin(async sql => {
-      await setCurrentIdentity(sql, ctx);
-      return await sql`
-        select
-            t.workinstancestatusid as status,
-            t.workinstancetrustreasoncodeid as reason
-        from
-            public.worktemplate,
-            engine0t.on_template_deleted(worktemplate.*) as t
-        where worktemplate.id = ${TEMPLATE._id}
-      `;
-    });
-
-    expect(r1).toHaveLength(5);
-    expect(
-      r1.every(
-        row =>
-          row.status === 711n /* Cancelled */ &&
-          row.reason === 765n /* Reaped */,
-      ),
-    ).toBeTrue();
-  });
-
   beforeAll(async () => {
     const logs = await sql<{ op: string; id: string }[]>`
       select *
@@ -155,11 +114,7 @@ describe("engine0", () => {
   });
 
   afterAll(async () => {
-    assert(!!CUSTOMER);
-    process.stderr.write("Cleaning up... ");
-    const [row] = await sql`
-      select runtime.destroy_demo(${CUSTOMER}) as ok;
-    `;
-    console.debug(row.ok);
+    const { id } = decodeGlobalId(CUSTOMER);
+    await cleanup(id);
   });
 });

@@ -2,10 +2,13 @@
 
 BEGIN;
 
+-- No GRANTs required :)
+
 -- Assumptions:
 -- 1. workresulttypeid must point at 'Date' := 868
 -- 2. workresultisprimary must be true
 -- 3. workresultorder should be 0 for 'start' and 1 for 'end'
+-- 4. workresultinstancevalues are stored in epoch millisecond form
 
 create or replace function legacy0.compute_time_at_task(workinstanceid bigint)
 returns interval

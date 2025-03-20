@@ -8,7 +8,7 @@ import {
 } from "@/schema/system/component/task";
 import type { Refetchable } from "@/schema/system/node";
 import type { Connection } from "@/schema/system/pagination";
-import { assert, normalizeBase64 } from "@/util";
+import { assert, assertUnderlyingType, normalizeBase64 } from "@/util";
 import type { ID, Int } from "grats";
 import { match } from "ts-pattern";
 import type { Trackable } from "../tracking";
@@ -27,7 +27,7 @@ export class Location implements Component, Refetchable, Trackable {
   constructor(args: ConstructorArgs) {
     this.id = normalizeBase64(args.id);
     const { type, id } = decodeGlobalId(this.id);
-    this._type = type;
+    this._type = assertUnderlyingType("location", type);
     this._id = id;
   }
 

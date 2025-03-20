@@ -1,23 +1,39 @@
 -- Deploy graphql:001-init to pg
-begin
-;
+begin;
 
+create schema ast;
 create schema auth;
 create schema debug;
 
 do $$
 begin
   if exists (select 1 from pg_roles where rolname = 'graphql') then
+    revoke all on schema ast from graphql;
     revoke all on schema auth from graphql;
     revoke all on schema debug from graphql;
+    grant usage on schema ast to graphql;
     grant usage on schema auth to graphql;
     grant usage on schema debug to graphql;
+    alter default privileges in schema ast grant execute on routines to graphql;
     alter default privileges in schema auth grant execute on routines to graphql;
     alter default privileges in schema debug grant execute on routines to graphql;
+  end if;
+
+  if exists (select 1 from pg_roles where rolname = 'tendrelservice') then
+    revoke all on schema ast from tendrelservice;
+    revoke all on schema auth from tendrelservice;
+    revoke all on schema debug from tendrelservice;
+    grant usage on schema ast to tendrelservice;
+    grant usage on schema auth to tendrelservice;
+    grant usage on schema debug to tendrelservice;
+    alter default privileges in schema ast grant execute on routines to tendrelservice;
+    alter default privileges in schema auth grant execute on routines to tendrelservice;
+    alter default privileges in schema debug grant execute on routines to tendrelservice;
   end if;
 end $$;
 
 -- BEGIN auth utility functions
+
 create or replace function auth.current_identity(parent bigint, identity text)
 returns bigint
 as $$
@@ -30,8 +46,7 @@ as $$
 $$
 language sql
 stable
-strict
-;
+strict;
 
 comment on function auth.current_identity is $$
 
@@ -50,7 +65,10 @@ where locationid = $2
 $$;
 
 -- END auth utility functions
+
+
 -- BEGIN debugging utility functions
+
 create or replace function debug.inspect(r anyelement)
 returns anyelement
 as $$
@@ -58,8 +76,7 @@ begin
   raise notice 'inspect: %', r;
   return r;
 end $$
-language plpgsql
-;
+language plpgsql;
 
 comment on function debug.inspect is $$
 
@@ -92,8 +109,7 @@ begin
   raise notice 'inspect: % := %', t, r;
   return r;
 end $$
-language plpgsql
-;
+language plpgsql;
 
 comment on function debug.inspect_t is $$
 
@@ -120,7 +136,10 @@ NOTICE:  inspect: foo.id := 1009
 $$;
 
 -- END debugging utility functions
+
+
 -- BEGIN name utility functions
+
 create or replace function
     public.create_name(
         customer_id text, source_language text, source_text text, modified_by bigint
@@ -146,29 +165,24 @@ as $$
   returning languagemasterid as _id, languagemasteruuid as id;
 $$
 language sql
-strict
-;
+strict;
 
 do $$
 begin
   if exists (select 1 from pg_roles where rolname = 'graphql') then
     grant execute on function public.create_name to graphql;
   end if;
-end $$;
 
--- END name utility functions
-create schema ast;
-
-do $$
-begin
-  if exists (select 1 from pg_roles where rolname = 'graphql') then
-    revoke all on schema ast from graphql;
-    grant usage on schema ast to graphql;
-    alter default privileges in schema ast grant execute on routines to graphql;
+  if exists (select 1 from pg_roles where rolname = 'tendrelservice') then
+    grant execute on function public.create_name to tendrelservice;
   end if;
 end $$;
 
+-- END name utility functions
+
+
 -- BEGIN type constructor utility functions
+
 create or replace function
     ast.create_system_type(type_name text, type_hierarchy text, modified_by bigint)
 returns table(_id bigint, id text)
@@ -212,8 +226,7 @@ begin
   return;
 end $$
 language plpgsql
-strict
-;
+strict;
 
 create or replace function
     ast.create_user_type(
@@ -277,9 +290,8 @@ begin
   return;
 end $$
 language plpgsql
-strict
-;
+strict;
 
 -- END type constructor utility functions
-commit
-;
+
+commit;

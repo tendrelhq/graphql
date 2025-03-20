@@ -2,7 +2,12 @@ import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 import { sql } from "@/datasources/postgres";
 import { schema } from "@/schema/final";
 import { decodeGlobalId } from "@/schema/system";
-import { createTestContext, execute, findAndEncode } from "@/test/prelude";
+import {
+  cleanup,
+  createTestContext,
+  execute,
+  findAndEncode,
+} from "@/test/prelude";
 import { map } from "@/util";
 import { Location } from "../location";
 import { TestCreateLocationDocument } from "./create.test.generated";
@@ -78,10 +83,6 @@ describe("createLocation", () => {
 
   afterAll(async () => {
     const { id } = decodeGlobalId(CUSTOMER);
-    process.stdout.write("Cleaning up... ");
-    const [row] = await sql<[{ ok: string }]>`
-      select runtime.destroy_demo(${id}) as ok;
-    `;
-    console.log(row.ok);
+    await cleanup(id);
   });
 });

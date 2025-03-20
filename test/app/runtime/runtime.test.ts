@@ -7,6 +7,7 @@ import {
   NOW,
   assertNoDiagnostics,
   assertTaskIsNamed,
+  cleanup,
   createTestContext,
   execute,
   findAndEncode,
@@ -723,28 +724,7 @@ ${rows.map(r => ` - ${r.id}`).join("\n")}
     }
 
     const { id } = decodeGlobalId(CUSTOMER);
-    // useful for debugging tests:
-    if (process.env.SKIP_RUNTIME_CLEANUP) {
-      console.log(
-        "Skipping clean up... don't forget to cleanup after yourself!",
-      );
-      console.debug(`select runtime.destroy_demo(${id})`);
-      return;
-    }
-
-    process.stdout.write("Cleaning up... ");
-    await sql`
-      delete from public.workdescription
-      where workdescriptioncustomerid = (
-          select customerid
-          from public.customer
-          where customeruuid = ${id}
-      )
-    `;
-    const [row] = await sql<[{ ok: string }]>`
-      select runtime.destroy_demo(${id}) as ok;
-    `;
-    console.log(row.ok);
+    await cleanup(id);
   });
 });
 

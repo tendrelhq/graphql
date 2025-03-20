@@ -1,4 +1,4 @@
-import { orm } from "@/datasources/postgres";
+import { orm, sql } from "@/datasources/postgres";
 import { Limits } from "@/limits";
 import type { Context, InputMaybe } from "@/schema";
 import { encodeGlobalId } from "@/schema/system";
@@ -95,6 +95,7 @@ export async function assertTaskIsNamed(
   displayName: string,
   ctx: Context,
 ) {
+  const n = await t.name(ctx);
   return assert(displayName === (await n.value(ctx)));
 }
 
@@ -131,4 +132,22 @@ export function env(name: string, value?: { toString(): string }) {
       process.env[name] = old;
     },
   };
+}
+
+export async function cleanup(id: string) {
+  if (process.env.CI || process.env.SKIP_CLEANUP) return;
+  process.stdout.write("Cleaning up...");
+  // HACK: need to add this to the cleanup procedure.
+  await sql`
+    delete from public.workdescription
+    where workdescriptioncustomerid = (
+        select customerid
+        from public.customer
+        where customeruuid = ${id}
+    )
+  `;
+  const [row] = await sql<[{ ok: string }]>`
+    select runtime.destroy_demo(${id}) as ok;
+  `;
+  process.stdout.write(row.ok);
 }

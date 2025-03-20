@@ -3,7 +3,12 @@ import { sql } from "@/datasources/postgres";
 import { schema } from "@/schema/final";
 import { decodeGlobalId } from "@/schema/system";
 import { Task } from "@/schema/system/component/task";
-import { createTestContext, execute, findAndEncode } from "@/test/prelude";
+import {
+  cleanup,
+  createTestContext,
+  execute,
+  findAndEncode,
+} from "@/test/prelude";
 import { assertNonNull, map } from "@/util";
 import { TestCopyFromDocument } from "./copyFrom.test.generated";
 
@@ -131,10 +136,6 @@ describe("copyFrom", () => {
 
   afterAll(async () => {
     const { id } = decodeGlobalId(CUSTOMER);
-    process.stdout.write("Cleaning up... ");
-    const [row] = await sql<[{ ok: string }]>`
-      select runtime.destroy_demo(${id}) as ok;
-    `;
-    console.log(row.ok);
+    await cleanup(id);
   });
 });

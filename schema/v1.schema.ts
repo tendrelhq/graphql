@@ -221,8 +221,8 @@ export function getSchema(): GraphQLSchema {
               type: new GraphQLNonNull(GraphQLID),
             },
           },
-          resolve(source, args, context) {
-            return queryNodeResolver(source, args, context);
+          resolve(_source, args, context) {
+            return queryNodeResolver(args, context);
           },
         },
         trackables: {
@@ -1631,8 +1631,7 @@ export function getSchema(): GraphQLSchema {
     fields() {
       return {
         errors: {
-          description:
-            "Fatal errors that caused the batch operation to atomically fail.",
+          description: "Fatal errors that caused the operation to fail.",
           name: "errors",
           type: new GraphQLList(new GraphQLNonNull(DiagnosticType)),
           resolve(source, args, context, info) {
@@ -1650,7 +1649,7 @@ export function getSchema(): GraphQLSchema {
       return {
         count: {
           description:
-            "The total count of operations applied as part of this batch operation.",
+            "The total count of operations applied as part of this operation.",
           name: "count",
           type: GraphQLInt,
           resolve(source, args, context, info) {
@@ -1660,7 +1659,7 @@ export function getSchema(): GraphQLSchema {
           },
         },
         created: {
-          description: "Nodes that were created by this batch operation.",
+          description: "Nodes that were created as a result of this operation.",
           name: "created",
           type: new GraphQLList(new GraphQLNonNull(NodeType)),
           resolve(source, args, context, info) {
@@ -1670,7 +1669,7 @@ export function getSchema(): GraphQLSchema {
           },
         },
         deleted: {
-          description: "Nodes that were deleted by this batch operation.",
+          description: "Nodes that were deleted as a result of this operation.",
           name: "deleted",
           type: new GraphQLList(new GraphQLNonNull(GraphQLID)),
           resolve(source, args, context, info) {
@@ -1680,7 +1679,7 @@ export function getSchema(): GraphQLSchema {
           },
         },
         updated: {
-          description: "Nodes that were updated by this batch operation.",
+          description: "Nodes that were updated as a result of this operation.",
           name: "updated",
           type: new GraphQLList(new GraphQLNonNull(NodeType)),
           resolve(source, args, context, info) {
@@ -1721,47 +1720,6 @@ export function getSchema(): GraphQLSchema {
           },
         };
       },
-    });
-  const SetFieldOperationType: GraphQLInputObjectType =
-    new GraphQLInputObjectType({
-      name: "SetFieldOperation",
-      fields() {
-        return {
-          field: {
-            name: "field",
-            type: GraphQLID,
-          },
-          parent: {
-            name: "parent",
-            type: GraphQLID,
-          },
-          value: {
-            name: "value",
-            type: ValueInputType,
-          },
-          valueType: {
-            name: "valueType",
-            type: new GraphQLNonNull(ValueTypeType),
-          },
-        };
-      },
-    });
-  const FieldOperationsType: GraphQLInputObjectType =
-    new GraphQLInputObjectType({
-      name: "FieldOperations",
-      fields() {
-        return {
-          add: {
-            name: "add",
-            type: AddFieldOperationType,
-          },
-          set: {
-            name: "set",
-            type: SetFieldOperationType,
-          },
-        };
-      },
-      isOneOf: true,
     });
   const ActivateNodeOperationType: GraphQLInputObjectType =
     new GraphQLInputObjectType({
@@ -1845,6 +1803,51 @@ export function getSchema(): GraphQLSchema {
       isOneOf: true,
     },
   );
+  const SetFieldOperationType: GraphQLInputObjectType =
+    new GraphQLInputObjectType({
+      name: "SetFieldOperation",
+      fields() {
+        return {
+          field: {
+            name: "field",
+            type: GraphQLID,
+          },
+          parent: {
+            name: "parent",
+            type: GraphQLID,
+          },
+          value: {
+            name: "value",
+            type: ValueInputType,
+          },
+          valueType: {
+            name: "valueType",
+            type: new GraphQLNonNull(ValueTypeType),
+          },
+        };
+      },
+    });
+  const FieldOperationsType: GraphQLInputObjectType =
+    new GraphQLInputObjectType({
+      name: "FieldOperations",
+      fields() {
+        return {
+          add: {
+            name: "add",
+            type: AddFieldOperationType,
+          },
+          field: {
+            name: "field",
+            type: NodeOperationsType,
+          },
+          set: {
+            name: "set",
+            type: SetFieldOperationType,
+          },
+        };
+      },
+      isOneOf: true,
+    });
   const AdvanceTaskOperationType: GraphQLInputObjectType =
     new GraphQLInputObjectType({
       name: "AdvanceTaskOperation",
@@ -2254,10 +2257,8 @@ export function getSchema(): GraphQLSchema {
               type: new GraphQLNonNull(GraphQLID),
             },
           },
-          resolve(source, args, context) {
-            return assertNonNull(
-              mutationDeleteNodeResolver(source, context, args.node),
-            );
+          resolve(_source, args) {
+            return assertNonNull(mutationDeleteNodeResolver(args.node));
           },
         },
         operateOnTask: {

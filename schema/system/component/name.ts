@@ -3,6 +3,7 @@ import type { Component } from "@/schema/system/component";
 import type { DynamicString } from "@/schema/system/i18n";
 import type { Refetchable } from "@/schema/system/node";
 import type { Context } from "@/schema/types";
+import { assertUnderlyingType } from "@/util";
 import type { ID } from "grats";
 
 /** @gqlInput */
@@ -22,7 +23,7 @@ export class DisplayName implements Component, Refetchable {
 
   constructor(public id: ID) {
     const { type, ...identifier } = decodeGlobalId(id);
-    this._type = type;
+    this._type = assertUnderlyingType("name", type);
     this._id = identifier.id;
   }
 

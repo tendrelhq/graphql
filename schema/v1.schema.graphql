@@ -246,6 +246,7 @@ input FieldInput {
 
 input FieldOperations @oneOf {
   add: AddFieldOperation
+  field: NodeOperations
   set: SetFieldOperation
 }
 
@@ -791,26 +792,26 @@ type TaskEdge {
 
 type TaskOperationErr {
   """
-  Fatal errors that caused the batch operation to atomically fail.
+  Fatal errors that caused the operation to fail.
   """
   errors: [Diagnostic!] @semanticNonNull
 }
 
 type TaskOperationOk {
   """
-  The total count of operations applied as part of this batch operation.
+  The total count of operations applied as part of this operation.
   """
   count: Int @semanticNonNull
   """
-  Nodes that were created by this batch operation.
+  Nodes that were created as a result of this operation.
   """
   created: [Node!] @semanticNonNull
   """
-  Nodes that were deleted by this batch operation.
+  Nodes that were deleted as a result of this operation.
   """
   deleted: [ID!] @semanticNonNull
   """
-  Nodes that were updated by this batch operation.
+  Nodes that were updated as a result of this operation.
   """
   updated: [Node!] @semanticNonNull
 }

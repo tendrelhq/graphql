@@ -18,7 +18,7 @@ jobs:
     runs-on: ubuntu-latest
     services:
       postgres:
-        image: postgres:16
+        image: postgres:14
         env:
           POSTGRES_PASSWORD: postgres
         options: >-
@@ -29,25 +29,24 @@ jobs:
         ports:
           - 5432:5432
     steps:
+      - uses: actions/checkout@v4
+      - uses: cachix/install-nix-action@v31
+        with:
+          github_access_token: ${{ secrets.GITHUB_TOKEN }}
+          extra_nix_config: |
+            accept-flake-config = true
       - uses: tailscale/github-action@v2
         with:
           oauth-client-id: ${{ secrets.TAILSCALE_OAUTH_CLIENT_ID }}
           oauth-secret: ${{ secrets.TAILSCALE_OAUTH_SECRET }}
           tags: tag:test
-      - run: |
-          sudo apt-get update
-          sudo apt-get install --yes --no-install-recommends postgresql-client
       - id: check-cache
         uses: actions/cache/restore@v4
         with:
           path: db.dump
           key: ${{ runner.os }}-db-dump-2025-03-20
       - if: steps.check-cache.outputs.cache-hit != 'true'
-        run: |
-          pg_dump --verbose --format=c --clean --if-exists        \
-                  --disable-triggers --no-acl --no-owner          \
-                  --schema=public --schema=entity --schema=sqitch \
-                  --file db.dump
+        run: nix develop -c just dump
         env:
           PGDATABASE: ${{ secrets.TEST_PGDATABASE }}
           PGHOST: ${{ secrets.TEST_PGHOST }}
@@ -58,22 +57,16 @@ jobs:
         with:
           path: db.dump
           key: ${{ steps.check-cache.outputs.cache-primary-key }}
-      - run: |
-          createdb tendrel
-          pg_restore --verbose --exit-on-error --no-acl --no-owner \
-                     -d tendrel --clean --if-exists db.dump
+      - run: nix develop -c just dbname=tendrel restore
         env:
+          PGDATABASE: tendrel
           PGHOST: localhost
           PGPASSWORD: postgres
           PGUSER: postgres
-      - uses: actions/checkout@v4
-      - run: |
-          docker pull sqitch/sqitch
-          curl -L https://git.io/JJKCn -o sqitch && chmod +x sqitch
-          ./sqitch deploy --target ci
-      - uses: oven-sh/setup-bun@v2
-      - run: bun install --frozen-lockfile
-      - run: bun test
+      - run: nix develop -c just target=ci migrate
+      - run: nix develop -c just install
+      # - run: nix develop -c just test # pgTAP is not installed :(
+      - run: nix develop -c bun test
         env:
           BASE_URL: http://localhost:3001/api/v1
           PGDATABASE: tendrel

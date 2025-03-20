@@ -11,6 +11,12 @@ begin
     grant usage on schema engine0 to graphql;
     alter default privileges in schema engine0 grant execute on routines to graphql;
   end if;
+
+  if exists (select 1 from pg_roles where rolname = 'tendrelservice') then
+    revoke all on schema engine0 from tendrelservice;
+    grant usage on schema engine0 to tendrelservice;
+    alter default privileges in schema engine0 grant execute on routines to tendrelservice;
+  end if;
 end $$;
 
 create or replace function engine0.execute(task_id text, modified_by bigint)

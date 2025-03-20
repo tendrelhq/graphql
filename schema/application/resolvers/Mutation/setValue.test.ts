@@ -4,6 +4,7 @@ import { schema } from "@/schema/final";
 import { decodeGlobalId, encodeGlobalId } from "@/schema/system";
 import { Task } from "@/schema/system/component/task";
 import {
+  cleanup,
   createTestContext,
   execute,
   findAndEncode,
@@ -133,10 +134,6 @@ describe("setValue", () => {
 
   afterAll(async () => {
     const { id } = decodeGlobalId(CUSTOMER);
-    process.stdout.write("Cleaning up... ");
-    const [row] = await sql<[{ ok: string }]>`
-      select runtime.destroy_demo(${id}) as ok;
-    `;
-    console.log(row.ok);
+    await cleanup(id);
   });
 });

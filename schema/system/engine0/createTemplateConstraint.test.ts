@@ -5,6 +5,7 @@ import { Location } from "@/schema/platform/archetype/location";
 import { decodeGlobalId } from "@/schema/system";
 import { Task } from "@/schema/system/component/task";
 import {
+  cleanup,
   createTestContext,
   execute,
   findAndEncode,
@@ -135,10 +136,6 @@ describe("createTemplateConstraint", () => {
 
   afterAll(async () => {
     const { id } = decodeGlobalId(CUSTOMER);
-    process.stdout.write("Cleaning up... ");
-    const [row] = await sql<[{ ok: string }]>`
-      select runtime.destroy_demo(${id}) as ok;
-    `;
-    console.log(row.ok);
+    await cleanup(id);
   });
 });

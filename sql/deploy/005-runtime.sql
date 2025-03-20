@@ -2,16 +2,8 @@
 begin
 ;
 
+-- NOTE: This schema is not meant for production use!
 create schema runtime;
-
-do $$
-begin
-  if exists (select 1 from pg_roles where rolname = 'graphql') then
-    revoke all on schema runtime from graphql;
-    grant usage on schema runtime to graphql;
-    alter default privileges in schema runtime grant execute on routines to graphql;
-  end if;
-end $$;
 
 create or replace function
     runtime.create_customer(customer_name text, language_type text, modified_by bigint)
