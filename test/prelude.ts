@@ -95,9 +95,8 @@ export async function assertTaskIsNamed(
   displayName: string,
   ctx: Context,
 ) {
-  const dn = await t.displayName();
-  const n = await dn.name(ctx);
-  return n.value === displayName;
+  const name = await (await t.name()).value(ctx);
+  return assert(name === displayName);
 }
 
 export function assertNoDiagnostics<
