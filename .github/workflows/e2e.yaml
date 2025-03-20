@@ -41,11 +41,13 @@ jobs:
         uses: actions/cache/restore@v4
         with:
           path: db.dump
-          key: ${{ runner.os }}-db-dump-2025-03-13
+          key: ${{ runner.os }}-db-dump-2025-03-20
       - if: steps.check-cache.outputs.cache-hit != 'true'
         run: |
-          pg_dump --format=c --clean --if-exists --disable-triggers --no-acl \
-                  --no-owner --schema=public --schema=entity --verbose --file db.dump
+          pg_dump --verbose --format=c --clean --if-exists        \
+                  --disable-triggers --no-acl --no-owner          \
+                  --schema=public --schema=entity --schema=sqitch \
+                  --file db.dump
         env:
           PGDATABASE: ${{ secrets.TEST_PGDATABASE }}
           PGHOST: ${{ secrets.TEST_PGHOST }}

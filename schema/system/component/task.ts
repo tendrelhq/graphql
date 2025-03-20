@@ -490,9 +490,9 @@ export class Task implements Assignable, Component, Refetchable, Trackable {
           wis.systagtype AS status,
           wi.workinstancecreateddate AS create_date,
           wi.workinstancestartdate AS start_date,
-          nullif(ov_start.workresultinstancevalue, '')::timestamptz AS ov_start_date,
+          to_timestamp(nullif(ov_start.workresultinstancevalue, '')::bigint / 1000.0) AS ov_start_date,
           wi.workinstancecompleteddate AS close_date,
-          nullif(ov_close.workresultinstancevalue, '')::timestamptz AS ov_close_date,
+          to_timestamp(nullif(ov_close.workresultinstancevalue, '')::bigint / 1000.0) AS ov_close_date,
           wi.workinstancetimezone AS time_zone
       FROM public.workinstance AS wi
       INNER JOIN public.systag AS wis
@@ -1557,12 +1557,12 @@ export function valueInputToSql(input: FieldInput) {
         input.valueType === "timestamp",
         `invalid valueType '${input.valueType}' for timestamp input`,
       );
-      const ms = Date.parse(input.value.timestamp);
-      if (Number.isNaN(ms)) {
+      const epoch = Date.parse(input.value.timestamp);
+      if (Number.isNaN(epoch)) {
         console.warn(`Discarding invalid timestamp '${input.value.timestamp}'`);
         return null;
       }
-      return new Date(ms).toISOString();
+      return epoch.toString();
     }
     default: {
       const _: never = input.value;

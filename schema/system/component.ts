@@ -41,7 +41,7 @@ select
         when f.type = 'Date'
         then
             jsonb_build_object(
-                '__typename', 'TimestampValue', 'timestamp', f.value::timestamptz
+                '__typename', 'TimestampValue', 'timestamp', to_timestamp(f.value::bigint / 1000.0)
             )
         when f.type = 'Number'
         then
