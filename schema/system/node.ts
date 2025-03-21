@@ -9,6 +9,7 @@ import {
 } from "../platform/attachment";
 import type { Context } from "../types";
 import { Task } from "./component/task";
+import { assertUnderlyingType } from "@/util";
 
 /**
  * Indicates an object that is "refetchable".
@@ -54,6 +55,12 @@ export function id(node: Refetchable): ID {
  */
 export async function deleteNode(node: ID): Promise<ID[]> {
   const { type, id } = decodeGlobalId(node);
+  // Nodes map to tables. These are the ones we have standardized on in the
+  // legacy model.
+  assertUnderlyingType(
+    ["workresult", "workresultinstance", "workinstance", "worktemplate"],
+    type,
+  );
   const rows = await sql`
     select exe.*
     from engine1.delete_node(${type}, ${id}) as ops,
@@ -61,9 +68,9 @@ export async function deleteNode(node: ID): Promise<ID[]> {
     ;
   `;
 
-  console.debug("engine1.execution.result:\n", JSON.stringify(rows, null, 2));
+  console.debug(`engine1.execution.result:\n${JSON.stringify(rows, null, 2)}`);
 
-  if (!rows.length) {
+  if (rows.length) {
     return [node];
   }
 

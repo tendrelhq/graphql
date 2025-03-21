@@ -57,11 +57,10 @@ export function assertUnderlyingType(
     typeof expected === "string"
       ? expected === received
       : expected.some(e => e === received);
-  if (!valid) {
-    throw new Error(
-      `Invalid typename; expected: ${expected}, received: ${received}`,
-    );
-  }
+  assert(
+    valid,
+    `Invalid typename; expected: ${expected}, received: ${received}`,
+  );
   return received;
 }
 
