@@ -1,6 +1,7 @@
 -- Deploy graphql:create-template-constraint to pg
-begin
-;
+begin;
+
+-- No GRANTs required :)
 
 create or replace function
     legacy0.create_template_constraint_on_location(
@@ -72,8 +73,6 @@ begin
   return;
 end $$
 language plpgsql
-strict
-;
+strict;
 
-commit
-;
+commit;

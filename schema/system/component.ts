@@ -8,7 +8,8 @@ import {
   type ConstructorArgs as AttachmentConstructorArgs,
 } from "../platform/attachment";
 import type { Context } from "../types";
-import { DisplayName } from "./component/name";
+import type { Description } from "./component/description";
+import type { DisplayName } from "./component/name";
 import type { Connection, Edge, PageInfo } from "./pagination";
 import type { Timestamp } from "./temporal";
 
@@ -30,7 +31,6 @@ export interface Component {
 
 export const field$fragment: Fragment = sql`
 select
-    f._name,
     f.id,
     case
         when f.type = 'Boolean'
@@ -41,7 +41,7 @@ select
         when f.type = 'Date'
         then
             jsonb_build_object(
-                '__typename', 'TimestampValue', 'timestamp', f.value::timestamptz
+                '__typename', 'TimestampValue', 'timestamp', to_timestamp(f.value::bigint / 1000.0)
             )
         when f.type = 'Number'
         then
@@ -67,8 +67,6 @@ from field as f
 
 /** @gqlType */
 export type Field = {
-  _name: ID;
-
   /**
    * Unique identifier for this Field.
    *
@@ -92,6 +90,16 @@ export type Field = {
    * @gqlField
    */
   valueType: ValueType;
+};
+
+// Not exposed via GraphQL, yet.
+export type FieldQuery = {
+  /**
+   * Query for a Field by its canonical name (i.e. non-localized).
+   * This is, most often, the name that is given to the Field when it is first
+   * created.
+   */
+  byName?: string;
 };
 
 /**
@@ -202,12 +210,24 @@ export async function attachments(
 }
 
 /**
+ * Description of a Field.
+ *
+ * @gqlField
+ */
+export async function description(
+  field: Field,
+  ctx: Context,
+): Promise<Description | null> {
+  return await ctx.orm.description.load(field.id);
+}
+
+/**
  * Display name for a Field.
  *
  * @gqlField
  */
-export function name(field: Field): DisplayName {
-  return new DisplayName(field._name);
+export async function name(field: Field, ctx: Context): Promise<DisplayName> {
+  return await ctx.orm.displayName.load(field.id);
 }
 
 /** @gqlInput */

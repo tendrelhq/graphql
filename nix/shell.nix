@@ -24,6 +24,7 @@
           pkgs.awscli2
           pkgs.bun
           pkgs.just
+          pkgs.nodejs
           pkgs.openssl
           pkgs.vtsls
         ];

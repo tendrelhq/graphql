@@ -50,6 +50,11 @@ interface Activatable implements Component {
   id: ID!
 }
 
+input ActivateNodeOperation {
+  active: Boolean!
+  node: ID!
+}
+
 type ActivationStatus {
   activatedAt: String
   active: Boolean!
@@ -72,9 +77,21 @@ input ActiveInput {
   updatedAt: TemporalInput
 }
 
+input AddFieldOperation {
+  field: ID
+  parent: ID!
+  value: ValueInput
+  valueType: ValueType!
+}
+
 input AdvanceFsmOptions {
   fsm: AdvanceTaskOptions!
   task: AdvanceTaskOptions!
+}
+
+input AdvanceTaskOperation {
+  hash: String!
+  task: ID!
 }
 
 input AdvanceTaskOptions {
@@ -113,6 +130,12 @@ type Aggregate {
 
 enum ApplicationType {
   Checklist
+}
+
+input AssignTaskOperation {
+  assignTo: [ID!]
+  task: ID!
+  unassignFrom: [ID!]
 }
 
 """
@@ -478,6 +501,7 @@ type ChecklistResult implements Activatable & Component & Node {
     last: Int
   ): AttachmentConnection!
   auditable: Auditable
+  description: Description
   draft: Boolean
   id: ID!
   name: DisplayName!
@@ -551,6 +575,16 @@ type Closed {
   inProgressBy: Assignable
   openedAt: TimestampOverridable @semanticNonNull
   openedBy: Assignable
+}
+
+input ClosedInput {
+  closedAt: Timestamp
+  closedBecause: String
+  closedBy: ID
+  inProgressAt: Timestamp
+  inProgressBy: ID
+  openedAt: Timestamp
+  openedBy: ID
 }
 
 """
@@ -658,19 +692,24 @@ type DebugInfo {
   updatedBy: Identity
 }
 
-"""
-TODO
-"""
-type Description implements Component {
-  description: DynamicString!
-  id: ID!
+input DeleteNodeOperation {
+  node: ID!
 }
 
-"""
-TODO
-"""
-input DescriptionInput {
+type Description implements Component & Node {
+  description: DynamicString
+    @deprecated(reason: "Use Description.locale and/or Description.value.")
+    @semanticNonNull
+  """
+  A globally unique opaque identifier for a node.
+  """
   id: ID!
+  locale: String @semanticNonNull
+  value: String @semanticNonNull
+}
+
+input DescriptionInput {
+  id: ID
   value: DynamicStringInput!
 }
 
@@ -825,6 +864,10 @@ type Field {
     last: Int
   ): AttachmentConnection @semanticNonNull
   """
+  Description of a Field.
+  """
+  description: Description
+  """
   Unique identifier for this Field.
   """
   id: ID @semanticNonNull
@@ -870,6 +913,12 @@ input FieldInput {
   valueType: ValueType!
 }
 
+input FieldOperations @oneOf {
+  add: AddFieldOperation
+  field: NodeOperations
+  set: SetFieldOperation
+}
+
 """
 Data type for tracking Boolean-like values in the form of "enabled" or
 "disabled".
@@ -904,6 +953,13 @@ type InProgress {
   inProgressBy: Assignable
   openedAt: TimestampOverridable @semanticNonNull
   openedBy: String
+}
+
+input InProgressInput {
+  inProgressAt: Timestamp
+  inProgressBy: ID
+  openedAt: Timestamp
+  openedBy: ID
 }
 
 """
@@ -941,6 +997,22 @@ input InstantToStringOptions {
 
 input InstantiateOptions {
   fields: [FieldInput!]
+}
+
+input InstantiateTaskOperation {
+  """
+  Immediately assign the newly instantiated Task to the given identities.
+  """
+  assignees: [ID!]
+  """
+  Apply the given field overrides to the newly instantiated Task.
+  """
+  fields: [FieldInput!]
+  """
+  Instantiate the Task into the given TaskState.
+  """
+  state: TaskStateInput
+  task: ID!
 }
 
 type Invitation {
@@ -1096,6 +1168,7 @@ type Mutation {
   deleteNode(node: ID!): [ID!] @semanticNonNull
   disableLanguage(languageId: ID!, orgId: ID!): EnabledLanguageEdge!
   enableLanguage(languageId: ID!, orgId: ID!): EnabledLanguageEdge!
+  operateOnTask(ops: [TaskOperation!]!): TaskOperationResult @semanticNonNull
   saveChecklist(input: ChecklistInput!): ChecklistEdge!
   setStatus(
     entity: ID!
@@ -1144,6 +1217,13 @@ interface Node {
   id: ID!
 }
 
+input NodeOperations @oneOf {
+  activate: ActivateNodeOperation
+  delete: DeleteNodeOperation
+  publish: PublishNodeOperation
+  rename: RenameNodeOperation
+}
+
 type NumberValue {
   number: Int
 }
@@ -1187,6 +1267,11 @@ type OnceSchedule {
 type Open {
   openedAt: TimestampOverridable @semanticNonNull
   openedBy: Assignable
+}
+
+input OpenInput {
+  openedAt: Timestamp
+  openedBy: ID
 }
 
 type Organization implements Node {
@@ -1236,6 +1321,10 @@ type PageInfo {
   hasNextPage: Boolean @semanticNonNull
   hasPreviousPage: Boolean @semanticNonNull
   startCursor: String
+}
+
+input PublishNodeOperation {
+  node: ID!
 }
 
 type Query {
@@ -1343,6 +1432,11 @@ type Register {
   binary: String
 }
 
+input RenameNodeOperation {
+  name: String!
+  node: ID!
+}
+
 type Requirement implements Component {
   id: ID!
   requires: ID!
@@ -1430,6 +1524,13 @@ type SetChecklistStatusPayload implements SetStatusPayload {
   edge: ChecklistEdge!
 }
 
+input SetFieldOperation {
+  field: ID
+  parent: ID
+  value: ValueInput
+  valueType: ValueType!
+}
+
 interface SetStatusPayload {
   delta: Int!
 }
@@ -1512,7 +1613,7 @@ type Tag {
 
 """
 A system-level component that identifies an Entity as being applicable to
-tendrel's internal "task processing pipeline". In practice, Tasks most often
+Tendrel's internal "task processing pipeline". In practice, Tasks most often
 represent "jobs" performed by humans. However, this need not always be the
 case.
 
@@ -1580,6 +1681,7 @@ type Task implements Assignable & Component & Node & Trackable {
     """
     overType: [String!]!
   ): [Aggregate!] @semanticNonNull
+  description: Description
   displayName: DisplayName
     @deprecated(reason: "Use Task.name instead.")
     @semanticNonNull
@@ -1636,7 +1738,53 @@ type TaskEdge {
   node: Task @semanticNonNull
 }
 
+input TaskOperation @oneOf {
+  field: FieldOperations
+  node: NodeOperations
+  task: TaskOperations
+}
+
+type TaskOperationErr {
+  """
+  Fatal errors that caused the operation to fail.
+  """
+  errors: [Diagnostic!] @semanticNonNull
+}
+
+type TaskOperationOk {
+  """
+  The total count of operations applied as part of this operation.
+  """
+  count: Int @semanticNonNull
+  """
+  Nodes that were created as a result of this operation.
+  """
+  created: [Node!] @semanticNonNull
+  """
+  Nodes that were deleted as a result of this operation.
+  """
+  deleted: [ID!] @semanticNonNull
+  """
+  Nodes that were updated as a result of this operation.
+  """
+  updated: [Node!] @semanticNonNull
+}
+
+union TaskOperationResult = TaskOperationErr | TaskOperationOk
+
+input TaskOperations @oneOf {
+  advance: AdvanceTaskOperation
+  assign: AssignTaskOperation
+  instantiate: InstantiateTaskOperation
+}
+
 union TaskState = Closed | InProgress | Open
+
+input TaskStateInput @oneOf {
+  closed: ClosedInput
+  inProgress: InProgressInput
+  open: OpenInput
+}
 
 """
 Where applicable, Entities can have an associated StateMachine that defines

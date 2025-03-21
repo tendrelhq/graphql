@@ -1,6 +1,7 @@
 -- Deploy graphql:create-user-type to pg
-begin
-;
+begin;
+
+-- No GRANTs required :)
 
 create or replace function
     ast.create_user_type(
@@ -68,8 +69,6 @@ begin
   return;
 end $$
 language plpgsql
-strict
-;
+strict;
 
-commit
-;
+commit;

@@ -11,6 +11,12 @@ begin
     grant usage on schema i18n to graphql;
     alter default privileges in schema i18n grant execute on routines to graphql;
   end if;
+
+  if exists (select 1 from pg_roles where rolname = 'tendrelservice') then
+    revoke all on schema i18n from tendrelservice;
+    grant usage on schema i18n to tendrelservice;
+    alter default privileges in schema i18n grant execute on routines to tendrelservice;
+  end if;
 end $$;
 
 create or replace function

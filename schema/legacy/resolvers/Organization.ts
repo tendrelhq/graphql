@@ -377,7 +377,7 @@ export const Organization: OrganizationResolvers = {
       edges: rows.map(row => ({
         cursor: row.id.toString(),
         // biome-ignore lint/suspicious/noExplicitAny: temporary during migration
-        node: new Location(row, ctx) as any,
+        node: new Location(row) as any,
       })),
       pageInfo: {
         startCursor: startCursor?.id.toString(),

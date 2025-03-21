@@ -25,6 +25,10 @@ export const ChecklistResult: ChecklistResultResolvers = {
   auditable(parent, _, ctx) {
     return ctx.orm.auditable.load(parent.id);
   },
+  // @ts-expect-error: temporary under migration
+  async description(parent, _, ctx) {
+    return await ctx.orm.description.load(parent.id as string);
+  },
   async draft(parent) {
     const { type, id } = decodeGlobalId(parent.id);
     if (type === "workresult") {

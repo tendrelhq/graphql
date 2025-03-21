@@ -80,17 +80,13 @@ export type FSM = {
  *
  * @gqlField
  */
-export async function fsm(
-  t: Task,
-  ctx: Context,
-): Promise<StateMachine<Task> | null> {
-  return await fsm_(sql, t, ctx);
+export async function fsm(t: Task): Promise<StateMachine<Task> | null> {
+  return await fsm_(sql, t);
 }
 
 export async function fsm_(
   sql: Sql | TxSql,
   t: Task,
-  ctx: Context,
 ): Promise<StateMachine<Task> | null> {
   if (t._type !== "workinstance") {
     assert(
@@ -108,12 +104,12 @@ export async function fsm_(
 
   return {
     hash: await t.hash(), // Note that this is currently unused.
-    active: new Task({ id: fsm.active }, ctx),
+    active: new Task({ id: fsm.active }),
     transitions: {
       edges:
         fsm.transitions?.map(transition => ({
           cursor: transition,
-          node: new Task({ id: transition }, ctx),
+          node: new Task({ id: transition }),
         })) ?? [],
       pageInfo: {
         hasNextPage: false,
@@ -146,7 +142,7 @@ export async function advance(
   ctx: Context,
   opts: AdvanceFsmOptions,
 ): Promise<AdvanceTaskStateMachineResult> {
-  const root = new Task({ id: opts.fsm.id }, ctx);
+  const root = new Task({ id: opts.fsm.id });
   console.debug(`fsm: ${root.id}`);
   assert(root._type === "workinstance");
 
@@ -198,7 +194,7 @@ export async function advance(
       } satisfies AdvanceTaskStateMachineResult;
     }
 
-    const choice = new Task(opts.task, ctx);
+    const choice = new Task(opts.task);
     console.debug(`choice: ${choice.id}`);
 
     if (is_valid_advancement(fsm, choice) === false) {
@@ -292,7 +288,7 @@ export async function advanceFsm(
 
       const ins = result.at(0)?.instance;
       if (ins) {
-        const t = new Task({ id: ins }, ctx);
+        const t = new Task({ id: ins });
 
         // In Progress must have a start date.
         await sql`

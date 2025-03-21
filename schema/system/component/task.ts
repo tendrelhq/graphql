@@ -30,6 +30,9 @@ import {
   type Component,
   type Field,
   type FieldInput,
+  type FieldQuery,
+  type ValueInput,
+  type ValueType,
   field$fragment,
 } from "../component";
 import type { Refetchable } from "../node";
@@ -37,23 +40,210 @@ import type { Overridable } from "../overridable";
 import type { Connection, Edge, PageInfo } from "../pagination";
 import type { Timestamp } from "../temporal";
 import { type Assignable, Assignment } from "./assignee";
+import type { Description } from "./description";
 import type { DisplayName } from "./name";
 
 export type ConstructorArgs = {
   id: ID;
 };
 
-export type FieldOptions = {
-  byName?: {
-    // TODO: support localized byName lookup?
-    locale?: never;
-    value: string;
-  };
+/**
+ * @gqlInput
+ * @oneOf
+ */
+type NodeOperations =
+  | {
+      activate: ActivateNodeOperation;
+    }
+  | {
+      delete: DeleteNodeOperation;
+    }
+  | {
+      publish: PublishNodeOperation;
+    }
+  | {
+      rename: RenameNodeOperation;
+    };
+
+/** @gqlInput */
+type ActivateNodeOperation = {
+  node: ID;
+  active: boolean;
+};
+
+/** @gqlInput */
+type DeleteNodeOperation = {
+  node: ID;
+};
+
+/** @gqlInput */
+type PublishNodeOperation = {
+  node: ID;
+};
+
+/** @gqlInput */
+type RenameNodeOperation = {
+  node: ID;
+  name: string;
 };
 
 /**
+ * @gqlInput
+ * @oneOf
+ */
+type FieldOperations =
+  | {
+      add: AddFieldOperation;
+    }
+  | {
+      field: NodeOperations;
+    }
+  | {
+      set: SetFieldOperation;
+    };
+
+/** @gqlInput */
+type AddFieldOperation = {
+  parent: ID;
+  field?: ID | null;
+  value?: ValueInput | null;
+  valueType: ValueType;
+};
+
+/** @gqlInput */
+type SetFieldOperation = {
+  parent?: ID | null;
+  field?: ID | null;
+  value?: ValueInput | null;
+  valueType: ValueType;
+};
+
+/**
+ * @gqlInput
+ * @oneOf
+ */
+type TaskOperations =
+  | {
+      advance: AdvanceTaskOperation;
+    }
+  | {
+      assign: AssignTaskOperation;
+    }
+  | {
+      instantiate: InstantiateTaskOperation;
+    };
+
+/** @gqlInput */
+type AdvanceTaskOperation = {
+  task: ID;
+  hash: string;
+  /// If not provided, then advance the Task in accordance with its internal
+  /// state machine. Typically this means: Open -> InProgress -> Closed.
+  // targetState?: TaskState | null;
+};
+
+/** @gqlInput */
+type AssignTaskOperation = {
+  task: ID;
+  assignTo?: ID[] | null;
+  unassignFrom?: ID[] | null;
+};
+
+/** @gqlInput */
+type InstantiateTaskOperation = {
+  task: ID;
+  /**
+   * Immediately assign the newly instantiated Task to the given identities.
+   */
+  assignees?: ID[] | null;
+  /**
+   * Apply the given field overrides to the newly instantiated Task.
+   */
+  fields?: FieldInput[] | null;
+  /**
+   * Instantiate the Task into the given TaskState.
+   */
+  state?: TaskStateInput | null;
+};
+
+/**
+ * @gqlInput
+ * @oneOf
+ */
+type TaskOperation =
+  | {
+      field: FieldOperations;
+    }
+  | {
+      node: NodeOperations;
+    }
+  | {
+      task: TaskOperations;
+    };
+
+/** @gqlUnion */
+type TaskOperationResult = TaskOperationOk | TaskOperationErr;
+
+/** @gqlType */
+type TaskOperationOk = {
+  __typename: "TaskOperationOk";
+  /**
+   * The total count of operations applied as part of this operation.
+   *
+   * @gqlField
+   */
+  count: Int;
+  /**
+   * Nodes that were created as a result of this operation.
+   *
+   * @gqlField
+   */
+  created: Refetchable[];
+  /**
+   * Nodes that were deleted as a result of this operation.
+   *
+   * @gqlField
+   */
+  deleted: ID[];
+  /**
+   * Nodes that were updated as a result of this operation.
+   *
+   * @gqlField
+   */
+  updated: Refetchable[];
+};
+
+/** @gqlType */
+type TaskOperationErr = {
+  __typename: "TaskOperationErr";
+  /**
+   * Fatal errors that caused the operation to fail.
+   *
+   * @gqlField
+   */
+  errors: Diagnostic[];
+};
+
+/**
+ * @gqlMutationField
+ */
+export async function operateOnTask(
+  ops: TaskOperation[],
+): Promise<TaskOperationResult> {
+  return {
+    __typename: "TaskOperationErr",
+    errors: [
+      {
+        __typename: "Diagnostic",
+        code: DiagnosticKind.feature_not_available,
+      },
+    ],
+  };
+}
+
+/**
  * A system-level component that identifies an Entity as being applicable to
- * tendrel's internal "task processing pipeline". In practice, Tasks most often
+ * Tendrel's internal "task processing pipeline". In practice, Tasks most often
  * represent "jobs" performed by humans. However, this need not always be the
  * case.
  *
@@ -68,30 +258,34 @@ export class Task implements Assignable, Component, Refetchable, Trackable {
   readonly _id: string;
   readonly id: ID;
 
-  constructor(
-    args: ConstructorArgs,
-    private ctx: Context,
-  ) {
+  constructor(args: ConstructorArgs) {
     this.id = normalizeBase64(args.id);
     const { type, id } = decodeGlobalId(this.id);
     this._type = type;
     this._id = id;
   }
 
-  static fromTypeId(type: string, id: string, ctx: Context) {
-    return new Task({ id: encodeGlobalId({ type, id }) }, ctx);
+  static fromTypeId(type: string, id: string) {
+    return new Task({ id: encodeGlobalId({ type, id }) });
+  }
+
+  /**
+   * @gqlField
+   */
+  async description(ctx: Context): Promise<Description | null> {
+    return await ctx.orm.description.load(this.id);
   }
 
   /**
    * @deprecated Use Task.name instead.
    * @gqlField
    */
-  async displayName(): Promise<DisplayName> {
-    return await this.ctx.orm.displayName.load(this.id);
+  async displayName(ctx: Context): Promise<DisplayName> {
+    return await ctx.orm.displayName.load(this.id);
   }
 
   // Not exposed via GraphQL, yet.
-  async field(opts: FieldOptions): Promise<Field | null> {
+  async field(query: FieldQuery): Promise<Field | null> {
     const [row] = await match(this._type)
       .with(
         "workinstance",
@@ -101,27 +295,23 @@ export class Task implements Assignable, Component, Refetchable, Trackable {
                   encode(
                       ('workresultinstance:' || wi.id || ':' || wr.id)::bytea, 'base64'
                   ) as id,
-                  encode(('name:' || n.languagemasteruuid)::bytea, 'base64') as _name,
-                  wi.workinstanceid as _id,
-                  wr.workresultid as _field,
                   t.systagtype as type,
                   wri.workresultinstancevalue as value
               from public.workinstance as wi
-              inner join
-                  public.workresultinstance as wri
+              inner join public.workresultinstance as wri
                   on wi.workinstanceid = wri.workresultinstanceworkinstanceid
-              inner join
-                  public.workresult as wr
+              inner join public.workresult as wr
                   on wri.workresultinstanceworkresultid = wr.workresultid
-              inner join
-                  public.languagemaster as n
-                  on wr.workresultlanguagemasterid = n.languagemasterid
-                  ${
-                    opts.byName
-                      ? sql`and n.languagemastersource = ${opts.byName.value}`
-                      : sql``
-                  }
               inner join public.systag as t on wr.workresulttypeid = t.systagid
+              ${
+                query.byName
+                  ? sql`
+              inner join public.languagemaster as n
+                  on wr.workresultlanguagemasterid = n.languagemasterid
+                  and n.languagemastersource = ${query.byName}
+                  `
+                  : sql``
+              }
               where wi.id = ${this._id}
           )
 
@@ -134,23 +324,23 @@ export class Task implements Assignable, Component, Refetchable, Trackable {
           with field as (
               select
                   encode(('workresult:' || wr.id)::bytea, 'base64') as id,
-                  encode(('name:' || n.languagemasteruuid)::bytea, 'base64') as "_name",
-                  wr.workresultid as _field,
                   t.systagtype as type,
                   wr.workresultdefaultvalue as value
               from public.worktemplate as wt
               inner join
                   public.workresult as wr
                   on wt.worktemplateid = wr.workresultworktemplateid
+              inner join public.systag as t on wr.workresulttypeid = t.systagid
+              ${
+                query.byName
+                  ? sql`
               inner join
                   public.languagemaster as n
                   on wr.workresultlanguagemasterid = n.languagemasterid
-                  ${
-                    opts.byName
-                      ? sql`and n.languagemastersource = ${opts.byName.value}`
-                      : sql``
-                  }
-              inner join public.systag as t on wr.workresulttypeid = t.systagid
+                  and n.languagemastersource = ${query.byName}
+                  `
+                  : sql``
+              }
               where wt.id = ${this._id}
           )
 
@@ -232,7 +422,7 @@ export class Task implements Assignable, Component, Refetchable, Trackable {
         return [null];
       });
 
-    if (row) return new Location(row, this.ctx);
+    if (row) return new Location(row);
 
     console.warn(`No parent for Task ${this}`);
     return null;
@@ -259,21 +449,21 @@ export class Task implements Assignable, Component, Refetchable, Trackable {
 
     if (!row) return null;
 
-    return new Task(row, this.ctx);
+    return new Task(row);
   }
 
   /**
    * @gqlField
    */
-  async name(): Promise<DisplayName> {
-    return await this.ctx.orm.displayName.load(this.id);
+  async name(ctx: Context): Promise<DisplayName> {
+    return await ctx.orm.displayName.load(this.id);
   }
 
   // FIXME: We should probably implement this as a StateMachine<TaskState>?
   // This would allow the frontend to disambiguate start vs end, i.e. not have
   // to infer the valid action(s) based on the TaskState.
   /** @gqlField */
-  async state(): Promise<TaskState | null> {
+  async state(ctx: Context): Promise<TaskState | null> {
     // Only workinstances have statuses.
     if (this._type !== "workinstance") return null;
 
@@ -300,9 +490,9 @@ export class Task implements Assignable, Component, Refetchable, Trackable {
           wis.systagtype AS status,
           wi.workinstancecreateddate AS create_date,
           wi.workinstancestartdate AS start_date,
-          nullif(ov_start.workresultinstancevalue, '')::timestamptz AS ov_start_date,
+          to_timestamp(nullif(ov_start.workresultinstancevalue, '')::bigint / 1000.0) AS ov_start_date,
           wi.workinstancecompleteddate AS close_date,
-          nullif(ov_close.workresultinstancevalue, '')::timestamptz AS ov_close_date,
+          to_timestamp(nullif(ov_close.workresultinstancevalue, '')::bigint / 1000.0) AS ov_close_date,
           wi.workinstancetimezone AS time_zone
       FROM public.workinstance AS wi
       INNER JOIN public.systag AS wis
@@ -344,7 +534,7 @@ export class Task implements Assignable, Component, Refetchable, Trackable {
     }
 
     // HACK: not great, but ok for now.
-    const ass = await assignees(this, this.ctx); // n.b. db call
+    const ass = await assignees(this, ctx); // n.b. db call
 
     return match(row.status)
       .with(
@@ -622,7 +812,6 @@ export async function attachments(
  */
 export async function chain(
   t: Task,
-  ctx: Context,
   /**
    * For use in pagination. Specifies the limit for "forward pagination".
    */
@@ -664,7 +853,7 @@ export async function chain(
   return {
     edges: rows.map(row => ({
       cursor: row.id,
-      node: new Task(row, ctx),
+      node: new Task(row),
     })),
     pageInfo: {
       hasNextPage: false,
@@ -758,6 +947,21 @@ export async function chainAgg(
 /** @gqlUnion */
 export type TaskState = Open | InProgress | Closed;
 
+/**
+ * @gqlInput
+ * @oneOf
+ */
+export type TaskStateInput =
+  | {
+      open: OpenInput;
+    }
+  | {
+      inProgress: InProgressInput;
+    }
+  | {
+      closed: ClosedInput;
+    };
+
 /** @gqlEnum */
 export type TaskStateName = "Open" | "InProgress" | "Closed";
 
@@ -769,6 +973,14 @@ export type Open = {
   openedAt: Overridable<Timestamp>;
   /** @gqlField */
   openedBy?: Assignable | null;
+};
+
+/** @gqlInput */
+export type OpenInput = {
+  // TODO: probably want this to be overridable? Ugh. I hate the concept of
+  // overrides.
+  openedAt?: Timestamp | null;
+  openedBy?: ID | null;
 };
 
 /** @gqlType */
@@ -783,6 +995,14 @@ export type InProgress = {
   inProgressAt: Overridable<Timestamp>;
   /** @gqlField */
   inProgressBy?: Assignable | null;
+};
+
+/** @gqlInput */
+export type InProgressInput = {
+  openedAt?: Timestamp | null;
+  openedBy?: ID | null;
+  inProgressAt?: Timestamp | null;
+  inProgressBy?: ID | null;
 };
 
 /** @gqlType */
@@ -803,6 +1023,17 @@ export type Closed = {
   closedBecause?: string | null;
   /** @gqlField */
   closedBy?: Assignable | null;
+};
+
+/** @gqlInput */
+export type ClosedInput = {
+  openedAt?: Timestamp | null;
+  openedBy?: ID | null;
+  inProgressAt?: Timestamp | null;
+  inProgressBy?: ID | null;
+  closedAt?: Timestamp | null;
+  closedBecause?: string | null;
+  closedBy?: ID | null;
 };
 
 /** @gqlInput */
@@ -1030,7 +1261,7 @@ export async function advanceTask(
     task: t,
     instantiations: instantiations.map(i => ({
       cursor: i.id,
-      node: new Task(i, ctx),
+      node: new Task(i),
     })),
   };
 }
@@ -1216,7 +1447,7 @@ export async function applyFieldEdits(
   entity: ID,
   edits: FieldInput[],
 ): Promise<Task> {
-  const t = new Task({ id: entity }, ctx);
+  const t = new Task({ id: entity });
 
   if (t._type === "workinstance" && edits.length > 0) {
     const result = await sql.begin(async sql => {
@@ -1326,12 +1557,12 @@ export function valueInputToSql(input: FieldInput) {
         input.valueType === "timestamp",
         `invalid valueType '${input.valueType}' for timestamp input`,
       );
-      const ms = Date.parse(input.value.timestamp);
-      if (Number.isNaN(ms)) {
+      const epoch = Date.parse(input.value.timestamp);
+      if (Number.isNaN(epoch)) {
         console.warn(`Discarding invalid timestamp '${input.value.timestamp}'`);
         return null;
       }
-      return new Date(ms).toISOString();
+      return epoch.toString();
     }
     default: {
       const _: never = input.value;

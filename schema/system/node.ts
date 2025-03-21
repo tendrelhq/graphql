@@ -1,16 +1,16 @@
 import { sql } from "@/datasources/postgres";
 import { GraphQLError } from "graphql";
 import type { ID } from "grats";
-import { match } from "ts-pattern";
 import { decodeGlobalId, encodeGlobalId } from ".";
 import { Location } from "../platform/archetype/location";
 import {
   Attachment,
   type ConstructorArgs as AttachmentConstructorArgs,
 } from "../platform/attachment";
-import type { Mutation, Query } from "../root";
 import type { Context } from "../types";
 import { Task } from "./component/task";
+import { assertUnderlyingType } from "@/util";
+import { DisplayName } from "./component/name";
 
 /**
  * Indicates an object that is "refetchable".
@@ -52,67 +52,46 @@ export function id(node: Refetchable): ID {
  * Delete a Node.
  * This operation is a no-op if the node has already been deleted.
  *
- * @gqlField
+ * @gqlMutationField
  */
-export async function deleteNode(
-  _: Mutation,
-  ctx: Context,
-  node: ID,
-): Promise<ID[]> {
+export async function deleteNode(node: ID): Promise<ID[]> {
   const { type, id } = decodeGlobalId(node);
+  // Nodes map to tables. These are the ones we have standardized on in the
+  // legacy model.
+  assertUnderlyingType(
+    ["workresult", "workresultinstance", "workinstance", "worktemplate"],
+    type,
+  );
+  const rows = await sql`
+    select exe.*
+    from engine1.delete_node(${type}, ${id}) as ops,
+         engine1.execute(ops.*) as exe
+    ;
+  `;
 
-  if (type !== "workresult" && type !== "worktemplate") {
-    // No-op.
-    return [];
+  console.debug(`engine1.execution.result:\n${JSON.stringify(rows, null, 2)}`);
+
+  if (rows.length) {
+    return [node];
   }
 
-  const [row] = await match(type)
-    .with(
-      "workresult",
-      () => sql<[{ id: ID }?]>`
-        update public.workresult
-        set workresultdeleted = true,
-            workresultmodifieddate = now(),
-            workresultmodifiedby = auth.current_identity(workresultcustomerid, ${ctx.auth.userId})
-        where id = ${id}
-        returning encode(('workresult:' || id)::bytea, 'base64') as id
-      `,
-    )
-    .with(
-      "worktemplate",
-      () => sql<[{ id: ID }?]>`
-        update public.worktemplate
-        set worktemplatedeleted = true,
-            worktemplatemodifieddate = now(),
-            worktemplatemodifiedby = auth.current_identity(worktemplatecustomerid, ${ctx.auth.userId})
-        where id = ${id}
-        returning encode(('worktemplate:' || id)::bytea, 'base64') as id
-      `,
-    )
-    .exhaustive();
-
-  return row ? [row.id] : [];
+  throw new GraphQLError("Failed to delete Node");
 }
 
 /**
- * @gqlField
+ * @gqlQueryField
  * @killsParentOnException
  */
 export async function node(
-  _: Query,
   args: { id: ID },
   ctx: Context,
 ): Promise<Refetchable> {
   const { type, id } = decodeGlobalId(args.id);
   switch (type) {
     case "location":
-      return new Location(args, ctx);
+      return new Location(args);
     case "name":
-      return {
-        __typename: "Name",
-        ...(await ctx.orm.name.load(id)),
-        // biome-ignore lint/suspicious/noExplicitAny:
-      } as any;
+      return new DisplayName(args.id);
     case "organization":
       return {
         __typename: "Organization",
@@ -148,7 +127,7 @@ export async function node(
             // biome-ignore lint/suspicious/noExplicitAny:
           } as any;
         default:
-          return new Task({ id: args.id }, ctx);
+          return new Task({ id: args.id });
       }
     }
     case "workresult":

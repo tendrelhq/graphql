@@ -1,6 +1,7 @@
 -- Deploy graphql:apply-field-edits to pg
-begin
-;
+begin;
+
+-- No GRANTs required :)
 
 create type engine0.diagnostic_kind as enum (
     'field_type_mismatch',
@@ -70,10 +71,8 @@ begin
 
   return;
 end $$
-language plpgsql
-;
+language plpgsql;
 
--- fmt: off
 create or replace function
     engine0.apply_field_edit(
         entity text,
@@ -84,7 +83,6 @@ create or replace function
     )
 returns setof engine0.diagnostic
 as $$
--- fmt: on
 declare
   -- @see auth.set_actor
   user_id text := current_setting('user.id');
@@ -312,8 +310,6 @@ begin
   ;
   return;
 end $$
-language plpgsql
-;
+language plpgsql;
 
-commit
-;
+commit;

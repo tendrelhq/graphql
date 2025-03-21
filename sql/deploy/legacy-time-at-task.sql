@@ -2,10 +2,13 @@
 
 BEGIN;
 
+-- No GRANTs required :)
+
 -- Assumptions:
 -- 1. workresulttypeid must point at 'Date' := 868
 -- 2. workresultisprimary must be true
 -- 3. workresultorder should be 0 for 'start' and 1 for 'end'
+-- 4. workresultinstancevalues are stored in epoch millisecond form
 
 create or replace function legacy0.compute_time_at_task(workinstanceid bigint)
 returns interval
@@ -36,8 +39,8 @@ as $$
       )
 
   select
-      coalesce(ov_end.value::timestamptz, workinstance.workinstancecompleteddate)
-      - coalesce(ov_start.value::timestamptz, workinstance.workinstancestartdate)
+      coalesce(to_timestamp(ov_end.value::bigint / 1000.0), workinstance.workinstancecompleteddate)
+      - coalesce(to_timestamp(ov_start.value::bigint / 1000.0), workinstance.workinstancestartdate)
   from public.workinstance
   left join ov_start on true
   left join ov_end on true

@@ -2,7 +2,12 @@ import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 import { sql } from "@/datasources/postgres";
 import { schema } from "@/schema/final";
 import { decodeGlobalId } from "@/schema/system";
-import { createTestContext, execute, findAndEncode } from "@/test/prelude";
+import {
+  cleanup,
+  createTestContext,
+  execute,
+  findAndEncode,
+} from "@/test/prelude";
 import { map } from "@/util";
 import { Location } from "../location";
 import { TestCreateLocationDocument } from "./create.test.generated";
@@ -41,13 +46,17 @@ describe("createLocation", () => {
   test("parent == location", async () => {
     const result = await execute(schema, TestCreateLocationDocument, {
       input: {
-        category: "asdf",
+        category: "Runtime Location",
         name: "test child location",
         parent: SITE.id,
         timeZone: "America/Denver",
       },
     });
     expect(result).toMatchSnapshot();
+    // Our expects aren't as comprehensive as we'd like here due to our messed
+    // up return type for this mutation. You should see a log line:
+    // > createLocation: engine.instantiate.count: 1
+    // as a result of running this test.
   });
 
   beforeAll(async () => {
@@ -68,16 +77,12 @@ describe("createLocation", () => {
     CUSTOMER = findAndEncode("customer", "organization", logs);
     SITE = map(
       findAndEncode("site", "location", logs),
-      id => new Location({ id }, ctx),
+      id => new Location({ id }),
     );
   });
 
   afterAll(async () => {
     const { id } = decodeGlobalId(CUSTOMER);
-    process.stdout.write("Cleaning up... ");
-    const [row] = await sql<[{ ok: string }]>`
-      select runtime.destroy_demo(${id}) as ok;
-    `;
-    console.log(row.ok);
+    await cleanup(id);
   });
 });

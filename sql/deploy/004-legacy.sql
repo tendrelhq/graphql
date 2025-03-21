@@ -11,6 +11,12 @@ begin
     grant usage on schema legacy0 to graphql;
     alter default privileges in schema legacy0 grant execute on routines to graphql;
   end if;
+
+  if exists (select 1 from pg_roles where rolname = 'tendrelservice') then
+    revoke all on schema legacy0 from tendrelservice;
+    grant usage on schema legacy0 to tendrelservice;
+    alter default privileges in schema legacy0 grant execute on routines to tendrelservice;
+  end if;
 end $$;
 
 -- fmt: off

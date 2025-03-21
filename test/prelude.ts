@@ -1,4 +1,4 @@
-import { orm } from "@/datasources/postgres";
+import { orm, sql } from "@/datasources/postgres";
 import { Limits } from "@/limits";
 import type { Context, InputMaybe } from "@/schema";
 import { encodeGlobalId } from "@/schema/system";
@@ -95,8 +95,8 @@ export async function assertTaskIsNamed(
   displayName: string,
   ctx: Context,
 ) {
-  const name = await (await t.name()).value(ctx);
-  return assert(name === displayName);
+  const n = await t.name(ctx);
+  return assert(displayName === (await n.value(ctx)));
 }
 
 export function assertNoDiagnostics<
@@ -106,10 +106,24 @@ export function assertNoDiagnostics<
 }
 
 export async function getFieldByName(t: Task, name: string): Promise<Field> {
-  const field = await t.field({ byName: { value: name } });
+  const field = await t.field({ byName: name });
   return assertNonNull(field, `no named field ${name}`);
 }
 
+/**
+ * Set an environment variable for the current scope, and automatically revert
+ * it to its original value on (scope) exit.
+ *
+ * @example
+ * ```typescript
+ * process.env.MY_VAR = "false";
+ * {
+ *   using _ = env("MY_VAR", true);
+ *   assert(process.env.MY_VAR === "true");
+ * }
+ * assert(process.env.MY_VAR === "false");
+ * ```
+ */
 export function env(name: string, value?: { toString(): string }) {
   const old = process.env[name];
   process.env[name] = value?.toString();
@@ -118,4 +132,22 @@ export function env(name: string, value?: { toString(): string }) {
       process.env[name] = old;
     },
   };
+}
+
+export async function cleanup(id: string) {
+  if (process.env.CI || process.env.SKIP_CLEANUP) return;
+  process.stdout.write("Cleaning up...");
+  // HACK: need to add this to the cleanup procedure.
+  await sql`
+    delete from public.workdescription
+    where workdescriptioncustomerid = (
+        select customerid
+        from public.customer
+        where customeruuid = ${id}
+    )
+  `;
+  const [row] = await sql<[{ ok: string }]>`
+    select runtime.destroy_demo(${id}) as ok;
+  `;
+  process.stdout.write(row.ok);
 }

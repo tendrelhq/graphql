@@ -6,6 +6,7 @@ import { decodeGlobalId } from "@/schema/system";
 import { Task } from "@/schema/system/component/task";
 import { TestCreateTemplateConstraintDocument } from "@/schema/system/engine0/createTemplateConstraint.test.generated";
 import {
+  cleanup,
   createTestContext,
   execute,
   findAndEncode,
@@ -39,12 +40,9 @@ describe("extended runtime demo", () => {
     );
     expect(result.errors).toBeFalsy();
 
-    LOCATION = new Location(
-      {
-        id: assertNonNull(result.data?.createLocation?.id),
-      },
-      ctx,
-    );
+    LOCATION = new Location({
+      id: assertNonNull(result.data?.createLocation?.id),
+    });
   });
 
   test.skip("should be okay without a constraint/instance", async () => {
@@ -128,20 +126,16 @@ describe("extended runtime demo", () => {
     CUSTOMER = findAndEncode("customer", "organization", logs);
     SITE = map(
       findAndEncode("site", "location", logs),
-      id => new Location({ id }, ctx),
+      id => new Location({ id }),
     );
     TEMPLATE = map(
       findAndEncode("task", "worktemplate", logs),
-      id => new Task({ id }, ctx),
+      id => new Task({ id }),
     );
   });
 
   afterAll(async () => {
     const { id } = decodeGlobalId(CUSTOMER);
-    process.stdout.write("Cleaning up... ");
-    const [row] = await sql<[{ ok: string }]>`
-      select runtime.destroy_demo(${id}) as ok;
-    `;
-    console.log(row.ok);
+    await cleanup(id);
   });
 });

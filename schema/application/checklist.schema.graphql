@@ -189,6 +189,7 @@ type ChecklistResult implements Component & Activatable & Node {
     before: String
     after: String
   ): AttachmentConnection!
+  description: Description
   draft: Boolean
   name: DisplayName!
   order: Int!

@@ -201,12 +201,18 @@ fragment TaskFSM_fragment on TaskStateMachine {
         }
       }
     }
+    description {
+      value
+    }
     name {
       value
     }
     fields {
       edges {
         node {
+          description {
+            value
+          }
           name {
             value
           }

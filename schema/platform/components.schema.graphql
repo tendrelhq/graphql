@@ -145,22 +145,6 @@ input AuditableInput {
 """
 TODO
 """
-type Description implements Component {
-  id: ID!
-  description: DynamicString!
-}
-
-"""
-TODO
-"""
-input DescriptionInput {
-  id: ID!
-  value: DynamicStringInput!
-}
-
-"""
-TODO
-"""
 input DisplayNameInput {
   id: ID!
   value: DynamicStringInput!

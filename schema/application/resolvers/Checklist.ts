@@ -2,7 +2,6 @@ import { join, sql } from "@/datasources/postgres";
 import type {
   Assignee,
   ChecklistResolvers,
-  Description,
   PageInfo,
   ResolversTypes,
 } from "@/schema";
@@ -100,7 +99,7 @@ export const Checklist: ChecklistResolvers = {
     };
   },
   async attachments(parent, args, ctx) {
-    const t = new Task({ id: parent.id as string }, ctx);
+    const t = new Task({ id: parent.id as string });
     return await attachments(t, ctx, args);
   },
   auditable(parent, _, ctx) {
@@ -153,21 +152,20 @@ export const Checklist: ChecklistResolvers = {
       totalCount: 0,
     };
   },
+  // @ts-expect-error: temporary under migration
   async description(parent, _, ctx) {
-    return (await ctx.orm.description.load(parent.id)) as Description;
+    return await ctx.orm.description.load(parent.id as string);
   },
   async draft(parent) {
     const { type, id } = decodeGlobalId(parent.id);
-    if (type === "worktemplate") {
-      const [row] = await sql<[{ draft: boolean }]>`
-        select worktemplatedraft as draft
-        from public.worktemplate
-        where id = ${id}
-      `;
-      return row.draft;
-    }
     // Only templates can be in the draft state.
-    return false;
+    if (type !== "worktemplate") return false;
+    const [row] = await sql<[{ draft: boolean }]>`
+      select worktemplatedraft as draft
+      from public.worktemplate
+      where id = ${id}
+    `;
+    return row.draft;
   },
   async items(parent, args) {
     const { type: parentType, id: parentId } = decodeGlobalId(parent.id);
@@ -209,6 +207,7 @@ export const Checklist: ChecklistResolvers = {
             INNER JOIN public.workresult AS wr
                 ON wri.workresultinstanceworkresultid = wr.workresultid
                 AND wr.workresultdeleted = false
+                AND wr.workresultdraft = ${args.withDraft ?? false}
                 AND wr.workresultisprimary = false
             WHERE ${join(
               [

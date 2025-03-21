@@ -8,6 +8,7 @@ import {
 } from "bun:test";
 import { sql } from "@/datasources/postgres";
 import { assert } from "@/util";
+import { cleanup } from "./prelude";
 
 describe("engine/scheduling", () => {
   let CUSTOMER: string;
@@ -98,11 +99,6 @@ describe("engine/scheduling", () => {
   });
 
   afterAll(async () => {
-    assert(!!CUSTOMER);
-    process.stderr.write("Cleaning up... ");
-    const [row] = await sql`
-      select runtime.destroy_demo(${CUSTOMER}) as ok;
-    `;
-    console.debug(row.ok);
+    await cleanup(CUSTOMER);
   });
 });

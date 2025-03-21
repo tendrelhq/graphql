@@ -1,16 +1,23 @@
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 import { sql } from "@/datasources/postgres";
-import { assert } from "@/util";
+import { assert, map } from "@/util";
+import { cleanup, createTestContext, findAndEncode } from "./prelude";
+import { Task } from "@/schema/system/component/task";
+import { setCurrentIdentity } from "@/auth";
+import { decodeGlobalId } from "@/schema/system";
+
+const ctx = await createTestContext();
 
 describe("engine0", () => {
   let CUSTOMER: string;
-  let INSTANCE: string;
+  let INSTANCE: Task;
+  let TEMPLATE: Task;
 
   test("build", async () => {
     const result = await sql`
       select target, target_type, row_to_json(t.*) as condition, *
       from
-          engine0.build_instantiation_plan(task_id := ${INSTANCE}) as p,
+          engine0.build_instantiation_plan(task_id := ${INSTANCE._id}) as p,
           unnest(p.ops) as t
     `;
     // IMPORTANT! This is the build phase and so what we get back is the
@@ -23,7 +30,7 @@ describe("engine0", () => {
     const r0 = await sql`
       select pc.*
       from
-          engine0.build_instantiation_plan(${INSTANCE}) as pb,
+          engine0.build_instantiation_plan(${INSTANCE._id}) as pb,
           engine0.evaluate_instantiation_plan(
               target := pb.target,
               target_type := pb.target_type,
@@ -38,13 +45,13 @@ describe("engine0", () => {
     await sql`
       update public.workinstance
       set workinstancestatusid = 707
-      where id = ${INSTANCE}
+      where id = ${INSTANCE._id}
     `;
     //
     const r1 = await sql`
       select pc.*
       from
-          engine0.build_instantiation_plan(${INSTANCE}) as pb,
+          engine0.build_instantiation_plan(${INSTANCE._id}) as pb,
           engine0.evaluate_instantiation_plan(
               target := pb.target,
               target_type := pb.target_type,
@@ -73,7 +80,8 @@ describe("engine0", () => {
 
   test("build + check + execute", async () => {
     await sql.begin(async tx => {
-      const result = await tx`select * from engine0.execute(${INSTANCE}, 895)`;
+      const result =
+        await tx`select * from engine0.execute(${INSTANCE._id}, 895)`;
       // We expect only the respawn rule to result in instantiation.
       expect(result).toHaveLength(1);
       expect(result.some(row => !row.instance)).toBeFalse();
@@ -81,7 +89,7 @@ describe("engine0", () => {
   });
 
   beforeAll(async () => {
-    const logs = await sql`
+    const logs = await sql<{ op: string; id: string }[]>`
       select *
       from runtime.create_demo(
           customer_name := 'Frozen Tendy Factory',
@@ -94,21 +102,19 @@ describe("engine0", () => {
       )
     `;
 
-    CUSTOMER = logs.find(({ op }) => op.trim() === "+customer")?.id;
-    assert(!!CUSTOMER);
-
-    INSTANCE = logs.find(({ op }) => op.trim() === "+instance")?.id;
-    assert(!!INSTANCE);
-
-    console.debug("setup:", { CUSTOMER, INSTANCE });
+    CUSTOMER = findAndEncode("customer", "organization", logs);
+    TEMPLATE = map(
+      findAndEncode("task", "worktemplate", logs),
+      id => new Task({ id }),
+    );
+    INSTANCE = map(
+      findAndEncode("instance", "workinstance", logs),
+      id => new Task({ id }),
+    );
   });
 
   afterAll(async () => {
-    assert(!!CUSTOMER);
-    process.stderr.write("Cleaning up... ");
-    const [row] = await sql`
-      select runtime.destroy_demo(${CUSTOMER}) as ok;
-    `;
-    console.debug(row.ok);
+    const { id } = decodeGlobalId(CUSTOMER);
+    await cleanup(id);
   });
 });

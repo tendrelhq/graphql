@@ -67,7 +67,7 @@ export async function createTemplateConstraint(
   entity: ID,
   options?: Options | null,
 ): Promise<Result> {
-  const t = new Task({ id: template }, ctx);
+  const t = new Task({ id: template });
   const { id: entityId, type: entityType } = decodeGlobalId(entity);
 
   if (t._type !== "worktemplate") {
@@ -171,7 +171,7 @@ export async function createTemplateConstraint_(
     `;
 
     if (row) {
-      const node = new Task(row, ctx);
+      const node = new Task(row);
 
       if (opts.fields?.length) {
         const result = await applyFieldEdits_(sql, ctx, node, opts.fields);

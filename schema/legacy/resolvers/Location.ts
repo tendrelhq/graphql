@@ -1,5 +1,6 @@
 import { sql } from "@/datasources/postgres";
 import type { ActivationStatus, LocationResolvers } from "@/schema";
+import { Location as LocationNew } from "@/schema/platform/archetype/location";
 import { decodeGlobalId } from "@/schema/system";
 import { isValue, nullish } from "@/util";
 
@@ -73,19 +74,21 @@ export const Location: Pick<
     const hack = await ctx.orm.location.load(decodeGlobalId(parent.id).id);
     return ctx.orm.name.load(decodeGlobalId(hack.nameId).id);
   },
+  // @ts-expect-error: temporary under migration
   async parent(parent, _, ctx) {
     const hack = await ctx.orm.location.load(decodeGlobalId(parent.id).id);
     if (hack.parentId) {
-      return ctx.orm.location.load(decodeGlobalId(hack.parentId).id);
+      return new LocationNew({ id: hack.parentId as string });
     }
   },
   async scanCode(parent, _, ctx) {
     const hack = await ctx.orm.location.load(decodeGlobalId(parent.id).id);
     return hack.scanCode;
   },
+  // @ts-expect-error: temporary under migration
   async site(parent, _, ctx) {
     const hack = await ctx.orm.location.load(decodeGlobalId(parent.id).id);
-    return ctx.orm.location.load(decodeGlobalId(hack.siteId).id);
+    return new LocationNew({ id: hack.siteId as string });
   },
   tags(parent, _, ctx) {
     return [];
