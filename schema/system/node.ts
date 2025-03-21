@@ -10,6 +10,7 @@ import {
 import type { Context } from "../types";
 import { Task } from "./component/task";
 import { assertUnderlyingType } from "@/util";
+import { DisplayName } from "./component/name";
 
 /**
  * Indicates an object that is "refetchable".
@@ -90,12 +91,7 @@ export async function node(
     case "location":
       return new Location(args);
     case "name":
-      return {
-        // FIXME: Can we switch to DisplayName without breaking anything?
-        __typename: "Name",
-        ...(await ctx.orm.name.load(id)),
-        // biome-ignore lint/suspicious/noExplicitAny:
-      } as any;
+      return new DisplayName(args.id);
     case "organization":
       return {
         __typename: "Organization",
