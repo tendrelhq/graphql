@@ -24,6 +24,8 @@ package:
 start: package
     docker run --env-file=.env.local --network=host --rm {{image_name}}
 
-test:
+tap:
     pg_prove ./test/*.test.sql
+
+test: tap
     bun test

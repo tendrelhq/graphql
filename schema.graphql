@@ -264,7 +264,7 @@ TODO
 """
 input AuditableInput {
   enabled: Boolean!
-  id: ID!
+  id: ID
 }
 
 type AuthenticationStatus {
@@ -444,7 +444,7 @@ input ChecklistInput {
   customerId: ID!
   description: DescriptionInput
   draft: Boolean
-  id: ID!
+  id: ID
   items: [ChecklistItemInput!]
   name: DisplayNameInput!
   required: Boolean
@@ -518,8 +518,9 @@ TODO
 input ChecklistResultInput {
   assignees: [AssigneeInput!]
   auditable: AuditableInput
+  description: DescriptionInput
   draft: Boolean
-  id: ID!
+  id: ID
   name: DisplayNameInput!
   order: Int!
   required: Boolean
@@ -636,7 +637,12 @@ input CreateLocationInput {
   name: String!
   parent: ID!
   scanCode: String
-  timeZone: String!
+  """
+  If not specified, the time zone will be derived from the parent (when the
+  parent is a Location). This is most notably *not* the case when the parent is
+  a Customer.
+  """
+  timeZone: String
 }
 
 input CreateNameInput {
@@ -777,7 +783,7 @@ type DisplayName implements Component & Node {
 TODO
 """
 input DisplayNameInput {
-  id: ID!
+  id: ID
   value: DynamicStringInput!
 }
 
@@ -1559,7 +1565,7 @@ type Sop implements Component {
 TODO
 """
 input SopInput {
-  id: ID!
+  id: ID
   link: URL!
 }
 

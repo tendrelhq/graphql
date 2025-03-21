@@ -24,3 +24,5 @@ legacy-time-at-task 2025-03-13T21:54:04Z Will Ruggiano <ruggiano@tendrel.io> # c
 
 engine0t 2025-03-14T23:35:42Z Will Ruggiano <ruggiano@tendrel.io> # add engine for templates
 nodeops 2025-03-18T19:35:03Z Will Ruggiano <ruggiano@tendrel.io> # node-level engine1 operations
+ensure-field-t 2025-03-21T21:21:16Z Will Ruggiano <ruggiano@tendrel.io> # field upsert
+@v0.28.1 2025-03-24T18:58:42Z Will Ruggiano <ruggiano@tendrel.io> # move checklist to engine1

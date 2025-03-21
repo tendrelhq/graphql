@@ -2,1429 +2,595 @@ import { setCurrentIdentity } from "@/auth";
 import { sql } from "@/datasources/postgres";
 import type {
   Checklist,
-  ChecklistInput,
-  ChecklistItemInput,
-  ID,
+  InputMaybe,
   MutationResolvers,
+  WidgetInput,
 } from "@/schema";
-import { decodeGlobalId } from "@/schema/system";
+import { decodeGlobalId, encodeGlobalId } from "@/schema/system";
+import {
+  assert,
+  assertNonNull,
+  assertUnderlyingType,
+  map,
+  mapOrElse,
+} from "@/util";
 import { GraphQLError } from "graphql";
-import { P, match } from "ts-pattern";
-import { copyFromWorkTemplate } from "./copyFrom";
-import { map, mapOrElse } from "@/util";
 
 export const saveChecklist: NonNullable<
   MutationResolvers["saveChecklist"]
 > = async (_, { input }, ctx) => {
-  const { type, id } = decodeGlobalId(input.id);
+  const customerId = decodeGlobalId(input.customerId).id;
 
-  // TODO: (we'll want these eventually)
-  // Assignees (workinstance)
-  // Items (workinstance)
-  // Required (none - for now)
-  // Schedule (worktemplate)
-  // Status (workinstance)
+  let existing: InputMaybe<string>;
+  if (input.id) {
+    const { type, id } = decodeGlobalId(input.id);
 
-  if (type !== "worktemplate") {
-    throw new Error("Can only modify templates right now");
-  }
-
-  const [existing] = await sql<[{ deleted: boolean }?]>`
-    select worktemplatedeleted as deleted
-    from public.worktemplate
-    where id = ${id}
-  `;
-
-  if (existing?.deleted === true) {
-    throw new GraphQLError(
-      "The Checklist you are trying to modify has been deleted.",
-      {
+    if (type !== "worktemplate") {
+      throw new GraphQLError("Can only modify templates right now", {
         extensions: {
           code: "BAD_REQUEST",
         },
-      },
-    );
-  }
+      });
+    }
 
-  // We want to encode our operations here such that we can implement a generic
-  // entrypoint (in sql) to handle everything. This is leading us towards an
-  // engine0 but for templates. What we are crucially missing here is a clear
-  // boundary between components, so we are going to need to reconstruct the
-  // component updates first. TaskUpdate will be one struct. Descriptions,
-  // Auditable, Assignees, Schedule, etc will all be distinct structs which
-  // mirror how we represent them currently. We can use the presence (or
-  // absence) of IDs to indicate an update (or creation) of the underlying
-  // resource, although note that the update case will actually be an upsert in
-  // case the ID that we get is only known to the client.
-  const ops = [
-    //
-    ...mapOrElse(input.active, active => [], []),
-  ];
+    const [row] = await sql<[{ deleted: boolean }?]>`
+      select worktemplatedeleted as deleted
+      from public.worktemplate
+      where id = ${id}
+    `;
+    existing = row ? id : undefined;
+
+    if (row?.deleted === true) {
+      throw new GraphQLError(
+        "The Checklist you are trying to modify has been deleted.",
+        {
+          extensions: {
+            code: "BAD_REQUEST",
+          },
+        },
+      );
+    }
+  }
 
   if (existing) {
-    // update.
-    const result = await sql.begin(tx => [
-      tx`
-        UPDATE public.worktemplate
-        SET
-            worktemplateenddate = ${input.active?.active ? null : sql`now()`},
-            worktemplatemodifieddate = now()
-        WHERE
-            id = ${id}
-            AND ${
-              input.active?.active
-                ? sql`(
-                    worktemplateenddate IS NOT null
-                    AND worktemplateenddate < now()
-                )`
-                : sql`(
-                    worktemplateenddate IS null
-                    OR worktemplateenddate > now()
-                )`
-            }
-      `,
-      input.auditable
-        ? tx`
-            WITH inputs (auditable) AS (
-                VALUES (
-                    ${input.auditable.enabled}::boolean
-                )
-            )
+    const fields: [string, string, string, number, string, string][] =
+      //           id    , name  , type  , order , desc  , widget
+      mapOrElse(
+        input.items,
+        items =>
+          items
+            // We don't support nested templates at the moment.
+            .filter(item => !!item.result)
+            .map(({ result }) => [
+              // id
+              map(result.id, field => {
+                try {
+                  const { type, id } = decodeGlobalId(field);
+                  assertUnderlyingType("workresult", type);
+                  return id;
+                } catch {
+                  return null; // implies `field` was client generated
+                }
+              }) as string,
+              // name
+              result.name.value.value, // gross
+              // type
+              assertNonNull(
+                map(result.widget, resultTypeFromInput),
+                "unsupported result type",
+              ),
+              // order
+              result.order,
+              // desc
+              (result.description?.value ?? null) as unknown as string,
+              // widget
+              map(result.widget, widgetTypeFromInput) as string,
+            ]),
+        [],
+      );
 
-            UPDATE public.worktemplate
-            SET
-                worktemplateisauditable = inputs.auditable,
-                worktemplatemodifieddate = now()
-            FROM inputs
-            WHERE
-                id = ${id}
-                AND
-                worktemplateisauditable != inputs.auditable
-        `
-        : tx`
-            UPDATE public.worktemplate
-            SET
-                worktemplateisauditable = false,
-                worktemplatemodifieddate = now()
-            WHERE
-                id = ${id}
-                AND
-                worktemplateisauditable = true
-        `,
-      input.description
-        ? tx`
-            WITH inputs (source, locale) AS (
-                VALUES (
-                    ${input.description.value.value}::text,
-                    (
-                        SELECT systagid
-                        FROM public.systag
-                        WHERE
-                            systagparentid = 2
-                            AND
-                            systagtype = ${input.description.value.locale}
-                    )
-                )
-            ),
-
-            i AS (
-                INSERT INTO public.languagemaster AS lm (
-                    languagemastercustomerid,
-                    languagemastersource,
-                    languagemastersourcelanguagetypeid
-                )
-                SELECT
-                    wt.worktemplatecustomerid,
-                    inputs.source,
-                    inputs.locale
-                FROM public.worktemplate AS wt, inputs
-                WHERE
-                    wt.id = ${id}
-                    AND wt.worktemplatedescriptionid IS null
-                RETURNING lm.languagemasterid AS id
-            ),
-
-            u AS (
-                UPDATE public.languagemaster AS lm
-                SET
-                    languagemastersource = inputs.source,
-                    languagemastersourcelanguagetypeid = inputs.locale,
-                    languagemasterstatus = 'NEEDS_COMPLETE_RETRANSLATION',
-                    languagemastermodifieddate = now()
-                FROM public.worktemplate AS wt, inputs
-                WHERE
-                    wt.id = ${id}
-                    AND
-                    wt.worktemplatedescriptionid IS NOT null
-                    AND
-                    lm.languagemasterid = wt.worktemplatedescriptionid
-                    AND (
-                        languagemastersource != inputs.source
-                        OR
-                        languagemastersourcelanguagetypeid != inputs.locale
-                    )
-            )
-
-            UPDATE public.worktemplate AS wt
-            SET
-                worktemplatedescriptionid = i.id,
-                worktemplatemodifieddate = now()
-            FROM i
-            WHERE
-                wt.id = ${id}
-                AND (
-                    wt.worktemplatedescriptionid IS null
-                    OR
-                    wt.worktemplatedescriptionid != i.id
-                )
-        `
-        : tx`
-            UPDATE public.worktemplate
-            SET
-                worktemplatedescriptionid = null,
-                worktemplatemodifieddate = now()
-            WHERE
-                id = ${id}
-                AND
-                worktemplatedescriptionid IS NOT null
-        `,
-      // You can't go back into draft.
-      ...(input.draft === true
-        ? []
-        : // You can only come out of draft.
-          // Keller said so.
-          [
-            tx`
-              update public.worktemplate
-              set worktemplatedraft = false
-              where id = ${id} and worktemplatedraft = true
-            `,
-          ]),
-      tx`
-        WITH
-            inputs AS (
-                SELECT
-                    ${input.name.value.value}::text AS name,
-                    systagid AS locale
-                FROM public.systag
-                WHERE
-                    systagparentid = 2
-                    AND systagtype = ${input.name.value.locale}
-            ),
-
-            master AS (
-                SELECT languagemasterid AS id
-                FROM public.languagemaster
-                WHERE languagemasterid IN (
-                    SELECT worktemplatenameid
-                    FROM public.worktemplate
-                    WHERE id = ${id}
-                )
-            ),
-
-            trans AS (
-                UPDATE public.languagetranslations
-                SET
-                    languagetranslationvalue = inputs.name,
-                    languagetranslationmodifieddate = now()
-                FROM inputs, master
-                WHERE
-                    languagetranslationmasterid = master.id
-                    AND languagetranslationtypeid = inputs.locale
-                    AND languagetranslationvalue IS DISTINCT FROM inputs.name
-            )
-
-        UPDATE public.languagemaster
-        SET
-            languagemastersource = inputs.name,
-            languagemastersourcelanguagetypeid = inputs.locale,
-            languagemasterstatus = 'NEEDS_COMPLETE_RETRANSLATION',
-            languagemastermodifieddate = now()
-        FROM inputs, master
-        WHERE
-            languagemasterid = master.id
-            AND (languagemastersource, languagemastersourcelanguagetypeid) IS DISTINCT FROM (inputs.name, inputs.locale)
-      `,
-      input.sop
-        ? tx`
-            WITH inputs (sop) AS (
-                VALUES (
-                    ${input.sop.link.toString()}::text
-                )
-            )
-
-            UPDATE public.worktemplate
-            SET
-                worktemplatesoplink = inputs.sop,
-                worktemplatemodifieddate = now()
-            FROM inputs
-            WHERE
-                id = ${id}
-                AND (
-                    worktemplatesoplink IS null
-                    OR
-                    worktemplatesoplink != inputs.sop
-                )
-        `
-        : tx`
-            UPDATE public.worktemplate
-            SET
-                worktemplatesoplink = null,
-                worktemplatemodifieddate = now()
-            WHERE
-                id = ${id}
-                AND worktemplatesoplink IS NOT null
-        `,
-    ]);
-
-    const delta = result.reduce((acc, res) => acc + res.count, 0);
-    console.log(
-      `Applied ${delta} update(s) to Entity ${input.id} (${type}:${id})`,
-    );
-
-    if (input.items?.length) {
-      await saveChecklistResults(id, input.items);
-    }
-  } else {
-    // else: create
-    const result = await sql.begin(async tx => {
-      const r0 = await tx`
-        WITH inputs (customer, source, locale, auditable, sop, description, draft) AS (
-            VALUES (
-                (
-                    SELECT customerid
-                    FROM public.customer
-                    WHERE customeruuid = ${decodeGlobalId(input.customerId).id}
-                ),
-                ${input.name.value.value}::text,
-                (
-                    SELECT systagid
-                    FROM public.systag
-                    WHERE
-                        systagparentid = 2
-                        AND
-                        systagtype = ${input.name.value.locale}
-                ),
-                ${input.auditable?.enabled ?? false}::boolean,
-                nullif(${input.sop?.link.toString() ?? null}, '')::text,
-                nullif(${input.description?.value?.value ?? null}, '')::text,
-                ${input.draft ?? false}::boolean
-            )
-        ),
-
-        description AS (
-            INSERT INTO public.languagemaster (
-                languagemastercustomerid,
-                languagemastersource,
-                languagemastersourcelanguagetypeid
-            )
-            SELECT
-                inputs.customer,
-                inputs.description,
-                inputs.locale
-            FROM inputs
-            WHERE inputs.description IS NOT null
-            RETURNING languagemasterid AS id
-        ),
-
-        name AS (
-            INSERT INTO public.languagemaster (
-                languagemastercustomerid,
-                languagemastersource,
-                languagemastersourcelanguagetypeid
-            )
-            SELECT
-                customer,
-                source,
-                locale
-            FROM inputs
-            RETURNING languagemasterid AS id
-        ),
-
-        site AS (
-            SELECT locationid AS id
-            FROM public.location
-            INNER JOIN inputs
-                ON locationcustomerid = inputs.customer
-            WHERE locationistop = true
-            LIMIT 1
-        )
-
-        INSERT INTO public.worktemplate (
-            id,
-            worktemplateallowondemand,
-            worktemplatecustomerid,
-            worktemplatedescriptionid,
-            worktemplatedraft,
-            worktemplateisauditable,
-            worktemplatenameid,
-            worktemplatesiteid,
-            worktemplatesoplink,
-            worktemplateworkfrequencyid
-        )
-        SELECT
-            ${id},
-            true,
-            inputs.customer,
-            description.id,
-            inputs.draft,
-            inputs.auditable,
-            name.id,
-            site.id,
-            inputs.sop,
-            1404
-        FROM inputs, name, site
-        LEFT JOIN description ON true
-      `;
-
-      // Fix the hardcoded worktemplateworkfrequencyid we set in the last
-      // INSERT. Note that this is necessary because there is a circular
-      // dependency between worktemplate and workfrequency.
-      const r2 = await tx`
-        WITH frequency AS (
-            INSERT INTO public.workfrequency (
-                workfrequencycustomerid,
-                workfrequencytypeid,
-                workfrequencyvalue,
-                workfrequencyworktemplateid
-            )
-            SELECT
-                wt.worktemplatecustomerid,
-                740,
-                1,
-                wt.worktemplateid
-            FROM public.worktemplate AS wt
-            WHERE wt.id = ${id}
-            RETURNING workfrequencyid AS id
-        )
-
-        UPDATE public.worktemplate AS wt
-        SET
-            worktemplateworkfrequencyid = frequency.id,
-            worktemplatemodifieddate = now()
-        FROM frequency
-        WHERE wt.id = ${id}
-      `;
-
-      // Create the necessary next template rule for the On Demand frequency
-      // type.
-      const r3 = await tx`
-        INSERT INTO public.worktemplatenexttemplate (
-            worktemplatenexttemplateprevioustemplateid,
-            worktemplatenexttemplatenexttemplateid,
-            worktemplatenexttemplatecustomerid,
-            worktemplatenexttemplateviastatuschange,
-            worktemplatenexttemplateviastatuschangeid,
-            worktemplatenexttemplatesiteid,
-            worktemplatenexttemplatetypeid
-        )
-
-        SELECT
-            worktemplateid,
-            worktemplateid,
-            worktemplatecustomerid,
-            true,
-            707,
-            worktemplatesiteid,
-            811
-        FROM public.worktemplate
-        WHERE id = ${id}
-      `;
-
-      // Assign the correct template type: Checklist.
-      // These things are kinda like "marker components". They don't really mean
-      // a whole lot to the rest of the system, but are crucial on the frontend
-      // and in the datawarehouse at the moment.
-      const r4 = await tx`
-          INSERT INTO public.worktemplatetype (
-              worktemplatetypecustomerid,
-              worktemplatetypecustomeruuid,
-              worktemplatetypeworktemplateuuid,
-              worktemplatetypeworktemplateid,
-              worktemplatetypesystaguuid,
-              worktemplatetypesystagid
-          )
-          SELECT
-              c.customerid,
-              c.customeruuid,
-              wt.id,
-              wt.worktemplateid,
-              t.systaguuid,
-              t.systagid
-          FROM public.worktemplate AS wt
-          INNER JOIN public.customer AS c
-              ON wt.worktemplatecustomerid = c.customerid
-          INNER JOIN public.systag AS t
-              ON
-                  t.systagparentid = 882
-                  AND
-                  t.systagtype = 'Checklist'
-          WHERE wt.id = ${id}
-      `;
-
-      // Create the primary location result. This essentially maps to an
-      // Assignee component.
-      const r5 = await tx`
-        WITH inputs AS (
-            SELECT
-                worktemplateid,
-                worktemplatecustomerid,
-                worktemplatesiteid
-            FROM public.worktemplate
-            WHERE id = ${id}
-        ),
-
-        name AS (
-            INSERT INTO public.languagemaster (
-                languagemastercustomerid,
-                languagemastersource,
-                languagemastersourcelanguagetypeid
-            )
-            SELECT
-                inputs.worktemplatecustomerid,
-                'Location',
-                20
-            FROM inputs
-            RETURNING languagemasterid
-        ),
-
-        type AS (
-            SELECT
-                t.systagid AS type,
-                e.systagid AS reftype
-            FROM public.systag AS t, public.systag AS e
-            WHERE
-                (t.systagparentid, t.systagtype) = (699, 'Entity')
-                AND
-                (e.systagparentid, e.systagtype) = (849, 'Location')
-        ),
-
-        widget AS (
-            SELECT custagid AS type
-            FROM public.custag, inputs
-            WHERE
-                custagcustomerid = inputs.worktemplatecustomerid
-                AND custagsystagid = (
-                    SELECT systagid
-                    FROM public.systag
-                    WHERE
-                        systagparentid = 1
-                        AND systagtype = 'Widget Type'
-                )
-                AND custagtype = 'Location'
-            UNION
-            SELECT custagid AS type
-            FROM public.custag
-            WHERE
-                custagcustomerid = 0
-                AND custagsystagid = (
-                    SELECT systagid
-                    FROM public.systag
-                    WHERE
-                        systagparentid = 1
-                        AND systagtype = 'Widget Type'
-                )
-                AND custagtype = 'Location'
-            LIMIT 1
-        )
-
-        INSERT INTO public.workresult (
-            workresultcustomerid,
-            workresultdefaultvalue,
-            workresultentitytypeid,
-            workresultforaudit,
-            workresultfortask,
-            workresultisprimary,
-            workresultisrequired,
-            workresultlanguagemasterid,
-            workresultorder,
-            workresultsiteid,
-            workresultsoplink,
-            workresulttypeid,
-            workresultwidgetid,
-            workresultworktemplateid
-        )
-        SELECT
-            inputs.worktemplatecustomerid,
-            inputs.worktemplatesiteid::text,
-            type.reftype,
-            true,
-            true,
-            true,
-            false,
-            name.languagemasterid,
-            0,
-            inputs.worktemplatesiteid,
-            null,
-            type.type,
-            widget.type,
-            inputs.worktemplateid
-        FROM inputs, name, type, widget
-      `;
-
-      // Create the primary worker result. This essentially maps to an
-      // Assignee component.
-      const r6 = await tx`
-        WITH inputs AS (
-            SELECT
-                worktemplateid,
-                worktemplatecustomerid,
-                worktemplatesiteid
-            FROM public.worktemplate
-            WHERE id = ${id}
-        ),
-
-        name AS (
-            INSERT INTO public.languagemaster (
-                languagemastercustomerid,
-                languagemastersource,
-                languagemastersourcelanguagetypeid
-            )
-            SELECT
-                inputs.worktemplatecustomerid,
-                'Worker',
-                20
-            FROM inputs
-            RETURNING languagemasterid
-        ),
-
-        type AS (
-            SELECT
-                t.systagid AS type,
-                e.systagid AS reftype
-            FROM public.systag AS t, public.systag AS e
-            WHERE
-                (t.systagparentid, t.systagtype) = (699, 'Entity')
-                AND
-                (e.systagparentid, e.systagtype) = (849, 'Worker')
-        ),
-
-        widget AS (
-            SELECT custagid AS type
-            FROM public.custag, inputs
-            WHERE
-                custagcustomerid = inputs.worktemplatecustomerid
-                AND custagsystagid = (
-                    SELECT systagid
-                    FROM public.systag
-                    WHERE
-                        systagparentid = 1
-                        AND systagtype = 'Widget Type'
-                )
-                AND custagtype = 'Location'
-            UNION
-            SELECT custagid AS type
-            FROM public.custag
-            WHERE
-                custagcustomerid = 0
-                AND custagsystagid = (
-                    SELECT systagid
-                    FROM public.systag
-                    WHERE
-                        systagparentid = 1
-                        AND systagtype = 'Widget Type'
-                )
-                AND custagtype = 'Location'
-            LIMIT 1
-        )
-
-        INSERT INTO public.workresult (
-            workresultcustomerid,
-            workresultdefaultvalue,
-            workresultentitytypeid,
-            workresultforaudit,
-            workresultfortask,
-            workresultisprimary,
-            workresultisrequired,
-            workresultlanguagemasterid,
-            workresultorder,
-            workresultsiteid,
-            workresultsoplink,
-            workresulttypeid,
-            workresultwidgetid,
-            workresultworktemplateid
-        )
-        SELECT
-            inputs.worktemplatecustomerid,
-            null,
-            type.reftype,
-            true,
-            true,
-            true,
-            false,
-            name.languagemasterid,
-            0,
-            inputs.worktemplatesiteid,
-            null,
-            type.type,
-            widget.type,
-            inputs.worktemplateid
-        FROM inputs, name, type, widget
-      `;
-
-      // Create a template constraint for (primary) location.
-      // This is necessary for the rules engine to correctly (re)spawn instances.
-      const r7 = await tx`
-        INSERT INTO public.worktemplateconstraint (
-            worktemplateconstraintcustomerid,
-            worktemplateconstraintcustomeruuid,
-            worktemplateconstrainttemplateid,
-            worktemplateconstraintconstraintid,
-            worktemplateconstraintconstrainedtypeid
-        )
-
-        SELECT
-            wt.worktemplatecustomerid,
-            c.customeruuid,
-            wt.id,
-            ct.custaguuid,
-            cd.systaguuid
-        FROM
-            public.worktemplate AS wt,
-            public.customer AS c,
-            public.location AS l,
-            public.custag AS ct,
-            public.systag AS cd
-        WHERE
-            wt.id = ${id}
-            AND
-            wt.worktemplatecustomerid = c.customerid
-            AND
-            wt.worktemplatesiteid = l.locationid
-            AND
-            l.locationcategoryid = ct.custagid
-            AND (
-                cd.systagparentid = 849
-                AND
-                cd.systagtype = 'Location'
-            )
-      `;
-
-      // Create a Time At Task result.
-      const r8 = await tx`
-        WITH inputs AS (
-            SELECT
-                worktemplateid,
-                worktemplatecustomerid,
-                worktemplatesiteid
-            FROM public.worktemplate
-            WHERE id = ${id}
-        ),
-
-        name (languagemasterid) AS (
-            VALUES (4367::bigint)
-        ),
-
-        -- TODO: Eventually switch this to 'Duration'?
-        type AS (
-            SELECT t.systagid AS type
-            FROM public.systag AS t
-            WHERE
-                (t.systagparentid, t.systagtype) = (699, 'Time At Task')
-        ),
-
-        widget AS (
-            SELECT custagid AS type
-            FROM public.custag, inputs
-            WHERE
-                custagcustomerid = inputs.worktemplatecustomerid
-                AND custagsystagid = (
-                    SELECT systagid
-                    FROM public.systag
-                    WHERE
-                        systagparentid = 1
-                        AND systagtype = 'Widget Type'
-                )
-                AND custagtype = 'Time At Task'
-            UNION
-            SELECT custagid AS type
-            FROM public.custag
-            WHERE
-                custagcustomerid = 0
-                AND custagsystagid = (
-                    SELECT systagid
-                    FROM public.systag
-                    WHERE
-                        systagparentid = 1
-                        AND systagtype = 'Widget Type'
-                )
-                AND custagtype = 'Time At Task'
-            LIMIT 1
-        )
-
-        INSERT INTO public.workresult (
-            workresultcustomerid,
-            workresultforaudit,
-            workresultfortask,
-            workresultisprimary,
-            workresultisvisible,
-            workresultlanguagemasterid,
-            workresultorder,
-            workresultsiteid,
-            workresulttypeid,
-            workresultwidgetid,
-            workresultworktemplateid
-        )
-        SELECT
-            inputs.worktemplatecustomerid,
-            false,
-            true,
-            true,
-            false,
-            name.languagemasterid,
-            999,
-            inputs.worktemplatesiteid,
-            type.type,
-            widget.type,
-            inputs.worktemplateid
-        FROM inputs, name, type, widget
-      `;
-
-      return [r0, r2, r3, r4, r5, r6, r7, r8];
-    });
-
-    const delta = result.reduce((acc, res) => acc + res.count, 0);
-    console.log(`Created Entity ${input.id} by way of ${delta} operation(s)`);
-
-    if (input.items?.length) {
-      await saveChecklistResults(id, input.items);
-    }
-
-    // Create an Open instance of the newly created Checklist template.
-    const r = await sql.begin(async sql => {
+    const [node, delta] = await sql.begin(async sql => {
       await setCurrentIdentity(sql, ctx);
-      return await copyFromWorkTemplate(sql, id, {}, ctx);
+
+      let count = 0;
+
+      // First, we do all updates that don't have side effects. Side effects are
+      // things like "insantiate on publish", "reap on delete", etc. Updates to
+      // a template's description, name and sop are side effect free. Changing
+      // whether a template is auditable, deleting a template, and publishing a
+      // template (or any of its results) are operations that involve side
+      // effects.
+      const r = await sql`
+        with input (auditable, sop) as (
+          values (
+              ${input.auditable?.enabled ?? false}::boolean,
+              ${input.sop?.link.toString() ?? null}::text
+          )
+        )
+
+        update public.worktemplate
+        set worktemplateisauditable = input.auditable,
+            worktemplatesoplink = input.sop,
+            worktemplatemodifieddate = now(),
+            worktemplatemodifiedby = auth.current_identity(worktemplatecustomerid, current_setting('user.id'))
+        from input
+        where id = ${existing}
+          and (worktemplateisauditable, worktemplatesoplink)
+              is distinct from (input.auditable, input.sop)
+        returning 1
+      `;
+      count += r.length;
+
+      // Next we do relational updates.
+      if (input.description) {
+        // Upsert description.
+        const r = await sql`
+          with
+            input as (
+              select
+                  auth.current_identity(worktemplatecustomerid, ${ctx.auth.userId}) as actor,
+                  systag.systagid as locale,
+                  worktemplate.worktemplatecustomerid as owner,
+                  worktemplate.worktemplateid as template,
+                  ${input.description.value.value}::text as value
+              from public.systag, public.worktemplate
+              where systag.systagparentid = 2
+                and systag.systagtype = current_setting('user.locale')
+                and worktemplate.id = ${existing}
+            ),
+
+            description as (
+              select *
+              from public.workdescription
+              where id = ${input.description.id ?? null}
+            ),
+
+            ins_content as (
+              insert into public.languagemaster (
+                  languagemastercustomerid,
+                  languagemastersource,
+                  languagemastersourcelanguagetypeid,
+                  languagemastermodifiedby
+              )
+              select
+                  input.owner,
+                  input.value,
+                  input.locale,
+                  input.actor
+              from input
+              where not exists (select 1 from description)
+              returning
+                  languagemasterid as _id,
+                  languagemastersourcelanguagetypeid as _type
+            ),
+
+            ins_desc as (
+              insert into public.workdescription (
+                  workdescriptioncustomerid,
+                  workdescriptionworktemplateid,
+                  workdescriptionlanguagemasterid,
+                  workdescriptionlanguagetypeid,
+                  workdescriptionmodifiedby
+              )
+              select
+                  input.owner,
+                  input.template,
+                  ins_content._id,
+                  ins_content._type,
+                  input.actor
+              from input, ins_content
+              returning 1
+            ),
+
+            upd_master as (
+              update public.languagemaster
+              set languagemastersource = input.value,
+                  languagemastersourcelanguagetypeid = input.locale,
+                  languagemasterstatus = 'NEEDS_COMPLETE_RETRANSLATION',
+                  languagemastermodifieddate = now(),
+                  languagemastermodifiedby = input.actor
+              from input, description
+              where languagemasterid = description.workdescriptionlanguagemasterid
+                and (languagemastersource, languagemastersourcelanguagetypeid)
+                    is distinct from (input.value, input.locale)
+              returning 1
+            ),
+
+            upd_trans as (
+              update public.languagetranslations
+              set languagetranslationvalue = input.value,
+                  languagetranslationmodifieddate = now(),
+                  languagetranslationmodifiedby = input.actor
+              from input, description
+              where languagetranslationmasterid = description.workdescriptionlanguagemasterid
+                and (languagetranslationvalue, languagetranslationtypeid)
+                    is distinct from (input.value, input.locale)
+              returning 1
+            )
+
+          select 1 from ins_desc
+          union all
+          select 1 from ins_content
+          union all
+          select 1 from upd_master
+          union all
+          select 1 from upd_trans
+        `;
+        count += r.length;
+      } else {
+        // Remove description.
+        const r = await sql`
+          with input as (
+              select
+                  auth.current_identity(worktemplatecustomerid, ${ctx.auth.userId}) as actor,
+                  worktemplate.worktemplateid as template
+              from public.worktemplate
+              where worktemplate.id = ${existing}
+          )
+
+          update public.workdescription
+          set workdescriptionenddate = now(),
+              workdescriptionmodifieddate = now(),
+              workdescriptionmodifiedby = input.actor
+          from input
+          where workdescriptionworktemplateid = input.template
+            and workdescriptionworkresultid is null
+          returning 1
+        `;
+        count += r.length;
+      }
+
+      if (input.name) {
+        // Update name.
+        const r = await sql`
+          with
+            input as (
+              select ${input.name.value.value}::text as name, systagid as locale
+              from public.systag
+              where systagparentid = 2
+                and systagtype = current_setting('user.locale')
+            ),
+
+            master as (
+              select languagemasterid as id
+              from public.languagemaster
+              where languagemasterid in (
+                  select worktemplatenameid
+                  from public.worktemplate
+                  where id = ${existing}
+              )
+            ),
+
+            upd_trans as (
+              update public.languagetranslations
+              set languagetranslationvalue = input.name,
+                  languagetranslationmodifieddate = now()
+              from input, master
+              where languagetranslationmasterid = master.id
+                and languagetranslationtypeid = input.locale
+                and languagetranslationvalue is distinct from input.name
+              returning 1
+            ),
+
+            upd_master as (
+              update public.languagemaster
+              set languagemastersource = input.name,
+                  languagemastersourcelanguagetypeid = input.locale,
+                  languagemasterstatus = 'NEEDS_COMPLETE_RETRANSLATION',
+                  languagemastermodifieddate = now()
+              from input, master
+              where languagemasterid = master.id
+                and (languagemastersource, languagemastersourcelanguagetypeid) is distinct from (input.name, input.locale)
+              returning 1
+            )
+
+          select * from upd_master
+          union all
+          select * from upd_trans
+        `;
+        count += r.length;
+      }
+
+      // Finally, fields.
+      if (fields.length) {
+        const r = await sql`
+          with
+            input as (
+              select
+                  auth.current_identity(customerid, current_setting('user.id')) as actor,
+                  systagtype as language,
+                  customeruuid as owner,
+                  worktemplate.id as template
+              from
+                  public.customer,
+                  public.systag,
+                  public.worktemplate
+              where
+                  customer.customeruuid = ${customerId}
+                  and systag.systagparentid = 2
+                    and systag.systagtype = current_setting('user.locale')
+                  and worktemplate.id = ${existing}
+            ),
+
+            field (id, f_name, f_type, f_order, f_desc, f_widget) as (
+              values ${sql(fields)}
+            )
+
+          select 1
+          from
+            input,
+            field,
+            legacy0.ensure_field_t(
+                customer_id := input.owner,
+                language_type := input.language,
+                template_id := input.template,
+                field_description := field.f_desc,
+                field_id := field.id,
+                field_is_draft := false,
+                field_is_primary := false,
+                field_is_required := false,
+                field_name := field.f_name,
+                field_order := field.f_order::integer,
+                field_reference_type := null,
+                field_type := field.f_type,
+                field_value := null,
+                field_widget := field.f_widget,
+                modified_by := input.actor
+            ) as t
+          ;
+        `;
+        count += r.length;
+      }
+
+      return [encodeGlobalId({ type: "worktemplate", id: existing }), count];
     });
-    console.debug(`Created Open instance? ${r.ok ? "yes" : "no"}`);
+
+    console.debug(`Updated Checklist by way of ${delta} operations(s).`);
+
+    return {
+      cursor: node,
+      node: { id: node } as Checklist,
+    };
   }
 
+  // else: create
+  const fields: [string, string, number, string, string][] = mapOrElse(
+    //           name  , type  , order , desc  , widget
+    input.items,
+    items =>
+      items
+        // We don't support nested templates at the moment.
+        .filter(item => !!item.result)
+        .map(({ result }) => [
+          // name
+          result.name.value.value,
+          // type
+          assertNonNull(
+            map(result.widget, resultTypeFromInput),
+            "unsupported result type",
+          ),
+          // order
+          result.order,
+          // desc
+          (result.description?.value ?? null) as unknown as string,
+          // widget
+          map(result.widget, widgetTypeFromInput) as string,
+        ]),
+    [],
+  );
+  const [node, delta] = await sql.begin(async sql => {
+    await setCurrentIdentity(sql, ctx);
+
+    let count = 0;
+    const rows = await sql`
+      select
+          auth.current_identity(customerid, current_setting('user.id')) as actor,
+          systagtype as language,
+          customeruuid as owner,
+          t.id as template
+      from
+        public.customer,
+        public.systag,
+        legacy0.create_task_t(
+            customer_id := customeruuid,
+            language_type := systagtype,
+            task_name := ${input.name.value.value},
+            task_parent_id := (
+                select locationuuid
+                from public.location
+                where locationcustomerid = customerid
+                  and locationistop = true
+                limit 1
+            ),
+            modified_by := auth.current_identity(customerid, current_setting('user.id'))
+        ) as t
+      where customeruuid = ${customerId}
+        and systagparentid = 2 and systagtype = current_setting('user.locale')
+      ;
+    `;
+    assert(rows.length === 1);
+    count += 1;
+
+    const { actor, language, owner, template } = rows[0];
+
+    {
+      const r = await sql`
+        select *
+        from legacy0.create_template_type(
+            template_id := ${template},
+            systag_id := (
+                select systaguuid
+                from public.systag
+                where systagparentid = 882 and systagtype = 'Checklist'
+            ),
+            modified_by := ${actor}
+        );
+      `;
+      count += r.length;
+    }
+
+    {
+      const r = await sql`
+        select *
+        from legacy0.create_instantiation_rule(
+            prev_template_id := ${template},
+            next_template_id := ${template},
+            state_condition := 'In Progress',
+            type_tag := 'On Demand',
+            modified_by := ${actor}
+        );
+      `;
+      count += r.length;
+    }
+
+    if (input.auditable) {
+      const r = await sql`
+        update public.worktemplate
+        set worktemplateisauditable = ${input.auditable.enabled}
+        where id = ${template}
+          and worktemplateisauditable is distinct from ${input.auditable.enabled};
+      `;
+      count += r.count;
+    }
+
+    if (input.description) {
+      const r = await sql`
+        with ins_content as (
+            select *
+            from public.create_name(
+                customer_id := ${owner},
+                modified_by := ${actor},
+                source_language := ${input.description.value.locale ?? ctx.req.i18n.language},
+                source_text := ${input.description.value.value}
+            )
+        )
+
+        insert into public.workdescription (
+            workdescriptioncustomerid,
+            workdescriptionworktemplateid,
+            workdescriptionlanguagemasterid,
+            workdescriptionlanguagetypeid,
+            workdescriptionmodifiedby
+        )
+        select
+            worktemplatecustomerid,
+            worktemplateid,
+            ins_content._id,
+            ins_content._type,
+            ${actor}
+        from ins_content, public.worktemplate
+        where worktemplate.id = ${template}
+      `;
+      count += r.count;
+    }
+
+    if (input.sop) {
+      const r = await sql`
+        update public.worktemplate
+        set worktemplatesoplink = ${input.sop.link.toString()}
+        where id = ${template};
+      `;
+      count += r.count;
+    }
+
+    if (fields.length) {
+      const r = await sql`
+        with field (f_name, f_type, f_order, f_desc, f_widget) as (
+            values ${sql(fields)}
+        )
+
+        select t.*
+        from field, legacy0.create_field_t(
+            customer_id := ${owner},
+            language_type := ${language},
+            template_id := ${template},
+            field_description := field.f_desc,
+            field_is_draft := false,
+            field_is_primary := false,
+            field_is_required := false,
+            field_name := field.f_name,
+            field_order := field.f_order::integer,
+            field_reference_type := null,
+            field_type := field.f_type,
+            field_value := null,
+            field_widget := field.f_widget,
+            modified_by := ${actor}
+        ) as t;
+      `;
+      count += r.length;
+    }
+
+    return [encodeGlobalId({ type: "worktemplate", id: template }), count];
+  });
+
+  console.debug(`Created Checklist by way of ${delta} operation(s)`);
+
   return {
-    cursor: input.id.toString(),
-    node: { id: input.id } as Checklist,
+    cursor: node,
+    node: { id: node } as Checklist,
   };
 };
 
-async function saveChecklistResults(
-  parent: string,
-  input: NonNullable<ChecklistInput["items"]>,
-) {
-  const current = await sql<{ id: ID }[]>`
-    SELECT encode(('workresult:' || id)::bytea, 'base64') AS id
-    FROM public.workresult
-    WHERE
-        workresultworktemplateid = (
-            SELECT worktemplateid
-            FROM public.worktemplate
-            WHERE id = ${parent}
-        )
-  `.then(rows => new Set(rows.map(r => r.id)));
-
-  const actions = input.reduce((acc, inp) => {
-    if ("checklist" in inp) return acc; // not yet supported
-    const exists = current.has(inp.result.id);
-    if (!acc.has(exists)) {
-      acc.set(exists, []);
+function resultTypeFromInput(input: WidgetInput) {
+  switch (true) {
+    case "boolean" in input:
+      return "Boolean";
+    case "checkbox" in input:
+      return "Boolean";
+    case "clicker" in input:
+      return "Number";
+    case "duration" in input:
+      return "Duration";
+    case "multiline" in input:
+      return "String";
+    case "number" in input:
+      return "Number";
+    case "reference" in input:
+      // Not supported at the moment.
+      return null;
+    case "section" in input:
+      return "String";
+    case "sentiment" in input:
+      return "Number";
+    case "string" in input:
+      return "String";
+    case "temporal" in input:
+      return "Date";
+    default: {
+      const _: never = input;
+      throw "invariant violated";
     }
-    acc.get(exists)?.push(inp);
-    return acc;
-  }, new Map<boolean, ChecklistItemInput[]>());
+  }
+}
 
-  const result = await sql.begin(tx =>
-    [...actions.entries()].flatMap(([exists, items]) =>
-      exists
-        ? items.flatMap(i =>
-            i.result
-              ? [
-                  // update
-                  i.result.auditable
-                    ? tx`
-                        WITH inputs (auditable) AS (
-                            VALUES (
-                                ${i.result.auditable.enabled}::boolean
-                            )
-                        )
-
-                        UPDATE public.workresult
-                        SET
-                            workresultforaudit = inputs.auditable,
-                            workresultmodifieddate = now()
-                        WHERE
-                            id = ${decodeGlobalId(i.result.id).id}
-                            AND workresultforaudit IS DISTINCT FROM inputs.auditable
-                    `
-                    : tx`
-                        UPDATE public.workresult
-                        SET
-                            workresultforaudit = false,
-                            workresultmodifieddate = now()
-                        WHERE
-                            id = ${decodeGlobalId(i.result.id).id}
-                            AND workresultforaudit = true
-                    `,
-                  // You can't go back into draft.
-                  ...(i.result.draft === true
-                    ? []
-                    : // You can only come out of draft.
-                      // Keller said so.
-                      [
-                        tx`
-                          update public.workresult
-                          set workresultdraft = false,
-                              workresultmodifieddate = now()
-                          where
-                              id = ${decodeGlobalId(i.result.id).id}
-                              and workresultdraft = true
-                        `,
-                      ]),
-                  tx`
-                    WITH
-                        inputs AS (
-                            SELECT
-                                ${i.result.name.value.value}::text AS name,
-                                systagid AS locale
-                            FROM public.systag
-                            WHERE
-                                systagparentid = 2
-                                AND systagtype = ${i.result.name.value.locale}
-                        ),
-
-                        master AS (
-                            SELECT languagemasterid AS id
-                            FROM public.languagemaster
-                            WHERE languagemasteruuid = ${decodeGlobalId(i.result.name.id).id}
-                        ),
-
-                        trans AS (
-                            UPDATE public.languagetranslations
-                            SET
-                                languagetranslationvalue = inputs.name,
-                                languagetranslationmodifieddate = now()
-                            FROM inputs, master
-                            WHERE
-                                languagetranslationmasterid = master.id
-                                AND languagetranslationtypeid = inputs.locale
-                                AND languagetranslationvalue IS DISTINCT FROM inputs.name
-                        )
-
-                    UPDATE public.languagemaster
-                    SET
-                        languagemastersource = inputs.name,
-                        languagemastersourcelanguagetypeid = inputs.locale,
-                        languagemasterstatus = 'NEEDS_COMPLETE_RETRANSLATION',
-                        languagemastermodifieddate = now()
-                    FROM inputs, master
-                    WHERE
-                        languagemasterid = master.id
-                        AND (languagemastersource, languagemastersourcelanguagetypeid) IS DISTINCT FROM (inputs.name, inputs.locale)
-                  `,
-                  tx`
-                      WITH inputs (required) AS (
-                          VALUES (
-                              ${i.result.required ?? false}::boolean
-                          )
-                      )
-
-                      UPDATE public.workresult
-                      SET
-                          workresultisrequired = inputs.required,
-                          workresultmodifieddate = now()
-                      FROM inputs
-                      WHERE
-                          id = ${decodeGlobalId(i.result.id).id}
-                          AND workresultisrequired IS DISTINCT FROM inputs.required
-                  `,
-                  tx`
-                      WITH inputs (ordinality) AS (
-                          VALUES (
-                              ${i.result.order}::integer
-                          )
-                      )
-
-                      UPDATE public.workresult
-                      SET 
-                          workresultorder = inputs.ordinality,
-                          workresultmodifieddate = now()
-                      FROM inputs
-                      WHERE
-                          id = ${decodeGlobalId(i.result.id).id}
-                          AND workresultorder IS DISTINCT FROM inputs.ordinality
-                    `,
-                  tx`
-                        WITH inputs (type, widget, reftype, value) AS (
-                            VALUES (
-                              ${(() => {
-                                switch (true) {
-                                  case "boolean" in i.result.widget:
-                                    return "Boolean";
-                                  case "checkbox" in i.result.widget:
-                                    return "Boolean";
-                                  case "clicker" in i.result.widget:
-                                    return "Number";
-                                  case "duration" in i.result.widget:
-                                    return "Duration";
-                                  case "multiline" in i.result.widget:
-                                    return "String";
-                                  case "number" in i.result.widget:
-                                    return "Number";
-                                  case "reference" in i.result.widget:
-                                    return "Entity";
-                                  case "section" in i.result.widget:
-                                    return "String";
-                                  case "sentiment" in i.result.widget:
-                                    return "Number";
-                                  case "string" in i.result.widget:
-                                    return "String";
-                                  case "temporal" in i.result.widget:
-                                    return "Date";
-                                  default: {
-                                    const _: never = i.result.widget;
-                                    throw "invariant violated";
-                                  }
-                                }
-                              })()}::text,
-                              ${(() => {
-                                switch (true) {
-                                  case "boolean" in i.result.widget:
-                                    return "Boolean";
-                                  case "checkbox" in i.result.widget:
-                                    return "Checkbox";
-                                  case "clicker" in i.result.widget:
-                                    return "Clicker";
-                                  case "duration" in i.result.widget:
-                                    return "Duration";
-                                  case "multiline" in i.result.widget:
-                                    return "Text";
-                                  case "number" in i.result.widget:
-                                    return "Number";
-                                  case "reference" in i.result.widget:
-                                    // biome-ignore lint/style/noNonNullAssertion:
-                                    return i.result.widget.reference!
-                                      .possibleTypes[0];
-                                  case "section" in i.result.widget:
-                                    return "Section";
-                                  case "sentiment" in i.result.widget:
-                                    return "Number";
-                                  case "string" in i.result.widget:
-                                    return "String";
-                                  case "temporal" in i.result.widget:
-                                    return "Date";
-                                  default: {
-                                    const _: never = i.result.widget;
-                                    throw "invariant violated";
-                                  }
-                                }
-                              })()}::text,
-                              ${
-                                i.result.widget.reference?.value
-                                  ? match(
-                                      decodeGlobalId(
-                                        i.result.widget.reference.value,
-                                      ).type,
-                                    )
-                                      .with("location", () => "Location")
-                                      .with("worker", () => "Worker")
-                                      .otherwise(() => null)
-                                  : null
-                              }::text,
-                              ${(() => {
-                                switch (true) {
-                                  case "boolean" in i.result.widget:
-                                    return (
-                                      i.result.widget.boolean?.value ?? null
-                                    );
-                                  case "checkbox" in i.result.widget:
-                                    return (
-                                      i.result.widget.checkbox?.value ?? null
-                                    );
-                                  case "clicker" in i.result.widget:
-                                    return (
-                                      i.result.widget.clicker?.value ?? null
-                                    );
-                                  case "duration" in i.result.widget:
-                                    return (
-                                      i.result.widget.duration?.value ?? null
-                                    );
-                                  case "multiline" in i.result.widget:
-                                    return (
-                                      i.result.widget.multiline?.value ?? null
-                                    );
-                                  case "number" in i.result.widget:
-                                    return (
-                                      i.result.widget.number?.value ?? null
-                                    );
-                                  case "reference" in i.result.widget: {
-                                    return i.result.widget.reference?.value
-                                      ? match(
-                                          decodeGlobalId(
-                                            i.result.widget.reference.value,
-                                          ),
-                                        )
-                                          .with(
-                                            {
-                                              type: "location",
-                                              id: P.string,
-                                            },
-                                            ({ id }) => sql`(
-                                                SELECT locationid
-                                                FROM public.location
-                                                WHERE locationuuid = ${id}
-                                            )`,
-                                          )
-                                          .with(
-                                            { type: "worker", id: P.string },
-                                            ({ id }) => sql`(
-                                                SELECT workerinstanceid
-                                                FROM public.workerinstance
-                                                WHERE workerinstanceuuid = ${id}
-                                            )`,
-                                          )
-                                          .otherwise(() => null)
-                                      : null;
-                                  }
-                                  case "section" in i.result.widget:
-                                    return (
-                                      i.result.widget.section?.value ?? null
-                                    );
-                                  case "sentiment" in i.result.widget:
-                                    return (
-                                      i.result.widget.sentiment?.value ?? null
-                                    );
-                                  case "string" in i.result.widget:
-                                    return (
-                                      i.result.widget.string?.value ?? null
-                                    );
-                                  case "temporal" in i.result.widget:
-                                    return null;
-                                  default: {
-                                    const _: never = i.result.widget;
-                                    throw "invariant violated";
-                                  }
-                                }
-                              })()}::text
-                            )
-                        ),
-
-                        type AS (
-                            SELECT
-                                t.systagid AS type,
-                                r.systagid AS reftype
-                            FROM inputs
-                            INNER JOIN public.systag AS t
-                                ON
-                                    t.systagparentid = 699
-                                    AND t.systagtype = inputs.type
-                            LEFT JOIN public.systag AS r
-                                ON
-                                    r.systagparentid = 849
-                                    AND r.systagtype = inputs.reftype
-                        )
-
-                        UPDATE public.workresult AS wr
-                        SET
-                            workresultdefaultvalue = inputs.value,
-                            workresultmodifieddate = now()
-                        FROM inputs, type
-                        WHERE
-                            wr.id = ${decodeGlobalId(i.result.id).id}
-                            AND wr.workresultdefaultvalue IS DISTINCT FROM inputs.value
-                    `,
-                ]
-              : [],
-          )
-        : items.flatMap(i =>
-            i.result
-              ? [
-                  // create
-                  tx`
-                    WITH p AS (
-                        SELECT
-                            worktemplateid AS id,
-                            worktemplatecustomerid AS customer,
-                            worktemplatesiteid AS location
-                        FROM public.worktemplate
-                        WHERE id = ${parent}
-                    ),
-
-                    t AS (
-                        SELECT
-                            t.systagid AS type,
-                            r.systagid AS entity
-                        FROM public.systag AS t
-                        LEFT JOIN public.systag AS r
-                            ON
-                                r.systagparentid = 849
-                                AND r.systagtype = ${match(
-                                  i.result.widget.reference?.possibleTypes.at(
-                                    0,
-                                  ),
-                                )
-                                  .with("Location", () => "Location")
-                                  .with("Worker", () => "Worker")
-                                  .otherwise(() => null)}::text
-                        WHERE
-                            t.systagparentid = 699
-                            AND t.systagtype = ${(() => {
-                              switch (true) {
-                                case "boolean" in i.result.widget:
-                                  return "Boolean";
-                                case "checkbox" in i.result.widget:
-                                  return "Boolean";
-                                case "clicker" in i.result.widget:
-                                  return "Number";
-                                case "duration" in i.result.widget:
-                                  return "Duration";
-                                case "multiline" in i.result.widget:
-                                  return "String";
-                                case "number" in i.result.widget:
-                                  return "Number";
-                                case "reference" in i.result.widget:
-                                  return "Entity";
-                                case "section" in i.result.widget:
-                                  return "String";
-                                case "sentiment" in i.result.widget:
-                                  return "Number";
-                                case "string" in i.result.widget:
-                                  return "String";
-                                case "temporal" in i.result.widget:
-                                  return "Date";
-                                default: {
-                                  const _: never = i.result.widget;
-                                  throw "invariant violated";
-                                }
-                              }
-                            })()}
-                    ),
-
-                    w AS (
-                        SELECT custagid AS type
-                        FROM public.custag, p
-                        WHERE
-                            custagcustomerid = p.customer
-                            AND custagsystagid = (
-                                SELECT systagid
-                                FROM public.systag
-                                WHERE
-                                    systagparentid = 1
-                                    AND systagtype = 'Widget Type'
-                            )
-                            AND custagtype = ${(() => {
-                              switch (true) {
-                                case "boolean" in i.result.widget:
-                                  return "Boolean";
-                                case "checkbox" in i.result.widget:
-                                  return "Checkbox";
-                                case "section" in i.result.widget:
-                                  return "Section";
-                                case "clicker" in i.result.widget:
-                                  return "Clicker";
-                                case "duration" in i.result.widget:
-                                  return "Duration";
-                                case "multiline" in i.result.widget:
-                                  return "Text";
-                                case "number" in i.result.widget:
-                                  return "Number";
-                                case "reference" in i.result.widget:
-                                  // biome-ignore lint/style/noNonNullAssertion:
-                                  return i.result.widget.reference!
-                                    .possibleTypes[0];
-                                case "sentiment" in i.result.widget:
-                                  return "Sentiment";
-                                case "string" in i.result.widget:
-                                  return "String";
-                                case "temporal" in i.result.widget:
-                                  return "Date";
-                                default: {
-                                  const _: never = i.result.widget;
-                                  throw "invariant violated";
-                                }
-                              }
-                            })()}
-                        UNION
-                        SELECT custagid AS type
-                        FROM public.custag
-                        WHERE
-                            custagcustomerid = 0
-                            AND custagsystagid = (
-                                SELECT systagid
-                                FROM public.systag
-                                WHERE
-                                    systagparentid = 1
-                                    AND systagtype = 'Widget Type'
-                            )
-                            AND custagtype = ${(() => {
-                              switch (true) {
-                                case "boolean" in i.result.widget:
-                                  return "Boolean";
-                                case "checkbox" in i.result.widget:
-                                  return "Checkbox";
-                                case "section" in i.result.widget:
-                                  return "Section";
-                                case "clicker" in i.result.widget:
-                                  return "Clicker";
-                                case "duration" in i.result.widget:
-                                  return "Duration";
-                                case "multiline" in i.result.widget:
-                                  return "Text";
-                                case "number" in i.result.widget:
-                                  return "Number";
-                                case "reference" in i.result.widget:
-                                  // biome-ignore lint/style/noNonNullAssertion:
-                                  return i.result.widget.reference!
-                                    .possibleTypes[0];
-                                case "sentiment" in i.result.widget:
-                                  return "Sentiment";
-                                case "string" in i.result.widget:
-                                  return "String";
-                                case "temporal" in i.result.widget:
-                                  return "Date";
-                                default: {
-                                  const _: never = i.result.widget;
-                                  throw "invariant violated";
-                                }
-                              }
-                            })()}
-                        LIMIT 1
-                    ),
-
-                    v (value) AS (
-                        VALUES (
-                            ${(() => {
-                              switch (true) {
-                                case "boolean" in i.result.widget:
-                                  return i.result.widget.boolean?.value ?? null;
-                                case "checkbox" in i.result.widget:
-                                  return (
-                                    i.result.widget.checkbox?.value ?? null
-                                  );
-                                case "section" in i.result.widget:
-                                  return i.result.widget.section?.value ?? null;
-                                case "clicker" in i.result.widget:
-                                  return i.result.widget.clicker?.value ?? null;
-                                case "duration" in i.result.widget:
-                                  return (
-                                    i.result.widget.duration?.value ?? null
-                                  );
-                                case "multiline" in i.result.widget:
-                                  return (
-                                    i.result.widget.multiline?.value ?? null
-                                  );
-                                case "number" in i.result.widget:
-                                  return i.result.widget.number?.value ?? null;
-                                case "reference" in i.result.widget: {
-                                  return i.result.widget.reference?.value
-                                    ? match(
-                                        decodeGlobalId(
-                                          i.result.widget.reference.value,
-                                        ),
-                                      )
-                                        .with(
-                                          {
-                                            type: "location",
-                                            id: P.string,
-                                          },
-                                          ({ id }) => sql`(
-                                              SELECT locationid::text
-                                              FROM public.location
-                                              WHERE locationuuid = ${id}
-                                          )`,
-                                        )
-                                        .with(
-                                          { type: "worker", id: P.string },
-                                          ({ id }) => sql`(
-                                              SELECT workerinstanceid::text
-                                              FROM public.workerinstance
-                                              WHERE workerinstanceuuid = ${id}
-                                          )`,
-                                        )
-                                        .otherwise(() => null)
-                                    : null;
-                                }
-                                case "sentiment" in i.result.widget:
-                                  return (
-                                    i.result.widget.sentiment?.value ?? null
-                                  );
-                                case "string" in i.result.widget:
-                                  return i.result.widget.string?.value ?? null;
-                                case "temporal" in i.result.widget:
-                                  return null;
-                                default: {
-                                  const _: never = i.result.widget;
-                                  throw "invariant violated";
-                                }
-                              }
-                            })()}::text
-                        )
-                    ),
-
-                    n AS (
-                        INSERT INTO public.languagemaster (
-                            languagemastercustomerid,
-                            languagemastersource,
-                            languagemastersourcelanguagetypeid
-                        )
-                        SELECT
-                            p.customer,
-                            ${i.result.name.value.value}::text,
-                            locale.systagid
-                        FROM p, public.systag AS locale
-                        WHERE
-                            locale.systagparentid = 2
-                            AND locale.systagtype = ${i.result.name.value.locale}
-                        RETURNING languagemasterid AS id
-                    ),
-
-                    a (sop) AS (
-                        VALUES (
-                          null::text
-                        )
-                    ),
-
-                    c (auditable, required) AS (
-                        VALUES (
-                            ${i.result.auditable?.enabled ?? false}::boolean,
-                            ${i.result.required ?? false}::boolean
-                        )
-                    )
-
-                    INSERT INTO public.workresult (
-                        workresultcustomerid,
-                        workresultdefaultvalue,
-                        workresultdraft,
-                        workresultentitytypeid,
-                        workresultforaudit,
-                        workresultfortask,
-                        workresultisrequired,
-                        workresultlanguagemasterid,
-                        workresultorder,
-                        workresultsiteid,
-                        workresultsoplink,
-                        workresulttypeid,
-                        workresultwidgetid,
-                        workresultworktemplateid
-                    )
-                    SELECT
-                        p.customer,
-                        v.value,
-                        ${i.result.draft ?? false},
-                        t.entity,
-                        c.auditable,
-                        true,
-                        c.required,
-                        n.id,
-                        ${i.result.order},
-                        p.location,
-                        a.sop,
-                        t.type,
-                        w.type,
-                        p.id
-                    FROM p, a, c, n, t, v, w
-                  `,
-                ]
-              : [],
-          ),
-    ),
-  );
-
-  const delta = result?.reduce((acc, res) => acc + res.count, 0);
-  console.log(`Applied ${delta} update(s) to nested Entities`);
+function widgetTypeFromInput(input: WidgetInput) {
+  switch (true) {
+    case "boolean" in input:
+      return "Boolean";
+    case "checkbox" in input:
+      return "Checkbox";
+    case "clicker" in input:
+      return "Clicker";
+    case "duration" in input:
+      return "Duration";
+    case "multiline" in input:
+      return "Text";
+    case "number" in input:
+      return "Number";
+    case "reference" in input:
+      // Not supported at the moment.
+      return null;
+    case "section" in input:
+      return "Section";
+    case "sentiment" in input:
+      return "Sentiment";
+    case "string" in input:
+      return "String";
+    case "temporal" in input:
+      return "Date";
+    default: {
+      const _: never = input;
+      throw "invariant violated";
+    }
+  }
 }

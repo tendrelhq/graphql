@@ -213,7 +213,12 @@ input CreateLocationInput {
   name: String!
   parent: ID!
   scanCode: String
-  timeZone: String!
+  """
+  If not specified, the time zone will be derived from the parent (when the
+  parent is a Location). This is most notably *not* the case when the parent is
+  a Customer.
+  """
+  timeZone: String
 }
 
 input DeleteNodeOperation {

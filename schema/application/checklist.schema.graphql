@@ -113,7 +113,7 @@ type ChecklistChain {
 }
 
 input ChecklistInput {
-  id: ID!
+  id: ID
   active: ActiveInput
   assignees: [AssigneeInput!]
   auditable: AuditableInput
@@ -203,9 +203,10 @@ type ChecklistResult implements Component & Activatable & Node {
 TODO
 """
 input ChecklistResultInput {
-  id: ID!
+  id: ID
   assignees: [AssigneeInput!]
   auditable: AuditableInput
+  description: DescriptionInput
   draft: Boolean
   name: DisplayNameInput!
   required: Boolean

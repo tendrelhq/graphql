@@ -222,14 +222,19 @@ begin
       ) as field (f_name, f_type, f_ref_type),
       legacy0.create_field_t(
           customer_id := customer_id,
-          modified_by := modified_by,
           language_type := language_type,
           template_id := ins_template,
-          field_name := field.f_name,
-          field_type := field.f_type,
-          field_reference_type := field.f_ref_type,
+          field_description := null,
+          field_is_draft := false,
           field_is_primary := true,
-          field_order := 0
+          field_is_required := false,
+          field_name := field.f_name,
+          field_order := 0,
+          field_reference_type := field.f_ref_type,
+          field_type := field.f_type,
+          field_value := null,
+          field_widget := null,
+          modified_by := modified_by
       )
   ;
   --
@@ -361,40 +366,61 @@ create or replace function
         customer_id text,
         language_type text,
         template_id text,
-        field_name text,
-        field_type text,
-        field_reference_type text,
+        field_description text,
+        field_is_draft boolean,
         field_is_primary boolean,
+        field_is_required boolean,
+        field_name text,
         field_order integer,
+        field_reference_type text,
+        field_type text,
+        field_value text,
+        field_widget text,
         modified_by bigint
     )
 returns table(id text)
 as $$
+declare
+  ins_field text;
+begin
   with
-      ins_name as (
-          select *
-          from public.create_name(
-              customer_id := customer_id,
-              modified_by := modified_by,
-              source_language := language_type,
-              source_text := field_name
-          )
-      ),
-
-      ins_type as (
-          select t.systagid as _type, r.systagid as _ref_type
-          from public.systag as t
-          left join public.systag as r
-              on r.systagparentid = 849
-              and r.systagtype = field_reference_type
-          where
-              t.systagparentid = 699
-              and t.systagtype = field_type
+    ins_name as (
+      select *
+      from public.create_name(
+          customer_id := customer_id,
+          modified_by := modified_by,
+          source_language := language_type,
+          source_text := field_name
       )
+    ),
+
+    ins_type as (
+      select t.systagid as _type, r.systagid as _ref_type
+      from public.systag as t
+      left join public.systag as r
+          on r.systagparentid = 849
+          and r.systagtype = field_reference_type
+      where
+          t.systagparentid = 699
+          and t.systagtype = field_type
+    ),
+
+    ins_widget as (
+      select custagid as _id
+      from public.custag
+      where custagcustomerid = 0
+        and custagsystagid = (
+            select systagid
+            from public.systag
+            where systagparentid = 1 and systagtype = 'Widget Type'
+        )
+        and custagtype = field_widget
+    )
 
   insert into public.workresult (
       workresultcustomerid,
       workresultdefaultvalue,
+      workresultdraft,
       workresultentitytypeid,
       workresultforaudit,
       workresultfortask,
@@ -411,29 +437,66 @@ as $$
   )
   select
       wt.worktemplatecustomerid,
-      null,
+      nullif(field_value, ''),
+      field_is_draft,
       ins_type._ref_type,
       false,
       true,
       field_is_primary,
-      false,
+      field_is_required,
       ins_name._id,
       field_order,
       wt.worktemplatesiteid,
       null,
       ins_type._type,
-      null,
+      ins_widget._id,
       wt.worktemplateid,
       modified_by
   from
       public.worktemplate as wt,
       ins_name,
       ins_type
+  left join ins_widget on true
   where wt.id = template_id
-  returning id;
-$$
-language sql
-;
+  returning workresult.id into ins_field;
+
+  if not found then
+    raise exception 'failed creating template field';
+  end if;
+
+  id := ins_field;
+  return next;
+
+  if nullif(field_description, '') is not null then
+    insert into public.workdescription (
+        workdescriptioncustomerid,
+        workdescriptionworktemplateid,
+        workdescriptionworkresultid,
+        workdescriptionlanguagemasterid,
+        workdescriptionlanguagetypeid,
+        workdescriptionmodifiedby
+    )
+    select
+        workresultcustomerid,
+        workresultworktemplateid,
+        workresultid,
+        content._id,
+        content._type,
+        modified_by
+    from
+        public.workresult,
+        public.create_name(
+            customer_id := customer_id,
+            modified_by := modified_by,
+            source_language := language_type,
+            source_text := field_description
+        ) as content
+    where workresult.id = ins_field;
+  end if;
+
+  return;
+end $$
+language plpgsql;
 
 create or replace function
     legacy0.create_instantiation_rule(

@@ -14,7 +14,12 @@ export type CreateLocationInput = {
   name: string;
   parent: ID;
   scanCode?: string | null;
-  timeZone: string;
+  /**
+   * If not specified, the time zone will be derived from the parent (when the
+   * parent is a Location). This is most notably *not* the case when the parent is
+   * a Customer.
+   */
+  timeZone?: string | null;
 };
 
 /** @gqlField */
@@ -39,7 +44,8 @@ export async function createLocation(
         select
             customerid as _authority,
             customeruuid as authority,
-            null::text as id
+            null::text as id,
+            ${input.timeZone ?? "utc"} as timezone
         from public.customer
         where customeruuid = ${parentId}
       `,
@@ -50,7 +56,8 @@ export async function createLocation(
         select
             c.customerid as _authority,
             c.customeruuid as authority,
-            l.locationuuid as id
+            l.locationuuid as id,
+            coalesce(${input.timeZone ?? null}, l.locationtimezone) as timezone
         from public.location as l
         inner join public.customer as c on l.locationcustomerid = c.customerid
         where l.locationuuid = ${parentId}
@@ -69,7 +76,7 @@ export async function createLocation(
               language_type := ${ctx.req.i18n.language},
               location_name := ${input.name},
               location_parent_id := parent.id,
-              location_timezone := ${input.timeZone},
+              location_timezone := parent.timezone,
               location_typename := ${input.category},
               modified_by := auth.current_identity(parent._authority, ${ctx.auth.userId})
           ) as t

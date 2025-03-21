@@ -1547,8 +1547,10 @@ export function getSchema(): GraphQLSchema {
             type: GraphQLString,
           },
           timeZone: {
+            description:
+              "If not specified, the time zone will be derived from the parent (when the\nparent is a Location). This is most notably *not* the case when the parent is\na Customer.",
             name: "timeZone",
-            type: new GraphQLNonNull(GraphQLString),
+            type: GraphQLString,
           },
         };
       },

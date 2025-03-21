@@ -110,25 +110,25 @@ as $$
   with op (kind, id) as (values (kind, id))
   select
       'engine1.delete_workresult'::regproc,
-      jsonb_build_array(workresult.id)
+      jsonb_agg(workresult.id)
   from op, public.workresult
   where op.kind = 'workresult' and op.id = workresult.id
   union all
   select
       'engine1.delete_worktemplate'::regproc,
-      jsonb_build_array(worktemplate.id)
+      jsonb_agg(worktemplate.id)
   from op, public.worktemplate
   where op.kind = 'worktemplate' and op.id = worktemplate.id
   union all
   select
       'engine1.delete_workresultinstance'::regproc,
-      jsonb_build_array(wri.workresultinstanceuuid)
+      jsonb_agg(wri.workresultinstanceuuid)
   from op, public.workresultinstance as wri
   where op.kind = 'workresultinstance' and op.id = wri.workresultinstanceuuid
   union all
   select
       'engine1.delete_workinstance'::regproc,
-      jsonb_build_array(workinstance.id)
+      jsonb_agg(workinstance.id)
   from op, public.workinstance
   where op.kind = 'workinstance' and op.id = workinstance.id;
 $$

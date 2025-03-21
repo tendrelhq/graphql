@@ -140,29 +140,33 @@ $$;
 
 -- BEGIN name utility functions
 
+drop function if exists public.create_name;
+
 create or replace function
     public.create_name(
         customer_id text, source_language text, source_text text, modified_by bigint
     )
-returns table(_id bigint, id text)
+returns table(_id bigint, id text, _type bigint)
 as $$
   insert into public.languagemaster (
-    languagemastercustomerid,
-    languagemastersourcelanguagetypeid,
-    languagemastersource,
-    languagemastermodifiedby
+      languagemastercustomerid,
+      languagemastersourcelanguagetypeid,
+      languagemastersource,
+      languagemastermodifiedby
   )
   select
-    c.customerid,
-    s.systagid,
-    source_text,
-    modified_by
+      c.customerid,
+      s.systagid,
+      source_text,
+      modified_by
   from public.customer as c, public.systag as s
-  where
-    c.customeruuid = customer_id
-    and s.systagparentid = 2
-    and s.systagtype = source_language
-  returning languagemasterid as _id, languagemasteruuid as id;
+  where c.customeruuid = customer_id
+      and s.systagparentid = 2
+      and s.systagtype = source_language
+  returning
+      languagemasterid as _id,
+      languagemasteruuid as id,
+      languagemastersourcelanguagetypeid as _type;
 $$
 language sql
 strict;
