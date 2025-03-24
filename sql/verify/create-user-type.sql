@@ -1,9 +1,6 @@
 -- Verify graphql:create-user-type on pg
-begin
-;
+begin;
 
-select pg_catalog.has_function_privilege('ast.create_user_type'::regproc, 'execute')
-;
+select pg_catalog.has_function_privilege('ast.create_user_type'::regproc, 'execute');
 
-rollback
-;
+rollback;

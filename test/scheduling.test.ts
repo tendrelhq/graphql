@@ -7,12 +7,15 @@ import {
   test,
 } from "bun:test";
 import { sql } from "@/datasources/postgres";
-import { assert } from "@/util";
-import { cleanup } from "./prelude";
+import { assert, map } from "@/util";
+import { cleanup, createTestContext, findAndEncode, setup } from "./prelude";
+import { Task } from "@/schema/system/component/task";
+
+const ctx = await createTestContext();
 
 describe("engine/scheduling", () => {
   let CUSTOMER: string;
-  let INSTANCE: string;
+  let INSTANCE: Task;
   let RRULE: number;
 
   async function create_rrule(type: string, interval: number): Promise<number> {
@@ -27,7 +30,7 @@ describe("engine/scheduling", () => {
               frequency_interval := ${interval},
               modified_by := 895
           ) as rr
-      where i.id = ${INSTANCE} and i.workinstanceworktemplateid = t.worktemplateid
+      where i.id = ${INSTANCE._id} and i.workinstanceworktemplateid = t.worktemplateid
     `;
     return row._id;
   }
@@ -42,13 +45,13 @@ describe("engine/scheduling", () => {
     const u = await sql`
       update public.workinstance
       set workinstancestatusid = 707, workinstancecompleteddate = now()
-      where id = ${INSTANCE}
+      where id = ${INSTANCE._id}
     `;
     assert(u.count === 1);
 
     const result = await sql.begin(async tx => {
       const rows = await tx<[{ instance: string }?]>`
-        select * from engine0.execute(${INSTANCE}, 895)
+        select * from engine0.execute(${INSTANCE._id}, 895)
       `;
       assert(!!rows.at(0)?.instance);
       return await tx<[{ diff: string }?]>`
@@ -56,7 +59,7 @@ describe("engine/scheduling", () => {
         from public.workinstance as prev
         inner join public.workinstance as next
             on prev.workinstanceid = next.workinstancepreviousid
-        where prev.id = ${INSTANCE} and next.id = ${
+        where prev.id = ${INSTANCE._id} and next.id = ${
           // biome-ignore lint/style/noNonNullAssertion:
           rows[0]!.instance
         }
@@ -76,26 +79,12 @@ describe("engine/scheduling", () => {
   });
 
   beforeAll(async () => {
-    const logs = await sql`
-      select *
-      from runtime.create_demo(
-          customer_name := 'engine0.test.ts',
-          admins := (
-              select array_agg(workeruuid)
-              from public.worker
-              where workerfullname = 'Jerry Garcia'
-          ),
-          modified_by := 895
-      )
-    `;
-
-    CUSTOMER = logs.find(({ op }) => op.trim() === "+customer")?.id;
-    assert(!!CUSTOMER);
-
-    INSTANCE = logs.find(({ op }) => op.trim() === "+instance")?.id;
-    assert(!!INSTANCE);
-
-    console.debug("setup:", { CUSTOMER, INSTANCE });
+    const logs = await setup(ctx);
+    CUSTOMER = findAndEncode("customer", "organization", logs);
+    INSTANCE = map(
+      findAndEncode("instance", "workinstance", logs),
+      id => new Task({ id }),
+    );
   });
 
   afterAll(async () => {

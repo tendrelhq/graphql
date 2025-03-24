@@ -457,11 +457,10 @@ export const saveChecklist: NonNullable<
       const r = await sql`
         with ins_content as (
             select *
-            from public.create_name(
-                customer_id := ${owner},
-                modified_by := ${actor},
-                source_language := ${input.description.value.locale ?? ctx.req.i18n.language},
-                source_text := ${input.description.value.value}
+            from i18n.create_localized_content(
+                owner := ${owner},
+                content := ${input.description.value.value},
+                language := ${input.description.value.locale ?? ctx.req.i18n.language}
             )
         )
 

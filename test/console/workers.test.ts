@@ -1,19 +1,28 @@
-import { afterAll, beforeAll, describe, expect, test } from "bun:test";
-import { sql } from "@/datasources/postgres";
 import { schema } from "@/schema/final";
-import { decodeGlobalId, encodeGlobalId } from "@/schema/system";
-import { cleanup, execute, paginateQuery } from "@/test/prelude";
+import {
+  cleanup,
+  createTestContext,
+  execute,
+  findAndEncode,
+  paginateQuery,
+  setup,
+} from "@/test/prelude";
+import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 import {
   ListWorkersTestDocument,
   PaginateWorkersTestDocument,
 } from "./workers.test.generated";
+import { setCurrentIdentity } from "@/auth";
+import { sql } from "@/datasources/postgres";
+
+const ctx = await createTestContext();
 
 describe("[console] workers", () => {
-  let ACCOUNT: string; // customer
+  let CUSTOMER: string;
 
   test("list", async () => {
     const result = await execute(schema, ListWorkersTestDocument, {
-      account: ACCOUNT,
+      account: CUSTOMER,
     });
     expect(result.errors).toBeFalsy();
     expect(result.data).toMatchSnapshot();
@@ -24,7 +33,7 @@ describe("[console] workers", () => {
     for await (const page of paginateQuery({
       async execute(cursor) {
         return await execute(schema, PaginateWorkersTestDocument, {
-          account: ACCOUNT,
+          account: CUSTOMER,
           first: 5,
           after: cursor,
         });
@@ -44,7 +53,7 @@ describe("[console] workers", () => {
 
   test("search", async () => {
     const result = await execute(schema, ListWorkersTestDocument, {
-      account: ACCOUNT,
+      account: CUSTOMER,
       search: {
         active: true,
         user: {
@@ -60,39 +69,32 @@ describe("[console] workers", () => {
   });
 
   beforeAll(async () => {
-    const logs = await sql<{ op: string; id: string }[]>`
-      select *
-      from
-          runtime.create_demo(
-              customer_name := 'Frozen Tendy Factory',
-              admins := (
-                  select array_agg(workeruuid)
-                  from public.worker
-                  where workerfullname in (
-                      'Jerry Garcia',
-                      'Mike Heavner',
-                      'Will Ruggiano',
-                      'Will Twait'
-                  )
-              ),
-              modified_by := 895
-          )
-      ;
-    `;
-    // we get customer uuid back in the first row
-    const row1 = logs.at(0);
-    // but we can check the tag to be sure
-    if (row1?.op?.trim() !== "+customer") {
-      throw "setup failed to find customer";
-    }
-    ACCOUNT = encodeGlobalId({
-      type: "organization", // bleh
-      id: row1.id,
+    const logs = await sql.begin(async sql => {
+      await setCurrentIdentity(sql, ctx);
+      return await sql<{ op: string; id: string }[]>`
+        select *
+        from
+            runtime.create_demo(
+                customer_name := 'Frozen Tendy Factory',
+                admins := (
+                    select array_agg(workeruuid)
+                    from public.worker
+                    where workerfullname in (
+                        'Jerry Garcia',
+                        'Mike Heavner',
+                        'Will Ruggiano',
+                        'Will Twait'
+                    )
+                ),
+                modified_by := 895
+            )
+        ;
+      `;
     });
+    CUSTOMER = findAndEncode("customer", "organization", logs);
   });
 
   afterAll(async () => {
-    const { id } = decodeGlobalId(ACCOUNT);
-    await cleanup(id);
+    await cleanup(CUSTOMER);
   });
 });

@@ -1,4 +1,4 @@
--- Deploy graphql:002-engine to pg
+-- Deploy graphql:engine0 to pg
 begin
 ;
 

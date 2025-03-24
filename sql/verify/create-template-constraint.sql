@@ -1,6 +1,5 @@
 -- Verify graphql:create-template-constraint on pg
-begin
-;
+begin;
 
 select
     pg_catalog.has_function_privilege(
@@ -8,5 +7,4 @@ select
     )
 ;
 
-rollback
-;
+rollback;

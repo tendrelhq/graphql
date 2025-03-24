@@ -11,6 +11,7 @@ import {
   findAndEncode,
   getFieldByName,
   paginateQuery,
+  setup,
 } from "@/test/prelude";
 import { assert, assertNonNull, map } from "@/util";
 import type { ID } from "grats";
@@ -149,20 +150,7 @@ describe("[app/runtime] attach", () => {
   });
 
   beforeAll(async () => {
-    const logs = await sql<{ op: string; id: string }[]>`
-      select *
-      from
-          runtime.create_demo(
-              customer_name := 'Frozen Tendy Factory',
-              admins := (
-                  select array_agg(workeruuid)
-                  from public.worker
-                  where workeridentityid = ${ctx.auth.userId}
-              ),
-              modified_by := 895
-          )
-      ;
-    `;
+    const logs = await setup(ctx);
     CUSTOMER = findAndEncode("customer", "organization", logs);
     INSTANCE = map(
       findAndEncode("instance", "workinstance", logs),
@@ -172,7 +160,6 @@ describe("[app/runtime] attach", () => {
   });
 
   afterAll(async () => {
-    const { id } = decodeGlobalId(CUSTOMER);
-    await cleanup(id);
+    await cleanup(CUSTOMER);
   });
 });

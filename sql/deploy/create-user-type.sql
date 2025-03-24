@@ -35,11 +35,10 @@ begin
     return query
       with ins_name as (
           select *
-          from public.create_name(
-              customer_id := customer_id,
-              source_language := language_type,
-              source_text := type_name,
-              modified_by := modified_by
+          from i18n.create_localized_content(
+              owner := customer_id,
+              content := type_name,
+              language := language_type
           )
       )
 

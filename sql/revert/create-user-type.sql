@@ -1,9 +1,6 @@
 -- Revert graphql:create-user-type from pg
-begin
-;
+begin;
 
-drop function if exists ast.create_user_type
-;
+drop function if exists ast.create_user_type;
 
-commit
-;
+commit;

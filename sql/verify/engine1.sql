@@ -1,4 +1,4 @@
--- Verify graphql:engine0t on pg
+-- Verify graphql:engine1 on pg
 
 BEGIN;
 

@@ -1,4 +1,4 @@
--- Deploy graphql:legacy-time-at-task to pg
+-- Deploy graphql:legacy0-compute-time-at-task to pg
 
 BEGIN;
 

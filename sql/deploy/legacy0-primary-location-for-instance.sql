@@ -1,4 +1,4 @@
--- Deploy graphql:006-primary-location-for-instance to pg
+-- Deploy graphql:legacy0-primary-location-for-instance to pg
 begin;
 
 -- No GRANTs required :)

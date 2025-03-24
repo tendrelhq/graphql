@@ -1,9 +1,6 @@
 -- Revert graphql:create-location from pg
-begin
-;
+begin;
 
-drop function if exists legacy0.create_location
-;
+drop function if exists legacy0.create_location;
 
-commit
-;
+commit;

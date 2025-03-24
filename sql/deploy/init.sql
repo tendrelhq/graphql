@@ -1,34 +1,47 @@
--- Deploy graphql:001-init to pg
+-- Deploy graphql:init to pg
 begin;
 
 create schema ast;
 create schema auth;
 create schema debug;
+create schema i18n;
 
 do $$
 begin
   if exists (select 1 from pg_roles where rolname = 'graphql') then
     revoke all on schema ast from graphql;
-    revoke all on schema auth from graphql;
-    revoke all on schema debug from graphql;
     grant usage on schema ast to graphql;
-    grant usage on schema auth to graphql;
-    grant usage on schema debug to graphql;
     alter default privileges in schema ast grant execute on routines to graphql;
+    --
+    revoke all on schema auth from graphql;
+    grant usage on schema auth to graphql;
     alter default privileges in schema auth grant execute on routines to graphql;
+    --
+    grant usage on schema debug to graphql;
+    revoke all on schema debug from graphql;
     alter default privileges in schema debug grant execute on routines to graphql;
+    --
+    revoke all on schema i18n from graphql;
+    grant usage on schema i18n to graphql;
+    alter default privileges in schema i18n grant execute on routines to graphql;
   end if;
 
   if exists (select 1 from pg_roles where rolname = 'tendrelservice') then
     revoke all on schema ast from tendrelservice;
-    revoke all on schema auth from tendrelservice;
-    revoke all on schema debug from tendrelservice;
     grant usage on schema ast to tendrelservice;
-    grant usage on schema auth to tendrelservice;
-    grant usage on schema debug to tendrelservice;
     alter default privileges in schema ast grant execute on routines to tendrelservice;
+    --
+    revoke all on schema auth from tendrelservice;
+    grant usage on schema auth to tendrelservice;
     alter default privileges in schema auth grant execute on routines to tendrelservice;
+    --
+    grant usage on schema debug to tendrelservice;
+    revoke all on schema debug from tendrelservice;
     alter default privileges in schema debug grant execute on routines to tendrelservice;
+    --
+    revoke all on schema i18n from tendrelservice;
+    grant usage on schema i18n to tendrelservice;
+    alter default privileges in schema i18n grant execute on routines to tendrelservice;
   end if;
 end $$;
 
@@ -137,52 +150,98 @@ $$;
 
 -- END debugging utility functions
 
-
--- BEGIN name utility functions
-
-drop function if exists public.create_name;
+-- BEGIN localization utility functions
 
 create or replace function
-    public.create_name(
-        customer_id text, source_language text, source_text text, modified_by bigint
+    i18n.create_localized_content(
+        owner text,
+        content text,
+        language text
     )
-returns table(_id bigint, id text, _type bigint)
+returns table(id text, _id bigint, _type bigint)
 as $$
   insert into public.languagemaster (
       languagemastercustomerid,
-      languagemastersourcelanguagetypeid,
       languagemastersource,
+      languagemastersourcelanguagetypeid,
       languagemastermodifiedby
   )
   select
-      c.customerid,
-      s.systagid,
-      source_text,
-      modified_by
-  from public.customer as c, public.systag as s
-  where c.customeruuid = customer_id
-      and s.systagparentid = 2
-      and s.systagtype = source_language
+      customer.customerid,
+      content,
+      systag.systagid,
+      auth.current_identity(customer.customerid, current_setting('user.id'))
+  from public.customer, public.systag
+  where customeruuid = owner and (systagparentid, systagtype) = (2, language)
   returning
-      languagemasterid as _id,
       languagemasteruuid as id,
-      languagemastersourcelanguagetypeid as _type;
+      languagemasterid as _id,
+      languagemastersourcelanguagetypeid as _type
+  ;
 $$
-language sql
-strict;
+language sql;
 
-do $$
+create or replace function
+    i18n.update_localized_content(
+        master_id text,
+        content text,
+        language text
+    )
+returns table(id text)
+as $$
+declare
+  language_id bigint;
 begin
-  if exists (select 1 from pg_roles where rolname = 'graphql') then
-    grant execute on function public.create_name to graphql;
-  end if;
+  select systagid into language_id
+  from public.systag
+  where systagparentid = 2 and systagtype = locale;
 
-  if exists (select 1 from pg_roles where rolname = 'tendrelservice') then
-    grant execute on function public.create_name to tendrelservice;
-  end if;
-end $$;
+  return query
+    with
+      upd_master as (
+          update public.languagemaster
+          set languagemastersource = content,
+              languagemastersourcelanguagetypeid = language_id,
+              languagemasterstatus = 'NEEDS_COMPLETE_RETRANSLATION',
+              languagemastermodifieddate = now(),
+              languagemastermodifiedby = auth.current_identity(
+                  parent := languagemastercustomerid,
+                  identity := current_setting('user.id')
+              )
+          where languagemasteruuid = master_id
+            and (languagemastersource, languagemastersourcelanguagetypeid)
+                is distinct from (content, language_id)
+          returning languagemasteruuid as id
+      ),
+      upd_trans as (
+          update public.languagetranslations
+          set languagetranslationvalue = content,
+              languagetranslationmodifieddate = now(),
+              languagetranslationmodifiedby = auth.current_identity(
+                  parent := languagetranslationcustomerid,
+                  identity := current_setting('user.id')
+              )
+          where
+            languagetranslationmasterid = (
+                select languagemasterid
+                from public.languagemaster
+                where languagemasteruuid = master_id
+            )
+            and (languagetranslationvalue, languagetranslationtypeid)
+                is distinct from (content, language_id)
+          returning languagetranslationuuid as id
+      )
 
--- END name utility functions
+    select * from upd_master
+    union all
+    select * from upd_trans
+  ;
+
+  return;
+end $$
+language plpgsql;
+
+-- END localization utility functions
 
 
 -- BEGIN type constructor utility functions
@@ -197,11 +256,10 @@ begin
         select t.*
         from
             public.customer as c,
-            public.create_name(
-                customer_id := c.customeruuid,
-                source_language := 'en',
-                source_text := type_name,
-                modified_by := modified_by
+            i18n.create_localized_content(
+                owner := c.customeruuid,
+                content := type_name,
+                language := 'en'
             ) as t
         where c.customerid = 0
     )
@@ -264,11 +322,10 @@ begin
     return query
       with ins_name as (
           select *
-          from public.create_name(
-              customer_id := customer_id,
-              source_language := language_type,
-              source_text := type_name,
-              modified_by := modified_by
+          from i18n.create_localized_content(
+              owner := customer_id,
+              content := type_name,
+              language := language_type
           )
       )
 

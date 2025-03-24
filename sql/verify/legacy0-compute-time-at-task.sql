@@ -1,4 +1,4 @@
--- Verify graphql:legacy-time-at-task on pg
+-- Verify graphql:legacy0-compute-time-at-task on pg
 
 BEGIN;
 

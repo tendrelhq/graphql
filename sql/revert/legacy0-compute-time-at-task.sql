@@ -1,4 +1,4 @@
--- Revert graphql:legacy-time-at-task from pg
+-- Revert graphql:legacy0-compute-time-at-task from pg
 
 BEGIN;
 

@@ -1,4 +1,4 @@
--- Verify graphql:004-legacy on pg
+-- Verify graphql:legacy0 on pg
 begin;
 
 select pg_catalog.has_schema_privilege('legacy0', 'usage');

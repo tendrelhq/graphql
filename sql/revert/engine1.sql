@@ -1,4 +1,4 @@
--- Revert graphql:engine0t from pg
+-- Revert graphql:engine1 from pg
 
 BEGIN;
 

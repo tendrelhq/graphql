@@ -1,4 +1,4 @@
--- Verify graphql:005-runtime on pg
+-- Verify graphql:runtime on pg
 begin
 ;
 

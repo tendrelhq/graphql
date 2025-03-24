@@ -1,4 +1,4 @@
--- Revert graphql:004-legacy-entities from pg
+-- Revert graphql:legacy0 from pg
 begin;
 -- The following avoids 'notice' messages pertaining to cascading deletes.
 set local client_min_messages = 'warning';

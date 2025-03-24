@@ -1,4 +1,4 @@
--- Deploy graphql:005-runtime to pg
+-- Deploy graphql:runtime to pg
 begin
 ;
 
@@ -16,11 +16,10 @@ begin
     select t.*
     from public.customer as c
     cross join
-        lateral public.create_name(
-            customer_id := c.customeruuid,
-            source_language := language_type,
-            source_text := customer_name,
-            modified_by := modified_by
+        lateral i18n.create_localized_content(
+            owner := c.customeruuid,
+            content := customer_name,
+            language := language_type
         ) as t
     where c.customerid = 0
   )

@@ -1,4 +1,4 @@
--- Deploy graphql:004-legacy-entities to pg
+-- Deploy graphql:legacy0 to pg
 begin
 ;
 
@@ -46,11 +46,10 @@ begin
 
   with ins_name as (
     select *
-    from public.create_name(
-        customer_id := customer_id,
-        source_language := language_type,
-        source_text := location_name,
-        modified_by := modified_by
+    from i18n.create_localized_content(
+        owner := customer_id,
+        content := location_name,
+        language := language_type
     )
   ),
 
@@ -177,11 +176,10 @@ declare
 begin
   with ins_name as (
     select *
-    from public.create_name (
-        customer_id := customer_id,
-        modified_by := modified_by,
-        source_language := language_type,
-        source_text := task_name
+    from i18n.create_localized_content(
+        owner := customer_id,
+        content := task_name,
+        language := language_type
     )
   )
   insert into public.worktemplate (
@@ -386,11 +384,10 @@ begin
   with
     ins_name as (
       select *
-      from public.create_name(
-          customer_id := customer_id,
-          modified_by := modified_by,
-          source_language := language_type,
-          source_text := field_name
+      from i18n.create_localized_content(
+          owner := customer_id,
+          content := field_name,
+          language := language_type
       )
     ),
 
@@ -485,11 +482,10 @@ begin
         modified_by
     from
         public.workresult,
-        public.create_name(
-            customer_id := customer_id,
-            modified_by := modified_by,
-            source_language := language_type,
-            source_text := field_description
+        i18n.create_localized_content(
+            owner := customer_id,
+            content := field_description,
+            language := language_type
         ) as content
     where workresult.id = ins_field;
   end if;

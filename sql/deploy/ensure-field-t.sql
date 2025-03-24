@@ -78,11 +78,10 @@ begin
 
       ins_content as (
           select *
-          from public.create_name(
-              customer_id := customer_id,
-              modified_by := modified_by,
-              source_language := language_type,
-              source_text := field_description
+          from i18n.create_localized_content(
+              owner := customer_id,
+              content := field_description,
+              language := language_type
           )
           where not exists (select 1 from existing_desc)
       ),

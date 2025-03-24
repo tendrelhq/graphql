@@ -12,6 +12,7 @@ import {
   execute,
   findAndEncode,
   getFieldByName,
+  setup,
 } from "@/test/prelude";
 import { assert, map, nullish } from "@/util";
 import {
@@ -20,6 +21,7 @@ import {
   TestRuntimeEntrypointDocument,
   TestRuntimeTransitionMutationDocument,
 } from "./runtime.test.generated";
+import { setCurrentIdentity } from "@/auth";
 
 const ctx = await createTestContext();
 
@@ -591,20 +593,7 @@ describe("runtime demo", () => {
   });
 
   beforeAll(async () => {
-    const logs = await sql<{ op: string; id: string }[]>`
-      select *
-      from
-          runtime.create_demo(
-              customer_name := 'Frozen Tendy Factory',
-              admins := array[
-                  'worker_69d4c075-39d0-4437-a9cc-7b912c7ba049',
-                  'worker_a5d1d16f-4264-45e7-97c6-1ef534b8875f'
-              ],
-              modified_by := 895
-          )
-      ;
-    `;
-
+    const logs = await setup(ctx);
     try {
       CUSTOMER = findAndEncode("customer", "organization", logs);
       FSM_T = map(
@@ -620,13 +609,13 @@ describe("runtime demo", () => {
         id => new Task({ id }),
       );
 
-      // we get 'Downtime' in the 39th row
-      const row39 = logs.at(39 - 1);
+      // we get 'Downtime' in the 38th row
+      const row38 = logs.at(38 - 1);
       // but we can check the tag to be sure
-      if (row39?.op?.trim() !== "+next") {
+      if (row38?.op?.trim() !== "+next") {
         throw "setup failed to find Downtime";
       }
-      DOWNTIME = Task.fromTypeId("worktemplate", row39.id);
+      DOWNTIME = Task.fromTypeId("worktemplate", row38.id);
     } catch (e) {
       let i = 0;
       for (const l of logs) {
@@ -637,61 +626,65 @@ describe("runtime demo", () => {
 
     // We don't currently have a mechanism to specify descriptions during
     // customer create. We'll do it manually for now.
-    const d0 = await sql`
-      with content as (
-          select *
-          from public.create_name(
-              customer_id := ${decodeGlobalId(CUSTOMER).id},
-              source_language := 'en',
-              source_text := 'This is a really important task. Please do your best :)',
-              modified_by := 895
-          )
-      )
+    const d0 = await sql.begin(async sql => {
+      await setCurrentIdentity(sql, ctx);
+      return await sql`
+        with content as (
+            select *
+            from i18n.create_localized_content(
+                owner := ${decodeGlobalId(CUSTOMER).id},
+                content := 'This is a really important task. Please do your best :)',
+                language := 'en'
+            )
+        )
 
-      insert into public.workdescription (
-          workdescriptioncustomerid,
-          workdescriptionworktemplateid,
-          workdescriptionlanguagemasterid,
-          workdescriptionlanguagetypeid
-      )
-      select
-          worktemplate.worktemplatecustomerid,
-          worktemplate.worktemplateid,
-          content._id,
-          20
-      from content, public.worktemplate
-      where worktemplate.id = ${FSM_T._id}
-    `;
+        insert into public.workdescription (
+            workdescriptioncustomerid,
+            workdescriptionworktemplateid,
+            workdescriptionlanguagemasterid,
+            workdescriptionlanguagetypeid
+        )
+        select
+            worktemplate.worktemplatecustomerid,
+            worktemplate.worktemplateid,
+            content._id,
+            20
+        from content, public.worktemplate
+        where worktemplate.id = ${FSM_T._id}
+      `;
+    });
     assert(d0.count === 1);
 
     const f = await FSM_T.field({ byName: "Comments" });
-    const d1 = await sql`
-      with content as (
-          select *
-          from public.create_name(
-              customer_id := ${decodeGlobalId(CUSTOMER).id},
-              source_language := 'en',
-              source_text := 'If anything goes wrong, this is the place to note it down',
-              modified_by := 895
-          )
-      )
+    const d1 = await sql.begin(async sql => {
+      await setCurrentIdentity(sql, ctx);
+      return await sql`
+        with content as (
+            select *
+            from i18n.create_localized_content(
+                owner := ${decodeGlobalId(CUSTOMER).id},
+                content := 'If anything goes wrong, this is the place to note it down',
+                language := 'en'
+            )
+        )
 
-      insert into public.workdescription (
-          workdescriptioncustomerid,
-          workdescriptionworktemplateid,
-          workdescriptionworkresultid,
-          workdescriptionlanguagemasterid,
-          workdescriptionlanguagetypeid
-      )
-      select
-          workresult.workresultcustomerid,
-          workresult.workresultworktemplateid,
-          workresult.workresultid,
-          content._id,
-          20
-      from content, public.workresult
-      where workresult.id = ${decodeGlobalId(f!.id).id}
-    `;
+        insert into public.workdescription (
+            workdescriptioncustomerid,
+            workdescriptionworktemplateid,
+            workdescriptionworkresultid,
+            workdescriptionlanguagemasterid,
+            workdescriptionlanguagetypeid
+        )
+        select
+            workresult.workresultcustomerid,
+            workresult.workresultworktemplateid,
+            workresult.workresultid,
+            content._id,
+            20
+        from content, public.workresult
+        where workresult.id = ${decodeGlobalId(f!.id).id}
+      `;
+    });
     assert(d1.count === 1);
   });
 
@@ -723,8 +716,7 @@ ${rows.map(r => ` - ${r.id}`).join("\n")}
       );
     }
 
-    const { id } = decodeGlobalId(CUSTOMER);
-    await cleanup(id);
+    await cleanup(CUSTOMER);
   });
 });
 

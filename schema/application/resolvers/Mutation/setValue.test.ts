@@ -133,7 +133,6 @@ describe("setValue", () => {
   });
 
   afterAll(async () => {
-    const { id } = decodeGlobalId(CUSTOMER);
-    await cleanup(id);
+    await cleanup(CUSTOMER);
   });
 });

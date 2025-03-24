@@ -1,10 +1,9 @@
-import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 import { sql } from "@/datasources/postgres";
-import { assert, map } from "@/util";
-import { cleanup, createTestContext, findAndEncode } from "./prelude";
-import { Task } from "@/schema/system/component/task";
-import { setCurrentIdentity } from "@/auth";
 import { decodeGlobalId } from "@/schema/system";
+import { Task } from "@/schema/system/component/task";
+import { map } from "@/util";
+import { afterAll, beforeAll, describe, expect, test } from "bun:test";
+import { cleanup, createTestContext, findAndEncode, setup } from "./prelude";
 
 const ctx = await createTestContext();
 
@@ -89,19 +88,7 @@ describe("engine0", () => {
   });
 
   beforeAll(async () => {
-    const logs = await sql<{ op: string; id: string }[]>`
-      select *
-      from runtime.create_demo(
-          customer_name := 'Frozen Tendy Factory',
-          admins := (
-              select array_agg(workeruuid)
-              from public.worker
-              where workerfullname = 'Jerry Garcia'
-          ),
-          modified_by := 895
-      )
-    `;
-
+    const logs = await setup(ctx);
     CUSTOMER = findAndEncode("customer", "organization", logs);
     TEMPLATE = map(
       findAndEncode("task", "worktemplate", logs),
@@ -114,7 +101,6 @@ describe("engine0", () => {
   });
 
   afterAll(async () => {
-    const { id } = decodeGlobalId(CUSTOMER);
-    await cleanup(id);
+    await cleanup(CUSTOMER);
   });
 });

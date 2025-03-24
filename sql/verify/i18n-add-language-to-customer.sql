@@ -1,9 +1,5 @@
--- Verify graphql:003-i18n on pg
-begin
-;
-
-select pg_catalog.has_schema_privilege('i18n', 'usage')
-;
+-- Verify graphql:i18n-add-language-to-customer on pg
+begin;
 
 select
     pg_catalog.has_function_privilege(
@@ -11,5 +7,4 @@ select
     )
 ;
 
-rollback
-;
+rollback;

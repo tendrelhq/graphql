@@ -1,23 +1,5 @@
--- Deploy graphql:003-i18n to pg
-begin
-;
-
-create schema i18n;
-
-do $$
-begin
-  if exists (select 1 from pg_roles where rolname = 'graphql') then
-    revoke all on schema i18n from graphql;
-    grant usage on schema i18n to graphql;
-    alter default privileges in schema i18n grant execute on routines to graphql;
-  end if;
-
-  if exists (select 1 from pg_roles where rolname = 'tendrelservice') then
-    revoke all on schema i18n from tendrelservice;
-    grant usage on schema i18n to tendrelservice;
-    alter default privileges in schema i18n grant execute on routines to tendrelservice;
-  end if;
-end $$;
+-- Deploy graphql:i18n-add-language-to-customer to pg
+begin;
 
 create or replace function
     i18n.add_language_to_customer(
@@ -58,12 +40,9 @@ as $$
           from public.systag
           where systagparentid = 2 and systagtype = language_code
       )
-  limit 1
-  ;
+  limit 1;
 $$
 language sql
-strict
-;
+strict;
 
-commit
-;
+commit;

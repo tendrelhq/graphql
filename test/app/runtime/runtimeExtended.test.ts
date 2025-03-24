@@ -10,6 +10,7 @@ import {
   createTestContext,
   execute,
   findAndEncode,
+  setup,
   testGlobalId,
 } from "@/test/prelude";
 import { assertNonNull, map } from "@/util";
@@ -109,20 +110,7 @@ describe("extended runtime demo", () => {
   });
 
   beforeAll(async () => {
-    const logs = await sql<{ op: string; id: string }[]>`
-      select *
-      from
-          runtime.create_demo(
-              customer_name := 'Frozen Tendy Factory',
-              admins := (
-                  select array_agg(workeruuid)
-                  from public.worker
-                  where workeridentityid = ${ctx.auth.userId}
-              ),
-              modified_by := auth.current_identity(0, ${ctx.auth.userId})
-          )
-      ;
-    `;
+    const logs = await setup(ctx);
     CUSTOMER = findAndEncode("customer", "organization", logs);
     SITE = map(
       findAndEncode("site", "location", logs),
@@ -135,7 +123,6 @@ describe("extended runtime demo", () => {
   });
 
   afterAll(async () => {
-    const { id } = decodeGlobalId(CUSTOMER);
-    await cleanup(id);
+    await cleanup(CUSTOMER);
   });
 });

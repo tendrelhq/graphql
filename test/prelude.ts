@@ -1,10 +1,11 @@
+import { setCurrentIdentity } from "@/auth";
 import { orm, sql } from "@/datasources/postgres";
 import { Limits } from "@/limits";
 import type { Context, InputMaybe } from "@/schema";
-import { encodeGlobalId } from "@/schema/system";
+import { decodeGlobalId, encodeGlobalId } from "@/schema/system";
 import type { Field } from "@/schema/system/component";
 import type { Task } from "@/schema/system/component/task";
-import { assert, assertNonNull, map } from "@/util";
+import { assert, assertNonNull, assertUnderlyingType, map } from "@/util";
 import type { TypedDocumentNode as DocumentNode } from "@graphql-typed-document-node/core";
 import {
   type ExecutionResult,
@@ -134,20 +135,44 @@ export function env(name: string, value?: { toString(): string }) {
   };
 }
 
+export async function setup(ctx: Context) {
+  return await sql.begin(async sql => {
+    await setCurrentIdentity(sql, ctx);
+    return await sql<{ op: string; id: string }[]>`
+      select *
+      from
+          runtime.create_demo(
+              customer_name := 'Frozen Tendy Factory',
+              admins := (
+                  select array_agg(workeruuid)
+                  from public.worker
+                  where workeridentityid = ${assertNonNull(process.env.X_TENDREL_USER)}
+              ),
+              modified_by := 895
+          )
+      ;
+    `;
+  });
+}
+
 export async function cleanup(id: string) {
   if (process.env.CI || process.env.SKIP_CLEANUP) return;
   process.stdout.write("Cleaning up...");
+
+  const decoded = decodeGlobalId(id);
+  assertUnderlyingType("organization", decoded.type);
+
   // HACK: need to add this to the cleanup procedure.
   await sql`
     delete from public.workdescription
     where workdescriptioncustomerid = (
         select customerid
         from public.customer
-        where customeruuid = ${id}
+        where customeruuid = ${decoded.id}
     )
   `;
   const [row] = await sql<[{ ok: string }]>`
-    select runtime.destroy_demo(${id}) as ok;
+    select runtime.destroy_demo(${decoded.id}) as ok;
   `;
   process.stdout.write(row.ok);
 }
