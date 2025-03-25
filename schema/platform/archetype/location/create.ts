@@ -7,6 +7,7 @@ import type { ID } from "grats";
 import type { Fragment } from "postgres";
 import { match } from "ts-pattern";
 import { Location } from "../location";
+import { setCurrentIdentity } from "@/auth";
 
 /** @gqlInput */
 export type CreateLocationInput = {
@@ -42,8 +43,8 @@ export async function createLocation(
       "organization",
       () => sql`
         select
-            customerid as _authority,
-            customeruuid as authority,
+            customerid as _owner,
+            customeruuid as owner,
             null::text as id,
             ${input.timeZone ?? "utc"} as timezone
         from public.customer
@@ -54,8 +55,8 @@ export async function createLocation(
       "location",
       () => sql`
         select
-            c.customerid as _authority,
-            c.customeruuid as authority,
+            c.customerid as _owner,
+            c.customeruuid as owner,
             l.locationuuid as id,
             coalesce(${input.timeZone ?? null}, l.locationtimezone) as timezone
         from public.location as l
@@ -66,19 +67,20 @@ export async function createLocation(
     .exhaustive();
 
   const result = await sql.begin(async sql => {
+    await setCurrentIdentity(sql, ctx);
     const [row] = await sql<[{ id: string }]>`
       with parent as (${parentFragment})
       select t.id
       from
           parent,
           legacy0.create_location(
-              customer_id := parent.authority,
-              language_type := ${ctx.req.i18n.language},
+              customer_id := parent.owner,
+              language_type := current_setting('user.locale'),
               location_name := ${input.name},
               location_parent_id := parent.id,
               location_timezone := parent.timezone,
               location_typename := ${input.category},
-              modified_by := auth.current_identity(parent._authority, ${ctx.auth.userId})
+              modified_by := auth.current_identity(parent._owner, current_setting('user.id'))
           ) as t
       ;
     `;
@@ -108,7 +110,7 @@ export async function createLocation(
                 wt.id as template_id,
                 loc.locationuuid as location_id,
                 tt.systagtype as target_type,
-                auth.current_identity(loc.locationcustomerid, ${ctx.auth.userId}) as modified_by
+                auth.current_identity(loc.locationcustomerid, current_setting('user.id')) as modified_by
             from public.location as loc
             inner join public.worktemplate as wt
                 -- Ensure that we only evaluate templates that are in scope
@@ -145,7 +147,7 @@ export async function createLocation(
                 )
         )
 
-        select 1
+        select r.instance
         from
             to_instantiate as t,
             engine0.instantiate(
@@ -160,6 +162,11 @@ export async function createLocation(
       console.debug(
         `createLocation: engine.instantiate.count: ${result.length}`,
       );
+      if (process.env.NODE_ENV === "development") {
+        console.debug(
+          `createLocation: engine.instantiate:\n${JSON.stringify(result, null, 2)}`,
+        );
+      }
     }
 
     return encodeGlobalId({

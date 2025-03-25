@@ -19,7 +19,6 @@
           config.pre-commit.devShell
         ];
         buildInputs = [
-          config.packages.biome
           config.packages.copilot-cli
           pkgs.awscli2
           pkgs.bun
@@ -30,14 +29,6 @@
         ];
         BIOME_BINARY = lib.getExe config.packages.biome;
         # Janky af I know, but an easy way to silently fail successfully
-        TREEFMT = "treefmt";
-      };
-
-      ci = pkgs.mkShellNoCC {
-        name = "tendrelhq/graphql-ci";
-        inputsFrom = [
-          config.devShells.default
-        ];
         TREEFMT = "treefmt";
       };
     };

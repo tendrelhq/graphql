@@ -1,24 +1,18 @@
-FROM oven/bun:1 AS base
-WORKDIR /usr/src/app
+FROM nixos/nix:latest AS builder
 
-# Install dependencies into a temporary directory.
-# This will will cache them and speed up future builds.
-FROM base AS install
-RUN mkdir -p /tmp/dev
-COPY package.json bun.lockb /tmp/dev
-RUN cd /tmp/dev && bun install --frozen-lockfile --ignore-scripts
+COPY . /tmp/build
+WORKDIR /tmp/build
 
-# Production build.
-FROM base AS build
-ARG NODE_ENV=production
-ENV NODE_ENV=$NODE_ENV
-COPY --from=install /tmp/dev/node_modules node_modules
-COPY . .
-RUN bun generate
-RUN bun build --target=node --outfile=dist/app.js ./bin/app.ts
+RUN nix \
+      --extra-experimental-features "nix-command flakes" \
+      --accept-flake-config \
+      build
 
-# Runtime image.
-FROM node:23
-COPY --from=build /usr/src/app/dist/app.js .
-EXPOSE 4000/tcp
-CMD ["node", "app.js"]
+RUN mkdir /tmp/nix-store-closure
+RUN cp -R $(nix-store -qR result/) /tmp/nix-store-closure
+
+FROM scratch
+WORKDIR /app
+COPY --from=builder /tmp/nix-store-closure /nix/store
+COPY --from=builder /tmp/build/result /app
+ENTRYPOINT ["/app/bin/entrypoint"]
