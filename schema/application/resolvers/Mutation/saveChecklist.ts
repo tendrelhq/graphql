@@ -237,8 +237,7 @@ export const saveChecklist: NonNullable<
           update public.workdescription
           set workdescriptionenddate = now(),
               workdescriptionmodifieddate = now(),
-              workdescriptionmodifiedby = auth.current_setting(workdescriptioncustomerid, current_setting('user.id'))
-          from input
+              workdescriptionmodifiedby = auth.current_identity(workdescriptioncustomerid, current_setting('user.id'))
           where
             workdescriptionworktemplateid = (
                 select worktemplateid
