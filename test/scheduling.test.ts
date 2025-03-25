@@ -7,9 +7,9 @@ import {
   test,
 } from "bun:test";
 import { sql } from "@/datasources/postgres";
+import { Task } from "@/schema/system/component/task";
 import { assert, map } from "@/util";
 import { cleanup, createTestContext, findAndEncode, setup } from "./prelude";
-import { Task } from "@/schema/system/component/task";
 
 const ctx = await createTestContext();
 

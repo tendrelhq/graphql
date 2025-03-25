@@ -1,3 +1,6 @@
+import { afterAll, beforeAll, describe, expect, test } from "bun:test";
+import { setCurrentIdentity } from "@/auth";
+import { sql } from "@/datasources/postgres";
 import { schema } from "@/schema/final";
 import {
   cleanup,
@@ -7,13 +10,10 @@ import {
   paginateQuery,
   setup,
 } from "@/test/prelude";
-import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 import {
   ListWorkersTestDocument,
   PaginateWorkersTestDocument,
 } from "./workers.test.generated";
-import { setCurrentIdentity } from "@/auth";
-import { sql } from "@/datasources/postgres";
 
 const ctx = await createTestContext();
 

@@ -1,3 +1,4 @@
+import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 import { Task } from "@/schema/system/component/task";
 import {
   cleanup,
@@ -6,7 +7,6 @@ import {
   setup,
 } from "@/test/prelude";
 import { map } from "@/util";
-import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 import { deleteNode } from "./node";
 
 const ctx = await createTestContext();

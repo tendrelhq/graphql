@@ -1,8 +1,8 @@
+import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 import { sql } from "@/datasources/postgres";
 import { decodeGlobalId } from "@/schema/system";
 import { Task } from "@/schema/system/component/task";
 import { map } from "@/util";
-import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 import { cleanup, createTestContext, findAndEncode, setup } from "./prelude";
 
 const ctx = await createTestContext();

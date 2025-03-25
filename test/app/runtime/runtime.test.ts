@@ -1,4 +1,5 @@
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
+import { setCurrentIdentity } from "@/auth";
 import { sql } from "@/datasources/postgres";
 import { schema } from "@/schema/final";
 import { decodeGlobalId, encodeGlobalId } from "@/schema/system";
@@ -21,7 +22,6 @@ import {
   TestRuntimeEntrypointDocument,
   TestRuntimeTransitionMutationDocument,
 } from "./runtime.test.generated";
-import { setCurrentIdentity } from "@/auth";
 
 const ctx = await createTestContext();
 
@@ -682,7 +682,10 @@ describe("runtime demo", () => {
             content._id,
             20
         from content, public.workresult
-        where workresult.id = ${decodeGlobalId(f!.id).id}
+        where workresult.id = ${
+          /* biome-ignore lint/style/noNonNullAssertion: */
+          decodeGlobalId(f!.id).id
+        }
       `;
     });
     assert(d1.count === 1);

@@ -103,6 +103,7 @@
         shfmt.enable = true;
       };
       settings = {
+        formatter.biome.options = lib.mkForce ["check" "--write"];
         # formatter.sqlfmt = {
         #   command = lib.getExe pkgs.python3.pkgs.sqlfmt;
         #   options = ["-"];
