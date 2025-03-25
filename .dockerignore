@@ -8,11 +8,13 @@ config/
 copilot/
 data/
 docs/
-flake.*
 justfile
-nix/
 node_modules/
 postgresql.conf
+result
 sqitch.conf
 sql/
 test/
+# Our build system (nix) needs these at the moment:
+!.dockerignore
+!.gitignore

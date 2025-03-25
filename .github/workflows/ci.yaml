@@ -16,12 +16,15 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: cachix/install-nix-action@v30
+      - uses: cachix/install-nix-action@v31
         with:
           github_access_token: ${{ secrets.GITHUB_TOKEN }}
           extra_nix_config: |
             accept-flake-config = true
+      # Run our checks to catch quick issues
       - run: nix flake check
+      # Run a full build to ensure that works
+      - run: nix build
   build:
     needs: check
     runs-on: ubuntu-latest
