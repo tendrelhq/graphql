@@ -1,3 +1,4 @@
+import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 import { schema } from "@/schema/final";
 import {
   cleanup,
@@ -7,7 +8,6 @@ import {
   paginateQuery,
   setup,
 } from "@/test/prelude";
-import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 import {
   ListLocationsTestDocument,
   PaginateLocationsTestDocument,

@@ -1,3 +1,4 @@
+import { setCurrentIdentity } from "@/auth";
 import { sql } from "@/datasources/postgres";
 import type { Mutation } from "@/schema/root";
 import { decodeGlobalId, encodeGlobalId } from "@/schema/system";
@@ -7,7 +8,6 @@ import type { ID } from "grats";
 import type { Fragment } from "postgres";
 import { match } from "ts-pattern";
 import { Location } from "../location";
-import { setCurrentIdentity } from "@/auth";
 
 /** @gqlInput */
 export type CreateLocationInput = {

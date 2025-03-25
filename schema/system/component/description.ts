@@ -1,10 +1,10 @@
-import type { ID } from "grats";
-import type { Component } from "../component";
-import type { Refetchable } from "../node";
 import type { Context } from "@/schema/types";
 import { assertUnderlyingType, normalizeBase64 } from "@/util";
+import type { ID } from "grats";
 import { decodeGlobalId } from "..";
+import type { Component } from "../component";
 import type { DynamicString, DynamicStringInput } from "../i18n";
+import type { Refetchable } from "../node";
 
 export type ConstructorArgs = {
   id: ID;
