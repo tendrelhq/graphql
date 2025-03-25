@@ -8,6 +8,7 @@ import { Limits } from "@/limits";
 import type { Context } from "@/schema";
 import { schema } from "@/schema/final";
 import upload from "@/upload";
+import { map } from "@/util";
 import { ApolloServer } from "@apollo/server";
 import { expressMiddleware } from "@apollo/server/express4";
 import { ApolloServerPluginDrainHttpServer } from "@apollo/server/plugin/drainHttpServer";
@@ -16,7 +17,21 @@ import express from "express";
 import { GraphQLError } from "graphql";
 import morgan from "morgan";
 
-console.log(`NODE_ENV: ${process.env.NODE_ENV}`);
+console.log(`NODE_ENV=${process.env.NODE_ENV}`);
+if (process.env.NODE_ENV === "development") {
+  console.debug("--------------------");
+  console.debug(
+    map(process.env, env => {
+      const lines = [];
+      for (const [key, value] of Object.entries(env)) {
+        if (key !== "NODE_ENV") {
+          lines.push(`${key}=${value}`);
+        }
+      }
+      return lines.sort((a, b) => a.localeCompare(b)).join("\n");
+    }),
+  );
+}
 
 const app = express();
 const httpServer = http.createServer(app);
