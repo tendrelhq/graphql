@@ -6,7 +6,7 @@ target     := "dev"
 default: start
 
 dump:
-    pg_dump --verbose --format=c --disable-triggers --no-acl --no-owner --schema=public --schema=entity --clean --if-exists --file db.dump
+    pg_dump --verbose --format=c --no-acl --no-owner --exclude-schema=datawarehouse --exclude-schema=upload --clean --if-exists --file db.dump
 
 restore:
     createdb {{dbname}}
