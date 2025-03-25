@@ -441,12 +441,12 @@ input ChecklistInput {
   active: ActiveInput
   assignees: [AssigneeInput!]
   auditable: AuditableInput
-  customerId: ID!
   description: DescriptionInput
   draft: Boolean
   id: ID
   items: [ChecklistItemInput!]
   name: DisplayNameInput!
+  parent: ID
   required: Boolean
   schedule: ScheduleInput
   sop: SopInput

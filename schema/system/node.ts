@@ -1,4 +1,5 @@
 import { sql } from "@/datasources/postgres";
+import { assertUnderlyingType } from "@/util";
 import { GraphQLError } from "graphql";
 import type { ID } from "grats";
 import { decodeGlobalId, encodeGlobalId } from ".";
@@ -8,9 +9,8 @@ import {
   type ConstructorArgs as AttachmentConstructorArgs,
 } from "../platform/attachment";
 import type { Context } from "../types";
-import { Task } from "./component/task";
-import { assertUnderlyingType } from "@/util";
 import { DisplayName } from "./component/name";
+import { Task } from "./component/task";
 
 /**
  * Indicates an object that is "refetchable".

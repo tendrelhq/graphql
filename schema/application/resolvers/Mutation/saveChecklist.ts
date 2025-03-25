@@ -16,11 +16,26 @@ import {
 } from "@/util";
 import { GraphQLError } from "graphql";
 
+type RawFieldCreateInput = [
+  string, // name
+  string, // type
+  number, // order
+  boolean, // auditable
+  string, // description
+  boolean, // draft
+  boolean, // required
+  string, // default value
+  string, // widget type
+];
+
+type RawFieldUpdateInput = [
+  string, // id
+  ...RawFieldCreateInput,
+];
+
 export const saveChecklist: NonNullable<
   MutationResolvers["saveChecklist"]
 > = async (_, { input }, ctx) => {
-  const customerId = decodeGlobalId(input.customerId).id;
-
   let existing: InputMaybe<string>;
   if (input.id) {
     const { type, id } = decodeGlobalId(input.id);
@@ -53,41 +68,47 @@ export const saveChecklist: NonNullable<
   }
 
   if (existing) {
-    const fields: [string, string, string, number, string, string][] =
-      //           id    , name  , type  , order , desc  , widget
-      mapOrElse(
-        input.items,
-        items =>
-          items
-            // We don't support nested templates at the moment.
-            .filter(item => !!item.result)
-            .map(({ result }) => [
-              // id
-              map(result.id, field => {
-                try {
-                  const { type, id } = decodeGlobalId(field);
-                  assertUnderlyingType("workresult", type);
-                  return id;
-                } catch {
-                  return null; // implies `field` was client generated
-                }
-              }) as string,
-              // name
-              result.name.value.value, // gross
-              // type
-              assertNonNull(
-                map(result.widget, resultTypeFromInput),
-                "unsupported result type",
-              ),
-              // order
-              result.order,
-              // desc
-              (result.description?.value ?? null) as unknown as string,
-              // widget
-              map(result.widget, widgetTypeFromInput) as string,
-            ]),
-        [],
-      );
+    const fields: RawFieldUpdateInput[] = mapOrElse(
+      input.items,
+      items =>
+        items
+          // We don't support nested templates at the moment.
+          .filter(item => !!item.result)
+          .map(({ result }) => [
+            // id
+            map(result.id, field => {
+              try {
+                const { type, id } = decodeGlobalId(field);
+                assertUnderlyingType("workresult", type);
+                return id;
+              } catch {
+                return null; // implies `field` was client generated
+              }
+            }) as string,
+            // name
+            result.name.value.value, // gross
+            // type
+            assertNonNull(
+              map(result.widget, resultTypeFromInput),
+              "unsupported result type",
+            ),
+            // order
+            result.order,
+            // auditable
+            (result.auditable?.enabled ?? false) as boolean,
+            // desc
+            (result.description?.value.value ?? null) as string,
+            // draft
+            (result.draft ?? false) as boolean,
+            // required
+            (result.required ?? false) as boolean,
+            // value (default)
+            (map(result.widget, defaultValueFromInput) ?? null) as string,
+            // widget
+            map(result.widget, widgetTypeFromInput) as string,
+          ]),
+      [],
+    );
 
     const [node, delta] = await sql.begin(async sql => {
       await setCurrentIdentity(sql, ctx);
@@ -99,36 +120,29 @@ export const saveChecklist: NonNullable<
       // a template's description, name and sop are side effect free. Changing
       // whether a template is auditable, deleting a template, and publishing a
       // template (or any of its results) are operations that involve side
-      // effects.
+      // effects. We'll do those last.
       const r = await sql`
-        with input (auditable, sop) as (
-          values (
-              ${input.auditable?.enabled ?? false}::boolean,
-              ${input.sop?.link.toString() ?? null}::text
-          )
+        with inputs (sop) as (
+          values (${input.sop?.link.toString() ?? null}::text)
         )
-
         update public.worktemplate
-        set worktemplateisauditable = input.auditable,
-            worktemplatesoplink = input.sop,
+        set worktemplatesoplink = inputs.sop,
             worktemplatemodifieddate = now(),
             worktemplatemodifiedby = auth.current_identity(worktemplatecustomerid, current_setting('user.id'))
-        from input
+        from inputs
         where id = ${existing}
-          and (worktemplateisauditable, worktemplatesoplink)
-              is distinct from (input.auditable, input.sop)
+          and nullif(worktemplatesoplink, '') is distinct from inputs.sop
         returning 1
       `;
       count += r.length;
 
-      // Next we do relational updates.
       if (input.description) {
         // Upsert description.
         const r = await sql`
           with
             input as (
               select
-                  auth.current_identity(worktemplatecustomerid, ${ctx.auth.userId}) as actor,
+                  auth.current_identity(worktemplatecustomerid, current_setting('user.id')) as actor,
                   systag.systagid as locale,
                   worktemplate.worktemplatecustomerid as owner,
                   worktemplate.worktemplateid as template,
@@ -220,20 +234,17 @@ export const saveChecklist: NonNullable<
       } else {
         // Remove description.
         const r = await sql`
-          with input as (
-              select
-                  auth.current_identity(worktemplatecustomerid, ${ctx.auth.userId}) as actor,
-                  worktemplate.worktemplateid as template
-              from public.worktemplate
-              where worktemplate.id = ${existing}
-          )
-
           update public.workdescription
           set workdescriptionenddate = now(),
               workdescriptionmodifieddate = now(),
-              workdescriptionmodifiedby = input.actor
+              workdescriptionmodifiedby = auth.current_setting(workdescriptioncustomerid, current_setting('user.id'))
           from input
-          where workdescriptionworktemplateid = input.template
+          where
+            workdescriptionworktemplateid = (
+                select worktemplateid
+                from public.worktemplate
+                where id = ${existing}
+            )
             and workdescriptionworkresultid is null
           returning 1
         `;
@@ -291,55 +302,107 @@ export const saveChecklist: NonNullable<
         count += r.length;
       }
 
-      // Finally, fields.
+      // Now we begin with engine1.
+      // First up, the template itself. This will cascade template-level
+      // operations into instantiations. Note that this is slightly suboptimal
+      // since we will need a second pass through at the result-level to ensure
+      // all of the fields are instantiated correctly. Also note that the
+      // operations below are no-ops if the templates are already in the given
+      // states.
+      {
+        const r = await sql`
+          with
+            node as (
+              select *
+              from public.worktemplate
+              where id = ${existing}
+            ),
+
+            ops as (
+              select t.*
+              from node, engine1.set_worktemplateisauditable(
+                jsonb_build_array(
+                  jsonb_build_object(
+                      'id', node.id,
+                      'enabled', ${input.auditable?.enabled ?? false}
+                  )
+                )
+              ) as t
+              union all
+              select t.*
+              from node, engine1.set_worktemplatedraft(
+                jsonb_build_array(
+                  jsonb_build_object(
+                      'id', node.id,
+                      'draft', ${input.draft ?? false}
+                  )
+                )
+              ) as t
+            )
+
+          select t.*
+          from ops, engine1.execute(ops.*) as t;
+        `;
+        count += r.length;
+      }
+
+      // Lastly we do fields. These also go through engine1, and also cascade
+      // into field-level instantiations.
       if (fields.length) {
         const r = await sql`
           with
-            input as (
+            constants as (
               select
                   auth.current_identity(customerid, current_setting('user.id')) as actor,
                   systagtype as language,
                   customeruuid as owner,
                   worktemplate.id as template
               from
+                  public.worktemplate,
                   public.customer,
-                  public.systag,
-                  public.worktemplate
+                  public.systag
               where
-                  customer.customeruuid = ${customerId}
+                  worktemplate.id = ${existing}
                   and systag.systagparentid = 2
                     and systag.systagtype = current_setting('user.locale')
-                  and worktemplate.id = ${existing}
+                  and worktemplatecustomerid = customerid
             ),
 
-            field (id, f_name, f_type, f_order, f_desc, f_widget) as (
-              values ${sql(fields)}
+            fields (id, "name", "type", "order", auditable, "desc", draft, required, "value", widget) as (
+              values ${sql(fields as string[][])}
             )
 
-          select 1
+          select t.*
           from
-            input,
-            field,
-            legacy0.ensure_field_t(
-                customer_id := input.owner,
-                language_type := input.language,
-                template_id := input.template,
-                field_description := field.f_desc,
-                field_id := field.id,
-                field_is_draft := false,
+            constants as c,
+            fields as f,
+            engine1.upsert_field_t(
+                customer_id := c."owner",
+                language_type := c."language",
+                modified_by := c.actor,
+                template_id := c.template,
+                field_description := f."desc",
+                field_id := f.id,
+                field_is_draft := f.draft::boolean,
                 field_is_primary := false,
-                field_is_required := false,
-                field_name := field.f_name,
-                field_order := field.f_order::integer,
+                field_is_required := f.required::boolean,
+                field_name := f."name",
+                field_order := f."order"::integer,
                 field_reference_type := null,
-                field_type := field.f_type,
-                field_value := null,
-                field_widget := field.f_widget,
-                modified_by := input.actor
-            ) as t
+                field_type := f."type",
+                field_value := f."value",
+                field_widget := f.widget
+            ) as ops,
+            engine1.execute(ops.*) as t
           ;
         `;
         count += r.length;
+        console.debug(`saveChecklist: engine1.execute.count: ${r.length}`);
+        if (process.env.NODE_ENV === "development" && r.length) {
+          console.debug(
+            `saveChecklist: engine1.execute:\n${JSON.stringify(r, null, 2)}`,
+          );
+        }
       }
 
       return [encodeGlobalId({ type: "worktemplate", id: existing }), count];
@@ -354,8 +417,7 @@ export const saveChecklist: NonNullable<
   }
 
   // else: create
-  const fields: [string, string, number, string, string][] = mapOrElse(
-    //           name  , type  , order , desc  , widget
+  const fields: RawFieldCreateInput[] = mapOrElse(
     input.items,
     items =>
       items
@@ -371,13 +433,30 @@ export const saveChecklist: NonNullable<
           ),
           // order
           result.order,
+          // auditable
+          (result.auditable?.enabled ?? false) as boolean,
           // desc
-          (result.description?.value ?? null) as unknown as string,
+          (result.description?.value.value ?? null) as string,
+          // draft
+          (result.draft ?? false) as boolean,
+          // required
+          (result.required ?? false) as boolean,
+          // value (default)
+          (map(result.widget, defaultValueFromInput) ?? null) as string,
           // widget
           map(result.widget, widgetTypeFromInput) as string,
         ]),
     [],
   );
+  const { type: parentType, id: parentId } = decodeGlobalId(input.parent);
+  if (parentType !== "location") {
+    throw new GraphQLError(`Invalid parent type for Checklist: ${parentType}`, {
+      extensions: {
+        code: "BAD_REQUEST",
+      },
+    });
+  }
+
   const [node, delta] = await sql.begin(async sql => {
     await setCurrentIdentity(sql, ctx);
 
@@ -389,22 +468,18 @@ export const saveChecklist: NonNullable<
           customeruuid as owner,
           t.id as template
       from
+        public.location,
         public.customer,
         public.systag,
         legacy0.create_task_t(
             customer_id := customeruuid,
             language_type := systagtype,
             task_name := ${input.name.value.value},
-            task_parent_id := (
-                select locationuuid
-                from public.location
-                where locationcustomerid = customerid
-                  and locationistop = true
-                limit 1
-            ),
+            task_parent_id := location.locationuuid,
             modified_by := auth.current_identity(customerid, current_setting('user.id'))
         ) as t
-      where customeruuid = ${customerId}
+      where locationuuid = ${parentId}
+        and locationcustomerid = customerid
         and systagparentid = 2 and systagtype = current_setting('user.locale')
       ;
     `;
@@ -439,6 +514,18 @@ export const saveChecklist: NonNullable<
             type_tag := 'On Demand',
             modified_by := ${actor}
         );
+      `;
+      count += r.length;
+    }
+
+    {
+      const r = await sql`
+        select t.*
+        from legacy0.create_template_constraint_on_location(
+            template_id := ${template},
+            location_id := ${parentId},
+            modified_by := ${actor}
+        ) as t;
       `;
       count += r.length;
     }
@@ -494,8 +581,8 @@ export const saveChecklist: NonNullable<
 
     if (fields.length) {
       const r = await sql`
-        with field (f_name, f_type, f_order, f_desc, f_widget) as (
-            values ${sql(fields)}
+        with field (f_name, f_type, f_order, f_auditable, f_desc, f_draft, f_required, f_value, f_widget) as (
+          values ${sql(fields as string[][])}
         )
 
         select t.*
@@ -504,19 +591,38 @@ export const saveChecklist: NonNullable<
             language_type := ${language},
             template_id := ${template},
             field_description := field.f_desc,
-            field_is_draft := false,
+            field_is_draft := field.f_draft::boolean,
             field_is_primary := false,
-            field_is_required := false,
+            field_is_required := field.f_required::boolean,
             field_name := field.f_name,
             field_order := field.f_order::integer,
             field_reference_type := null,
             field_type := field.f_type,
-            field_value := null,
+            field_value := field.f_value,
             field_widget := field.f_widget,
             modified_by := ${actor}
         ) as t;
       `;
       count += r.length;
+    }
+
+    if (input.draft !== true) {
+      // This may be the update responsible for "publishing" this template...
+      const r = await sql`
+        with ops as (
+          select *
+          from engine1.instantiate_worktemplate(jsonb_build_array(${template}))
+        )
+        select t.*
+        from ops, engine1.execute(ops.*) as t
+      `;
+      count += r.length;
+      console.debug(`saveChecklist: engine1.execute.count: ${r.length}`);
+      if (process.env.NODE_ENV === "development") {
+        console.debug(
+          `saveChecklist: engine1.execute:\n${JSON.stringify(r, null, 2)}`,
+        );
+      }
     }
 
     return [encodeGlobalId({ type: "worktemplate", id: template }), count];
@@ -562,6 +668,45 @@ function resultTypeFromInput(input: WidgetInput) {
   }
 }
 
+function defaultValueFromInput(input: WidgetInput) {
+  switch (true) {
+    case "boolean" in input:
+      return input.boolean?.value?.toString();
+    case "checkbox" in input:
+      return input.checkbox?.value?.toString();
+    case "clicker" in input:
+      return input.clicker?.value?.toString();
+    case "duration" in input:
+      return input.duration?.value?.toString();
+    case "multiline" in input:
+      return input.multiline?.value;
+    case "number" in input:
+      return input.number?.value?.toString();
+    case "reference" in input:
+      // Not supported at the moment.
+      return null;
+    case "section" in input:
+      return input.section?.value;
+    case "sentiment" in input:
+      return input.sentiment?.value?.toString();
+    case "string" in input:
+      return input.string?.value;
+    case "temporal" in input: {
+      if (input.temporal.value?.instant) {
+        return input.temporal.value.instant;
+      }
+      if (input.temporal.value?.zdt) {
+        return input.temporal.value.zdt.epochMilliseconds;
+      }
+      return null;
+    }
+    default: {
+      const _: never = input;
+      return null; // theoretically impossible but no need to panic
+    }
+  }
+}
+
 function widgetTypeFromInput(input: WidgetInput) {
   switch (true) {
     case "boolean" in input:
@@ -592,4 +737,8 @@ function widgetTypeFromInput(input: WidgetInput) {
       throw "invariant violated";
     }
   }
+}
+
+async function engine1() {
+  //
 }

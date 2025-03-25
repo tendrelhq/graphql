@@ -100,10 +100,19 @@ where
 ;
 
 select isnt_empty($$
-  select e.*
-  from
-      engine1.publish_worktemplate(jsonb_build_array(current_setting('test.template'))) as op,
-      engine1.execute(op.*) as e
+  with ops as (
+    select *
+    from engine1.set_worktemplatedraft(
+        jsonb_build_array(
+            jsonb_build_object(
+                'id', current_setting('test.template'),
+                'enabled', false
+          )
+        )
+    )
+  )
+  select t.*
+  from ops, engine1.execute(ops.*) as t
 $$);
 
 select is(count(*), 5::bigint, 'should have created 5 instances, one per location')

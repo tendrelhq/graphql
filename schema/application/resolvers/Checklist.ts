@@ -207,7 +207,6 @@ export const Checklist: ChecklistResolvers = {
             INNER JOIN public.workresult AS wr
                 ON wri.workresultinstanceworkresultid = wr.workresultid
                 AND wr.workresultdeleted = false
-                AND wr.workresultdraft = ${args.withDraft ?? false}
                 AND wr.workresultisprimary = false
             WHERE ${join(
               [
@@ -320,32 +319,34 @@ export const Checklist: ChecklistResolvers = {
         "workinstance",
         () => sql<[{ count: bigint }]>`
             SELECT count(*)
-            FROM public.workresult AS wr
-            WHERE
-                wr.workresultworktemplateid IN (
-                    SELECT workinstanceworktemplateid
-                    FROM public.workinstance
-                    WHERE id = ${parentId}
-                )
+            FROM public.workinstance AS wi
+            INNER JOIN public.workresultinstance AS wri
+                ON wi.workinstanceid = wri.workresultinstanceworkinstanceid
+            INNER JOIN public.workresult AS wr
+                ON wri.workresultinstanceworkresultid = wr.workresultid
                 AND wr.workresultdeleted = false
-                AND wr.workresultdraft = ${args.withDraft ?? false}
                 AND wr.workresultisprimary = false
-                ${match(args.withActive)
-                  .with(
-                    true,
-                    () => sql`AND (
+            WHERE ${join(
+              [
+                sql`wi.id = ${parentId}`,
+                ...(args.withDraft ? [] : [sql`wr.workresultdraft = false`]),
+                ...match(args.withActive)
+                  .with(true, () => [
+                    sql`(
                         wr.workresultenddate IS null
                         OR wr.workresultenddate > now()
                     )`,
-                  )
-                  .with(
-                    false,
-                    () => sql`AND (
+                  ])
+                  .with(false, () => [
+                    sql`(
                         wr.workresultenddate IS NOT null
                         AND wr.workresultenddate < now()
                     )`,
-                  )
-                  .otherwise(() => sql``)}
+                  ])
+                  .otherwise(() => []),
+              ],
+              sql`AND`,
+            )}
         `,
       )
       .with(
