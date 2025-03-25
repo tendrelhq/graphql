@@ -611,7 +611,7 @@ export const saveChecklist: NonNullable<
       const r = await sql`
         with ops as (
           select *
-          from engine1.instantiate_worktemplate(jsonb_build_array(${template}))
+          from engine1.instantiate_worktemplate(jsonb_build_array(${template}::text))
         )
         select t.*
         from ops, engine1.execute(ops.*) as t
@@ -737,8 +737,4 @@ function widgetTypeFromInput(input: WidgetInput) {
       throw "invariant violated";
     }
   }
-}
-
-async function engine1() {
-  //
 }
