@@ -10,6 +10,7 @@ import {
   execute,
   findAndEncode,
   getFieldByName,
+  setup,
 } from "@/test/prelude";
 import { map } from "@/util";
 import { TestCreateTemplateConstraintDocument } from "./createTemplateConstraint.test.generated";
@@ -103,20 +104,7 @@ describe("createTemplateConstraint", () => {
   });
 
   beforeAll(async () => {
-    const logs = await sql<{ op: string; id: string }[]>`
-      select *
-      from
-          runtime.create_demo(
-              customer_name := 'Frozen Tendy Factory',
-              admins := (
-                  select array_agg(workeruuid)
-                  from public.worker
-                  where workeridentityid = ${ctx.auth.userId}
-              ),
-              modified_by := 895
-          )
-      ;
-    `;
+    const logs = await setup(ctx);
     CUSTOMER = findAndEncode("customer", "organization", logs);
     TEMPLATE = map(
       findAndEncode("next", "worktemplate", logs),

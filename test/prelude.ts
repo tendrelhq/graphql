@@ -146,7 +146,7 @@ export async function setup(ctx: Context) {
               admins := (
                   select array_agg(workeruuid)
                   from public.worker
-                  where workeridentityid = ${assertNonNull(process.env.X_TENDREL_USER)}
+                  where workeridentityid = current_setting('user.id')
               ),
               modified_by := 895
           )

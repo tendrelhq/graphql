@@ -1,19 +1,15 @@
 -- Verify graphql:engine0 on pg
 begin;
 
-select pg_catalog.has_schema_privilege('engine0', 'usage');
-
-select pg_catalog.has_function_privilege('engine0.execute'::regproc, 'execute');
 select
     pg_catalog.has_function_privilege(
-        'engine0.build_instantiation_plan'::regproc, 'execute'
+        'engine0.eval_field_condition'::regproc, 'execute'
     )
 ;
 select
     pg_catalog.has_function_privilege(
-        'engine0.evaluate_instantiation_plan'::regproc, 'execute'
+        'engine0.eval_field_and_state_condition'::regproc, 'execute'
     )
 ;
-select pg_catalog.has_function_privilege('engine0.instantiate'::regproc, 'execute');
 
 rollback;
