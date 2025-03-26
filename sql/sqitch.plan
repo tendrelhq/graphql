@@ -26,3 +26,6 @@ engine1 2025-03-14T23:35:42Z Will Ruggiano <ruggiano@tendrel.io>
 nodeops 2025-03-18T19:35:03Z Will Ruggiano <ruggiano@tendrel.io>
 ensure-field-t 2025-03-21T21:21:16Z Will Ruggiano <ruggiano@tendrel.io>
 @v0.28.1 2025-03-24T18:58:42Z Will Ruggiano <ruggiano@tendrel.io>
+init [init@v0.28.1] 2025-03-26T05:40:23Z Will Ruggiano <ruggiano@tendrel.io> # fix: upsert_localized_content
+nodeops [nodeops@v0.28.1] 2025-03-26T05:46:05Z Will Ruggiano <ruggiano@tendrel.io> # feat: description, name, order, etc
+@v0.29.0 2025-03-26T05:52:40Z Will Ruggiano <ruggiano@tendrel.io> # one patch and a couple features

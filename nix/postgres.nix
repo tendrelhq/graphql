@@ -69,6 +69,8 @@
           create extension ddlx schema pg_catalog;
         '';
         settings = {
+          log_statement = "all";
+          logging_collector = false;
           shared_preload_libraries = "pg_cron,plpgsql_check";
         };
       };
