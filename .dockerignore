@@ -18,3 +18,4 @@ test/
 # Our build system (nix) needs these at the moment:
 !.dockerignore
 !.gitignore
+!config/*.conf

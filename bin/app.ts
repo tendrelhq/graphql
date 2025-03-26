@@ -73,7 +73,7 @@ if (process.env.NODE_ENV === "development") {
     swaggerUi.serve,
     swaggerUi.setup(null, {
       swaggerOptions: {
-        url: "http://localhost:3000",
+        url: "http://localhost:4001",
       },
     }),
   );
@@ -81,13 +81,12 @@ if (process.env.NODE_ENV === "development") {
 
 app.get("/live", (_, res) => res.send());
 
-// Coming soon!
-// app.post(
-//   "/login",
-//   auth.clerk(), // Temporary.
-//   express.json(),
-//   auth.login,
-// );
+app.post(
+  "/login",
+  auth.clerk(), // Temporary.
+  express.json(),
+  auth.login,
+);
 
 app.post("/upload", auth.clerk(), express.json(), upload.POST);
 

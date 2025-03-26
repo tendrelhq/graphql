@@ -89,23 +89,17 @@
         };
 
         postgrest = {
-          command = pkgs.writeShellApplication {
-            name = "postgrest";
-            runtimeInputs = with pkgs; [postgrest];
-            text = ''
-              postgrest ${../config/postgrest.conf}
-            '';
-          };
+          command = config.packages.postgrest;
           depends_on.pg1.condition = "process_healthy";
           liveness_probe.http_get = {
             host = "localhost";
             path = "/live";
-            port = 3001;
+            port = 4002;
           };
           readiness_probe.http_get = {
             host = "localhost";
             path = "/ready";
-            port = 3001;
+            port = 4002;
           };
         };
       };

@@ -17,9 +17,17 @@ image:
 
 http:
   alias: ${COPILOT_ENVIRONMENT_NAME}.${COPILOT_APPLICATION_NAME}.tendrel.io
-  healthcheck: "/live"
   path: "/"
+  healthcheck: "/live"
   redirect_to_https: true
+  additional_rules:
+    - path: "/api/v1"
+      port: 443
+      target_container: postgrest
+      target_port: 4001
+      # healthcheck:
+      #   path: "/live"
+      #   port: 4002
 
 network:
   vpc:
@@ -32,7 +40,7 @@ memory: 2048
 
 secrets:
   CLERK_SECRET_KEY: /copilot/${COPILOT_APPLICATION_NAME}/${COPILOT_ENVIRONMENT_NAME}/secrets/clerk-secret-key
-  NEW_RELIC_LICENSE_KEY: /copilot/${COPILOT_APPLICATION_NAME}/${COPILOT_ENVIRONMENT_NAME}/secrets/new-relic-license-key
+  JWT_SECRET: /copilot/${COPILOT_APPLICATION_NAME}/${COPILOT_ENVIRONMENT_NAME}/secrets/jwt-secret
   PGUSERNAME:
     secretsmanager: "/database/service/graphql:username::"
   PGPASSWORD:
@@ -45,6 +53,7 @@ secrets:
     secretsmanager: "/database/service/graphql:dbname::"
 
 variables:
+  BASE_URL: https://${COPILOT_ENVIRONMENT_NAME}.${COPILOT_APPLICATION_NAME}.tendrel.io
   CLERK_PUBLISHABLE_KEY: pk_live_Y2xlcmsudGVuZHJlbC5pbyQ
   NODE_ENV: production
   STAGE: ${COPILOT_ENVIRONMENT_NAME}
@@ -73,27 +82,21 @@ environments:
   beta:
     variables:
       ATTACHMENT_BUCKET: beta-lambdastack-photostoragebucketcc7aea4f-1ang3xq3j0cqv
-# # Coming soon!
-# sidecars:
-#   postgrest:
-#     port: 3000
-#     image: postgrest/postgrest:v12.2.8
-#     secrets:
-#       PGUSERNAME:
-#         secretsmanager: "/database/service/graphql:username::"
-#       PGPASSWORD:
-#         secretsmanager: "/database/service/graphql:password::"
-#       PGHOST:
-#         secretsmanager: "/database/service/graphql:host::"
-#       PGPORT:
-#         secretsmanager: "/database/service/graphql:port::"
-#       PGDATABASE:
-#         secretsmanager: "/database/service/graphql:dbname::"
-#       PGRST_JWT_SECRET: /copilot/${COPILOT_APPLICATION_NAME}/${COPILOT_ENVIRONMENT_NAME}/secrets/jwt-secret
-#     variables:
-#       PGRST_ADMIN_SEVER_PORT: 3001
-#       # PGRST_DB_ANON_ROLE: anon
-#       PGRST_DB_PLAN_ENABLED: true
-#       PGRST_DB_SCHEMAS: api
-#       PGRST_DB_TX_END: commit-allow-override
-#       PGRST_JWT_SECRET_IS_BASE64: true
+
+sidecars:
+  postgrest:
+    port: 4001
+    image:
+      build: config/postgrest.dockerfile
+    secrets:
+      PGUSERNAME:
+        secretsmanager: "/database/service/graphql:username::"
+      PGPASSWORD:
+        secretsmanager: "/database/service/graphql:password::"
+      PGHOST:
+        secretsmanager: "/database/service/graphql:host::"
+      PGPORT:
+        secretsmanager: "/database/service/graphql:port::"
+      PGDATABASE:
+        secretsmanager: "/database/service/graphql:dbname::"
+      PGRST_JWT_SECRET: /copilot/${COPILOT_APPLICATION_NAME}/${COPILOT_ENVIRONMENT_NAME}/secrets/jwt-secret

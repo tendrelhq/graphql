@@ -9,6 +9,7 @@ import type { RequestHandler } from "express";
 import { GraphQLError } from "graphql";
 import * as jose from "jose";
 import { type TxSql, sql } from "./datasources/postgres";
+import { assert, assertNonNull } from "./util";
 
 declare global {
   namespace Express {
@@ -51,9 +52,10 @@ export function clerk() {
   };
 }
 
-// N.B. when JWT_ALG = HS256, JWT_SECRET must be at least 32 bytes!
-const ALG = process.env.JWT_ALG ?? "HS256";
-const SECRET = new TextEncoder().encode(process.env.JWT_SECRET);
+const PGRST_BASE_URL =
+  process.env.NODE_ENV === "development"
+    ? "http://localhost:4001"
+    : `${process.env.BASE_URL}/api/v1`;
 
 /**
  * Verify the provided *external* security token, generate a short-lived,
@@ -62,25 +64,60 @@ const SECRET = new TextEncoder().encode(process.env.JWT_SECRET);
  * this multi-step process.
  */
 export const login: RequestHandler = async (req, res) => {
+  // TODO: Move this elsewhere.
+  const ALG = process.env.JWT_ALG ?? "HS256";
+  const SECRET = new TextEncoder().encode(process.env.JWT_SECRET);
+  // N.B. when JWT_ALG = HS256, JWT_SECRET must be at least 32 bytes!
+  if (ALG === "HS256") assert(SECRET.length >= 32, "invalid jwt secret");
+
   const { userId } = req.auth;
 
-  const op = new jose.SignJWT({ role: "anon" })
+  // TODO: ensure the user exists in the system, effectively making this API a
+  // dual login/signup API. For now we will assume that the user has already
+  // "signed up" for a Tendrel account, i.e. via the canonical Clerk/console flow.
+
+  const temp = await new jose.SignJWT({ role: "anonymous" })
     .setProtectedHeader({ alg: ALG, typ: "JWT" })
     .setIssuer(`urn:tendrel:${process.env.STAGE}`)
     .setIssuedAt() // now
-    .setSubject(userId);
+    .setNotBefore("-5 minutes")
+    .setExpirationTime("5 minutes")
+    .setSubject(userId)
+    .sign(SECRET);
 
   try {
-    res.json({
-      access_token: await op.sign(SECRET),
-      issued_token_type: "urn:ietf:params:oauth:token-type:jwt",
-      token_type: "Bearer",
+    const token = await fetch(`${PGRST_BASE_URL}/rpc/token`, {
+      method: "POST",
+      body: JSON.stringify({
+        grant_type: "urn:ietf:params:oauth:grant-type:token-exchange",
+        subject_token: temp,
+        subject_token_type: "urn:ietf:params:oauth:token-type:jwt",
+      }),
+      headers: {
+        Authorization: `Bearer ${temp}`,
+      },
     });
+
+    const json = await token.json();
+
+    res
+      // https://www.rfc-editor.org/rfc/rfc6749#section-5.1
+      .setHeader("Cache-Control", "no-store")
+      .setHeader("Pragma", "no-cache")
+      .status(token.status);
+
+    if (!token.ok) {
+      // https://www.rfc-editor.org/rfc/rfc6749#section-5.2
+      res.json({
+        error: json.code,
+        error_description: json.message,
+      });
+    } else {
+      res.json(json);
+    }
   } catch (e) {
-    res.status(401).json({
-      error: "invalid_request",
-      error_description: e instanceof Error ? e.message : undefined,
-    });
+    console.error(e);
+    res.status(500).send("Internal Server Error");
   }
 };
 

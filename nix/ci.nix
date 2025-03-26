@@ -84,6 +84,14 @@
         outputHashAlgo = "sha256";
         outputHashMode = "recursive";
       };
+
+      postgrest = pkgs.writeShellApplication {
+        name = "postgrest";
+        runtimeInputs = [pkgs.postgrest];
+        text = ''
+          postgrest ${../config/postgrest.conf}
+        '';
+      };
     };
   };
 }

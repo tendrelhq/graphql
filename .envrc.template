@@ -8,6 +8,10 @@ if has nix; then
   use flake . --impure
 fi
 
+# You can use `docker-compose` to get up and running with a graphql AND a
+# postgrest service.
+export COMPOSE_FILE=./config/compose.yaml
+
 # Only required if you are *not* using [nix](./flake.nix).
 # @see https://www.postgresql.org/docs/current/libpq-envars.html
 export PGDATABASE=postgres # or 'tendrel'
