@@ -79,6 +79,8 @@ if (process.env.NODE_ENV === "development") {
   );
 }
 
+app.get("/live", (_, res) => res.send());
+
 // Coming soon!
 // app.post(
 //   "/login",

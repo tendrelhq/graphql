@@ -44,7 +44,7 @@ jobs:
         uses: actions/cache/restore@v4
         with:
           path: db.dump
-          key: ${{ runner.os }}-db-dump-2025-03-25
+          key: ${{ runner.os }}-db-dump-2025-03-28
       - if: steps.check-cache.outputs.cache-hit != 'true'
         run: nix develop -c just dump
         env:

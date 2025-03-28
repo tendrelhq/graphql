@@ -15,14 +15,11 @@ image:
   # Port exposed through your container to route traffic to it.
   port: 4000
 
-http: false
-nlb:
-  port: 443/tls
-  target_port: 4000
-  # additional_listeners:
-  #   - port: 3000/tls
-  #     target_container: postgrest
-  #     target_port: 3000
+http:
+  alias: ${COPILOT_ENVIRONMENT_NAME}.${COPILOT_APPLICATION_NAME}.tendrel.io
+  healthcheck: "/live"
+  path: "/"
+  redirect_to_https: true
 
 network:
   vpc:
