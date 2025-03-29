@@ -42,7 +42,7 @@
 
         buildPhase = ''
           runHook preBuild
-          bun build ./bin/app.ts --compile --minify --sourcemap
+          bun run build
           runHook postBuild
         '';
 

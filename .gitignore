@@ -3,6 +3,7 @@
 *.dump
 *.generated.ts
 .*
+app
 data/
 node_modules/
 result

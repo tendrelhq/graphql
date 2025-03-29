@@ -4,6 +4,7 @@
   "module": "schema/index.ts",
   "type": "module",
   "scripts": {
+    "build": "bun build ./bin/app.ts --compile --env=disable --minify --sourcemap",
     "check": "biome check --write && tsc --pretty",
     "clean": "git clean -dfx -e .direnv -e .env.local -e .envrc -e .pre-commit-config.yaml -e /data",
     "generate": "grats && bun ./scripts/generate-legacy-schema.ts && bun ./scripts/print-schema.ts",
