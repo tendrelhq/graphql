@@ -20,6 +20,7 @@
         ];
         buildInputs = [
           config.packages.copilot-cli
+          config.packages.devenv
           pkgs.awscli2
           pkgs.bun
           pkgs.just

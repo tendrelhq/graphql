@@ -48,6 +48,8 @@
         inputs.services.processComposeModules.default
       ];
 
+      cli.options.no-server = false;
+
       services.postgres.pg1 = {
         enable = true;
         package = config.packages.postgresql;

@@ -41,7 +41,7 @@ memory: 2048
 secrets:
   CLERK_SECRET_KEY: /copilot/${COPILOT_APPLICATION_NAME}/${COPILOT_ENVIRONMENT_NAME}/secrets/clerk-secret-key
   JWT_SECRET: /copilot/${COPILOT_APPLICATION_NAME}/${COPILOT_ENVIRONMENT_NAME}/secrets/jwt-secret
-  PGUSERNAME:
+  PGUSER:
     secretsmanager: "/database/service/graphql:username::"
   PGPASSWORD:
     secretsmanager: "/database/service/graphql:password::"
@@ -91,7 +91,7 @@ sidecars:
         dockerfile: config/postgrest.dockerfile
         context: .
     secrets:
-      PGUSERNAME:
+      PGUSER:
         secretsmanager: "/database/service/graphql:username::"
       PGPASSWORD:
         secretsmanager: "/database/service/graphql:password::"
