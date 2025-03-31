@@ -25,9 +25,9 @@ http:
       port: 443
       target_container: postgrest
       target_port: 4001
-      # healthcheck:
-      #   path: "/live"
-      #   port: 4002
+      healthcheck:
+        path: "/live"
+        port: 4002
 
 network:
   vpc:
