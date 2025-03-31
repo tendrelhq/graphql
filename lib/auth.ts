@@ -52,11 +52,6 @@ export function clerk() {
   };
 }
 
-const PGRST_BASE_URL =
-  process.env.NODE_ENV === "development"
-    ? "http://localhost:4001"
-    : `${process.env.BASE_URL}/api/v1`;
-
 /**
  * Verify the provided *external* security token, generate a short-lived,
  * finely-grained subject token, and then call our /token api to perform the
@@ -86,7 +81,7 @@ export const login: RequestHandler = async (req, res) => {
     .sign(SECRET);
 
   try {
-    const token = await fetch(`${PGRST_BASE_URL}/rpc/token`, {
+    const token = await fetch(`${process.env.PGRST_BASE_URL}/rpc/token`, {
       method: "POST",
       body: JSON.stringify({
         grant_type: "urn:ietf:params:oauth:grant-type:token-exchange",
