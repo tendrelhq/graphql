@@ -87,7 +87,9 @@ sidecars:
   postgrest:
     port: 4001
     image:
-      build: config/postgrest.dockerfile
+      build:
+        dockerfile: config/postgrest.dockerfile
+        context: .
     secrets:
       PGUSERNAME:
         secretsmanager: "/database/service/graphql:username::"
