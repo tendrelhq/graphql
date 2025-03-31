@@ -7,6 +7,11 @@ services:
     network_mode: host
     ports:
       - 4000:4000
+  nginx:
+    build: nginx.dockerfile
+    network_mode: host
+    ports:
+      - 80:80
   postgrest:
     build:
       context: ..

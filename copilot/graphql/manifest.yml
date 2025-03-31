@@ -24,11 +24,11 @@ http:
     - alias: ${COPILOT_ENVIRONMENT_NAME}.${COPILOT_APPLICATION_NAME}.tendrel.io
       path: "/api/v1"
       port: 443
-      target_container: postgrest
-      target_port: 4001
+      target_container: nginx
+      target_port: 80
       healthcheck:
         path: "/live"
-        port: 4002
+        port: 80
 
 network:
   vpc:
@@ -86,6 +86,10 @@ environments:
       ATTACHMENT_BUCKET: beta-lambdastack-photostoragebucketcc7aea4f-1ang3xq3j0cqv
 
 sidecars:
+  nginx:
+    port: 80
+    image:
+      build: config/nginx.dockerfile
   postgrest:
     port: 4001
     image:
