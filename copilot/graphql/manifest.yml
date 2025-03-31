@@ -21,7 +21,8 @@ http:
   healthcheck: "/live"
   redirect_to_https: true
   additional_rules:
-    - path: "/api/v1"
+    - alias: ${COPILOT_ENVIRONMENT_NAME}.${COPILOT_APPLICATION_NAME}.tendrel.io
+      path: "/api/v1"
       port: 443
       target_container: postgrest
       target_port: 4001
