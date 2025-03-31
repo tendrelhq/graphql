@@ -9,7 +9,7 @@ import type { RequestHandler } from "express";
 import { GraphQLError } from "graphql";
 import * as jose from "jose";
 import { type TxSql, sql } from "./datasources/postgres";
-import { assert, assertNonNull } from "./util";
+import { assert } from "./util";
 
 declare global {
   namespace Express {
@@ -81,7 +81,10 @@ export const login: RequestHandler = async (req, res) => {
     .sign(SECRET);
 
   try {
-    const token = await fetch(`${process.env.PGRST_BASE_URL}/rpc/token`, {
+    // Same URL in both development and production. In development this will hit
+    // the nginx proxy running on localhost. In production it will hit the same
+    // proxy but running in a separate (ECS) container.
+    const token = await fetch("http://localhost/api/v1/rpc/token", {
       method: "POST",
       body: JSON.stringify({
         grant_type: "urn:ietf:params:oauth:grant-type:token-exchange",

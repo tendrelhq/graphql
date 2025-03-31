@@ -18,7 +18,7 @@ describe("/api/token", () => {
       token_type: "Bearer",
     });
 
-    const res2 = await fetch("http://localhost:4001/rpc/token_introspect", {
+    const res2 = await fetch("http://localhost/api/v1/rpc/token_introspect", {
       method: "POST",
       headers: {
         Authorization: `Bearer ${login.access_token}`,
