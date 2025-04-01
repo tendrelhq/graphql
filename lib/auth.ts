@@ -59,26 +59,20 @@ export function clerk() {
  * this multi-step process.
  */
 export const login: RequestHandler = async (req, res) => {
-  // TODO: Move this elsewhere.
-  const ALG = process.env.JWT_ALG ?? "HS256";
-  const SECRET = new TextEncoder().encode(process.env.JWT_SECRET);
-  // N.B. when JWT_ALG = HS256, JWT_SECRET must be at least 32 bytes!
-  if (ALG === "HS256") assert(SECRET.length >= 32, "invalid jwt secret");
-
-  const { userId } = req.auth;
-
-  // TODO: ensure the user exists in the system, effectively making this API a
-  // dual login/signup API. For now we will assume that the user has already
-  // "signed up" for a Tendrel account, i.e. via the canonical Clerk/console flow.
-
-  const temp = await new jose.SignJWT({ role: "anonymous" })
-    .setProtectedHeader({ alg: ALG, typ: "JWT" })
-    .setIssuer(`urn:tendrel:${process.env.STAGE}`)
-    .setIssuedAt() // now
-    .setNotBefore("-5 minutes")
-    .setExpirationTime("5 minutes")
-    .setSubject(userId)
-    .sign(SECRET);
+  const { userId: sub } = req.auth;
+  const iss = `urn:tendrel:${process.env.STAGE}`;
+  const [{ jwt }] = await sql`
+    select auth.jwt_sign(
+      json_build_object(
+        'role', 'anonymous',
+        'iss', ${iss}::text,
+        'iat', extract(epoch from now()),
+        'nbf', extract(epoch from now() - '5 minutes'::interval),
+        'exp', extract(epoch from now() + '5 minutes'::interval),
+        'sub', ${sub}::text
+      )
+    ) as jwt;
+  `;
 
   try {
     // Same URL in both development and production. In development this will hit
@@ -88,11 +82,11 @@ export const login: RequestHandler = async (req, res) => {
       method: "POST",
       body: JSON.stringify({
         grant_type: "urn:ietf:params:oauth:grant-type:token-exchange",
-        subject_token: temp,
+        subject_token: jwt,
         subject_token_type: "urn:ietf:params:oauth:token-type:jwt",
       }),
       headers: {
-        Authorization: `Bearer ${temp}`,
+        Authorization: `Bearer ${jwt}`,
       },
     });
 

@@ -7,8 +7,11 @@ services:
     network_mode: host
     ports:
       - 4000:4000
+    restart: always
   nginx:
-    build: nginx.dockerfile
+    build:
+      context: .
+      dockerfile: nginx.dockerfile
     network_mode: host
     ports:
       - 80:80
@@ -22,3 +25,4 @@ services:
     network_mode: host
     ports:
       - 4001:4001
+    restart: always
