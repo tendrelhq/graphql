@@ -843,6 +843,25 @@ type Field {
     last: Int
   ): AttachmentConnection @semanticNonNull
   """
+  Intended to provide "auto-completion" in a frontend setting, this API returns
+  *distinct known values* for a given Field. For Fields without constraints
+  (which is most of them), this will return a "frecency" list of previously
+  used values for the given Field. When constraints are involved, the
+  completion list represents the *allowed* set of values for the given Field.
+
+  Note that "frecency" is not currently implemented. For such Fields (i.e. those
+  without constraints) you will simply get back an empty completion list.
+
+  Note also that currently there is no enforcement of the latter, constraint-based
+  semantic in the backend! The client *must* validate user input using the
+  completion list *before* issuing, for example, an `applyFieldEdits` mutation.
+  Otherwise the backend will gladly accept arbitrary values (assuming they are,
+  of course, of the correct type).
+
+  Note also that pagination is not currently implemented.
+  """
+  completions: ValueCompletionConnection @semanticNonNull
+  """
   Description of a Field.
   """
   description: Description
@@ -1897,6 +1916,21 @@ union Value =
   | NumberValue
   | StringValue
   | TimestampValue
+
+type ValueCompletion {
+  value: Value @semanticNonNull
+}
+
+type ValueCompletionConnection {
+  edges: [ValueCompletionEdge!] @semanticNonNull
+  pageInfo: PageInfo @semanticNonNull
+  totalCount: Int @semanticNonNull
+}
+
+type ValueCompletionEdge {
+  cursor: String @semanticNonNull
+  node: ValueCompletion @semanticNonNull
+}
 
 input ValueInput @oneOf {
   boolean: Boolean

@@ -1,5 +1,5 @@
 import { sql } from "@/datasources/postgres";
-import { assertNonNull, buildPaginationArgs, mapOrElse } from "@/util";
+import { assert, assertNonNull, buildPaginationArgs, mapOrElse } from "@/util";
 import type { ID, Int } from "grats";
 import type { Fragment } from "postgres";
 import { decodeGlobalId } from ".";
@@ -101,6 +101,96 @@ export type FieldQuery = {
    */
   byName?: string;
 };
+
+/** @gqlType */
+export type ValueCompletion = {
+  /** @gqlField */
+  value: Value;
+};
+
+/**
+ * Intended to provide "auto-completion" in a frontend setting, this API returns
+ * *distinct known values* for a given Field. For Fields without constraints
+ * (which is most of them), this will return a "frecency" list of previously
+ * used values for the given Field. When constraints are involved, the
+ * completion list represents the *allowed* set of values for the given Field.
+ *
+ * Note that "frecency" is not currently implemented. For such Fields (i.e. those
+ * without constraints) you will simply get back an empty completion list.
+ *
+ * Note also that currently there is no enforcement of the latter, constraint-based
+ * semantic in the backend! The client *must* validate user input using the
+ * completion list *before* issuing, for example, an `applyFieldEdits` mutation.
+ * Otherwise the backend will gladly accept arbitrary values (assuming they are,
+ * of course, of the correct type).
+ *
+ * Note also that pagination is not currently implemented.
+ *
+ * @gqlField
+ */
+export async function completions(
+  f: Field,
+  ctx: Context,
+): Promise<Connection<ValueCompletion>> {
+  // TODO: move Field to a class.
+  const g = decodeGlobalId(f.id);
+  if (g.type !== "workresultinstance") {
+    return {
+      edges: [],
+      pageInfo: {
+        hasNextPage: false,
+        hasPreviousPage: false,
+      },
+      totalCount: 0,
+    };
+  }
+
+  const instance = g.id; // workinstanceuuid
+  const field = assertNonNull(g.suffix?.at(0), "invalid global identifier"); // workresultuuid
+
+  // FIXME: we aren't using worktemplateconstraintconstrainedtypeid here.
+  // This feels like a gap. Although in the ideal model result type would inform
+  // our choice of algorithm: frecency vs constraint.
+  const rows = await sql<ValueCompletion[]>`
+    with f as (
+      select distinct
+        ''::text as id, -- unused, purely for fragment reuse
+        s.systagtype as "type",
+        c.custagtype as "value"
+      from public.workinstance as wi
+      inner join public.worktemplate as wt
+        on wi.workinstanceworktemplateid = wt.worktemplateid
+      inner join public.workresult as wr
+        on wt.worktemplateid = wr.workresultworktemplateid
+        and wr.id = ${field}
+      inner join public.systag as wrt
+        on wr.workresulttypeid = wrt.systagid
+      inner join public.worktemplateconstraint as wtc
+        on wt.id = wtc.worktemplateconstrainttemplateid
+        and wr.id = wtc.worktemplateconstraintresultid
+        and (
+          wtc.worktemplateconstraintenddate is null
+          or wtc.worktemplateconstraintenddate > now()
+        )
+      inner join public.custag as c
+        on wtc.worktemplateconstraintconstaintid = c.custaguuid
+        and (c.custagenddate is null or c.custagenddate > now())
+      where wi.id = ${instance}
+      order by c.custagorder
+    )
+
+    ${field$fragment}
+  `;
+
+  return {
+    edges: rows.map(row => ({ node: row, cursor: "" })),
+    pageInfo: {
+      hasNextPage: false,
+      hasPreviousPage: false,
+    },
+    totalCount: rows.length,
+  };
+}
 
 /**
  * Field attachments.

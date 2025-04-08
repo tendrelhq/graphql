@@ -1137,7 +1137,7 @@ export async function fields(
     };
   }
 
-  // FIXME: one last bit of jankiness down below: L114-118, L161-165.
+  // FIXME: one last bit of jankiness down below: L1168-1173, L1215-1220.
   // This hack is solely for the janky ass start/end time override "fields".
   const rows = await match(parent._type)
     .with(

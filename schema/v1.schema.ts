@@ -40,6 +40,7 @@ import {
 } from "./platform/attachment";
 import {
   attachments as fieldAttachmentsResolver,
+  completions as fieldCompletionsResolver,
   description as fieldDescriptionResolver,
   name as fieldNameResolver,
 } from "./system/component";
@@ -836,6 +837,82 @@ export function getSchema(): GraphQLSchema {
       ];
     },
   });
+  const ValueCompletionType: GraphQLObjectType = new GraphQLObjectType({
+    name: "ValueCompletion",
+    fields() {
+      return {
+        value: {
+          name: "value",
+          type: ValueType,
+          resolve(source, args, context, info) {
+            return assertNonNull(
+              defaultFieldResolver(source, args, context, info),
+            );
+          },
+        },
+      };
+    },
+  });
+  const ValueCompletionEdgeType: GraphQLObjectType = new GraphQLObjectType({
+    name: "ValueCompletionEdge",
+    fields() {
+      return {
+        cursor: {
+          name: "cursor",
+          type: GraphQLString,
+          resolve(source, args, context, info) {
+            return assertNonNull(
+              defaultFieldResolver(source, args, context, info),
+            );
+          },
+        },
+        node: {
+          name: "node",
+          type: ValueCompletionType,
+          resolve(source, args, context, info) {
+            return assertNonNull(
+              defaultFieldResolver(source, args, context, info),
+            );
+          },
+        },
+      };
+    },
+  });
+  const ValueCompletionConnectionType: GraphQLObjectType =
+    new GraphQLObjectType({
+      name: "ValueCompletionConnection",
+      fields() {
+        return {
+          edges: {
+            name: "edges",
+            type: new GraphQLList(new GraphQLNonNull(ValueCompletionEdgeType)),
+            resolve(source, args, context, info) {
+              return assertNonNull(
+                defaultFieldResolver(source, args, context, info),
+              );
+            },
+          },
+          pageInfo: {
+            name: "pageInfo",
+            type: PageInfoType,
+            resolve(source, args, context, info) {
+              return assertNonNull(
+                defaultFieldResolver(source, args, context, info),
+              );
+            },
+          },
+          totalCount: {
+            name: "totalCount",
+            type: GraphQLInt,
+            resolve(source, args, context, info) {
+              return assertNonNull(
+                defaultFieldResolver(source, args, context, info),
+              );
+            },
+          },
+        };
+      },
+    });
   const ValueTypeType: GraphQLEnumType = new GraphQLEnumType({
     name: "ValueType",
     values: {
@@ -889,6 +966,15 @@ export function getSchema(): GraphQLSchema {
             return assertNonNull(
               fieldAttachmentsResolver(source, context, args),
             );
+          },
+        },
+        completions: {
+          description:
+            'Intended to provide "auto-completion" in a frontend setting, this API returns\n*distinct known values* for a given Field. For Fields without constraints\n(which is most of them), this will return a "frecency" list of previously\nused values for the given Field. When constraints are involved, the\ncompletion list represents the *allowed* set of values for the given Field.\n\nNote that "frecency" is not currently implemented. For such Fields (i.e. those\nwithout constraints) you will simply get back an empty completion list.\n\nNote also that currently there is no enforcement of the latter, constraint-based\nsemantic in the backend! The client *must* validate user input using the\ncompletion list *before* issuing, for example, an `applyFieldEdits` mutation.\nOtherwise the backend will gladly accept arbitrary values (assuming they are,\nof course, of the correct type).\n\nNote also that pagination is not currently implemented.',
+          name: "completions",
+          type: ValueCompletionConnectionType,
+          resolve(source, _args, context) {
+            return assertNonNull(fieldCompletionsResolver(source, context));
           },
         },
         description: {
@@ -2066,6 +2152,9 @@ export function getSchema(): GraphQLSchema {
       TimestampValueType,
       TrackableConnectionType,
       TrackableEdgeType,
+      ValueCompletionType,
+      ValueCompletionConnectionType,
+      ValueCompletionEdgeType,
     ],
   });
 }
