@@ -119,6 +119,7 @@
           "*.plan"
           "*.snap"
           "*.sql"
+          "*.template"
           "*.toml"
           ".*" # hidden files
           "copilot/.workspace"

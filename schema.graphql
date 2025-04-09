@@ -818,14 +818,41 @@ input EnabledLanguageSearchOptions {
   primary: Boolean
 }
 
-type EntityConnection {
-  components(
-    after: String
-    before: String
-    first: Int
-    last: Int
-  ): ComponentConnection!
-  entity: ID!
+"""
+Entities represent distinct objects in the system. They can be physical
+objects, like Locations, Resources and Workers, or logical ones, like
+"Scan Codes".
+"""
+type EntityInstance {
+  id: ID @semanticNonNull
+  name: DisplayName @semanticNonNull
+}
+
+type EntityInstanceConnection {
+  edges: [EntityInstanceEdge!] @semanticNonNull
+  pageInfo: PageInfo @semanticNonNull
+  totalCount: Int @semanticNonNull
+}
+
+type EntityInstanceEdge {
+  cursor: String @semanticNonNull
+  node: EntityInstance @semanticNonNull
+}
+
+type EntityTemplate {
+  id: ID @semanticNonNull
+  name: DisplayName @semanticNonNull
+}
+
+type EntityTemplateConnection {
+  edges: [EntityTemplateEdge!] @semanticNonNull
+  pageInfo: PageInfo @semanticNonNull
+  totalCount: Int @semanticNonNull
+}
+
+type EntityTemplateEdge {
+  cursor: String @semanticNonNull
+  node: EntityTemplate @semanticNonNull
 }
 
 type EntityValue {
@@ -1117,17 +1144,37 @@ type Mutation {
   assign(entity: ID!, to: ID!): AssignmentPayload!
   attach(attachments: [URL!]!, entity: ID!): [AttachmentEdge!] @semanticNonNull
   copyFrom(entity: ID!, options: CopyFromOptions!): CopyFromPayload!
-  createEntity(id: String, suffix: [String!], type: String!): ID!
+  createEntityInstance(
+    name: String!
+    owner: ID!
+    template: ID!
+    type: ID!
+  ): EntityInstance @semanticNonNull
+  createEntityTemplate(
+    name: String!
+    owner: ID!
+    template: ID!
+    type: ID!
+  ): EntityTemplate @semanticNonNull
   createInvitation(input: CreateInvitationInput!): Worker!
   createLocation(input: CreateLocationInput!): Location @semanticNonNull
   """
-  Create a new template constraint.
+  Template constraints allow you to limit the set of values that are valid for
+  a given template and, optionally, field. Practically, this allows you to
+  define *enumerations*, e.g. a "string enum" with members 'foo', 'bar' and 'baz'.
+
+  Note that currently constraints are *not* validated in the backend.
+  Validation *should* happen on the client, prior to invoking the API.
+  Otherwise, the backend willl gladly accept any arbitrary value (assuming, of
+  course, that it is of the correct type).
   """
   createTemplateConstraint(
     entity: ID!
     options: TemplateConstraintOptions
     template: ID!
-  ): CreateTemplateConstraintResult @semanticNonNull
+  ): CreateTemplateConstraintResult
+    @deprecated(reason: "No longer supported")
+    @semanticNonNull
   createUser(input: CreateUserInput!): User!
   createWorker(input: CreateWorkerInput!): WorkerEdge!
   """
@@ -1315,10 +1362,27 @@ type Query {
     withName: String
     withStatus: [ChecklistStatusStates!]
   ): ChecklistConnection!
-  entity(id: ID!): EntityConnection!
+  instances(
+    after: String
+    first: Int
+    """
+    Only Entities of the given type. The type is the *canonical* type, i.e.
+    not localized. This is best for programmatic usage.
+    """
+    ofType: [String!]
+  ): EntityInstanceConnection @semanticNonNull
   languages: [Language!]!
   node(id: ID!): Node!
   roles: [Tag!]!
+  templates(
+    after: String
+    first: Int
+    """
+    Only Entities of the given type. The type is the *canonical* type, i.e.
+    not localized. This is best for programmatic usage.
+    """
+    ofType: [String!]
+  ): EntityTemplateConnection @semanticNonNull
   """
   Query for Trackable entities in the given `parent` hierarchy.
 
@@ -1637,6 +1701,7 @@ type Task implements Assignable & Component & Node & Trackable {
   displayName: DisplayName
     @deprecated(reason: "Use Task.name instead.")
     @semanticNonNull
+  field(byName: String): Field
   """
   TODO: description.
   """
@@ -1938,7 +2003,7 @@ input ValueInput @oneOf {
   number: Int
   string: String
   """
-  Date in either ISO or epoch millisecond format.
+  ISO 8601 format.
   """
   timestamp: String
 }

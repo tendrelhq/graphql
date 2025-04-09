@@ -1,43 +1,27 @@
 import {
-  node as queryNodeResolver,
-  id as assignmentIdResolver,
-  id as attachmentIdResolver,
-  id as descriptionIdResolver,
-  id as displayNameIdResolver,
-  id as taskIdResolver,
-  id as locationIdResolver,
-  deleteNode as mutationDeleteNodeResolver,
-} from "./system/node";
-import {
-  defaultFieldResolver,
-  GraphQLSchema,
-  GraphQLObjectType,
-  GraphQLNonNull,
-  GraphQLInterfaceType,
-  GraphQLID,
-  GraphQLList,
-  GraphQLString,
-  GraphQLInt,
   GraphQLBoolean,
   GraphQLEnumType,
-  GraphQLScalarType,
-  GraphQLUnionType,
-  GraphQLInputObjectType,
   GraphQLFloat,
+  GraphQLID,
+  GraphQLInputObjectType,
+  GraphQLInt,
+  GraphQLInterfaceType,
+  GraphQLList,
+  GraphQLNonNull,
+  GraphQLObjectType,
+  GraphQLScalarType,
+  GraphQLSchema,
+  GraphQLString,
+  GraphQLUnionType,
+  defaultFieldResolver,
 } from "graphql";
-import { trackables as queryTrackablesResolver } from "./platform/tracking";
-import {
-  assignees as taskAssigneesResolver,
-  attachments as taskAttachmentsResolver,
-  chain as taskChainResolver,
-  chainAgg as taskChainAggResolver,
-  fields as taskFieldsResolver,
-  applyFieldEdits as mutationApplyFieldEditsResolver,
-} from "./system/component/task";
+import { createLocation as mutationCreateLocationResolver } from "./platform/archetype/location/create";
+import { updateLocation as mutationUpdateLocationResolver } from "./platform/archetype/location/update";
 import {
   attachedBy as attachmentAttachedByResolver,
   attach as mutationAttachResolver,
 } from "./platform/attachment";
+import { trackables as queryTrackablesResolver } from "./platform/tracking";
 import {
   attachments as fieldAttachmentsResolver,
   completions as fieldCompletionsResolver,
@@ -45,12 +29,36 @@ import {
   name as fieldNameResolver,
 } from "./system/component";
 import {
-  fsm as taskFsmResolver,
+  applyFieldEdits as mutationApplyFieldEditsResolver,
+  assignees as taskAssigneesResolver,
+  attachments as taskAttachmentsResolver,
+  chainAgg as taskChainAggResolver,
+  chain as taskChainResolver,
+  fields as taskFieldsResolver,
+} from "./system/component/task";
+import {
   advance as mutationAdvanceResolver,
+  fsm as taskFsmResolver,
 } from "./system/component/task_fsm";
-import { createLocation as mutationCreateLocationResolver } from "./platform/archetype/location/create";
 import { createTemplateConstraint as mutationCreateTemplateConstraintResolver } from "./system/engine0/createTemplateConstraint";
-import { updateLocation as mutationUpdateLocationResolver } from "./platform/archetype/location/update";
+import {
+  entityInstanceName as entityInstanceNameResolver,
+  entityTemplate_name as entityTemplateNameResolver,
+  createEntityInstance as mutationCreateEntityInstanceResolver,
+  createEntityTemplate as mutationCreateEntityTemplateResolver,
+  instances as queryInstancesResolver,
+  templates as queryTemplatesResolver,
+} from "./system/entity";
+import {
+  id as assignmentIdResolver,
+  id as attachmentIdResolver,
+  id as descriptionIdResolver,
+  id as displayNameIdResolver,
+  id as locationIdResolver,
+  deleteNode as mutationDeleteNodeResolver,
+  node as queryNodeResolver,
+  id as taskIdResolver,
+} from "./system/node";
 async function assertNonNull<T>(value: T | Promise<T>): Promise<T> {
   const awaited = await value;
   if (awaited == null)
@@ -58,15 +66,34 @@ async function assertNonNull<T>(value: T | Promise<T>): Promise<T> {
   return awaited;
 }
 export function getSchema(): GraphQLSchema {
-  const NodeType: GraphQLInterfaceType = new GraphQLInterfaceType({
-    description: 'Indicates an object that is "refetchable".',
-    name: "Node",
+  const LocaleType: GraphQLScalarType = new GraphQLScalarType({
+    description:
+      "A language tag in the format of a BCP 47 (RFC 5646) standard string.",
+    name: "Locale",
+  });
+  const DynamicStringType: GraphQLObjectType = new GraphQLObjectType({
+    name: "DynamicString",
+    description:
+      "Plain text content that has been (potentially) translated into different\nlanguages as specified by the user's configuration.",
     fields() {
       return {
-        id: {
-          description: "A globally unique opaque identifier for a node.",
-          name: "id",
-          type: new GraphQLNonNull(GraphQLID),
+        locale: {
+          name: "locale",
+          type: LocaleType,
+          resolve(source, args, context, info) {
+            return assertNonNull(
+              defaultFieldResolver(source, args, context, info),
+            );
+          },
+        },
+        value: {
+          name: "value",
+          type: GraphQLString,
+          resolve(source, args, context, info) {
+            return assertNonNull(
+              defaultFieldResolver(source, args, context, info),
+            );
+          },
         },
       };
     },
@@ -84,6 +111,263 @@ export function getSchema(): GraphQLSchema {
       };
     },
   });
+  const NodeType: GraphQLInterfaceType = new GraphQLInterfaceType({
+    description: 'Indicates an object that is "refetchable".',
+    name: "Node",
+    fields() {
+      return {
+        id: {
+          description: "A globally unique opaque identifier for a node.",
+          name: "id",
+          type: new GraphQLNonNull(GraphQLID),
+        },
+      };
+    },
+  });
+  const DisplayNameType: GraphQLObjectType = new GraphQLObjectType({
+    name: "DisplayName",
+    fields() {
+      return {
+        id: {
+          description: "A globally unique opaque identifier for a node.",
+          name: "id",
+          type: new GraphQLNonNull(GraphQLID),
+          resolve(source) {
+            return displayNameIdResolver(source);
+          },
+        },
+        locale: {
+          name: "locale",
+          type: GraphQLString,
+          resolve(source, _args, context) {
+            return assertNonNull(source.locale(context));
+          },
+        },
+        name: {
+          deprecationReason:
+            "Use the DisplayName.value and/or DisplayName.locale instead.",
+          name: "name",
+          type: DynamicStringType,
+          resolve(source, _args, context) {
+            return assertNonNull(source.name(context));
+          },
+        },
+        value: {
+          name: "value",
+          type: GraphQLString,
+          resolve(source, _args, context) {
+            return assertNonNull(source.value(context));
+          },
+        },
+      };
+    },
+    interfaces() {
+      return [ComponentType, NodeType];
+    },
+  });
+  const EntityInstanceType: GraphQLObjectType = new GraphQLObjectType({
+    name: "EntityInstance",
+    description:
+      'Entities represent distinct objects in the system. They can be physical\nobjects, like Locations, Resources and Workers, or logical ones, like\n"Scan Codes".',
+    fields() {
+      return {
+        id: {
+          name: "id",
+          type: GraphQLID,
+          resolve(source, args, context, info) {
+            return assertNonNull(
+              defaultFieldResolver(source, args, context, info),
+            );
+          },
+        },
+        name: {
+          name: "name",
+          type: DisplayNameType,
+          resolve(source, _args, context) {
+            return assertNonNull(entityInstanceNameResolver(source, context));
+          },
+        },
+      };
+    },
+  });
+  const EntityInstanceEdgeType: GraphQLObjectType = new GraphQLObjectType({
+    name: "EntityInstanceEdge",
+    fields() {
+      return {
+        cursor: {
+          name: "cursor",
+          type: GraphQLString,
+          resolve(source, args, context, info) {
+            return assertNonNull(
+              defaultFieldResolver(source, args, context, info),
+            );
+          },
+        },
+        node: {
+          name: "node",
+          type: EntityInstanceType,
+          resolve(source, args, context, info) {
+            return assertNonNull(
+              defaultFieldResolver(source, args, context, info),
+            );
+          },
+        },
+      };
+    },
+  });
+  const PageInfoType: GraphQLObjectType = new GraphQLObjectType({
+    name: "PageInfo",
+    fields() {
+      return {
+        endCursor: {
+          name: "endCursor",
+          type: GraphQLString,
+        },
+        hasNextPage: {
+          name: "hasNextPage",
+          type: GraphQLBoolean,
+          resolve(source, args, context, info) {
+            return assertNonNull(
+              defaultFieldResolver(source, args, context, info),
+            );
+          },
+        },
+        hasPreviousPage: {
+          name: "hasPreviousPage",
+          type: GraphQLBoolean,
+          resolve(source, args, context, info) {
+            return assertNonNull(
+              defaultFieldResolver(source, args, context, info),
+            );
+          },
+        },
+        startCursor: {
+          name: "startCursor",
+          type: GraphQLString,
+        },
+      };
+    },
+  });
+  const EntityInstanceConnectionType: GraphQLObjectType = new GraphQLObjectType(
+    {
+      name: "EntityInstanceConnection",
+      fields() {
+        return {
+          edges: {
+            name: "edges",
+            type: new GraphQLList(new GraphQLNonNull(EntityInstanceEdgeType)),
+            resolve(source, args, context, info) {
+              return assertNonNull(
+                defaultFieldResolver(source, args, context, info),
+              );
+            },
+          },
+          pageInfo: {
+            name: "pageInfo",
+            type: PageInfoType,
+            resolve(source, args, context, info) {
+              return assertNonNull(
+                defaultFieldResolver(source, args, context, info),
+              );
+            },
+          },
+          totalCount: {
+            name: "totalCount",
+            type: GraphQLInt,
+            resolve(source, args, context, info) {
+              return assertNonNull(
+                defaultFieldResolver(source, args, context, info),
+              );
+            },
+          },
+        };
+      },
+    },
+  );
+  const EntityTemplateType: GraphQLObjectType = new GraphQLObjectType({
+    name: "EntityTemplate",
+    fields() {
+      return {
+        id: {
+          name: "id",
+          type: GraphQLID,
+          resolve(source, args, context, info) {
+            return assertNonNull(
+              defaultFieldResolver(source, args, context, info),
+            );
+          },
+        },
+        name: {
+          name: "name",
+          type: DisplayNameType,
+          resolve(source, _args, context) {
+            return assertNonNull(entityTemplateNameResolver(source, context));
+          },
+        },
+      };
+    },
+  });
+  const EntityTemplateEdgeType: GraphQLObjectType = new GraphQLObjectType({
+    name: "EntityTemplateEdge",
+    fields() {
+      return {
+        cursor: {
+          name: "cursor",
+          type: GraphQLString,
+          resolve(source, args, context, info) {
+            return assertNonNull(
+              defaultFieldResolver(source, args, context, info),
+            );
+          },
+        },
+        node: {
+          name: "node",
+          type: EntityTemplateType,
+          resolve(source, args, context, info) {
+            return assertNonNull(
+              defaultFieldResolver(source, args, context, info),
+            );
+          },
+        },
+      };
+    },
+  });
+  const EntityTemplateConnectionType: GraphQLObjectType = new GraphQLObjectType(
+    {
+      name: "EntityTemplateConnection",
+      fields() {
+        return {
+          edges: {
+            name: "edges",
+            type: new GraphQLList(new GraphQLNonNull(EntityTemplateEdgeType)),
+            resolve(source, args, context, info) {
+              return assertNonNull(
+                defaultFieldResolver(source, args, context, info),
+              );
+            },
+          },
+          pageInfo: {
+            name: "pageInfo",
+            type: PageInfoType,
+            resolve(source, args, context, info) {
+              return assertNonNull(
+                defaultFieldResolver(source, args, context, info),
+              );
+            },
+          },
+          totalCount: {
+            name: "totalCount",
+            type: GraphQLInt,
+            resolve(source, args, context, info) {
+              return assertNonNull(
+                defaultFieldResolver(source, args, context, info),
+              );
+            },
+          },
+        };
+      },
+    },
+  );
   const TrackableType: GraphQLInterfaceType = new GraphQLInterfaceType({
     description:
       'Identifies an Entity as being "trackable".\nWhat exactly this means depends on the type underlying said entity and is\nentirely user defined.',
@@ -141,39 +425,6 @@ export function getSchema(): GraphQLSchema {
       };
     },
   });
-  const PageInfoType: GraphQLObjectType = new GraphQLObjectType({
-    name: "PageInfo",
-    fields() {
-      return {
-        endCursor: {
-          name: "endCursor",
-          type: GraphQLString,
-        },
-        hasNextPage: {
-          name: "hasNextPage",
-          type: GraphQLBoolean,
-          resolve(source, args, context, info) {
-            return assertNonNull(
-              defaultFieldResolver(source, args, context, info),
-            );
-          },
-        },
-        hasPreviousPage: {
-          name: "hasPreviousPage",
-          type: GraphQLBoolean,
-          resolve(source, args, context, info) {
-            return assertNonNull(
-              defaultFieldResolver(source, args, context, info),
-            );
-          },
-        },
-        startCursor: {
-          name: "startCursor",
-          type: GraphQLString,
-        },
-      };
-    },
-  });
   const TrackableConnectionType: GraphQLObjectType = new GraphQLObjectType({
     name: "TrackableConnection",
     fields() {
@@ -212,6 +463,29 @@ export function getSchema(): GraphQLSchema {
     name: "Query",
     fields() {
       return {
+        instances: {
+          name: "instances",
+          type: EntityInstanceConnectionType,
+          args: {
+            after: {
+              name: "after",
+              type: GraphQLString,
+            },
+            first: {
+              name: "first",
+              type: GraphQLInt,
+            },
+            ofType: {
+              description:
+                "Only Entities of the given type. The type is the *canonical* type, i.e.\nnot localized. This is best for programmatic usage.",
+              name: "ofType",
+              type: new GraphQLList(new GraphQLNonNull(GraphQLString)),
+            },
+          },
+          resolve(_source, args, context) {
+            return assertNonNull(queryInstancesResolver(context, args));
+          },
+        },
         node: {
           name: "node",
           type: new GraphQLNonNull(NodeType),
@@ -223,6 +497,29 @@ export function getSchema(): GraphQLSchema {
           },
           resolve(_source, args, context) {
             return queryNodeResolver(args, context);
+          },
+        },
+        templates: {
+          name: "templates",
+          type: EntityTemplateConnectionType,
+          args: {
+            after: {
+              name: "after",
+              type: GraphQLString,
+            },
+            first: {
+              name: "first",
+              type: GraphQLInt,
+            },
+            ofType: {
+              description:
+                "Only Entities of the given type. The type is the *canonical* type, i.e.\nnot localized. This is best for programmatic usage.",
+              name: "ofType",
+              type: new GraphQLList(new GraphQLNonNull(GraphQLString)),
+            },
+          },
+          resolve(_source, args, context) {
+            return assertNonNull(queryTemplatesResolver(context, args));
           },
         },
         trackables: {
@@ -657,38 +954,6 @@ export function getSchema(): GraphQLSchema {
       };
     },
   });
-  const LocaleType: GraphQLScalarType = new GraphQLScalarType({
-    description:
-      "A language tag in the format of a BCP 47 (RFC 5646) standard string.",
-    name: "Locale",
-  });
-  const DynamicStringType: GraphQLObjectType = new GraphQLObjectType({
-    name: "DynamicString",
-    description:
-      "Plain text content that has been (potentially) translated into different\nlanguages as specified by the user's configuration.",
-    fields() {
-      return {
-        locale: {
-          name: "locale",
-          type: LocaleType,
-          resolve(source, args, context, info) {
-            return assertNonNull(
-              defaultFieldResolver(source, args, context, info),
-            );
-          },
-        },
-        value: {
-          name: "value",
-          type: GraphQLString,
-          resolve(source, args, context, info) {
-            return assertNonNull(
-              defaultFieldResolver(source, args, context, info),
-            );
-          },
-        },
-      };
-    },
-  });
   const DescriptionType: GraphQLObjectType = new GraphQLObjectType({
     name: "Description",
     fields() {
@@ -714,47 +979,6 @@ export function getSchema(): GraphQLSchema {
           type: GraphQLString,
           resolve(source, _args, context) {
             return assertNonNull(source.locale(context));
-          },
-        },
-        value: {
-          name: "value",
-          type: GraphQLString,
-          resolve(source, _args, context) {
-            return assertNonNull(source.value(context));
-          },
-        },
-      };
-    },
-    interfaces() {
-      return [ComponentType, NodeType];
-    },
-  });
-  const DisplayNameType: GraphQLObjectType = new GraphQLObjectType({
-    name: "DisplayName",
-    fields() {
-      return {
-        id: {
-          description: "A globally unique opaque identifier for a node.",
-          name: "id",
-          type: new GraphQLNonNull(GraphQLID),
-          resolve(source) {
-            return displayNameIdResolver(source);
-          },
-        },
-        locale: {
-          name: "locale",
-          type: GraphQLString,
-          resolve(source, _args, context) {
-            return assertNonNull(source.locale(context));
-          },
-        },
-        name: {
-          deprecationReason:
-            "Use the DisplayName.value and/or DisplayName.locale instead.",
-          name: "name",
-          type: DynamicStringType,
-          resolve(source, _args, context) {
-            return assertNonNull(source.name(context));
           },
         },
         value: {
@@ -1313,6 +1537,16 @@ export function getSchema(): GraphQLSchema {
             return assertNonNull(source.displayName(context));
           },
         },
+        field: {
+          name: "field",
+          type: FieldType,
+          args: {
+            byName: {
+              name: "byName",
+              type: GraphQLString,
+            },
+          },
+        },
         fields: {
           description: "TODO: description.",
           name: "fields",
@@ -1476,7 +1710,7 @@ export function getSchema(): GraphQLSchema {
           type: GraphQLString,
         },
         timestamp: {
-          description: "Date in either ISO or epoch millisecond format.",
+          description: "ISO 8601 format.",
           name: "timestamp",
           type: GraphQLString,
         },
@@ -1863,6 +2097,72 @@ export function getSchema(): GraphQLSchema {
             );
           },
         },
+        createEntityInstance: {
+          name: "createEntityInstance",
+          type: EntityInstanceType,
+          args: {
+            name: {
+              name: "name",
+              type: new GraphQLNonNull(GraphQLString),
+            },
+            owner: {
+              name: "owner",
+              type: new GraphQLNonNull(GraphQLID),
+            },
+            template: {
+              name: "template",
+              type: new GraphQLNonNull(GraphQLID),
+            },
+            type: {
+              name: "type",
+              type: new GraphQLNonNull(GraphQLID),
+            },
+          },
+          resolve(_source, args, context) {
+            return assertNonNull(
+              mutationCreateEntityInstanceResolver(
+                context,
+                args.owner,
+                args.template,
+                args.name,
+                args.type,
+              ),
+            );
+          },
+        },
+        createEntityTemplate: {
+          name: "createEntityTemplate",
+          type: EntityTemplateType,
+          args: {
+            name: {
+              name: "name",
+              type: new GraphQLNonNull(GraphQLString),
+            },
+            owner: {
+              name: "owner",
+              type: new GraphQLNonNull(GraphQLID),
+            },
+            template: {
+              name: "template",
+              type: new GraphQLNonNull(GraphQLID),
+            },
+            type: {
+              name: "type",
+              type: new GraphQLNonNull(GraphQLID),
+            },
+          },
+          resolve(_source, args, context) {
+            return assertNonNull(
+              mutationCreateEntityTemplateResolver(
+                context,
+                args.owner,
+                args.template,
+                args.name,
+                args.type,
+              ),
+            );
+          },
+        },
         createLocation: {
           name: "createLocation",
           type: LocationType,
@@ -1879,7 +2179,9 @@ export function getSchema(): GraphQLSchema {
           },
         },
         createTemplateConstraint: {
-          description: "Create a new template constraint.",
+          description:
+            "Template constraints allow you to limit the set of values that are valid for\na given template and, optionally, field. Practically, this allows you to\ndefine *enumerations*, e.g. a \"string enum\" with members 'foo', 'bar' and 'baz'.\n\nNote that currently constraints are *not* validated in the backend.\nValidation *should* happen on the client, prior to invoking the API.\nOtherwise, the backend willl gladly accept any arbitrary value (assuming, of\ncourse, that it is of the correct type).",
+          deprecationReason: "No longer supported",
           name: "createTemplateConstraint",
           type: CreateTemplateConstraintResultType,
           args: {
@@ -2130,6 +2432,12 @@ export function getSchema(): GraphQLSchema {
       DiagnosticType,
       DisplayNameType,
       DynamicStringType,
+      EntityInstanceType,
+      EntityInstanceConnectionType,
+      EntityInstanceEdgeType,
+      EntityTemplateType,
+      EntityTemplateConnectionType,
+      EntityTemplateEdgeType,
       EntityValueType,
       FieldType,
       FieldConnectionType,

@@ -20,8 +20,6 @@ services:
       context: ..
       dockerfile: config/postgrest.dockerfile
     env_file: ../.env.local
-    environment:
-      PGRST_OPENAPI_SERVER_PROXY_URI: http://localhost:4001
     network_mode: host
     ports:
       - 4001:4001

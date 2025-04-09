@@ -48,7 +48,7 @@ begin
         'scope', string_agg(systagtype, ' '),
         'exp', extract(epoch from now() + '24hr'::interval),
         'iat', extract(epoch from now()),
-        'iss', 'urn:tendrel:' || current_setting('app.stage'),
+        'iss', 'urn:tendrel:dev',
         'nbf', extract(epoch from now() - '30s'::interval),
         'sub', current_setting('request.jwt.claims')::jsonb ->> 'sub'
       )

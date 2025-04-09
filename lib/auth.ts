@@ -59,7 +59,36 @@ export function clerk() {
  * this multi-step process.
  */
 export const login: RequestHandler = async (req, res) => {
-  const { userId: sub } = req.auth;
+  try {
+    const r = await getAccessToken(req.auth.userId);
+    const token = await r.json();
+
+    res
+      // https://www.rfc-editor.org/rfc/rfc6749#section-5.1
+      .setHeader("Cache-Control", "no-store")
+      .setHeader("Pragma", "no-cache")
+      .status(r.status);
+
+    if (!r.ok) {
+      // https://www.rfc-editor.org/rfc/rfc6749#section-5.2
+      res.json({
+        error: token.code,
+        error_description: token.message,
+      });
+    } else {
+      res.json(token);
+    }
+  } catch (e) {
+    console.error(e);
+    res.status(500).send("Internal Server Error");
+  }
+};
+
+/**
+ * Get an access token for the given `sub`ject. This is always a Clerk user ID
+ * at the moment.
+ */
+export async function getAccessToken(sub: string) {
   const iss = `urn:tendrel:${process.env.STAGE}`;
   const [{ jwt }] = await sql`
     select auth.jwt_sign(
@@ -67,51 +96,28 @@ export const login: RequestHandler = async (req, res) => {
         'role', 'anonymous',
         'iss', ${iss}::text,
         'iat', extract(epoch from now()),
-        'nbf', extract(epoch from now() - '5 minutes'::interval),
-        'exp', extract(epoch from now() + '5 minutes'::interval),
+        'nbf', extract(epoch from now()) - 30 /* seconds */,
+        'exp', extract(epoch from now()) + 30 /* seconds */,
         'sub', ${sub}::text
       )
     ) as jwt;
   `;
 
-  try {
-    // Same URL in both development and production. In development this will hit
-    // the nginx proxy running on localhost. In production it will hit the same
-    // proxy but running in a separate (ECS) container.
-    const token = await fetch("http://localhost/api/v1/rpc/token", {
-      method: "POST",
-      body: JSON.stringify({
-        grant_type: "urn:ietf:params:oauth:grant-type:token-exchange",
-        subject_token: jwt,
-        subject_token_type: "urn:ietf:params:oauth:token-type:jwt",
-      }),
-      headers: {
-        Authorization: `Bearer ${jwt}`,
-      },
-    });
-
-    const json = await token.json();
-
-    res
-      // https://www.rfc-editor.org/rfc/rfc6749#section-5.1
-      .setHeader("Cache-Control", "no-store")
-      .setHeader("Pragma", "no-cache")
-      .status(token.status);
-
-    if (!token.ok) {
-      // https://www.rfc-editor.org/rfc/rfc6749#section-5.2
-      res.json({
-        error: json.code,
-        error_description: json.message,
-      });
-    } else {
-      res.json(json);
-    }
-  } catch (e) {
-    console.error(e);
-    res.status(500).send("Internal Server Error");
-  }
-};
+  // Same URL in both development and production. In development this assumes
+  // that Postgrest is running locally on port 4001, which it will be if you
+  // use the docker-compose file.
+  return await fetch("http://localhost:4001/rpc/token", {
+    method: "POST",
+    body: JSON.stringify({
+      grant_type: "urn:ietf:params:oauth:grant-type:token-exchange",
+      subject_token: jwt,
+      subject_token_type: "urn:ietf:params:oauth:token-type:jwt",
+    }),
+    headers: {
+      Authorization: `Bearer ${jwt}`,
+    },
+  });
+}
 
 export async function protect(
   { orgId, userId }: { orgId: string; userId: string },

@@ -1,0 +1,51 @@
+query ListReasonCodes {
+  instances(ofType: ["Reason Code"]) {
+    edges {
+      node {
+        name {
+          value
+        }
+      }
+    }
+  }
+}
+
+query ListRuntimeTemplates {
+  templates(ofType: ["Run"]) {
+    edges {
+      node {
+        name {
+          value
+        }
+      }
+    }
+  }
+}
+
+mutation CreateReasonCode($owner: ID!, $name: String!, $templates: [ID!]!) {
+  createEntityInstance(owner: $owner, name: $name, template: "", type: "") {
+    name {
+      value
+    }
+  }
+}
+
+query GetReasonCodeCompletions($task: ID!) {
+  node(id: $task) {
+    ... on Task {
+      reasonCode: field(byName: "Reason Code") {
+        completions {
+          edges {
+            node {
+              value {
+                ... on StringValue {
+                  string
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

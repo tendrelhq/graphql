@@ -50,9 +50,7 @@ const server = new ApolloServer<Context>({
 await server.start();
 
 app.use(
-  morgan(
-    ":date[iso] :method :url :status :res[content-length] - :response-time ms",
-  ),
+  morgan("common"),
   cors({
     // for w3c trace context propagation
     allowedHeaders: "*",
@@ -73,7 +71,7 @@ if (process.env.NODE_ENV === "development") {
     swaggerUi.serve,
     swaggerUi.setup(null, {
       swaggerOptions: {
-        url: "http://localhost:4001",
+        url: "http://localhost/api/v1",
       },
     }),
   );

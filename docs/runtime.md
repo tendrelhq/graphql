@@ -1,31 +1,5 @@
 # Runtime
 
-## Setup
-
-```sql
--- $1 is your workerinstanceid -> modifiedby
-begin
-;
-
--- Create an 'Runtime' type tag.
-select *
-from ast.create_system_type('Runtime', 'Template Type', $1)
-;
-
--- Create an 'Idle Time' type tag.
-select *
-from ast.create_system_type('Idle Time', 'Template Type', $1)
-;
-
--- Create a 'Downtime' type tag.
-select *
-from ast.create_system_type('Downtime', 'Template Type', $1)
-;
-
-commit
-;
-```
-
 ## Create a demo customer
 
 ```sql
@@ -46,4 +20,60 @@ from
 
 commit
 ;
+```
+
+## Reason codes, e.g. for Downtime and Idle Time
+
+Design:
+
+- Reason codes are an "enum" - the set of codes is defined albeit extensible.
+- Internally, they are just Strings with result-level constraints controlling
+  the values.
+- They are _still results_.
+
+```mermaid
+flowchart TD;
+    A(Tag - systag)-->B(Reason Code - systag)
+    B-->C(Machine Down - custag)
+    B-->D(Waiting for Materials - custag)
+    B-->E(Scheduled Maintenance - custag)
+```
+
+Frontend:
+
+The Field.completions field can be used to fetch the initial list.
+The resulting edges will be in custagorder (which you control).
+
+```graphql
+... on Task {
+  fields {
+    edges {
+      node {
+        # allowedValues {
+        completions { # ValueCompletionConnection
+          edges {     # ValueCompletionEdge
+            node {    # ValueCompletion
+              value { # Value
+                __typename
+                ... on StringValue {
+                  string
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
+```
+
+```jsx
+<select>
+  {data.field.completions.edges.map(e => (
+    <option value={e.node.value.string}>
+      {e.node.value.string}
+    </option>
+  )}
+</select>
 ```

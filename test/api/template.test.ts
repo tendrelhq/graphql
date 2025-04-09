@@ -1,27 +1,28 @@
 import { describe, expect, test } from "bun:test";
 import { baseurl } from "@/test/api/constants";
+import { pg } from "../prelude";
 
-describe.skip("/api/template", () => {
+describe("/api/template", () => {
   test("create", async () => {
-    const url = new URL("/template?select=id", baseurl);
-    const response = await fetch(url, {
-      method: "POST",
-      headers: {
-        Prefer: "return=representation, tx=rollback",
-      },
-      body: JSON.stringify({
-        name: "this is a test",
-        owner: "70f200bd-1c92-481d-9f5c-e6cf6cd92cd0",
-      }),
+    const response = await pg
+      .from("entity_template")
+      .insert({
+        owner: "f90d618d-5de7-4126-8c65-0afb700c6c61",
+        name: "My first template!",
+      })
+      .select("name")
+      .rollback();
+    expect(response).toMatchObject({
+      data: expect.arrayContaining([
+        {
+          name: "My first template!",
+        },
+      ]),
+      status: 201,
     });
-    expect(response.json()).resolves.toEqual([
-      {
-        id: expect.any(String),
-      },
-    ]);
   });
 
-  test("read", async () => {
+  test.skip("read", async () => {
     const url = new URL(
       "/template?select=id,display_name(value),fields(id,display_name(value),type(id,display_name(value)))&order=id",
       baseurl,
@@ -52,20 +53,12 @@ describe.skip("/api/template", () => {
   });
 
   test("delete", async () => {
-    const template = "0b9f3142-e7ed-4f78-8504-ccd2eb505075"; // FIXME: need a demo customer
-    const url = new URL(
-      `/template?id=eq.${template}&select=id,_deleted`,
-      baseurl,
-    );
-    const response = await fetch(url, {
-      method: "DELETE",
-      headers: {
-        // Use tx=rollback here while we get the test suites up and running.
-        // Eventually we should use a generated customer like we do in the
-        // existing runtime test suites.
-        Prefer: "return=representation, tx=rollback",
-      },
-    });
-    expect(response.json()).resolves.toMatchSnapshot();
+    const owner = "f90d618d-5de7-4126-8c65-0afb700c6c61";
+    const template = "0b9f3142-e7ed-4f78-8504-ccd2eb505075";
+    const response = await pg
+      .rpc("delete_entity_template", { owner, id: template })
+      .select("id,_deleted")
+      .rollback();
+    expect(response).toMatchSnapshot();
   });
 });

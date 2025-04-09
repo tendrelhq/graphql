@@ -1,0 +1,47 @@
+// Bun Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`runtime + reason codes mobile flows completions 1`] = `
+{
+  "node": {
+    "__typename": "Task",
+    "reasonCode": {
+      "__typename": "Field",
+      "completions": {
+        "__typename": "ValueCompletionConnection",
+        "edges": [
+          {
+            "__typename": "ValueCompletionEdge",
+            "node": {
+              "__typename": "ValueCompletion",
+              "value": {
+                "__typename": "StringValue",
+                "string": "Machine Down",
+              },
+            },
+          },
+          {
+            "__typename": "ValueCompletionEdge",
+            "node": {
+              "__typename": "ValueCompletion",
+              "value": {
+                "__typename": "StringValue",
+                "string": "Waiting for Materials",
+              },
+            },
+          },
+          {
+            "__typename": "ValueCompletionEdge",
+            "node": {
+              "__typename": "ValueCompletion",
+              "value": {
+                "__typename": "StringValue",
+                "string": "Scheduled Maintenance",
+              },
+            },
+          },
+        ],
+      },
+    },
+  },
+}
+`;

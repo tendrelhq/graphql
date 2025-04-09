@@ -17,20 +17,22 @@ import {
   assertNonNull,
   assertUnderlyingType,
   buildPaginationArgs,
+  map,
   mapOrElse,
   normalizeBase64,
 } from "@/util";
+import { Temporal } from "@js-temporal/polyfill";
 import { GraphQLError } from "graphql/error";
 import type { ID, Int } from "grats";
 import type { Fragment } from "postgres";
-import { match } from "ts-pattern";
+import { P, match } from "ts-pattern";
 import { decodeGlobalId, encodeGlobalId } from "..";
 import type { Aggregate } from "../aggregation";
 import {
   type Component,
   type Field,
+  type FieldDefinitionInput,
   type FieldInput,
-  type FieldQuery,
   field$fragment,
 } from "../component";
 import type { Refetchable } from "../node";
@@ -58,14 +60,14 @@ export type ConstructorArgs = {
  */
 export class Task implements Assignable, Component, Refetchable, Trackable {
   readonly __typename = "Task" as const;
-  readonly _type: string;
+  readonly _type: "workinstance" | "worktemplate";
   readonly _id: string;
   readonly id: ID;
 
   constructor(args: ConstructorArgs) {
     this.id = normalizeBase64(args.id);
     const { type, id } = decodeGlobalId(this.id);
-    this._type = type;
+    this._type = assertUnderlyingType(["workinstance", "worktemplate"], type);
     this._id = id;
   }
 
@@ -88,8 +90,10 @@ export class Task implements Assignable, Component, Refetchable, Trackable {
     return await ctx.orm.displayName.load(this.id);
   }
 
-  // Not exposed via GraphQL, yet.
-  async field(query: FieldQuery): Promise<Field | null> {
+  /**
+   * @gqlField
+   */
+  async field(args: { byName?: string | null }): Promise<Field | null> {
     const [row] = await match(this._type)
       .with(
         "workinstance",
@@ -108,15 +112,16 @@ export class Task implements Assignable, Component, Refetchable, Trackable {
                   on wri.workresultinstanceworkresultid = wr.workresultid
               inner join public.systag as t on wr.workresulttypeid = t.systagid
               ${
-                query.byName
+                args.byName
                   ? sql`
               inner join public.languagemaster as n
                   on wr.workresultlanguagemasterid = n.languagemasterid
-                  and n.languagemastersource = ${query.byName}
+                  and n.languagemastersource = ${args.byName}
                   `
                   : sql``
               }
               where wi.id = ${this._id}
+              limit 1
           )
 
           ${field$fragment}
@@ -136,24 +141,150 @@ export class Task implements Assignable, Component, Refetchable, Trackable {
                   on wt.worktemplateid = wr.workresultworktemplateid
               inner join public.systag as t on wr.workresulttypeid = t.systagid
               ${
-                query.byName
+                args.byName
                   ? sql`
               inner join
                   public.languagemaster as n
                   on wr.workresultlanguagemasterid = n.languagemasterid
-                  and n.languagemastersource = ${query.byName}
+                  and n.languagemastersource = ${args.byName}
                   `
                   : sql``
               }
               where wt.id = ${this._id}
+              limit 1
           )
 
           ${field$fragment}
         `,
       )
-      .otherwise(() => []);
+      .exhaustive();
 
     return row ?? null;
+  }
+
+  async addField(ctx: Context, input: FieldDefinitionInput): Promise<Field> {
+    const cte = match(this._type)
+      .with(
+        "workinstance",
+        () => sql`
+          select
+            customer.customeruuid as customer_id,
+            'en' as language_type,
+            auth.current_identity(customer.customerid, current_setting('user.id')) as modified_by,
+            worktemplate.id as template_id
+          from public.workinstance
+          inner join public.customer on workinstancecustomerid = customerid
+          inner join public.worktemplate on workinstanceworktemplateid = worktemplateid
+          where id = ${this._id}
+        `,
+      )
+      .with(
+        "worktemplate",
+        () => sql`
+          select
+            customer.customeruuid as customer_id,
+            'en' as language_type,
+            auth.current_identity(customer.customerid, current_setting('user.id')) as modified_by,
+            worktemplate.id as template_id
+          from public.worktemplate
+          inner join public.customer on worktemplatecustomerid = customerid
+          where id = ${this._id}
+        `,
+      )
+      .exhaustive();
+
+    const result = await sql.begin(async sql => {
+      await setCurrentIdentity(sql, ctx);
+      return await sql`
+        with cte as (${cte})
+        select t.*
+        from
+          cte,
+          engine1.upsert_field_t(
+            customer_id := cte.customer_id,
+            language_type := cte.language_type,
+            modified_by := cte.modified_by,
+            template_id := cte.template_id,
+            field_id := null,
+            field_name := ${input.name},
+            field_order := ${input.order ?? 0},
+            field_type := ${input.type}
+          ) as ops,
+          engine1.execute(ops.*) as t
+        ;
+      `;
+    });
+
+    // TODO: the return value could be more helpful.
+    // For now we know we the workresult will always be the first one.
+    const field: string = assertNonNull(
+      map(result.at(0)?.ctx.at(0)?.created.at(0)?.node, id =>
+        encodeGlobalId({ type: "workresult", id }),
+      ),
+      "failed to add field",
+    );
+
+    // This is still ugly...
+    // but honestly it's gotten way better since the Checklist days lmao.
+    return match(input.type)
+      .with("Boolean", () => ({
+        id: field,
+        value: {
+          __typename: "BooleanValue" as const,
+          boolean: match(input.value)
+            .with({ boolean: P.boolean }, v => v.boolean)
+            .otherwise(() => null),
+        },
+        valueType: "boolean" as const,
+      }))
+      .with("Entity", () => ({
+        id: field,
+        value: {
+          __typename: "EntityValue" as const,
+          entity: null,
+        },
+        valueType: "entity" as const,
+      }))
+      .with("Number", () => ({
+        id: field,
+        value: {
+          __typename: "NumberValue" as const,
+          number: match(input.value)
+            .with({ number: P.number }, v => v.number)
+            .otherwise(() => null),
+        },
+        valueType: "number" as const,
+      }))
+      .with("String", () => ({
+        id: field,
+        value: {
+          __typename: "StringValue" as const,
+          string: match(input.value)
+            .with({ string: P.string }, v => v.string)
+            .otherwise(() => null),
+        },
+        valueType: "string" as const,
+      }))
+      .with("Timestamp", () => ({
+        id: field,
+        value: {
+          __typename: "TimestampValue" as const,
+          timestamp: match(input.value)
+            .with({ timestamp: P.string }, v =>
+              Temporal.Instant.from(v.timestamp).epochSeconds.toString(),
+            )
+            .otherwise(() => null),
+        },
+        valueType: "timestamp" as const,
+      }))
+      .otherwise(() => {
+        throw new GraphQLError("Unknown Field value type", {
+          extensions: {
+            code: "BAD_REQUEST",
+            hint: "Expected one of: Boolean, Entity, Number, String, Timestamp",
+          },
+        });
+      });
   }
 
   /**

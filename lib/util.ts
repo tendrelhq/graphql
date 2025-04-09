@@ -49,8 +49,8 @@ export function assertNonNull<T>(
   return value;
 }
 
-export function assertUnderlyingType(
-  expected: string | string[],
+export function assertUnderlyingType<T extends string>(
+  expected: T | T[],
   received: string,
 ) {
   const valid =
@@ -61,7 +61,7 @@ export function assertUnderlyingType(
     valid,
     `Invalid typename; expected: ${expected}, received: ${received}`,
   );
-  return received;
+  return received as T;
 }
 
 export type WithKey<T> = T & { _key: string };
@@ -72,7 +72,7 @@ export type PaginationArgs = {
   limit: number;
 };
 
-type RawPaginationArgs = {
+export type RawPaginationArgs = {
   // forward
   first?: number | null;
   after?: string | null;
@@ -137,7 +137,7 @@ export function validatePaginationArgs(args: RawPaginationArgs) {
 export function map<T, R>(
   t: T,
   fn: (t: NonNullable<T>) => R,
-): T extends null | undefined ? T : R {
+): T extends null | undefined ? T | R : R {
   if (nullish(t)) {
     return t as T extends null | undefined ? T : R;
   }

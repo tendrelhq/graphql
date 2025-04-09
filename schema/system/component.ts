@@ -1,7 +1,8 @@
 import { sql } from "@/datasources/postgres";
-import { assert, assertNonNull, buildPaginationArgs, mapOrElse } from "@/util";
+import { assertNonNull, buildPaginationArgs, mapOrElse } from "@/util";
 import type { ID, Int } from "grats";
 import type { Fragment } from "postgres";
+import { match } from "ts-pattern";
 import { decodeGlobalId } from ".";
 import {
   Attachment,
@@ -92,16 +93,6 @@ export type Field = {
   valueType: ValueType;
 };
 
-// Not exposed via GraphQL, yet.
-export type FieldQuery = {
-  /**
-   * Query for a Field by its canonical name (i.e. non-localized).
-   * This is, most often, the name that is given to the Field when it is first
-   * created.
-   */
-  byName?: string;
-};
-
 /** @gqlType */
 export type ValueCompletion = {
   /** @gqlField */
@@ -132,53 +123,66 @@ export async function completions(
   f: Field,
   ctx: Context,
 ): Promise<Connection<ValueCompletion>> {
-  // TODO: move Field to a class.
-  const g = decodeGlobalId(f.id);
-  if (g.type !== "workresultinstance") {
-    return {
-      edges: [],
-      pageInfo: {
-        hasNextPage: false,
-        hasPreviousPage: false,
-      },
-      totalCount: 0,
-    };
-  }
-
-  const instance = g.id; // workinstanceuuid
-  const field = assertNonNull(g.suffix?.at(0), "invalid global identifier"); // workresultuuid
-
+  const { type, id, suffix } = decodeGlobalId(f.id);
   // FIXME: we aren't using worktemplateconstraintconstrainedtypeid here.
   // This feels like a gap. Although in the ideal model result type would inform
   // our choice of algorithm: frecency vs constraint.
-  const rows = await sql<ValueCompletion[]>`
-    with f as (
-      select distinct
-        ''::text as id, -- unused, purely for fragment reuse
-        s.systagtype as "type",
-        c.custagtype as "value"
-      from public.workinstance as wi
-      inner join public.worktemplate as wt
-        on wi.workinstanceworktemplateid = wt.worktemplateid
-      inner join public.workresult as wr
-        on wt.worktemplateid = wr.workresultworktemplateid
-        and wr.id = ${field}
-      inner join public.systag as wrt
-        on wr.workresulttypeid = wrt.systagid
-      inner join public.worktemplateconstraint as wtc
-        on wt.id = wtc.worktemplateconstrainttemplateid
-        and wr.id = wtc.worktemplateconstraintresultid
-        and (
-          wtc.worktemplateconstraintenddate is null
-          or wtc.worktemplateconstraintenddate > now()
-        )
-      inner join public.custag as c
-        on wtc.worktemplateconstraintconstaintid = c.custaguuid
-        and (c.custagenddate is null or c.custagenddate > now())
-      where wi.id = ${instance}
-      order by c.custagorder
+  // TODO: localization.
+  const cte = match(type)
+    .with(
+      "workresult",
+      () => sql`
+        select
+          ''::text as id, -- unused, purely for fragment reuse
+          s.systagtype as "type",
+          c.custagtype as "value"
+        from public.workresult as wr
+        inner join public.worktemplate as wt
+          on wr.workresultworktemplateid = wt.worktemplateid
+        inner join public.systag as s
+          on wr.workresulttypeid = s.systagid
+        inner join public.worktemplateconstraint as wtc
+          on wt.id = wtc.worktemplateconstrainttemplateid
+          and wr.id = wtc.worktemplateconstraintresultid
+        inner join public.custag as c
+          on wtc.worktemplateconstraintconstraintid = c.custaguuid
+          and (c.custagenddate is null or c.custagenddate > now())
+        where wr.id = ${id}
+        order by c.custagorder asc
+      `,
     )
+    .with("workresultinstance", () => {
+      const instance = id; // workinstanceuuid
+      const field = assertNonNull(suffix?.at(0), "invalid global identifier"); // workresultuuid
+      return sql`
+        select
+          ''::text as id, -- unused, purely for fragment reuse
+          s.systagtype as "type",
+          c.custagtype as "value"
+        from public.workinstance as wi
+        inner join public.worktemplate as wt
+          on wi.workinstanceworktemplateid = wt.worktemplateid
+        inner join public.workresult as wr
+          on wt.worktemplateid = wr.workresultworktemplateid
+          and wr.id = ${field}
+        inner join public.systag as s
+          on wr.workresulttypeid = s.systagid
+        inner join public.worktemplateconstraint as wtc
+          on wt.id = wtc.worktemplateconstrainttemplateid
+          and wr.id = wtc.worktemplateconstraintresultid
+        inner join public.custag as c
+          on wtc.worktemplateconstraintconstraintid = c.custaguuid
+          and (c.custagenddate is null or c.custagenddate > now())
+        where wi.id = ${instance}
+        order by c.custagorder asc
+      `;
+    })
+    .otherwise(() => {
+      throw "";
+    });
 
+  const rows = await sql<ValueCompletion[]>`
+    with field as (${cte})
     ${field$fragment}
   `;
 
@@ -320,6 +324,18 @@ export async function name(field: Field, ctx: Context): Promise<DisplayName> {
   return await ctx.orm.displayName.load(field.id);
 }
 
+export type FieldDefinitionInput = {
+  name: string;
+  type: string;
+  description?: string | null;
+  isDraft?: boolean | null;
+  isPrimary?: boolean | null;
+  order?: number | null;
+  referenceType?: string | null;
+  value?: ValueInput | null;
+  widget?: string | null;
+};
+
 /** @gqlInput */
 export type FieldInput = {
   field: ID;
@@ -417,7 +433,7 @@ export type ValueInput =
   // Timestamp
   | {
       /**
-       * Date in either ISO or epoch millisecond format.
+       * ISO 8601 format.
        */
       timestamp: string;
     };

@@ -37,3 +37,6 @@ public-rest-api [public-rest-api@v0.29.0] 2025-03-28T19:06:27Z Will Ruggiano <ru
 rudimentary-jwk 2025-04-01T03:17:03Z Will Ruggiano <ruggiano@tendrel.io> # store jwt-secret in the database
 token-exchange [token-exchange@v1.0.0-dev] 2025-04-01T06:58:56Z Will Ruggiano <ruggiano@tendrel.io> # switch to jwk
 @v1.0.1-dev 2025-04-01T07:21:14Z Will Ruggiano <ruggiano@tendrel.io> # feat: move jwk into the database
+
+permissions 2025-04-09T19:43:21Z Will Ruggiano <ruggiano@tendrel.io> # fix: permissions
+helpers-v2 2025-04-10T05:14:38Z Will Ruggiano <ruggiano@tendrel.io> # move helper functions to entity

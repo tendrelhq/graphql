@@ -444,10 +444,16 @@ exports[`/api/template read 1`] = `
 `;
 
 exports[`/api/template delete 1`] = `
-[
-  {
-    "_deleted": true,
-    "id": "0b9f3142-e7ed-4f78-8504-ccd2eb505075",
-  },
-]
+{
+  "count": null,
+  "data": [
+    {
+      "_deleted": true,
+      "id": "0b9f3142-e7ed-4f78-8504-ccd2eb505075",
+    },
+  ],
+  "error": null,
+  "status": 200,
+  "statusText": "OK",
+}
 `;

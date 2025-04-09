@@ -1,4 +1,4 @@
-import { setCurrentIdentity } from "@/auth";
+import { getAccessToken, setCurrentIdentity } from "@/auth";
 import { orm, sql } from "@/datasources/postgres";
 import { Limits } from "@/limits";
 import type { Context, InputMaybe } from "@/schema";
@@ -7,6 +7,7 @@ import type { Field } from "@/schema/system/component";
 import type { Task } from "@/schema/system/component/task";
 import { assert, assertNonNull, assertUnderlyingType, map } from "@/util";
 import type { TypedDocumentNode as DocumentNode } from "@graphql-typed-document-node/core";
+import { PostgrestClient } from "@supabase/postgrest-js";
 import {
   type ExecutionResult,
   type GraphQLSchema,
@@ -156,7 +157,10 @@ export async function setup(ctx: Context) {
 }
 
 export async function cleanup(id: string) {
-  if (process.env.CI || process.env.SKIP_CLEANUP) return;
+  if (process.env.CI || process.env.SKIP_CLEANUP) {
+    console.warn("Skipping cleanup for", id);
+    return;
+  }
   process.stdout.write("Cleaning up...");
 
   const decoded = decodeGlobalId(id);
@@ -176,3 +180,22 @@ export async function cleanup(id: string) {
   `;
   process.stdout.write(row.ok);
 }
+
+export const pg = new PostgrestClient("http://localhost/api/v1", {
+  async fetch(...args) {
+    const ctx = await createTestContext();
+    const token = await getAccessToken(ctx.auth.userId)
+      .then(r => r.json())
+      .then(r => r.access_token);
+    if (typeof args[1] === "object") {
+      args[1] = {
+        ...args[1],
+        headers: {
+          ...args[1].headers,
+          Authorization: `Bearer ${token}`,
+        },
+      };
+    }
+    return fetch(...args);
+  },
+});
