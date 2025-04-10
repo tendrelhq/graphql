@@ -82,10 +82,18 @@ export function findAndEncode(
   op: string,
   type: string,
   logs: { op: string; id: string }[],
+  opts?: { skip?: number },
 ) {
+  let count = 0;
+  const skip = opts?.skip ?? 0;
   return assertNonNull(
     map(
-      logs.find(l => l.op.trim() === `+${op}`),
+      logs.find(l => {
+        if (l.op.trim() === `+${op}`) {
+          return count++ === skip;
+        }
+        return false;
+      }),
       ({ id }) => encodeGlobalId({ type, id }),
     ),
     `setup failed to find ${op} (${type})`,
