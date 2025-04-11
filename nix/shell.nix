@@ -25,6 +25,7 @@
           pkgs.bun
           pkgs.just
           pkgs.nodejs
+          pkgs.python3
           pkgs.openssl
           pkgs.vtsls
         ];
