@@ -116,7 +116,10 @@ begin
   return;
 end $$
 language plpgsql
-security definer;
+-- To avoid leaking systag, we create this function as SECURITY DEFINER.
+-- In the future we work through the normal entity tables/views and remove the
+-- SECURITY DEFINER attribute.
+security definer; 
 
 --
 -- Authentication, authorization

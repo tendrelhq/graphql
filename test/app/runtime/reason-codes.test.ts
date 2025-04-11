@@ -27,7 +27,7 @@ describe.skipIf(!!process.env.CI)("runtime + reason codes", () => {
   let DOWN_TIME: Task;
   let IDLE_TIME: Task;
 
-  test.todo("list reason codes", async () => {
+  test("list reason codes", async () => {
     // Name, Category (template)
     const result = await execute(schema, ListReasonCodesDocument);
     expect(result.errors).toBeFalsy();
