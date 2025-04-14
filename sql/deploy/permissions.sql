@@ -27,7 +27,6 @@ grant execute on function api.token to anonymous;
 -- protected by RLS. [^RLS is not currently implemented]
 create role authenticated nologin in role anonymous;
 grant execute on function api.token_introspect to authenticated;
-
 grant execute on all routines in schema _api to authenticated;
 grant execute on all routines in schema  api to authenticated;
 grant all on table api.entity_description to authenticated;
@@ -37,6 +36,9 @@ grant all on table api.entity_instance_file to authenticated;
 grant all on table api.entity_tag to authenticated;
 grant all on table api.entity_template to authenticated;
 grant all on table api.entity_field to authenticated;
+grant usage on schema entity to authenticated;
+grant all on all tables in schema entity to authenticated;
+grant all on all tables in schema public to authenticated;
 
 -- Lastly, Good 'ol Tom, the `god` role. This role is available to any user who
 -- has access to the Tendrel internal customer so, essentially, just us devs.
