@@ -84,8 +84,9 @@ englishuuid = 'bcbe750d-1b3b-4e2b-82ec-448bb8b116f9';
 		left join (select * from entity.crud_systag_read_min(null,null,null, null, true,null,null, null,englishuuid)) as sys
 			on sys.systagid = cust.customerexternalsystemid
 	where entityinstanceuuid isNull 
-		and cust.customermodifieddate > insertdate
-		and cust.customermodifieddate < now() - interval '10 minutes';
+		-- and cust.customermodifieddate > insertdate
+		-- and cust.customermodifieddate < now() - interval '10 minutes';
+  ;
 
 -- add in the corect customerentity uuid.  It references self.  
 
@@ -122,8 +123,8 @@ englishuuid = 'bcbe750d-1b3b-4e2b-82ec-448bb8b116f9';
 		inner join customer cust
 			on customerid = entityinstanceoriginalid
 				and entityinstancetypeentityuuid = (select entitytemplatetypeentityuuid from entity.entitytemplate where entitytemplatename = 'Customer')  -- Flip these to the function in the future
-				and cust.customermodifieddate > insertdate
-				and cust.customermodifieddate < now() - interval '15 minutes'
+				-- and cust.customermodifieddate > insertdate
+				-- and cust.customermodifieddate < now() - interval '15 minutes'
 		inner join entity.entitytemplate
 			on entityinstanceentitytemplateentityuuid = entitytemplateuuid
 		inner join entity.entityfield
@@ -162,8 +163,8 @@ englishuuid = 'bcbe750d-1b3b-4e2b-82ec-448bb8b116f9';
 		inner join customer
 			on customerid = entityinstanceoriginalid
 				and entityinstancetypeentityuuid = (select entitytemplatetypeentityuuid from entity.entitytemplate where entitytemplatename = 'Customer') -- Flip these to the function in the future
-				and customermodifieddate > insertdate
-				and customermodifieddate < now() - interval '15 minutes'
+				-- and customermodifieddate > insertdate
+				-- and customermodifieddate < now() - interval '15 minutes'
 		inner join entity.entitytemplate
 			on entityinstanceentitytemplateentityuuid = entitytemplateuuid
 		inner join entity.entityfield
@@ -206,8 +207,8 @@ englishuuid = 'bcbe750d-1b3b-4e2b-82ec-448bb8b116f9';
 		inner join customer
 			on customerid = entityinstanceoriginalid
 				and entityinstancetypeentityuuid = (select entitytemplatetypeentityuuid from entity.entitytemplate where entitytemplatename = 'Customer')  -- Flip these to the function in the future
-				and customermodifieddate > insertdate
-				and customermodifieddate < now() - interval '15 minutes'
+				-- and customermodifieddate > insertdate
+				-- and customermodifieddate < now() - interval '15 minutes'
 		inner join entity.entitytemplate
 			on entityinstanceentitytemplateentityuuid = entitytemplateuuid
 		inner join entity.entityfield
@@ -248,8 +249,8 @@ englishuuid = 'bcbe750d-1b3b-4e2b-82ec-448bb8b116f9';
 		inner join customer
 			on customerid = entityinstanceoriginalid
 				and entityinstancetypeentityuuid = (select entitytemplatetypeentityuuid from entity.entitytemplate where entitytemplatename = 'Customer')  -- Flip these to the function in the future
-				and customermodifieddate > insertdate
-				and customermodifieddate < now() - interval '15 minutes'
+				-- and customermodifieddate > insertdate
+				-- and customermodifieddate < now() - interval '15 minutes'
 		inner join entity.entitytemplate
 			on entityinstanceentitytemplateentityuuid = entitytemplateuuid
 		inner join entity.entityfield
@@ -266,8 +267,8 @@ englishuuid = 'bcbe750d-1b3b-4e2b-82ec-448bb8b116f9';
 		from customer cust 
 			inner join (select * from entity.crud_customer_read_min(null,null, null, true,null,null, null, null)) as ent
 				on cust.customerid = ent.customerid
-					and cust.customermodifieddate > updatedate
-					and cust.customermodifieddate < now() - interval '10 minutes'
+					-- and cust.customermodifieddate > updatedate
+					-- and cust.customermodifieddate < now() - interval '10 minutes'
 		where cust.customermodifieddate <> ent.customermodifieddate) > 0
 	then
 		-- create list of modified customers
@@ -290,8 +291,8 @@ englishuuid = 'bcbe750d-1b3b-4e2b-82ec-448bb8b116f9';
 	  		from customer cust 
 				inner join (select * from entity.crud_customer_read_min(null,null, null, true,null,null, null, null)) as ent
 					on cust.customerid = ent.customerid
-						and cust.customermodifieddate > updatedate
-						and cust.customermodifieddate < now() - interval '15 minutes'
+						-- and cust.customermodifieddate > updatedate
+						-- and cust.customermodifieddate < now() - interval '15 minutes'
 			where cust.customermodifieddate <> ent.customermodifieddate);
 
 	-- customerlanguagetypeuuid
@@ -327,12 +328,13 @@ englishuuid = 'bcbe750d-1b3b-4e2b-82ec-448bb8b116f9';
 
 end if;
 
-if  (select dwlogginglevel4 from datawarehouse.dw_logginglevels) = false
-	Then Return;
-end if;
+  if exists(select 1 from pg_namespace where nspname = 'datawarehouse') then
+    if  (select dwlogginglevel4 from datawarehouse.dw_logginglevels) = false
+      Then Return;
+    end if;
 
-call datawarehouse.insert_tendy_tracker(0, 2520, 12496, 811, 844, 20782, 18068, 20783,20781, customer_start);
-
+    call datawarehouse.insert_tendy_tracker(0, 2520, 12496, 811, 844, 20782, 18068, 20783,20781, customer_start);
+  end if;
 End;
 
 $procedure$;

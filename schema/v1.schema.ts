@@ -475,11 +475,16 @@ export function getSchema(): GraphQLSchema {
               name: "first",
               type: GraphQLInt,
             },
-            ofType: {
+            owner: {
               description:
-                "Only Entities of the given type. The type is the *canonical* type, i.e.\nnot localized. This is best for programmatic usage.",
-              name: "ofType",
-              type: new GraphQLList(new GraphQLNonNull(GraphQLString)),
+                "TEMPORARY: this should be the customer/organization uuid.",
+              name: "owner",
+              type: new GraphQLNonNull(GraphQLID),
+            },
+            parent: {
+              description: "Instances with the given parent (instance).",
+              name: "parent",
+              type: new GraphQLList(new GraphQLNonNull(GraphQLID)),
             },
           },
           resolve(_source, args, context) {

@@ -616,10 +616,13 @@ type Query {
     after: String
     first: Int
     """
-    Only Entities of the given type. The type is the *canonical* type, i.e.
-    not localized. This is best for programmatic usage.
+    TEMPORARY: this should be the customer/organization uuid.
     """
-    ofType: [String!]
+    owner: ID!
+    """
+    Instances with the given parent (instance).
+    """
+    parent: [ID!]
   ): EntityInstanceConnection @semanticNonNull
   node(id: ID!): Node!
   templates(

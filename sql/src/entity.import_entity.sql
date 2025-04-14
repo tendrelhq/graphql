@@ -10,15 +10,17 @@ Begin
 
  -- Start the timer on this function
     fact_start = clock_timestamp();
-	
-if  (select dwrunfactimport from datawarehouse.dw_logginglevels) = false
-	Then 
-		if  (select dwlogginglevel2 from datawarehouse.dw_logginglevels) = true
-			Then   
-			        call datawarehouse.insert_tendy_tracker(0, 2517, 12496, 980, 844, 20770, 18068, 20771, 20769, fact_start);
-				return;
-		end if;
-end if;
+
+  if exists(select 1 from pg_namespace where nspname = 'datawarehouse') then
+    if  (select dwrunfactimport from datawarehouse.dw_logginglevels) = false
+      Then 
+        if  (select dwlogginglevel2 from datawarehouse.dw_logginglevels) = true
+          Then   
+                  call datawarehouse.insert_tendy_tracker(0, 2517, 12496, 980, 844, 20770, 18068, 20771, 20769, fact_start);
+            return;
+        end if;
+    end if;
+  end if;
 
 	call entity.import_entity_systag(intervaltype);
 	call entity.import_entity_customer(intervaltype);
@@ -26,8 +28,8 @@ end if;
 	call entity.import_entity_custag(intervaltype);
 	call entity.import_workresultinstanceentityvalue(intervaltype);
 
--- Insert into the tendy tracker
-
+  if exists(select 1 from pg_namespace where nspname = 'datawarehouse') then
+    -- Insert into the tendy tracker
     if (select dwlogginglevel2 from datawarehouse.dw_logginglevels) = false
     Then
         Return;
@@ -46,8 +48,7 @@ end if;
     end if;
 
     call datawarehouse.insert_tendy_tracker(0, 2519, 12496, 980, 844, 20778, 18068, 20779, 20777, fact_start);
-
-    commit;
+  end if;
 End;
 
 $procedure$;

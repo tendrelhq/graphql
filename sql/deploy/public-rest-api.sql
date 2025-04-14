@@ -1,15 +1,12 @@
 -- Deploy graphql:public-rest-api to pg
 begin;
 
--- PATCH: remove `anon` role
-revoke all on schema _api from anon;
-revoke all on schema api from anon;
-revoke all on all tables in schema api from anon;
-alter default privileges in schema api revoke all on tables from anon;
-drop role anon;
-
-grant usage on schema _api to anonymous, authenticated, god;
-grant usage on schema api to anonymous, authenticated, god;
+-- This is our "exposed schema".
+-- @see https://docs.postgrest.org/en/v12/references/api/schemas.html#schemas
+create schema if not exists api;
+-- This schema holds utility functions, e.g. our pre-request hook. It is not
+-- exposed and therefore cannot be directly "hit" via the REST api.
+create schema if not exists _api;
 
 -- PATCH: add SECURITY DEFINER
 create or replace function _api.parse_accept_language(accept_language text)
@@ -54,103 +51,30 @@ language plpgsql
 immutable
 security definer; --> this is new
 
-grant execute on function _api.parse_accept_language to anonymous, authenticated, god;
-grant execute on function _api.pre_request_hook to anonymous, authenticated, god;
+create or replace function _api.pre_request_hook()
+returns void
+as $$
+declare
+  accept_language text := nullif(current_setting('request.headers', true)::json ->> 'accept-language', '')::text;
+  preferred_language text;
+begin
+  -- TODO: This just uses the Accept-Language header to determine language
+  -- preference. It does not yet look at the user's configured preference, e.g.
+  -- workerlanguagetypeid (or whatever it is).
+  select systagtype into preferred_language
+  from _api.parse_accept_language(accept_language)
+  inner join public.systag on systagparentid = 2 and systagtype = tag
+  order by quality desc
+  limit 1;
 
--- This table is effectively readonly. It is a hack until languagemaster is
--- moved over to the entity model.
-revoke all on table api.localized from anonymous;
-revoke all on table api.localized from authenticated;
-revoke all on table api.localized from god;
+  perform set_config('user.preferred_language', preferred_language, true);
 
--- PATCH: add fake RLS.
-create or replace view api.template as
-  select
-    entitytemplatedeleted as _deleted,
-    entitytemplatedraft as _draft,
-    entitytemplateorder as _order,
-    entitytemplateisprimary as _primary,
-    entitytemplatestartdate as activated_at,
-    entitytemplatecreateddate as created_at,
-    entitytemplateenddate as deactivated_at,
-    entitytemplateexternalid as external_id,
-    entitytemplateexternalsystementityuuid as external_system,
-    entitytemplateuuid as id,
-    entitytemplatemodifiedbyuuid as modified_by,
-    entitytemplatename as name,
-    entitytemplateownerentityuuid as owner,
-    entitytemplateparententityuuid as parent,
-    entitytemplatescanid as scan_code,
-    entitytemplatetypeentityuuid as type,
-    entitytemplatemodifieddate as updated_at
-  from entity.entitytemplate
-  where
-    entitytemplateownerentityuuid = (current_setting('request.jwt.claims', true)::json ->> 'owner')::uuid
-    or current_setting('request.jwt.claims', true)::json ->> 'role' = 'god'
-;
-
-create or replace view api.template_field as
-  select
-    entityfielduuid as id,
-    entityfieldentitytemplateentityuuid as template,
-    entityfieldtypeentityuuid as type_id,
-    entityfieldcreateddate as created_at,
-    entityfieldmodifieddate as updated_at,
-    entityfieldstartdate as activated_at,
-    entityfieldenddate as deactivated_at,
-    entityfielddefaultvalue as default_value,
-    entityfieldname as name,
-    entityfieldownerentityuuid as owner,
-    entityfieldparententityuuid as parent,
-    entityfielddeleted as _deleted,
-    entityfielddraft as _draft,
-    entityfieldorder::integer as _order,
-    entityfieldisprimary as _primary
-  from entity.entityfield
-  where
-    entityfieldownerentityuuid = (current_setting('request.jwt.claims', true)::json ->> 'owner')::uuid
-    or current_setting('request.jwt.claims', true)::json ->> 'role' = 'god'
-;
-
-create or replace view api.instance as
-  select
-    entityinstanceuuid as id,
-    entityinstanceownerentityuuid as owner,
-    entityinstanceentitytemplateentityuuid as template,
-    entityinstancecreateddate as created_at,
-    entityinstancemodifieddate as updated_at,
-    entityinstancestartdate as activated_at,
-    entityinstanceenddate as deactivated_at,
-    entityinstanceentitytemplatename as name,
-    entityinstancedeleted as _deleted,
-    entityinstancedraft as _draft,
-    entityinstancecornerstoneorder as _order
-  from entity.entityinstance
-  where
-    entityinstanceownerentityuuid = (current_setting('request.jwt.claims', true)::json ->> 'owner')::uuid
-    or current_setting('request.jwt.claims', true)::json ->> 'role' = 'god'
-;
-
-create or replace view api.instance_field as
-  select
-    entityfieldinstanceuuid as id,
-    entityfieldinstanceentityinstanceentityuuid as instance,  
-    entityfieldinstanceownerentityuuid as owner, 
-    entityfieldinstancecreateddate as created_at,
-    entityfieldinstancemodifieddate as updated_at, 
-    entityfieldinstanceentityfieldentityuuid as template, 
-    entityfieldinstanceentityfieldname as name,  
-    entityfieldinstancedeleted as _deleted, 
-    entityfieldinstancedraft as _draft
-  from entity.entityfieldinstance
-  where
-    entityfieldinstanceownerentityuuid = (current_setting('request.jwt.claims', true)::json ->> 'owner')::uuid
-    or current_setting('request.jwt.claims', true)::json ->> 'role' = 'god'
-;
-
-grant all on table api.template to authenticated, god;
-grant all on table api.template_field to authenticated, god;
-grant all on table api.instance to authenticated, god;
-grant all on table api.instance_field to authenticated, god;
+  return;
+end $$
+language plpgsql
+-- To avoid leaking systag, we create this function as SECURITY DEFINER.
+-- In the future we work through the normal entity tables/views and remove the
+-- SECURITY DEFINER attribute.
+security definer; 
 
 commit;

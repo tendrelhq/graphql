@@ -27,9 +27,17 @@ describe.skipIf(!!process.env.CI)("runtime + reason codes", () => {
   let DOWN_TIME: Task;
   let IDLE_TIME: Task;
 
+  // FIXME: This does not list associated templates, which is necessary in the
+  // console view.
   test("list reason codes", async () => {
     // Name, Category (template)
-    const result = await execute(schema, ListReasonCodesDocument);
+    const result = await execute(schema, ListReasonCodesDocument, {
+      // FIXME: Should not be required:
+      owner: decodeGlobalId(CUSTOMER).id,
+      // FIXME: This is not particularly ergonomic :/
+      // Note that this is the entityinstanceuuid for the "Reason Code" systag:
+      parent: ["d9b10b97-73aa-4407-948a-29f8434d525e"],
+    });
     expect(result.errors).toBeFalsy();
     expect(result.data).toMatchSnapshot();
   });
@@ -38,12 +46,15 @@ describe.skipIf(!!process.env.CI)("runtime + reason codes", () => {
     // Filters: active
   });
 
+  // FIXME: Ditto above: does not list associated templates.
   test.todo("create a new reason code", async () => {
     // Name, Category (template)
     const result = await execute(schema, CreateReasonCodeDocument, {
-      owner: "",
-      name: "",
-      templates: [],
+      name: "Overwhelming Confusion",
+      // FIXME: Should not be required:
+      owner: decodeGlobalId(CUSTOMER).id,
+      parent: "d9b10b97-73aa-4407-948a-29f8434d525e",
+      templates: [DOWN_TIME.id],
     });
     expect(result.errors).toBeFalsy();
     expect(result.data).toMatchSnapshot();
@@ -162,7 +173,7 @@ async function addReasonCodeToTemplate(
   >`
     call entity.crud_custag_create(
       ${owner},
-      'a1b8da7a-768f-4046-83d7-739d11e32b67',
+      'd9b10b97-73aa-4407-948a-29f8434d525e',
       null,
       ${order},
       ${code},

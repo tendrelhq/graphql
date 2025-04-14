@@ -38,3 +38,4 @@ Dynamic localization can be customized using various HTTP headers:
 - `Prefer: timezone=America/Denver` specifies the timezone.
 ';
 
+GRANT USAGE ON SCHEMA api TO anonymous;

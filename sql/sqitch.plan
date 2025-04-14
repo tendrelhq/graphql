@@ -29,14 +29,9 @@ ensure-field-t 2025-03-21T21:21:16Z Will Ruggiano <ruggiano@tendrel.io>
 init [init@v0.28.1] 2025-03-26T05:40:23Z Will Ruggiano <ruggiano@tendrel.io> # fix: upsert_localized_content
 nodeops [nodeops@v0.28.1] 2025-03-26T05:46:05Z Will Ruggiano <ruggiano@tendrel.io> # feat: description, name, order, etc
 @v0.29.0 2025-03-26T05:52:40Z Will Ruggiano <ruggiano@tendrel.io> # one patch and a couple features
+
 engine0 [engine0@v0.29.0] 2025-03-26T06:16:54Z Will Ruggiano <ruggiano@tendrel.io> # feat: implement result-level rules
 token-exchange 2025-03-26T18:56:43Z Will Ruggiano <ruggiano@tendrel.io> # add /token endpoint
-public-rest-api [public-rest-api@v0.29.0] 2025-03-28T19:06:27Z Will Ruggiano <ruggiano@tendrel.io> # integrate with v0 auth
-@v1.0.0-dev 2025-03-31T17:43:47Z Will Ruggiano <ruggiano@tendrel.io> # initial public api release
-
-rudimentary-jwk 2025-04-01T03:17:03Z Will Ruggiano <ruggiano@tendrel.io> # store jwt-secret in the database
-token-exchange [token-exchange@v1.0.0-dev] 2025-04-01T06:58:56Z Will Ruggiano <ruggiano@tendrel.io> # switch to jwk
-@v1.0.1-dev 2025-04-01T07:21:14Z Will Ruggiano <ruggiano@tendrel.io> # feat: move jwk into the database
-
+public-rest-api 2025-03-28T19:06:27Z Will Ruggiano <ruggiano@tendrel.io> # integrate with v0 auth
 permissions 2025-04-09T19:43:21Z Will Ruggiano <ruggiano@tendrel.io> # fix: permissions
 patch-import-entity 2025-04-11T21:05:32Z Will Ruggiano <ruggiano@tendrel.io> # fix: no commit, no dw

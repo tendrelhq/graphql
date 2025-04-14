@@ -1,5 +1,7 @@
 import { constructHeadersFromArgs, extractPageInfo } from "@/api";
 import { getAccessToken } from "@/auth";
+import { sql } from "@/datasources/postgres";
+import { GraphQLError } from "graphql";
 import type { ID, Int } from "grats";
 import { encodeGlobalId } from ".";
 import type { Context } from "../types";
@@ -37,11 +39,10 @@ export async function instances(
   args: {
     first?: Int | null;
     after?: string | null;
-    /**
-     * Only Entities of the given type. The type is the *canonical* type, i.e.
-     * not localized. This is best for programmatic usage.
-     */
-    ofType?: string[] | null;
+    /** TEMPORARY: this should be the customer/organization uuid. */
+    owner: ID;
+    /** Instances with the given parent (instance). */
+    parent?: ID[] | null;
   },
 ): Promise<Connection<EntityInstance>> {
   const token = await getAccessToken(ctx.auth.userId)
@@ -51,10 +52,25 @@ export async function instances(
   const headers = constructHeadersFromArgs(args);
   headers.set("Authorization", `Bearer ${token}`);
 
-  const q = new URLSearchParams({ select: "id" });
-  if (args.ofType?.length) {
-    // FIXME: This is wrong!
-    q.append("type", `in.(${args.ofType.join(",")})`);
+  // FIXME: Should not be required?
+  const [{ owner }] = await sql`
+    select entityinstanceuuid as owner
+    from entity.entityinstance
+    where entityinstanceoriginaluuid = ${args.owner}
+  `;
+
+  const q = new URLSearchParams({
+    select: "id",
+    owner: `eq.${owner}`,
+  });
+  if (args.parent?.length) {
+    // FIXME: This is a weird one in Keller's entity model. Every entityinstance
+    // has a parent, template and type. I'm not entirely sure why these three
+    // exist. From looking through what Keller has done so far, this seems to be
+    // the case, e.g. for a custag:
+    // - template and type point at the "Customer Tag" template and instance, respectively
+    // - parent points at the "Reason Code" instance
+    q.append("parent", `in.(${args.parent.join(",")})`);
   }
 
   const r = await fetch(
@@ -64,6 +80,12 @@ export async function instances(
       headers: headers,
     },
   );
+
+  if (!r.ok) {
+    const e = await r.json();
+    console.error(e);
+    throw new GraphQLError("Internal Server Error");
+  }
 
   const rows: { id: string }[] = await r.json();
   return {

@@ -59,6 +59,5 @@ $function$;
 
 
 REVOKE ALL ON FUNCTION api.create_entity_field() FROM PUBLIC;
-GRANT EXECUTE ON FUNCTION api.create_entity_field() TO authenticated;
-GRANT EXECUTE ON FUNCTION api.create_entity_field() TO god;
 GRANT EXECUTE ON FUNCTION api.create_entity_field() TO tendreladmin WITH GRANT OPTION;
+GRANT EXECUTE ON FUNCTION api.create_entity_field() TO authenticated;

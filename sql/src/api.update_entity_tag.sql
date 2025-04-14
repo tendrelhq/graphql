@@ -56,5 +56,5 @@ $function$;
 
 
 REVOKE ALL ON FUNCTION api.update_entity_tag() FROM PUBLIC;
-GRANT EXECUTE ON FUNCTION api.update_entity_tag() TO PUBLIC;
 GRANT EXECUTE ON FUNCTION api.update_entity_tag() TO tendreladmin WITH GRANT OPTION;
+GRANT EXECUTE ON FUNCTION api.update_entity_tag() TO authenticated;

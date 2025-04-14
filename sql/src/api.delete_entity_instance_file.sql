@@ -42,5 +42,5 @@ $function$;
 
 
 REVOKE ALL ON FUNCTION api.delete_entity_instance_file(uuid,uuid) FROM PUBLIC;
-GRANT EXECUTE ON FUNCTION api.delete_entity_instance_file(uuid,uuid) TO PUBLIC;
 GRANT EXECUTE ON FUNCTION api.delete_entity_instance_file(uuid,uuid) TO tendreladmin WITH GRANT OPTION;
+GRANT EXECUTE ON FUNCTION api.delete_entity_instance_file(uuid,uuid) TO authenticated;

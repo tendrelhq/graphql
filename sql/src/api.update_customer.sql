@@ -59,5 +59,5 @@ $function$;
 
 
 REVOKE ALL ON FUNCTION api.update_customer() FROM PUBLIC;
-GRANT EXECUTE ON FUNCTION api.update_customer() TO PUBLIC;
 GRANT EXECUTE ON FUNCTION api.update_customer() TO tendreladmin WITH GRANT OPTION;
+GRANT EXECUTE ON FUNCTION api.update_customer() TO authenticated;

@@ -44,6 +44,5 @@ A bunch of comments explaining post
 	';
 
 REVOKE ALL ON FUNCTION api.create_entity_tag() FROM PUBLIC;
-GRANT EXECUTE ON FUNCTION api.create_entity_tag() TO authenticated;
-GRANT EXECUTE ON FUNCTION api.create_entity_tag() TO god;
 GRANT EXECUTE ON FUNCTION api.create_entity_tag() TO tendreladmin WITH GRANT OPTION;
+GRANT EXECUTE ON FUNCTION api.create_entity_tag() TO authenticated;

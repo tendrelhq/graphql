@@ -67,5 +67,5 @@ $function$;
 
 
 REVOKE ALL ON FUNCTION api.update_location() FROM PUBLIC;
-GRANT EXECUTE ON FUNCTION api.update_location() TO PUBLIC;
 GRANT EXECUTE ON FUNCTION api.update_location() TO tendreladmin WITH GRANT OPTION;
+GRANT EXECUTE ON FUNCTION api.update_location() TO authenticated;

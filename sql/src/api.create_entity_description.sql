@@ -50,6 +50,5 @@ A bunch of comments explaining post
 	';
 
 REVOKE ALL ON FUNCTION api.create_entity_description() FROM PUBLIC;
-GRANT EXECUTE ON FUNCTION api.create_entity_description() TO authenticated;
-GRANT EXECUTE ON FUNCTION api.create_entity_description() TO god;
 GRANT EXECUTE ON FUNCTION api.create_entity_description() TO tendreladmin WITH GRANT OPTION;
+GRANT EXECUTE ON FUNCTION api.create_entity_description() TO authenticated;

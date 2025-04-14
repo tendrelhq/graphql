@@ -74,5 +74,6 @@ end $function$;
 
 
 REVOKE ALL ON FUNCTION api.token(api.grant_type,text,api.token_type,text,text) FROM PUBLIC;
-GRANT EXECUTE ON FUNCTION api.token(api.grant_type,text,api.token_type,text,text) TO PUBLIC;
 GRANT EXECUTE ON FUNCTION api.token(api.grant_type,text,api.token_type,text,text) TO tendreladmin WITH GRANT OPTION;
+GRANT EXECUTE ON FUNCTION api.token(api.grant_type,text,api.token_type,text,text) TO anonymous;
+GRANT EXECUTE ON FUNCTION api.token(api.grant_type,text,api.token_type,text,text) TO authenticated;

@@ -1,5 +1,5 @@
-query ListReasonCodes {
-  instances(ofType: ["Reason Code"]) {
+query ListReasonCodes($owner: ID!, $parent: [ID!]!) {
+  instances(owner: $owner, parent: $parent) {
     edges {
       node {
         name {
@@ -23,7 +23,7 @@ query ListRuntimeTemplates {
 }
 
 mutation CreateReasonCode($owner: ID!, $name: String!, $templates: [ID!]!) {
-  createEntityInstance(owner: $owner, name: $name, template: "", type: "") {
+  createEntityInstance(name: $name, owner: $owner, template: "", type: "") {
     name {
       value
     }

@@ -40,5 +40,5 @@ $function$;
 
 
 REVOKE ALL ON FUNCTION api.delete_custag(uuid,uuid) FROM PUBLIC;
-GRANT EXECUTE ON FUNCTION api.delete_custag(uuid,uuid) TO PUBLIC;
 GRANT EXECUTE ON FUNCTION api.delete_custag(uuid,uuid) TO tendreladmin WITH GRANT OPTION;
+GRANT EXECUTE ON FUNCTION api.delete_custag(uuid,uuid) TO authenticated;

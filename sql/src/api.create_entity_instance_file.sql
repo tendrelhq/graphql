@@ -37,6 +37,5 @@ $function$;
 
 
 REVOKE ALL ON FUNCTION api.create_entity_instance_file() FROM PUBLIC;
-GRANT EXECUTE ON FUNCTION api.create_entity_instance_file() TO authenticated;
-GRANT EXECUTE ON FUNCTION api.create_entity_instance_file() TO god;
 GRANT EXECUTE ON FUNCTION api.create_entity_instance_file() TO tendreladmin WITH GRANT OPTION;
+GRANT EXECUTE ON FUNCTION api.create_entity_instance_file() TO authenticated;

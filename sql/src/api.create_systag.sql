@@ -54,5 +54,5 @@ $function$;
 
 
 REVOKE ALL ON FUNCTION api.create_systag() FROM PUBLIC;
-GRANT EXECUTE ON FUNCTION api.create_systag() TO PUBLIC;
 GRANT EXECUTE ON FUNCTION api.create_systag() TO tendreladmin WITH GRANT OPTION;
+GRANT EXECUTE ON FUNCTION api.create_systag() TO authenticated;

@@ -12,9 +12,9 @@ export function extractPageInfo(res: Response): PaginationMeta {
   const [start, end, count] = map(contentRange.split("/"), cr =>
     [...cr[0].split("-"), cr[1]].map(Number),
   );
-  assert(Number.isFinite(start));
-  assert(Number.isFinite(end));
-  assert(Number.isFinite(count));
+  assert(Number.isFinite(start), `invalid start: ${contentRange}`);
+  assert(Number.isFinite(end), `invalid start: ${contentRange}`);
+  assert(Number.isFinite(count), `invalid start: ${contentRange}`);
 
   if (res.status === 206) {
     return {
@@ -47,6 +47,7 @@ export function constructHeadersFromArgs(
   const lower = Number(args.after ?? 0);
   const count = Math.min(args.first ?? 100, 100);
   const upper = lower + count - 1;
+  headers.append("Range-Unit", "items");
   headers.append("Range", `${lower}-${upper}`);
   return headers;
 }

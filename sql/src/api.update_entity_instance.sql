@@ -64,5 +64,5 @@ $function$;
 
 
 REVOKE ALL ON FUNCTION api.update_entity_instance() FROM PUBLIC;
-GRANT EXECUTE ON FUNCTION api.update_entity_instance() TO PUBLIC;
 GRANT EXECUTE ON FUNCTION api.update_entity_instance() TO tendreladmin WITH GRANT OPTION;
+GRANT EXECUTE ON FUNCTION api.update_entity_instance() TO authenticated;

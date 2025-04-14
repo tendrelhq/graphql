@@ -41,5 +41,5 @@ $function$;
 
 
 REVOKE ALL ON FUNCTION api.delete_customer_requested_language(uuid,text) FROM PUBLIC;
-GRANT EXECUTE ON FUNCTION api.delete_customer_requested_language(uuid,text) TO PUBLIC;
 GRANT EXECUTE ON FUNCTION api.delete_customer_requested_language(uuid,text) TO tendreladmin WITH GRANT OPTION;
+GRANT EXECUTE ON FUNCTION api.delete_customer_requested_language(uuid,text) TO authenticated;

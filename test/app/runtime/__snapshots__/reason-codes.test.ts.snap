@@ -1,5 +1,65 @@
 // Bun Snapshot v1, https://goo.gl/fbAQLP
 
+exports[`runtime + reason codes list reason codes 1`] = `
+{
+  "instances": {
+    "__typename": "EntityInstanceConnection",
+    "edges": [
+      {
+        "__typename": "EntityInstanceEdge",
+        "node": {
+          "__typename": "EntityInstance",
+          "name": {
+            "__typename": "DisplayName",
+            "value": "Machine Down",
+          },
+        },
+      },
+      {
+        "__typename": "EntityInstanceEdge",
+        "node": {
+          "__typename": "EntityInstance",
+          "name": {
+            "__typename": "DisplayName",
+            "value": "Waiting for Materials",
+          },
+        },
+      },
+      {
+        "__typename": "EntityInstanceEdge",
+        "node": {
+          "__typename": "EntityInstance",
+          "name": {
+            "__typename": "DisplayName",
+            "value": "Scheduled Maintenance",
+          },
+        },
+      },
+      {
+        "__typename": "EntityInstanceEdge",
+        "node": {
+          "__typename": "EntityInstance",
+          "name": {
+            "__typename": "DisplayName",
+            "value": "Lunch Break",
+          },
+        },
+      },
+      {
+        "__typename": "EntityInstanceEdge",
+        "node": {
+          "__typename": "EntityInstance",
+          "name": {
+            "__typename": "DisplayName",
+            "value": "Nothin to do!",
+          },
+        },
+      },
+    ],
+  },
+}
+`;
+
 exports[`runtime + reason codes in the app, get completions 1`] = `
 {
   "node": {
@@ -9,16 +69,6 @@ exports[`runtime + reason codes in the app, get completions 1`] = `
       "completions": {
         "__typename": "ValueCompletionConnection",
         "edges": [
-          {
-            "__typename": "ValueCompletionEdge",
-            "node": {
-              "__typename": "ValueCompletion",
-              "value": {
-                "__typename": "StringValue",
-                "string": "Machine Down",
-              },
-            },
-          },
           {
             "__typename": "ValueCompletionEdge",
             "node": {
@@ -36,6 +86,16 @@ exports[`runtime + reason codes in the app, get completions 1`] = `
               "value": {
                 "__typename": "StringValue",
                 "string": "Scheduled Maintenance",
+              },
+            },
+          },
+          {
+            "__typename": "ValueCompletionEdge",
+            "node": {
+              "__typename": "ValueCompletion",
+              "value": {
+                "__typename": "StringValue",
+                "string": "Machine Down",
               },
             },
           },
