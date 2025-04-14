@@ -26,6 +26,7 @@ end if;
 	call entity.import_entity_custag(intervaltype);
 	call entity.import_workresultinstanceentityvalue(intervaltype);
 
+  if exists (select 1 from pg_namespace where nspname = 'datawarehouse') then
 -- Insert into the tendy tracker
 
     if (select dwlogginglevel2 from datawarehouse.dw_logginglevels) = false
@@ -47,7 +48,7 @@ end if;
 
     call datawarehouse.insert_tendy_tracker(0, 2519, 12496, 980, 844, 20778, 18068, 20779, 20777, fact_start);
 
-    commit;
+  end if;
 End;
 
 $procedure$;

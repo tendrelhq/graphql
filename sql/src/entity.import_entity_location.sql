@@ -525,11 +525,13 @@ end if;
 
 drop table locmodified;
 
-if  (select dwlogginglevel4 from datawarehouse.dw_logginglevels) = false
-	Then Return;
-end if;
+  if exists (select 1 from pg_namespace where nspname = 'datawarehouse') then
+    if  (select dwlogginglevel4 from datawarehouse.dw_logginglevels) = false
+      Then Return;
+    end if;
 
-call datawarehouse.insert_tendy_tracker(0, 2521, 12496, 811, 844, 20786, 18068, 20787,20785, customer_start);
+    call datawarehouse.insert_tendy_tracker(0, 2521, 12496, 811, 844, 20786, 18068, 20787,20785, customer_start);
+  end if;
 
 End;
 

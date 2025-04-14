@@ -327,11 +327,13 @@ englishuuid = 'bcbe750d-1b3b-4e2b-82ec-448bb8b116f9';
 
 end if;
 
-if  (select dwlogginglevel4 from datawarehouse.dw_logginglevels) = false
-	Then Return;
-end if;
+if exists (select 1 from pg_namespace where nspname = 'datawarehouse') then
+  if  (select dwlogginglevel4 from datawarehouse.dw_logginglevels) = false
+    Then Return;
+  end if;
 
-call datawarehouse.insert_tendy_tracker(0, 2520, 12496, 811, 844, 20782, 18068, 20783,20781, customer_start);
+  call datawarehouse.insert_tendy_tracker(0, 2520, 12496, 811, 844, 20782, 18068, 20783,20781, customer_start);
+end if;
 
 End;
 
