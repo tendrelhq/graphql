@@ -1,4 +1,4 @@
--- Verify graphql:nodeops on pg
+-- Verify graphql:api-user-roles on pg
 
 BEGIN;
 

@@ -1,4 +1,4 @@
--- Verify graphql:patch-import-entity on pg
+-- Verify graphql:graphql-service-role on pg
 
 BEGIN;
 

@@ -4,6 +4,8 @@ services:
       context: ..
       dockerfile: config/graphql.dockerfile
     env_file: ../.env.local
+    environment:
+      PGUSER: graphql
     network_mode: host
     ports:
       - 4000:4000
@@ -20,6 +22,8 @@ services:
       context: ..
       dockerfile: config/postgrest.dockerfile
     env_file: ../.env.local
+    environment:
+      PGUSER: graphql
     network_mode: host
     ports:
       - 4001:4001

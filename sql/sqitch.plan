@@ -1,37 +1,5 @@
 %syntax-version=1.0.0
 %project=graphql
 
-init 2025-02-11T20:07:14Z Will Ruggiano <ruggiano@tendrel.io>
-engine0 2025-02-11T20:15:48Z Will Ruggiano <ruggiano@tendrel.io>
-i18n-add-language-to-customer 2025-02-11T21:14:41Z Will Ruggiano <ruggiano@tendrel.io>
-legacy0 2025-02-11T21:17:23Z Will Ruggiano <ruggiano@tendrel.io>
-runtime 2025-02-11T21:52:56Z Will Ruggiano <ruggiano@tendrel.io>
-legacy0-primary-location-for-instance 2025-02-12T05:09:57Z Will Ruggiano <ruggiano@tendrel.io>
-@v0.1.0 2025-02-12T06:27:02Z Will Ruggiano <ruggiano@tendrel.io> # v0.1.0
-
-create-user-type 2025-02-18T17:56:30Z Will Ruggiano <ruggiano@tendrel.io>
-create-location 2025-02-18T17:59:40Z Will Ruggiano <ruggiano@tendrel.io>
-apply-field-edits 2025-02-18T18:12:30Z Will Ruggiano <ruggiano@tendrel.io>
-@v0.1.1 2025-02-19T01:58:07Z Will Ruggiano <ruggiano@tendrel.io>
-
-create-template-constraint 2025-02-20T23:37:31Z Will Ruggiano <ruggiano@tendrel.io>
-@v0.2.0 2025-02-21T00:54:43Z Will Ruggiano <ruggiano@tendrel.io>
-
-jwt 2025-03-04T23:33:01Z Will Ruggiano <ruggiano@tendrel.io>
-public-rest-api 2025-03-11T23:11:55Z Will Ruggiano <ruggiano@tendrel.io>
-legacy0-compute-time-at-task 2025-03-13T21:54:04Z Will Ruggiano <ruggiano@tendrel.io>
-@v0.27.1 2025-03-14T21:53:26Z Will Ruggiano <ruggiano@tendrel.io>
-
-engine1 2025-03-14T23:35:42Z Will Ruggiano <ruggiano@tendrel.io>
-nodeops 2025-03-18T19:35:03Z Will Ruggiano <ruggiano@tendrel.io>
-ensure-field-t 2025-03-21T21:21:16Z Will Ruggiano <ruggiano@tendrel.io>
-@v0.28.1 2025-03-24T18:58:42Z Will Ruggiano <ruggiano@tendrel.io>
-init [init@v0.28.1] 2025-03-26T05:40:23Z Will Ruggiano <ruggiano@tendrel.io> # fix: upsert_localized_content
-nodeops [nodeops@v0.28.1] 2025-03-26T05:46:05Z Will Ruggiano <ruggiano@tendrel.io> # feat: description, name, order, etc
-@v0.29.0 2025-03-26T05:52:40Z Will Ruggiano <ruggiano@tendrel.io> # one patch and a couple features
-
-engine0 [engine0@v0.29.0] 2025-03-26T06:16:54Z Will Ruggiano <ruggiano@tendrel.io> # feat: implement result-level rules
-token-exchange 2025-03-26T18:56:43Z Will Ruggiano <ruggiano@tendrel.io> # add /token endpoint
-public-rest-api 2025-03-28T19:06:27Z Will Ruggiano <ruggiano@tendrel.io> # integrate with v0 auth
-permissions 2025-04-09T19:43:21Z Will Ruggiano <ruggiano@tendrel.io> # fix: permissions
-patch-import-entity 2025-04-11T21:05:32Z Will Ruggiano <ruggiano@tendrel.io> # fix: no commit, no dw
+graphql-service-role 2025-04-14T21:15:41Z Will Ruggiano <ruggiano@tendrel.io> # graphql service role
+api-user-roles 2025-04-14T21:29:23Z Will Ruggiano <ruggiano@tendrel.io> # api user roles
