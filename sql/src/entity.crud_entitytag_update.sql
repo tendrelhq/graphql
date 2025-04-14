@@ -1,5 +1,5 @@
 
--- Type: PROCEDURE ; Name: entity.crud_entitytag_update(uuid,uuid,uuid,uuid,uuid,uuid,boolean,boolean,timestamp with time zone,timestamp with time zone,bigint); Owner: bombadil
+-- Type: PROCEDURE ; Name: entity.crud_entitytag_update(uuid,uuid,uuid,uuid,uuid,uuid,boolean,boolean,timestamp with time zone,timestamp with time zone,bigint); Owner: tendreladmin
 
 CREATE OR REPLACE PROCEDURE entity.crud_entitytag_update(IN update_entitytaguuid uuid, IN update_entitytagownerentityuuid uuid, IN update_entitytagentityinstanceuuid uuid, IN update_entitytagentitytemplateuuid uuid, IN update_entitytagcustaguuid uuid, IN update_languagetypeuuid uuid, IN update_entitytagdeleted boolean, IN update_entitytagdraft boolean, IN update_entitytagstartdate timestamp with time zone, IN update_entitytagenddate timestamp with time zone, IN update_modifiedbyid bigint)
  LANGUAGE plpgsql
@@ -62,4 +62,4 @@ $procedure$;
 
 REVOKE ALL ON PROCEDURE entity.crud_entitytag_update(uuid,uuid,uuid,uuid,uuid,uuid,boolean,boolean,timestamp with time zone,timestamp with time zone,bigint) FROM PUBLIC;
 GRANT EXECUTE ON PROCEDURE entity.crud_entitytag_update(uuid,uuid,uuid,uuid,uuid,uuid,boolean,boolean,timestamp with time zone,timestamp with time zone,bigint) TO PUBLIC;
-GRANT EXECUTE ON PROCEDURE entity.crud_entitytag_update(uuid,uuid,uuid,uuid,uuid,uuid,boolean,boolean,timestamp with time zone,timestamp with time zone,bigint) TO bombadil WITH GRANT OPTION;
+GRANT EXECUTE ON PROCEDURE entity.crud_entitytag_update(uuid,uuid,uuid,uuid,uuid,uuid,boolean,boolean,timestamp with time zone,timestamp with time zone,bigint) TO tendreladmin WITH GRANT OPTION;

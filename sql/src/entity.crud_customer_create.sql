@@ -1,10 +1,11 @@
 
--- Type: PROCEDURE ; Name: entity.crud_customer_create(text,uuid,uuid,text,uuid,boolean,boolean,uuid[],bigint); Owner: bombadil
+-- Type: PROCEDURE ; Name: entity.crud_customer_create(text,uuid,uuid,text,uuid,boolean,boolean,uuid[],bigint); Owner: tendreladmin
 
 CREATE OR REPLACE PROCEDURE entity.crud_customer_create(IN create_customername text, OUT create_customeruuid text, OUT create_customerentityuuid uuid, IN create_customerparentuuid uuid, IN create_customerowner uuid, IN create_customerbillingid text, IN create_customerbillingsystemid uuid, IN create_customerdeleted boolean, IN create_customerdraft boolean, IN create_languagetypeuuids uuid[], IN create_modifiedby bigint)
  LANGUAGE plpgsql
 AS $procedure$
 Declare
+
 
 /*
 
@@ -111,7 +112,7 @@ if create_languagetypeuuids isNull
 end if;
 
     templanguagetypeuuid = (select systaguuid
-                            from systag
+                            from public.systag
                             where systagid = templanguagetypeid);
 
 If create_customerdeleted isNull
@@ -239,7 +240,7 @@ end if;
 		entityinstancenameuuid = templanguagemasteruuid
 	where entityinstanceuuid = create_customerentityuuid;
 
-	update customer
+	update public.customer
 	set customernamelanguagemasterid = templanguagemasterid
 	where customerid = tempcustomerid;
 	
@@ -310,7 +311,7 @@ end if;
 	select 
 		entityinstanceuuid,
 		entityinstanceownerentityuuid,
-		(select systaguuid from systag where systagid = templanguagetypeid),   -- shouldn't this be what was passed in
+		(select systaguuid from public.systag where systagid = templanguagetypeid),   -- shouldn't this be what was passed in
 		(select entityinstanceuuid from entity.entityinstance 
 			where entityinstanceentitytemplatename = 'System Tag'
 				and entityinstanceoriginalid = templanguagetypeid ),  -- shouldn't this be what was passed in
@@ -384,4 +385,4 @@ $procedure$;
 
 REVOKE ALL ON PROCEDURE entity.crud_customer_create(text,uuid,uuid,text,uuid,boolean,boolean,uuid[],bigint) FROM PUBLIC;
 GRANT EXECUTE ON PROCEDURE entity.crud_customer_create(text,uuid,uuid,text,uuid,boolean,boolean,uuid[],bigint) TO PUBLIC;
-GRANT EXECUTE ON PROCEDURE entity.crud_customer_create(text,uuid,uuid,text,uuid,boolean,boolean,uuid[],bigint) TO bombadil WITH GRANT OPTION;
+GRANT EXECUTE ON PROCEDURE entity.crud_customer_create(text,uuid,uuid,text,uuid,boolean,boolean,uuid[],bigint) TO tendreladmin WITH GRANT OPTION;

@@ -1,5 +1,5 @@
 
--- Type: FUNCTION ; Name: engine1.base64_decode(text); Owner: bombadil
+-- Type: FUNCTION ; Name: engine1.base64_decode(text); Owner: tendreladmin
 
 CREATE OR REPLACE FUNCTION engine1.base64_decode(data text)
  RETURNS bytea
@@ -19,4 +19,4 @@ $function$;
 
 REVOKE ALL ON FUNCTION engine1.base64_decode(text) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION engine1.base64_decode(text) TO PUBLIC;
-GRANT EXECUTE ON FUNCTION engine1.base64_decode(text) TO bombadil WITH GRANT OPTION;
+GRANT EXECUTE ON FUNCTION engine1.base64_decode(text) TO tendreladmin WITH GRANT OPTION;

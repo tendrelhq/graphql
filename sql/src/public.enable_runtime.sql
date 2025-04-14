@@ -1,5 +1,5 @@
 
--- Type: FUNCTION ; Name: enable_runtime(text,text,text,bigint,text); Owner: bombadil
+-- Type: FUNCTION ; Name: enable_runtime(text,text,text,bigint,text); Owner: tendreladmin
 
 CREATE OR REPLACE FUNCTION public.enable_runtime(customer_id text, site_uuid text, language_type text, modified_by bigint, timezone text)
  RETURNS TABLE(op text, id text)
@@ -380,4 +380,4 @@ $function$;
 
 REVOKE ALL ON FUNCTION enable_runtime(text,text,text,bigint,text) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION enable_runtime(text,text,text,bigint,text) TO PUBLIC;
-GRANT EXECUTE ON FUNCTION enable_runtime(text,text,text,bigint,text) TO bombadil WITH GRANT OPTION;
+GRANT EXECUTE ON FUNCTION enable_runtime(text,text,text,bigint,text) TO tendreladmin WITH GRANT OPTION;

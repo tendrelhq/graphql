@@ -1,5 +1,5 @@
 
--- Type: PROCEDURE ; Name: entity.crud_entitydescription_create(uuid,uuid,uuid,text,text,text,text,uuid,uuid,boolean,boolean,bigint); Owner: bombadil
+-- Type: PROCEDURE ; Name: entity.crud_entitydescription_create(uuid,uuid,uuid,text,text,text,text,uuid,uuid,boolean,boolean,bigint); Owner: tendreladmin
 
 CREATE OR REPLACE PROCEDURE entity.crud_entitydescription_create(IN create_entitydescriptionownerentityuuid uuid, IN create_entitytemplateentityuuid uuid, IN create_entityfieldentityuuid uuid, IN create_entitydescriptionname text, IN create_entitydescriptionsoplink text, IN create_entitydescriptionfile text, IN create_entitydescriptionicon text, IN create_entitydescriptionmimetypeuuid uuid, IN create_languagetypeuuid uuid, IN create_entitydescriptiondeleted boolean, IN create_entitydescriptiondraft boolean, OUT create_entitydescriptionentityuuid uuid, IN create_modifiedbyid bigint)
  LANGUAGE plpgsql
@@ -247,4 +247,4 @@ $procedure$;
 
 REVOKE ALL ON PROCEDURE entity.crud_entitydescription_create(uuid,uuid,uuid,text,text,text,text,uuid,uuid,boolean,boolean,bigint) FROM PUBLIC;
 GRANT EXECUTE ON PROCEDURE entity.crud_entitydescription_create(uuid,uuid,uuid,text,text,text,text,uuid,uuid,boolean,boolean,bigint) TO PUBLIC;
-GRANT EXECUTE ON PROCEDURE entity.crud_entitydescription_create(uuid,uuid,uuid,text,text,text,text,uuid,uuid,boolean,boolean,bigint) TO bombadil WITH GRANT OPTION;
+GRANT EXECUTE ON PROCEDURE entity.crud_entitydescription_create(uuid,uuid,uuid,text,text,text,text,uuid,uuid,boolean,boolean,bigint) TO tendreladmin WITH GRANT OPTION;

@@ -1,5 +1,5 @@
 
--- Type: FUNCTION ; Name: entity.func_dim_languagetranslation_read_min(uuid,uuid); Owner: bombadil
+-- Type: FUNCTION ; Name: entity.func_dim_languagetranslation_read_min(uuid,uuid); Owner: tendreladmin
 
 CREATE OR REPLACE FUNCTION entity.func_dim_languagetranslation_read_min(read_dim_dimcustomeruuid uuid, read_dim_dimlanguagetranslationtypeuuid uuid)
  RETURNS TABLE(dim_dimlanguatetypeid text, dim_languagetypeid bigint, dim_languagetypeshortname text, dim_languagetypelongname text, dim_languagetranslationtypeid bigint, dim_languagetypecreateddate timestamp with time zone, dim_languagetypemodifieddate timestamp with time zone, dim_languagetypestartdate timestamp with time zone, dim_languagetypeenddate timestamp with time zone, dim_languagetypeuuid text, dim_dimlanguatetypeuuid uuid, dim_languagetypeentityuuid uuid, dim_languagetranslationshortnameuuid text, dim_languagetranslationlongnameuuid text)
@@ -91,4 +91,4 @@ $function$;
 
 REVOKE ALL ON FUNCTION entity.func_dim_languagetranslation_read_min(uuid,uuid) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION entity.func_dim_languagetranslation_read_min(uuid,uuid) TO PUBLIC;
-GRANT EXECUTE ON FUNCTION entity.func_dim_languagetranslation_read_min(uuid,uuid) TO bombadil WITH GRANT OPTION;
+GRANT EXECUTE ON FUNCTION entity.func_dim_languagetranslation_read_min(uuid,uuid) TO tendreladmin WITH GRANT OPTION;

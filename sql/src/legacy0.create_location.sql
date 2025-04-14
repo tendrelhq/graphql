@@ -1,5 +1,5 @@
 
--- Type: FUNCTION ; Name: legacy0.create_location(text,text,text,text,text,text,bigint); Owner: bombadil
+-- Type: FUNCTION ; Name: legacy0.create_location(text,text,text,text,text,text,bigint); Owner: tendreladmin
 
 CREATE OR REPLACE FUNCTION legacy0.create_location(customer_id text, language_type text, location_name text, location_parent_id text, location_timezone text, location_typename text, modified_by bigint)
  RETURNS TABLE(_id bigint, id text)
@@ -104,4 +104,4 @@ end $function$;
 
 REVOKE ALL ON FUNCTION legacy0.create_location(text,text,text,text,text,text,bigint) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION legacy0.create_location(text,text,text,text,text,text,bigint) TO PUBLIC;
-GRANT EXECUTE ON FUNCTION legacy0.create_location(text,text,text,text,text,text,bigint) TO bombadil WITH GRANT OPTION;
+GRANT EXECUTE ON FUNCTION legacy0.create_location(text,text,text,text,text,text,bigint) TO tendreladmin WITH GRANT OPTION;

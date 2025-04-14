@@ -1,5 +1,5 @@
 
--- Type: FUNCTION ; Name: entity.func_test_entity(); Owner: bombadil
+-- Type: FUNCTION ; Name: entity.func_test_entity(); Owner: tendreladmin
 
 CREATE OR REPLACE FUNCTION entity.func_test_entity()
  RETURNS TABLE(failedtestcount bigint, successtestcount bigint, failedtest boolean, passedtext text, failedtext text)
@@ -98,4 +98,4 @@ $function$;
 
 REVOKE ALL ON FUNCTION entity.func_test_entity() FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION entity.func_test_entity() TO PUBLIC;
-GRANT EXECUTE ON FUNCTION entity.func_test_entity() TO bombadil WITH GRANT OPTION;
+GRANT EXECUTE ON FUNCTION entity.func_test_entity() TO tendreladmin WITH GRANT OPTION;

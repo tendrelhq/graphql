@@ -1,5 +1,5 @@
 
--- Type: FUNCTION ; Name: check_workresult_name(); Owner: bombadil
+-- Type: FUNCTION ; Name: check_workresult_name(); Owner: tendreladmin
 
 CREATE OR REPLACE FUNCTION public.check_workresult_name()
  RETURNS trigger
@@ -29,4 +29,4 @@ $function$;
 
 REVOKE ALL ON FUNCTION check_workresult_name() FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION check_workresult_name() TO PUBLIC;
-GRANT EXECUTE ON FUNCTION check_workresult_name() TO bombadil WITH GRANT OPTION;
+GRANT EXECUTE ON FUNCTION check_workresult_name() TO tendreladmin WITH GRANT OPTION;

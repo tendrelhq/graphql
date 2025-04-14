@@ -1,5 +1,5 @@
 
--- Type: FUNCTION ; Name: engine0.evaluate_instantiation_plan(text,text,engine0.closure[]); Owner: bombadil
+-- Type: FUNCTION ; Name: engine0.evaluate_instantiation_plan(text,text,engine0.closure[]); Owner: tendreladmin
 
 CREATE OR REPLACE FUNCTION engine0.evaluate_instantiation_plan(target text, target_type text, conditions engine0.closure[])
  RETURNS TABLE(system regproc, result boolean)
@@ -29,4 +29,4 @@ Evaluate an instantiation plan.
 
 REVOKE ALL ON FUNCTION engine0.evaluate_instantiation_plan(text,text,engine0.closure[]) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION engine0.evaluate_instantiation_plan(text,text,engine0.closure[]) TO PUBLIC;
-GRANT EXECUTE ON FUNCTION engine0.evaluate_instantiation_plan(text,text,engine0.closure[]) TO bombadil WITH GRANT OPTION;
+GRANT EXECUTE ON FUNCTION engine0.evaluate_instantiation_plan(text,text,engine0.closure[]) TO tendreladmin WITH GRANT OPTION;

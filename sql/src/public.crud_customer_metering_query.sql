@@ -1,5 +1,5 @@
 
--- Type: PROCEDURE ; Name: crud_customer_metering_query(integer,integer,text); Owner: bombadil
+-- Type: PROCEDURE ; Name: crud_customer_metering_query(integer,integer,text); Owner: tendreladmin
 
 CREATE OR REPLACE PROCEDURE public.crud_customer_metering_query(IN billing_month integer, IN billing_year integer, IN modified_by_workerinstance_uuid text)
  LANGUAGE plpgsql
@@ -106,4 +106,4 @@ $procedure$;
 
 REVOKE ALL ON PROCEDURE crud_customer_metering_query(integer,integer,text) FROM PUBLIC;
 GRANT EXECUTE ON PROCEDURE crud_customer_metering_query(integer,integer,text) TO PUBLIC;
-GRANT EXECUTE ON PROCEDURE crud_customer_metering_query(integer,integer,text) TO bombadil WITH GRANT OPTION;
+GRANT EXECUTE ON PROCEDURE crud_customer_metering_query(integer,integer,text) TO tendreladmin WITH GRANT OPTION;

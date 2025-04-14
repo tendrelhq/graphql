@@ -1,5 +1,5 @@
 
--- Type: FUNCTION ; Name: engine1.delete_workresultinstance(jsonb); Owner: bombadil
+-- Type: FUNCTION ; Name: engine1.delete_workresultinstance(jsonb); Owner: tendreladmin
 
 CREATE OR REPLACE FUNCTION engine1.delete_workresultinstance(ctx jsonb)
  RETURNS SETOF engine1.closure
@@ -18,4 +18,4 @@ $function$;
 
 REVOKE ALL ON FUNCTION engine1.delete_workresultinstance(jsonb) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION engine1.delete_workresultinstance(jsonb) TO PUBLIC;
-GRANT EXECUTE ON FUNCTION engine1.delete_workresultinstance(jsonb) TO bombadil WITH GRANT OPTION;
+GRANT EXECUTE ON FUNCTION engine1.delete_workresultinstance(jsonb) TO tendreladmin WITH GRANT OPTION;

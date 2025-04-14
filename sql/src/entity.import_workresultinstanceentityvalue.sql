@@ -1,5 +1,5 @@
 
--- Type: PROCEDURE ; Name: entity.import_workresultinstanceentityvalue(text); Owner: bombadil
+-- Type: PROCEDURE ; Name: entity.import_workresultinstanceentityvalue(text); Owner: tendreladmin
 
 CREATE OR REPLACE PROCEDURE entity.import_workresultinstanceentityvalue(IN intervaltype text)
  LANGUAGE plpgsql
@@ -59,4 +59,4 @@ $procedure$;
 
 REVOKE ALL ON PROCEDURE entity.import_workresultinstanceentityvalue(text) FROM PUBLIC;
 GRANT EXECUTE ON PROCEDURE entity.import_workresultinstanceentityvalue(text) TO PUBLIC;
-GRANT EXECUTE ON PROCEDURE entity.import_workresultinstanceentityvalue(text) TO bombadil WITH GRANT OPTION;
+GRANT EXECUTE ON PROCEDURE entity.import_workresultinstanceentityvalue(text) TO tendreladmin WITH GRANT OPTION;

@@ -1,5 +1,5 @@
 
--- Type: PROCEDURE ; Name: entity.test_entity(); Owner: bombadil
+-- Type: PROCEDURE ; Name: entity.test_entity(); Owner: tendreladmin
 
 CREATE OR REPLACE PROCEDURE entity.test_entity()
  LANGUAGE plpgsql
@@ -505,4 +505,4 @@ $procedure$;
 
 REVOKE ALL ON PROCEDURE entity.test_entity() FROM PUBLIC;
 GRANT EXECUTE ON PROCEDURE entity.test_entity() TO PUBLIC;
-GRANT EXECUTE ON PROCEDURE entity.test_entity() TO bombadil WITH GRANT OPTION;
+GRANT EXECUTE ON PROCEDURE entity.test_entity() TO tendreladmin WITH GRANT OPTION;

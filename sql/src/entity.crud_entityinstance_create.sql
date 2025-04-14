@@ -1,5 +1,5 @@
 
--- Type: PROCEDURE ; Name: entity.crud_entityinstance_create(uuid,uuid,text,uuid,uuid,integer,uuid,text,text,text,uuid,text,uuid,boolean,boolean,uuid,bigint); Owner: bombadil
+-- Type: PROCEDURE ; Name: entity.crud_entityinstance_create(uuid,uuid,text,uuid,uuid,integer,uuid,text,text,text,uuid,text,uuid,boolean,boolean,uuid,bigint); Owner: tendreladmin
 
 CREATE OR REPLACE PROCEDURE entity.crud_entityinstance_create(IN create_entityinstanceownerentityuuid uuid, IN create_entityinstanceentitytemplateentityuuid uuid, IN create_entityinstanceentitytemplateentityname text, IN create_entityinstanceparententityuuid uuid, IN create_entityinstanceecornerstoneentityuuid uuid, IN create_entityinstancecornerstoneorder integer, IN create_entityinstancetaguuid uuid, IN create_entityinstancetag text, IN create_entityinstancename text, IN create_entityinstancescanid text, IN create_entityinstancetypeuuid uuid, IN create_entityinstanceexternalid text, IN create_entityinstanceexternalsystemuuid uuid, IN create_entityinstancedeleted boolean, IN create_entityinstancedraft boolean, OUT create_entityinstanceentityuuid uuid, IN create_languagetypeuuid uuid, IN create_modifiedbyid bigint)
  LANGUAGE plpgsql
@@ -542,4 +542,4 @@ $procedure$;
 
 REVOKE ALL ON PROCEDURE entity.crud_entityinstance_create(uuid,uuid,text,uuid,uuid,integer,uuid,text,text,text,uuid,text,uuid,boolean,boolean,uuid,bigint) FROM PUBLIC;
 GRANT EXECUTE ON PROCEDURE entity.crud_entityinstance_create(uuid,uuid,text,uuid,uuid,integer,uuid,text,text,text,uuid,text,uuid,boolean,boolean,uuid,bigint) TO PUBLIC;
-GRANT EXECUTE ON PROCEDURE entity.crud_entityinstance_create(uuid,uuid,text,uuid,uuid,integer,uuid,text,text,text,uuid,text,uuid,boolean,boolean,uuid,bigint) TO bombadil WITH GRANT OPTION;
+GRANT EXECUTE ON PROCEDURE entity.crud_entityinstance_create(uuid,uuid,text,uuid,uuid,integer,uuid,text,text,text,uuid,text,uuid,boolean,boolean,uuid,bigint) TO tendreladmin WITH GRANT OPTION;

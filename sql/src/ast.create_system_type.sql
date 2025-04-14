@@ -1,5 +1,5 @@
 
--- Type: FUNCTION ; Name: ast.create_system_type(text,text,bigint); Owner: bombadil
+-- Type: FUNCTION ; Name: ast.create_system_type(text,text,bigint); Owner: tendreladmin
 
 CREATE OR REPLACE FUNCTION ast.create_system_type(type_name text, type_hierarchy text, modified_by bigint)
  RETURNS TABLE(_id bigint, id text)
@@ -47,4 +47,4 @@ end $function$;
 
 REVOKE ALL ON FUNCTION ast.create_system_type(text,text,bigint) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION ast.create_system_type(text,text,bigint) TO PUBLIC;
-GRANT EXECUTE ON FUNCTION ast.create_system_type(text,text,bigint) TO bombadil WITH GRANT OPTION;
+GRANT EXECUTE ON FUNCTION ast.create_system_type(text,text,bigint) TO tendreladmin WITH GRANT OPTION;

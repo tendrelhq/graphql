@@ -1,5 +1,5 @@
 
--- Type: FUNCTION ; Name: entity.crud_entityfileinstance_read_min(uuid,uuid,uuid,uuid,boolean,boolean,boolean,uuid); Owner: bombadil
+-- Type: FUNCTION ; Name: entity.crud_entityfileinstance_read_min(uuid,uuid,uuid,uuid,boolean,boolean,boolean,uuid); Owner: tendreladmin
 
 CREATE OR REPLACE FUNCTION entity.crud_entityfileinstance_read_min(read_ownerentityuuid uuid, read_entityfileinstanceentityuuid uuid, read_entityfileinstanceentityentityinstanceentityuuid uuid, read_entityfileinstanceentityfieldinstanceentityuuid uuid, read_entityfileinstancesenddeleted boolean, read_entityfileinstancesenddrafts boolean, read_entityfileinstancesendinactive boolean, read_languagetranslationtypeuuid uuid)
  RETURNS TABLE(languagetranslationtypeuuid uuid, entityfileinstanceuuid uuid, entityfileinstanceownerentityuuid uuid, entityfileinstanceentityentityinstanceentityuuid uuid, entityfileinstanceentityfieldinstanceentityuuid uuid, entityfileinstancestoragelocation text, entityfileinstancemimetypeuuid uuid, entityfileinstancecreateddate timestamp with time zone, entityfileinstancemodifieddate timestamp with time zone, entityfileinstanceexternalid text, entityfileinstanceexternalsystemuuid uuid, entityfileinstancemodifiedby text, entityfileinstancerefid bigint, entityfileinstancerefuuid text, entityfileinstancedraft boolean, entityfileinstancedeleted boolean, entityfileinstanceinactive boolean)
@@ -224,4 +224,4 @@ $function$;
 
 REVOKE ALL ON FUNCTION entity.crud_entityfileinstance_read_min(uuid,uuid,uuid,uuid,boolean,boolean,boolean,uuid) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION entity.crud_entityfileinstance_read_min(uuid,uuid,uuid,uuid,boolean,boolean,boolean,uuid) TO PUBLIC;
-GRANT EXECUTE ON FUNCTION entity.crud_entityfileinstance_read_min(uuid,uuid,uuid,uuid,boolean,boolean,boolean,uuid) TO bombadil WITH GRANT OPTION;
+GRANT EXECUTE ON FUNCTION entity.crud_entityfileinstance_read_min(uuid,uuid,uuid,uuid,boolean,boolean,boolean,uuid) TO tendreladmin WITH GRANT OPTION;

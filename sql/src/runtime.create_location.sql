@@ -1,5 +1,5 @@
 
--- Type: FUNCTION ; Name: runtime.create_location(text,bigint,text,text,text,text,text); Owner: bombadil
+-- Type: FUNCTION ; Name: runtime.create_location(text,bigint,text,text,text,text,text); Owner: tendreladmin
 
 CREATE OR REPLACE FUNCTION runtime.create_location(customer_id text, modified_by bigint, language_type text, timezone text, location_name text, location_parent_id text, location_typename text)
  RETURNS TABLE(_id bigint, id text)
@@ -25,4 +25,4 @@ end $function$;
 
 REVOKE ALL ON FUNCTION runtime.create_location(text,bigint,text,text,text,text,text) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION runtime.create_location(text,bigint,text,text,text,text,text) TO PUBLIC;
-GRANT EXECUTE ON FUNCTION runtime.create_location(text,bigint,text,text,text,text,text) TO bombadil WITH GRANT OPTION;
+GRANT EXECUTE ON FUNCTION runtime.create_location(text,bigint,text,text,text,text,text) TO tendreladmin WITH GRANT OPTION;

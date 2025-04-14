@@ -1,5 +1,5 @@
 
--- Type: PROCEDURE ; Name: entity.crud_entityfileinstance_create(uuid,uuid,uuid,text,uuid,uuid,boolean,boolean,bigint); Owner: bombadil
+-- Type: PROCEDURE ; Name: entity.crud_entityfileinstance_create(uuid,uuid,uuid,text,uuid,uuid,boolean,boolean,bigint); Owner: tendreladmin
 
 CREATE OR REPLACE PROCEDURE entity.crud_entityfileinstance_create(IN create_entityfileinstanceownerentityuuid uuid, IN create_entityfileinstanceentityentityinstanceentityuuid uuid, IN create_entityfileinstanceentityfieldinstanceentityuuid uuid, IN create_entityfileinstancestoragelocation text, IN create_entityfileinstancemimetypeuuid uuid, IN create_languagetypeuuid uuid, IN create_entityfileinstancedeleted boolean, IN create_entityfileinstancedraft boolean, OUT create_entityfileinstanceentityuuid uuid, IN create_modifiedbyid bigint)
  LANGUAGE plpgsql
@@ -182,4 +182,4 @@ $procedure$;
 
 REVOKE ALL ON PROCEDURE entity.crud_entityfileinstance_create(uuid,uuid,uuid,text,uuid,uuid,boolean,boolean,bigint) FROM PUBLIC;
 GRANT EXECUTE ON PROCEDURE entity.crud_entityfileinstance_create(uuid,uuid,uuid,text,uuid,uuid,boolean,boolean,bigint) TO PUBLIC;
-GRANT EXECUTE ON PROCEDURE entity.crud_entityfileinstance_create(uuid,uuid,uuid,text,uuid,uuid,boolean,boolean,bigint) TO bombadil WITH GRANT OPTION;
+GRANT EXECUTE ON PROCEDURE entity.crud_entityfileinstance_create(uuid,uuid,uuid,text,uuid,uuid,boolean,boolean,bigint) TO tendreladmin WITH GRANT OPTION;

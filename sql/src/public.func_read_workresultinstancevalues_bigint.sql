@@ -1,5 +1,5 @@
 
--- Type: FUNCTION ; Name: func_read_workresultinstancevalues_bigint(text[],text,text,boolean); Owner: bombadil
+-- Type: FUNCTION ; Name: func_read_workresultinstancevalues_bigint(text[],text,text,boolean); Owner: tendreladmin
 
 CREATE OR REPLACE FUNCTION public.func_read_workresultinstancevalues_bigint(func_workinstanceuuidarray text[], func_workresultuuid text, func_workresultname text, func_primaryaccuracy boolean)
  RETURNS TABLE(workresultinstancecustomerid bigint, workresultinstanceworkinstanceid bigint, workresultinstancevalue bigint)
@@ -58,4 +58,4 @@ $function$;
 
 REVOKE ALL ON FUNCTION func_read_workresultinstancevalues_bigint(text[],text,text,boolean) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION func_read_workresultinstancevalues_bigint(text[],text,text,boolean) TO PUBLIC;
-GRANT EXECUTE ON FUNCTION func_read_workresultinstancevalues_bigint(text[],text,text,boolean) TO bombadil WITH GRANT OPTION;
+GRANT EXECUTE ON FUNCTION func_read_workresultinstancevalues_bigint(text[],text,text,boolean) TO tendreladmin WITH GRANT OPTION;

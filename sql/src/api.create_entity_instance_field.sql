@@ -1,5 +1,5 @@
 
--- Type: FUNCTION ; Name: api.create_entity_instance_field(); Owner: bombadil
+-- Type: FUNCTION ; Name: api.create_entity_instance_field(); Owner: tendreladmin
 
 CREATE OR REPLACE FUNCTION api.create_entity_instance_field()
  RETURNS trigger
@@ -24,11 +24,10 @@ begin
       create_entityfieldinstanceexternalsystemuuid := null::uuid,
       create_entityfieldinstancedeleted := new._deleted,
       create_entityfieldinstancedraft := new._draft,
-      create_languagetypeuuid := null::uuid,  -- need to wire this in later
-      create_modifiedbyid := 895::bigint,  -- need to wire this in later
+      create_languagetypeuuid := ins_languagetypeentityuuid,  
+      create_modifiedbyid := ins_userid,  
       create_entityfieldinstanceentityuuid := ins_entity
   );
-
 
   select * into ins_row
   from api.entity_instance_field
@@ -44,4 +43,6 @@ $function$;
 
 
 REVOKE ALL ON FUNCTION api.create_entity_instance_field() FROM PUBLIC;
-GRANT EXECUTE ON FUNCTION api.create_entity_instance_field() TO bombadil WITH GRANT OPTION;
+GRANT EXECUTE ON FUNCTION api.create_entity_instance_field() TO authenticated;
+GRANT EXECUTE ON FUNCTION api.create_entity_instance_field() TO god;
+GRANT EXECUTE ON FUNCTION api.create_entity_instance_field() TO tendreladmin WITH GRANT OPTION;

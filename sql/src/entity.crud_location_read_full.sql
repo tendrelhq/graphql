@@ -1,5 +1,5 @@
 
--- Type: FUNCTION ; Name: entity.crud_location_read_full(uuid,uuid,uuid,uuid,boolean,uuid,boolean,boolean,boolean,uuid); Owner: bombadil
+-- Type: FUNCTION ; Name: entity.crud_location_read_full(uuid,uuid,uuid,uuid,boolean,uuid,boolean,boolean,boolean,uuid); Owner: tendreladmin
 
 CREATE OR REPLACE FUNCTION entity.crud_location_read_full(read_locationownerentityuuid uuid, read_locationentityuuid uuid, read_locationparententityuuid uuid, read_locationcornerstoneentityuuid uuid, read_alllocations boolean, read_locationtag uuid, read_locationsenddeleted boolean, read_locationsenddrafts boolean, read_locationsendinactive boolean, read_languagetranslationtypeentityuuid uuid)
  RETURNS TABLE(languagetranslationtypeentityuuid uuid, locationid bigint, locationuuid text, locationentityuuid uuid, locationownerentityuuid uuid, locationparententityuuid uuid, locationcornerstoneentityuuid uuid, locationcustomerid bigint, locationcustomeruuid text, locationcustomerentityuuid uuid, locationcustomername text, locationnameuuid text, locationname text, locationdisplaynameuuid text, locationdisplayname text, locationscanid text, locationcreateddate timestamp with time zone, locationmodifieddate timestamp with time zone, locationmodifiedbyuuid text, locationstartdate timestamp with time zone, locationenddate timestamp with time zone, locationexternalid text, locationexternalsystementityuuid uuid, locationexternalsystementname text, locationcornerstoneorder integer, locationlatitude numeric, locationlongitude numeric, locationradius numeric, locationtimezone text, locationtagentityuuid uuid, locationtagname text, locationsenddeleted boolean, locationsenddrafts boolean, locationsendinactive boolean)
@@ -603,4 +603,4 @@ $function$;
 
 REVOKE ALL ON FUNCTION entity.crud_location_read_full(uuid,uuid,uuid,uuid,boolean,uuid,boolean,boolean,boolean,uuid) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION entity.crud_location_read_full(uuid,uuid,uuid,uuid,boolean,uuid,boolean,boolean,boolean,uuid) TO PUBLIC;
-GRANT EXECUTE ON FUNCTION entity.crud_location_read_full(uuid,uuid,uuid,uuid,boolean,uuid,boolean,boolean,boolean,uuid) TO bombadil WITH GRANT OPTION;
+GRANT EXECUTE ON FUNCTION entity.crud_location_read_full(uuid,uuid,uuid,uuid,boolean,uuid,boolean,boolean,boolean,uuid) TO tendreladmin WITH GRANT OPTION;

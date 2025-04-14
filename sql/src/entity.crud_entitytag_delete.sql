@@ -1,5 +1,5 @@
 
--- Type: PROCEDURE ; Name: entity.crud_entitytag_delete(uuid,uuid,bigint); Owner: bombadil
+-- Type: PROCEDURE ; Name: entity.crud_entitytag_delete(uuid,uuid,bigint); Owner: tendreladmin
 
 CREATE OR REPLACE PROCEDURE entity.crud_entitytag_delete(IN create_entitytagownerentityuuid uuid, IN create_entitytagentityuuid uuid, IN create_modifiedbyid bigint)
  LANGUAGE plpgsql
@@ -77,4 +77,4 @@ $procedure$;
 
 REVOKE ALL ON PROCEDURE entity.crud_entitytag_delete(uuid,uuid,bigint) FROM PUBLIC;
 GRANT EXECUTE ON PROCEDURE entity.crud_entitytag_delete(uuid,uuid,bigint) TO PUBLIC;
-GRANT EXECUTE ON PROCEDURE entity.crud_entitytag_delete(uuid,uuid,bigint) TO bombadil WITH GRANT OPTION;
+GRANT EXECUTE ON PROCEDURE entity.crud_entitytag_delete(uuid,uuid,bigint) TO tendreladmin WITH GRANT OPTION;

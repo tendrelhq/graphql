@@ -1,5 +1,5 @@
 
--- Type: FUNCTION ; Name: legacy0.compute_time_at_task(bigint); Owner: bombadil
+-- Type: FUNCTION ; Name: legacy0.compute_time_at_task(bigint); Owner: tendreladmin
 
 CREATE OR REPLACE FUNCTION legacy0.compute_time_at_task(workinstanceid bigint)
  RETURNS interval
@@ -43,4 +43,4 @@ $function$;
 
 REVOKE ALL ON FUNCTION legacy0.compute_time_at_task(bigint) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION legacy0.compute_time_at_task(bigint) TO PUBLIC;
-GRANT EXECUTE ON FUNCTION legacy0.compute_time_at_task(bigint) TO bombadil WITH GRANT OPTION;
+GRANT EXECUTE ON FUNCTION legacy0.compute_time_at_task(bigint) TO tendreladmin WITH GRANT OPTION;

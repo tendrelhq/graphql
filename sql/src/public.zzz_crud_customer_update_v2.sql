@@ -1,5 +1,5 @@
 
--- Type: PROCEDURE ; Name: zzz_crud_customer_update_v2(text,text,text,text,text,bigint); Owner: bombadil
+-- Type: PROCEDURE ; Name: zzz_crud_customer_update_v2(text,text,text,text,text,bigint); Owner: tendreladmin
 
 CREATE OR REPLACE PROCEDURE public.zzz_crud_customer_update_v2(INOUT update_customeruuid text, IN update_customerexternalid text, IN update_customerexternalsystemuuid text, IN update_customername text, IN update_languagetypeuuid text, IN update_modifiedbyid bigint)
  LANGUAGE plpgsql
@@ -97,4 +97,4 @@ $procedure$;
 
 REVOKE ALL ON PROCEDURE zzz_crud_customer_update_v2(text,text,text,text,text,bigint) FROM PUBLIC;
 GRANT EXECUTE ON PROCEDURE zzz_crud_customer_update_v2(text,text,text,text,text,bigint) TO PUBLIC;
-GRANT EXECUTE ON PROCEDURE zzz_crud_customer_update_v2(text,text,text,text,text,bigint) TO bombadil WITH GRANT OPTION;
+GRANT EXECUTE ON PROCEDURE zzz_crud_customer_update_v2(text,text,text,text,text,bigint) TO tendreladmin WITH GRANT OPTION;

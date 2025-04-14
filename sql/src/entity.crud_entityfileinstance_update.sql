@@ -1,5 +1,5 @@
 
--- Type: PROCEDURE ; Name: entity.crud_entityfileinstance_update(uuid,uuid,uuid,uuid,text,uuid,boolean,boolean,text,uuid); Owner: bombadil
+-- Type: PROCEDURE ; Name: entity.crud_entityfileinstance_update(uuid,uuid,uuid,uuid,text,uuid,boolean,boolean,text,uuid); Owner: tendreladmin
 
 CREATE OR REPLACE PROCEDURE entity.crud_entityfileinstance_update(IN update_entityfileinstanceentityuuid uuid, IN update_entityfileinstanceownerentityuuid uuid, IN update_entityfileinstanceentityentityinstanceentityuuid uuid, IN update_entityfileinstanceentityfieldinstanceentityuuid uuid, IN update_entityfileinstancestoragelocation text, IN update_entityfileinstancemimetypeuuid uuid, IN update_entityfileinstancedeleted boolean, IN update_entityfileinstancedraft boolean, IN update_entityfileinstancemodifiedbyuuid text, IN update_languagetypeuuid uuid)
  LANGUAGE plpgsql
@@ -64,4 +64,4 @@ $procedure$;
 
 REVOKE ALL ON PROCEDURE entity.crud_entityfileinstance_update(uuid,uuid,uuid,uuid,text,uuid,boolean,boolean,text,uuid) FROM PUBLIC;
 GRANT EXECUTE ON PROCEDURE entity.crud_entityfileinstance_update(uuid,uuid,uuid,uuid,text,uuid,boolean,boolean,text,uuid) TO PUBLIC;
-GRANT EXECUTE ON PROCEDURE entity.crud_entityfileinstance_update(uuid,uuid,uuid,uuid,text,uuid,boolean,boolean,text,uuid) TO bombadil WITH GRANT OPTION;
+GRANT EXECUTE ON PROCEDURE entity.crud_entityfileinstance_update(uuid,uuid,uuid,uuid,text,uuid,boolean,boolean,text,uuid) TO tendreladmin WITH GRANT OPTION;

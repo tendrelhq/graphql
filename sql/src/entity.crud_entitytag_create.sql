@@ -1,5 +1,5 @@
 
--- Type: PROCEDURE ; Name: entity.crud_entitytag_create(uuid,uuid,uuid,uuid,uuid,boolean,boolean,bigint); Owner: bombadil
+-- Type: PROCEDURE ; Name: entity.crud_entitytag_create(uuid,uuid,uuid,uuid,uuid,boolean,boolean,bigint); Owner: tendreladmin
 
 CREATE OR REPLACE PROCEDURE entity.crud_entitytag_create(IN create_entitytagownerentityuuid uuid, IN create_entitytagentityinstanceuuid uuid, IN create_entitytagentitytemplateuuid uuid, IN create_entitytagcustaguuid uuid, IN create_languagetypeuuid uuid, IN create_entitytagdeleted boolean, IN create_entitytagdraft boolean, OUT create_entitytaguuid uuid, IN create_modifiedbyid bigint)
  LANGUAGE plpgsql
@@ -159,4 +159,4 @@ $procedure$;
 
 REVOKE ALL ON PROCEDURE entity.crud_entitytag_create(uuid,uuid,uuid,uuid,uuid,boolean,boolean,bigint) FROM PUBLIC;
 GRANT EXECUTE ON PROCEDURE entity.crud_entitytag_create(uuid,uuid,uuid,uuid,uuid,boolean,boolean,bigint) TO PUBLIC;
-GRANT EXECUTE ON PROCEDURE entity.crud_entitytag_create(uuid,uuid,uuid,uuid,uuid,boolean,boolean,bigint) TO bombadil WITH GRANT OPTION;
+GRANT EXECUTE ON PROCEDURE entity.crud_entitytag_create(uuid,uuid,uuid,uuid,uuid,boolean,boolean,bigint) TO tendreladmin WITH GRANT OPTION;

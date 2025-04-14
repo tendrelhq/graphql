@@ -1,5 +1,5 @@
 
--- Type: FUNCTION ; Name: api.create_entity_description(); Owner: bombadil
+-- Type: FUNCTION ; Name: api.create_entity_description(); Owner: tendreladmin
 
 CREATE OR REPLACE FUNCTION api.create_entity_description()
  RETURNS trigger
@@ -23,11 +23,11 @@ begin
 		create_entitydescriptionfile  := new.file_link, 
 		create_entitydescriptionicon  := new.icon_link, 
 		create_entitydescriptionmimetypeuuid  := new.file_mime_type, 
-		create_languagetypeuuid  := null::uuid, -- Fix this later
+		create_languagetypeuuid  := ins_languagetypeentityuuid, 
 		create_entitydescriptiondeleted  := false, 
 		create_entitydescriptiondraft  := new._draft,  
 		create_entitydescriptionentityuuid  := ins_entity, 
-		create_modifiedbyid :=null::bigint  -- Fix this later
+		create_modifiedbyid :=ins_userid  
   	);
 
   select * into ins_row
@@ -50,4 +50,6 @@ A bunch of comments explaining post
 	';
 
 REVOKE ALL ON FUNCTION api.create_entity_description() FROM PUBLIC;
-GRANT EXECUTE ON FUNCTION api.create_entity_description() TO bombadil WITH GRANT OPTION;
+GRANT EXECUTE ON FUNCTION api.create_entity_description() TO authenticated;
+GRANT EXECUTE ON FUNCTION api.create_entity_description() TO god;
+GRANT EXECUTE ON FUNCTION api.create_entity_description() TO tendreladmin WITH GRANT OPTION;

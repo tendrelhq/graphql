@@ -1,5 +1,5 @@
 
--- Type: FUNCTION ; Name: engine1.delete_node(text,text); Owner: bombadil
+-- Type: FUNCTION ; Name: engine1.delete_node(text,text); Owner: tendreladmin
 
 CREATE OR REPLACE FUNCTION engine1.delete_node(kind text, id text)
  RETURNS SETOF engine1.closure
@@ -34,4 +34,4 @@ $function$;
 
 REVOKE ALL ON FUNCTION engine1.delete_node(text,text) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION engine1.delete_node(text,text) TO PUBLIC;
-GRANT EXECUTE ON FUNCTION engine1.delete_node(text,text) TO bombadil WITH GRANT OPTION;
+GRANT EXECUTE ON FUNCTION engine1.delete_node(text,text) TO tendreladmin WITH GRANT OPTION;

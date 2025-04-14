@@ -11,33 +11,33 @@ declare
 begin
   -- TODO: Add the actual entity model grants for e.g. customer create via Lambda
   for r in select * from pg_roles where rolname in ('graphql', 'tendrelservice') loop
-    execute format('revoke all on schema ast from %', r.rolname);
-    execute format('grant usage on schema ast to %', r.rolname);
-    execute format('grant execute on all routines in schema ast to %', r.rolname);
+    execute format('revoke all on schema ast from %s', r.rolname);
+    execute format('grant usage on schema ast to %s', r.rolname);
+    execute format('grant execute on all routines in schema ast to %s', r.rolname);
     --
-    execute format('revoke all on schema auth from %', r.rolname);
-    execute format('grant usage on schema auth to %', r.rolname);
-    execute format('grant execute on all routines in schema auth to %', r.rolname);
+    execute format('revoke all on schema auth from %s', r.rolname);
+    execute format('grant usage on schema auth to %s', r.rolname);
+    execute format('grant execute on all routines in schema auth to %s', r.rolname);
     --
-    execute format('grant usage on schema debug to %', r.rolname);
-    execute format('revoke all on schema debug from %', r.rolname);
-    execute format('grant execute on all routines in schema debug to %', r.rolname);
+    execute format('grant usage on schema debug to %s', r.rolname);
+    execute format('revoke all on schema debug from %s', r.rolname);
+    execute format('grant execute on all routines in schema debug to %s', r.rolname);
     --
-    execute format('grant usage on schema entity0 to %', r.rolname);
-    execute format('revoke all on schema entity0 from %', r.rolname);
-    execute format('grant execute on all routines in schema entity0 to %', r.rolname);
+    execute format('grant usage on schema entity0 to %s', r.rolname);
+    execute format('revoke all on schema entity0 from %s', r.rolname);
+    execute format('grant execute on all routines in schema entity0 to %s', r.rolname);
     --
-    execute format('grant usage on schema entity1 to %', r.rolname);
-    execute format('revoke all on schema entity1 from %', r.rolname);
-    execute format('grant execute on all routines in schema entity1 to %', r.rolname);
+    execute format('grant usage on schema entity1 to %s', r.rolname);
+    execute format('revoke all on schema entity1 from %s', r.rolname);
+    execute format('grant execute on all routines in schema entity1 to %s', r.rolname);
     --
-    execute format('revoke all on schema i18n from %', r.rolname);
-    execute format('grant usage on schema i18n to %', r.rolname);
-    execute format('grant execute on all routines in schema i18n to %', r.rolname);
+    execute format('revoke all on schema i18n from %s', r.rolname);
+    execute format('grant usage on schema i18n to %s', r.rolname);
+    execute format('grant execute on all routines in schema i18n to %s', r.rolname);
     --
-    execute format('revoke all on schema legacy0 from %', r.rolname);
-    execute format('grant usage on schema legacy0 to %', r.rolname);
-    execute format('grant execute on all routines in schema legacy0 to %', r.rolname);
+    execute format('revoke all on schema legacy0 from %s', r.rolname);
+    execute format('grant usage on schema legacy0 to %s', r.rolname);
+    execute format('grant execute on all routines in schema legacy0 to %s', r.rolname);
   end loop;
 end $$;
 
@@ -69,16 +69,16 @@ grant execute on function api.token to anonymous;
 create role authenticated nologin in role anonymous;
 grant execute on function api.token_introspect to authenticated;
 
-grant execute on function api.delete_entity_instance to authenticated;
-grant execute on function api.delete_entity_instance_field to authenticated;
-grant execute on function api.delete_entity_template to authenticated;
-grant execute on function api.delete_entity_field to authenticated;
+grant execute on all routines in schema api to authenticated;
+grant all on table api.entity_description to authenticated;
 grant all on table api.entity_instance to authenticated;
 grant all on table api.entity_instance_field to authenticated;
+grant all on table api.entity_instance_file to authenticated;
+grant all on table api.entity_tag to authenticated;
 grant all on table api.entity_template to authenticated;
 grant all on table api.entity_field to authenticated;
 
--- Lastly, Good Ol Tom, the `god` role. This role is available to any user who
+-- Lastly, Good 'ol Tom, the `god` role. This role is available to any user who
 -- has access to the Tendrel internal customer so, essentially, just us devs.
 -- The most notable capability of this role is its `bypassrls` attribute...
 -- I give you.... god mode!

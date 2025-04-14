@@ -1,5 +1,5 @@
 
--- Type: FUNCTION ; Name: legacy0.create_rrule(text,text,numeric,bigint); Owner: bombadil
+-- Type: FUNCTION ; Name: legacy0.create_rrule(text,text,numeric,bigint); Owner: tendreladmin
 
 CREATE OR REPLACE FUNCTION legacy0.create_rrule(task_id text, frequency_type text, frequency_interval numeric, modified_by bigint)
  RETURNS TABLE(_id bigint)
@@ -67,4 +67,4 @@ end $function$;
 
 REVOKE ALL ON FUNCTION legacy0.create_rrule(text,text,numeric,bigint) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION legacy0.create_rrule(text,text,numeric,bigint) TO PUBLIC;
-GRANT EXECUTE ON FUNCTION legacy0.create_rrule(text,text,numeric,bigint) TO bombadil WITH GRANT OPTION;
+GRANT EXECUTE ON FUNCTION legacy0.create_rrule(text,text,numeric,bigint) TO tendreladmin WITH GRANT OPTION;

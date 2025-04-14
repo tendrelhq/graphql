@@ -1,5 +1,5 @@
 
--- Type: FUNCTION ; Name: auth.current_identity(bigint,text); Owner: bombadil
+-- Type: FUNCTION ; Name: auth.current_identity(bigint,text); Owner: tendreladmin
 
 CREATE OR REPLACE FUNCTION auth.current_identity(parent bigint, identity text)
  RETURNS bigint
@@ -32,4 +32,4 @@ where locationid = $2
 
 REVOKE ALL ON FUNCTION auth.current_identity(bigint,text) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION auth.current_identity(bigint,text) TO PUBLIC;
-GRANT EXECUTE ON FUNCTION auth.current_identity(bigint,text) TO bombadil WITH GRANT OPTION;
+GRANT EXECUTE ON FUNCTION auth.current_identity(bigint,text) TO tendreladmin WITH GRANT OPTION;

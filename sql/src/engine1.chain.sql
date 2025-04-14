@@ -1,5 +1,5 @@
 
--- Type: FUNCTION ; Name: engine1.chain(engine1.closure); Owner: bombadil
+-- Type: FUNCTION ; Name: engine1.chain(engine1.closure); Owner: tendreladmin
 
 CREATE OR REPLACE FUNCTION engine1.chain(engine1.closure)
  RETURNS SETOF engine1.closure
@@ -15,4 +15,4 @@ end $function$;
 
 REVOKE ALL ON FUNCTION engine1.chain(engine1.closure) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION engine1.chain(engine1.closure) TO PUBLIC;
-GRANT EXECUTE ON FUNCTION engine1.chain(engine1.closure) TO bombadil WITH GRANT OPTION;
+GRANT EXECUTE ON FUNCTION engine1.chain(engine1.closure) TO tendreladmin WITH GRANT OPTION;

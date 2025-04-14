@@ -1,5 +1,5 @@
 
--- Type: FUNCTION ; Name: engine1.instantiate(jsonb); Owner: bombadil
+-- Type: FUNCTION ; Name: engine1.instantiate(jsonb); Owner: tendreladmin
 
 CREATE OR REPLACE FUNCTION engine1.instantiate(ctx jsonb)
  RETURNS SETOF engine1.closure
@@ -40,4 +40,4 @@ $function$;
 
 REVOKE ALL ON FUNCTION engine1.instantiate(jsonb) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION engine1.instantiate(jsonb) TO PUBLIC;
-GRANT EXECUTE ON FUNCTION engine1.instantiate(jsonb) TO bombadil WITH GRANT OPTION;
+GRANT EXECUTE ON FUNCTION engine1.instantiate(jsonb) TO tendreladmin WITH GRANT OPTION;

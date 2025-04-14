@@ -1,5 +1,5 @@
 
--- Type: FUNCTION ; Name: entity.crud_entitydescription_read_min(uuid,uuid,uuid,uuid,boolean,boolean,boolean,uuid); Owner: bombadil
+-- Type: FUNCTION ; Name: entity.crud_entitydescription_read_min(uuid,uuid,uuid,uuid,boolean,boolean,boolean,uuid); Owner: tendreladmin
 
 CREATE OR REPLACE FUNCTION entity.crud_entitydescription_read_min(read_ownerentityuuid uuid, read_entitydescriptionentityuuid uuid, read_entitytemplateentityuuid uuid, read_entityfieldentityuuid uuid, read_entitydescriptionsenddeleted boolean, read_entitydescriptionsenddrafts boolean, read_entitydescriptionsendinactive boolean, read_languagetranslationtypeuuid uuid)
  RETURNS TABLE(languagetranslationtypeuuid uuid, entitydescriptionuuid uuid, entitydescriptionownerentityuuid uuid, entitydescriptionentitytemplateentityuuid uuid, entitydescriptionentityfieldentityduuid uuid, entitydescriptionname text, entitydescriptionlanguagemasteruuid text, entitydescriptionsoplink text, entitydescriptionfile text, entitydescriptionicon text, entitydescriptioncreateddate timestamp with time zone, entitydescriptionmodifieddate timestamp with time zone, entitydescriptionstartdate timestamp with time zone, entitydescriptionenddate timestamp with time zone, entitydescriptionmodifiedby text, entitydescriptionexternalid text, entitydescriptionexternalsystementityuuid uuid, entitydescriptionrefid bigint, entitydescriptionrefuuid text, entitydescriptiondraft boolean, entitydescriptiondeleted boolean, entitydescriptionactive boolean, entitydescriptionmimetypeuuid uuid)
@@ -276,4 +276,4 @@ $function$;
 
 REVOKE ALL ON FUNCTION entity.crud_entitydescription_read_min(uuid,uuid,uuid,uuid,boolean,boolean,boolean,uuid) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION entity.crud_entitydescription_read_min(uuid,uuid,uuid,uuid,boolean,boolean,boolean,uuid) TO PUBLIC;
-GRANT EXECUTE ON FUNCTION entity.crud_entitydescription_read_min(uuid,uuid,uuid,uuid,boolean,boolean,boolean,uuid) TO bombadil WITH GRANT OPTION;
+GRANT EXECUTE ON FUNCTION entity.crud_entitydescription_read_min(uuid,uuid,uuid,uuid,boolean,boolean,boolean,uuid) TO tendreladmin WITH GRANT OPTION;

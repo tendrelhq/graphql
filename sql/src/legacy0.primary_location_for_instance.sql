@@ -1,5 +1,5 @@
 
--- Type: FUNCTION ; Name: legacy0.primary_location_for_instance(text); Owner: bombadil
+-- Type: FUNCTION ; Name: legacy0.primary_location_for_instance(text); Owner: tendreladmin
 
 CREATE OR REPLACE FUNCTION legacy0.primary_location_for_instance(instance_id text)
  RETURNS TABLE(id text, _id bigint)
@@ -36,4 +36,4 @@ $function$;
 
 REVOKE ALL ON FUNCTION legacy0.primary_location_for_instance(text) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION legacy0.primary_location_for_instance(text) TO PUBLIC;
-GRANT EXECUTE ON FUNCTION legacy0.primary_location_for_instance(text) TO bombadil WITH GRANT OPTION;
+GRANT EXECUTE ON FUNCTION legacy0.primary_location_for_instance(text) TO tendreladmin WITH GRANT OPTION;

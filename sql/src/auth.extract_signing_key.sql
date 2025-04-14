@@ -1,5 +1,5 @@
 
--- Type: FUNCTION ; Name: auth.extract_signing_key(auth._jwk); Owner: bombadil
+-- Type: FUNCTION ; Name: auth.extract_signing_key(auth._jwk); Owner: tendreladmin
 
 CREATE OR REPLACE FUNCTION auth.extract_signing_key(jwk auth._jwk)
  RETURNS text
@@ -17,4 +17,4 @@ end $function$;
 
 REVOKE ALL ON FUNCTION auth.extract_signing_key(auth._jwk) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION auth.extract_signing_key(auth._jwk) TO PUBLIC;
-GRANT EXECUTE ON FUNCTION auth.extract_signing_key(auth._jwk) TO bombadil WITH GRANT OPTION;
+GRANT EXECUTE ON FUNCTION auth.extract_signing_key(auth._jwk) TO tendreladmin WITH GRANT OPTION;

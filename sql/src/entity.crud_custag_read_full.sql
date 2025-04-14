@@ -1,5 +1,5 @@
 
--- Type: FUNCTION ; Name: entity.crud_custag_read_full(uuid,uuid,uuid,uuid,boolean,boolean,boolean,boolean,uuid); Owner: bombadil
+-- Type: FUNCTION ; Name: entity.crud_custag_read_full(uuid,uuid,uuid,uuid,boolean,boolean,boolean,boolean,uuid); Owner: tendreladmin
 
 CREATE OR REPLACE FUNCTION entity.crud_custag_read_full(read_ownerentityuuid uuid, read_siteentityuuid uuid, read_custagentityuuid uuid, read_custagparententityuuid uuid, read_allcustags boolean, read_custagsenddeleted boolean, read_custagsenddrafts boolean, read_custagsendinactive boolean, read_languagetranslationtypeentityuuid uuid)
  RETURNS TABLE(languagetranslationtypeentityuuid uuid, custagid bigint, custaguuid text, custagentityuuid uuid, custagownerentityuuid uuid, custagownerentityname text, custagparententityuuid uuid, custagparentname text, custagcornerstoneentityid uuid, custagcustomerid bigint, custagcustomeruuid text, custagcustomerentityuuid uuid, custagcustomername text, custagnameuuid text, custagname text, custagdisplaynameuuid text, custagdisplayname text, custagtype text, custagcreateddate timestamp with time zone, custagmodifieddate timestamp with time zone, custagstartdate timestamp with time zone, custagenddate timestamp with time zone, custagexternalid text, custagexternalsystementityuuid uuid, custagexternalsystemenname text, custagmodifiedbyuuid text, custagabbreviationentityuuid uuid, custagabbreviationname text, custagorder integer, systagsenddeleted boolean, systagsenddrafts boolean, systagsendinactive boolean)
@@ -392,4 +392,4 @@ $function$;
 
 REVOKE ALL ON FUNCTION entity.crud_custag_read_full(uuid,uuid,uuid,uuid,boolean,boolean,boolean,boolean,uuid) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION entity.crud_custag_read_full(uuid,uuid,uuid,uuid,boolean,boolean,boolean,boolean,uuid) TO PUBLIC;
-GRANT EXECUTE ON FUNCTION entity.crud_custag_read_full(uuid,uuid,uuid,uuid,boolean,boolean,boolean,boolean,uuid) TO bombadil WITH GRANT OPTION;
+GRANT EXECUTE ON FUNCTION entity.crud_custag_read_full(uuid,uuid,uuid,uuid,boolean,boolean,boolean,boolean,uuid) TO tendreladmin WITH GRANT OPTION;

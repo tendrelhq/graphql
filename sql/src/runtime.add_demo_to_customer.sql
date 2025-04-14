@@ -1,5 +1,5 @@
 
--- Type: FUNCTION ; Name: runtime.add_demo_to_customer(text,text,bigint,text); Owner: bombadil
+-- Type: FUNCTION ; Name: runtime.add_demo_to_customer(text,text,bigint,text); Owner: tendreladmin
 
 CREATE OR REPLACE FUNCTION runtime.add_demo_to_customer(customer_id text, language_type text, modified_by bigint, timezone text)
  RETURNS TABLE(op text, id text)
@@ -385,4 +385,4 @@ end $function$;
 
 REVOKE ALL ON FUNCTION runtime.add_demo_to_customer(text,text,bigint,text) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION runtime.add_demo_to_customer(text,text,bigint,text) TO PUBLIC;
-GRANT EXECUTE ON FUNCTION runtime.add_demo_to_customer(text,text,bigint,text) TO bombadil WITH GRANT OPTION;
+GRANT EXECUTE ON FUNCTION runtime.add_demo_to_customer(text,text,bigint,text) TO tendreladmin WITH GRANT OPTION;

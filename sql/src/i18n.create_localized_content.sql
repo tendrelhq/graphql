@@ -1,5 +1,5 @@
 
--- Type: FUNCTION ; Name: i18n.create_localized_content(text,text,text); Owner: bombadil
+-- Type: FUNCTION ; Name: i18n.create_localized_content(text,text,text); Owner: tendreladmin
 
 CREATE OR REPLACE FUNCTION i18n.create_localized_content(owner text, content text, language text)
  RETURNS TABLE(id text, _id bigint, _type bigint)
@@ -28,4 +28,4 @@ $function$;
 
 REVOKE ALL ON FUNCTION i18n.create_localized_content(text,text,text) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION i18n.create_localized_content(text,text,text) TO PUBLIC;
-GRANT EXECUTE ON FUNCTION i18n.create_localized_content(text,text,text) TO bombadil WITH GRANT OPTION;
+GRANT EXECUTE ON FUNCTION i18n.create_localized_content(text,text,text) TO tendreladmin WITH GRANT OPTION;

@@ -1,5 +1,5 @@
 
--- Type: PROCEDURE ; Name: entity.crud_entitytemplate_update(uuid,uuid,uuid,text,uuid,text,text,text,integer,boolean,uuid,boolean,boolean,timestamp with time zone,timestamp with time zone,text,uuid); Owner: bombadil
+-- Type: PROCEDURE ; Name: entity.crud_entitytemplate_update(uuid,uuid,uuid,text,uuid,text,text,text,integer,boolean,uuid,boolean,boolean,timestamp with time zone,timestamp with time zone,text,uuid); Owner: tendreladmin
 
 CREATE OR REPLACE PROCEDURE entity.crud_entitytemplate_update(IN update_entitytemplateuuid uuid, IN update_entitytemplateownerentityuuid uuid, IN update_entitytemplateparententityuuid uuid, IN update_entitytemplateexternalid text, IN update_entitytemplateexternalsystementityuuid uuid, IN update_entitytemplatescanid text, IN update_entitytemplatenameuuid text, IN update_entitytemplatename text, IN update_entitytemplateorder integer, IN update_entitytemplateisprimary boolean, IN update_entitytemplatetypeentityuuid uuid, IN update_entitytemplatedeleted boolean, IN update_entitytemplatedraft boolean, IN update_entitytemplatestartdate timestamp with time zone, IN update_entitytemplateenddate timestamp with time zone, IN update_entitytemplatemodifiedbyuuid text, IN update_languagetypeuuid uuid)
  LANGUAGE plpgsql
@@ -133,4 +133,4 @@ $procedure$;
 
 REVOKE ALL ON PROCEDURE entity.crud_entitytemplate_update(uuid,uuid,uuid,text,uuid,text,text,text,integer,boolean,uuid,boolean,boolean,timestamp with time zone,timestamp with time zone,text,uuid) FROM PUBLIC;
 GRANT EXECUTE ON PROCEDURE entity.crud_entitytemplate_update(uuid,uuid,uuid,text,uuid,text,text,text,integer,boolean,uuid,boolean,boolean,timestamp with time zone,timestamp with time zone,text,uuid) TO PUBLIC;
-GRANT EXECUTE ON PROCEDURE entity.crud_entitytemplate_update(uuid,uuid,uuid,text,uuid,text,text,text,integer,boolean,uuid,boolean,boolean,timestamp with time zone,timestamp with time zone,text,uuid) TO bombadil WITH GRANT OPTION;
+GRANT EXECUTE ON PROCEDURE entity.crud_entitytemplate_update(uuid,uuid,uuid,text,uuid,text,text,text,integer,boolean,uuid,boolean,boolean,timestamp with time zone,timestamp with time zone,text,uuid) TO tendreladmin WITH GRANT OPTION;

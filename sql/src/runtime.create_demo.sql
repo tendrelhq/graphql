@@ -1,5 +1,5 @@
 
--- Type: FUNCTION ; Name: runtime.create_demo(text,text[],bigint); Owner: bombadil
+-- Type: FUNCTION ; Name: runtime.create_demo(text,text[],bigint); Owner: tendreladmin
 
 CREATE OR REPLACE FUNCTION runtime.create_demo(customer_name text, admins text[], modified_by bigint)
  RETURNS TABLE(op text, id text)
@@ -61,4 +61,4 @@ end $function$;
 
 REVOKE ALL ON FUNCTION runtime.create_demo(text,text[],bigint) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION runtime.create_demo(text,text[],bigint) TO PUBLIC;
-GRANT EXECUTE ON FUNCTION runtime.create_demo(text,text[],bigint) TO bombadil WITH GRANT OPTION;
+GRANT EXECUTE ON FUNCTION runtime.create_demo(text,text[],bigint) TO tendreladmin WITH GRANT OPTION;

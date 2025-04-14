@@ -1,5 +1,5 @@
 
--- Type: PROCEDURE ; Name: crud_location_restart(text,text,text,bigint,bigint); Owner: bombadil
+-- Type: PROCEDURE ; Name: crud_location_restart(text,text,text,bigint,bigint); Owner: tendreladmin
 
 CREATE OR REPLACE PROCEDURE public.crud_location_restart(IN update_customeruuid text, IN update_customerexternalid text, IN update_customerexternalsystemuuid text, INOUT update_locationid bigint, IN update_modifiedbyid bigint)
  LANGUAGE plpgsql
@@ -30,4 +30,4 @@ $procedure$;
 
 REVOKE ALL ON PROCEDURE crud_location_restart(text,text,text,bigint,bigint) FROM PUBLIC;
 GRANT EXECUTE ON PROCEDURE crud_location_restart(text,text,text,bigint,bigint) TO PUBLIC;
-GRANT EXECUTE ON PROCEDURE crud_location_restart(text,text,text,bigint,bigint) TO bombadil WITH GRANT OPTION;
+GRANT EXECUTE ON PROCEDURE crud_location_restart(text,text,text,bigint,bigint) TO tendreladmin WITH GRANT OPTION;

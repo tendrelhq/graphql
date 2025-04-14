@@ -1,5 +1,5 @@
 
--- Type: FUNCTION ; Name: entity.crud_customer_read_min(uuid,uuid,uuid,boolean,boolean,boolean,boolean,uuid); Owner: bombadil
+-- Type: FUNCTION ; Name: entity.crud_customer_read_min(uuid,uuid,uuid,boolean,boolean,boolean,boolean,uuid); Owner: tendreladmin
 
 CREATE OR REPLACE FUNCTION entity.crud_customer_read_min(read_customerentityuuid uuid, read_customerownerentityuuid uuid, read_customerparententityuuid uuid, read_allcustomers boolean, read_customersenddeleted boolean, read_customersenddrafts boolean, read_customersendinactive boolean, read_languagetranslationtypeuuid uuid)
  RETURNS TABLE(customerid bigint, customeruuid text, customerentityuuid uuid, customerownerentityuuid uuid, customerparententityuuid uuid, customercornerstoneentityuuid uuid, customercornerstoneorder integer, customernameuuid text, customerdisplaynameuuid text, customertypeentityuuid uuid, customercreateddate timestamp with time zone, customermodifieddate timestamp with time zone, customerstartdate timestamp with time zone, customerenddate timestamp with time zone, customermodifiedbyuuid text, customerexternalid text, customerexternalsystementityuuid uuid, customerlanguagetypeentityuuid uuid, customersenddeleted boolean, customersenddrafts boolean, customersendinactive boolean)
@@ -245,4 +245,4 @@ $function$;
 
 REVOKE ALL ON FUNCTION entity.crud_customer_read_min(uuid,uuid,uuid,boolean,boolean,boolean,boolean,uuid) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION entity.crud_customer_read_min(uuid,uuid,uuid,boolean,boolean,boolean,boolean,uuid) TO PUBLIC;
-GRANT EXECUTE ON FUNCTION entity.crud_customer_read_min(uuid,uuid,uuid,boolean,boolean,boolean,boolean,uuid) TO bombadil WITH GRANT OPTION;
+GRANT EXECUTE ON FUNCTION entity.crud_customer_read_min(uuid,uuid,uuid,boolean,boolean,boolean,boolean,uuid) TO tendreladmin WITH GRANT OPTION;

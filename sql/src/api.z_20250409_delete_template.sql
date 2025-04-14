@@ -1,5 +1,5 @@
 
--- Type: FUNCTION ; Name: api.z_20250409_delete_template(); Owner: bombadil
+-- Type: FUNCTION ; Name: api.z_20250409_delete_template(); Owner: tendreladmin
 
 CREATE OR REPLACE FUNCTION api.z_20250409_delete_template()
  RETURNS trigger
@@ -33,4 +33,4 @@ A bunch of comments explaining del
 	';
 
 REVOKE ALL ON FUNCTION api.z_20250409_delete_template() FROM PUBLIC;
-GRANT EXECUTE ON FUNCTION api.z_20250409_delete_template() TO bombadil WITH GRANT OPTION;
+GRANT EXECUTE ON FUNCTION api.z_20250409_delete_template() TO tendreladmin WITH GRANT OPTION;

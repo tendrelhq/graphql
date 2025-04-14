@@ -1,5 +1,5 @@
 
--- Type: PROCEDURE ; Name: entity.crud_entitydescription_update(uuid,uuid,uuid,uuid,text,text,text,text,uuid,text,uuid,boolean,boolean,timestamp with time zone,timestamp with time zone,text,uuid); Owner: bombadil
+-- Type: PROCEDURE ; Name: entity.crud_entitydescription_update(uuid,uuid,uuid,uuid,text,text,text,text,uuid,text,uuid,boolean,boolean,timestamp with time zone,timestamp with time zone,text,uuid); Owner: tendreladmin
 
 CREATE OR REPLACE PROCEDURE entity.crud_entitydescription_update(IN update_entitydescriptionuuid uuid, IN update_entitydescriptionownerentityuuid uuid, IN update_entitydescriptionentitytemplateentityuuid uuid, IN update_entitydescriptionentityfieldentityuuid uuid, IN update_entitydescriptionname text, IN update_entitydescriptionsoplink text, IN update_entitydescriptionfile text, IN update_entitydescriptionicon text, IN update_entitydescriptionmimetypeuuid uuid, IN update_entitydescriptionexternalid text, IN update_entitydescriptionexternalsystementityuuid uuid, IN update_entitydescriptiondeleted boolean, IN update_entitydescriptiondraft boolean, IN update_entitydescriptionstartdate timestamp with time zone, IN update_entitydescriptionenddate timestamp with time zone, IN update_entitydescriptionmodifiedbyuuid text, IN update_languagetypeuuid uuid)
  LANGUAGE plpgsql
@@ -124,4 +124,4 @@ $procedure$;
 
 REVOKE ALL ON PROCEDURE entity.crud_entitydescription_update(uuid,uuid,uuid,uuid,text,text,text,text,uuid,text,uuid,boolean,boolean,timestamp with time zone,timestamp with time zone,text,uuid) FROM PUBLIC;
 GRANT EXECUTE ON PROCEDURE entity.crud_entitydescription_update(uuid,uuid,uuid,uuid,text,text,text,text,uuid,text,uuid,boolean,boolean,timestamp with time zone,timestamp with time zone,text,uuid) TO PUBLIC;
-GRANT EXECUTE ON PROCEDURE entity.crud_entitydescription_update(uuid,uuid,uuid,uuid,text,text,text,text,uuid,text,uuid,boolean,boolean,timestamp with time zone,timestamp with time zone,text,uuid) TO bombadil WITH GRANT OPTION;
+GRANT EXECUTE ON PROCEDURE entity.crud_entitydescription_update(uuid,uuid,uuid,uuid,text,text,text,text,uuid,text,uuid,boolean,boolean,timestamp with time zone,timestamp with time zone,text,uuid) TO tendreladmin WITH GRANT OPTION;

@@ -1,5 +1,5 @@
 
--- Type: FUNCTION ; Name: legacy0.create_instantiation_rule(text,text,text,text,bigint); Owner: bombadil
+-- Type: FUNCTION ; Name: legacy0.create_instantiation_rule(text,text,text,text,bigint); Owner: tendreladmin
 
 CREATE OR REPLACE FUNCTION legacy0.create_instantiation_rule(prev_template_id text, next_template_id text, state_condition text, type_tag text, modified_by bigint)
  RETURNS TABLE(prev text, next text)
@@ -56,4 +56,4 @@ end $function$;
 
 REVOKE ALL ON FUNCTION legacy0.create_instantiation_rule(text,text,text,text,bigint) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION legacy0.create_instantiation_rule(text,text,text,text,bigint) TO PUBLIC;
-GRANT EXECUTE ON FUNCTION legacy0.create_instantiation_rule(text,text,text,text,bigint) TO bombadil WITH GRANT OPTION;
+GRANT EXECUTE ON FUNCTION legacy0.create_instantiation_rule(text,text,text,text,bigint) TO tendreladmin WITH GRANT OPTION;

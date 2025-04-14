@@ -1,5 +1,5 @@
 
--- Type: PROCEDURE ; Name: alarm(); Owner: bombadil
+-- Type: PROCEDURE ; Name: alarm(); Owner: tendreladmin
 
 CREATE OR REPLACE PROCEDURE public.alarm()
  LANGUAGE plpgsql
@@ -30,4 +30,4 @@ $procedure$;
 
 REVOKE ALL ON PROCEDURE alarm() FROM PUBLIC;
 GRANT EXECUTE ON PROCEDURE alarm() TO PUBLIC;
-GRANT EXECUTE ON PROCEDURE alarm() TO bombadil WITH GRANT OPTION;
+GRANT EXECUTE ON PROCEDURE alarm() TO tendreladmin WITH GRANT OPTION;

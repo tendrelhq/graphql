@@ -1,5 +1,5 @@
 
--- Type: FUNCTION ; Name: legacy0.ensure_field_t(text,text,text,text,text,boolean,boolean,boolean,text,integer,text,text,text,text,bigint); Owner: bombadil
+-- Type: FUNCTION ; Name: legacy0.ensure_field_t(text,text,text,text,text,boolean,boolean,boolean,text,integer,text,text,text,text,bigint); Owner: tendreladmin
 
 CREATE OR REPLACE FUNCTION legacy0.ensure_field_t(customer_id text, language_type text, template_id text, field_description text, field_id text, field_is_draft boolean, field_is_primary boolean, field_is_required boolean, field_name text, field_order integer, field_reference_type text, field_type text, field_value text, field_widget text, modified_by bigint)
  RETURNS TABLE(id text)
@@ -171,4 +171,4 @@ end $function$;
 
 REVOKE ALL ON FUNCTION legacy0.ensure_field_t(text,text,text,text,text,boolean,boolean,boolean,text,integer,text,text,text,text,bigint) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION legacy0.ensure_field_t(text,text,text,text,text,boolean,boolean,boolean,text,integer,text,text,text,text,bigint) TO PUBLIC;
-GRANT EXECUTE ON FUNCTION legacy0.ensure_field_t(text,text,text,text,text,boolean,boolean,boolean,text,integer,text,text,text,text,bigint) TO bombadil WITH GRANT OPTION;
+GRANT EXECUTE ON FUNCTION legacy0.ensure_field_t(text,text,text,text,text,boolean,boolean,boolean,text,integer,text,text,text,text,bigint) TO tendreladmin WITH GRANT OPTION;

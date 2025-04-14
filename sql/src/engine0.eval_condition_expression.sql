@@ -1,5 +1,5 @@
 
--- Type: FUNCTION ; Name: engine0.eval_condition_expression(text,text,text,text); Owner: bombadil
+-- Type: FUNCTION ; Name: engine0.eval_condition_expression(text,text,text,text); Owner: tendreladmin
 
 CREATE OR REPLACE FUNCTION engine0.eval_condition_expression(lhs text, op text, rhs text, type text)
  RETURNS boolean
@@ -70,4 +70,4 @@ $function$;
 
 REVOKE ALL ON FUNCTION engine0.eval_condition_expression(text,text,text,text) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION engine0.eval_condition_expression(text,text,text,text) TO PUBLIC;
-GRANT EXECUTE ON FUNCTION engine0.eval_condition_expression(text,text,text,text) TO bombadil WITH GRANT OPTION;
+GRANT EXECUTE ON FUNCTION engine0.eval_condition_expression(text,text,text,text) TO tendreladmin WITH GRANT OPTION;

@@ -1,5 +1,5 @@
 
--- Type: FUNCTION ; Name: api.z_20250409_update_template_field(); Owner: bombadil
+-- Type: FUNCTION ; Name: api.z_20250409_update_template_field(); Owner: tendreladmin
 
 CREATE OR REPLACE FUNCTION api.z_20250409_update_template_field()
  RETURNS trigger
@@ -12,4 +12,4 @@ end $function$;
 
 
 REVOKE ALL ON FUNCTION api.z_20250409_update_template_field() FROM PUBLIC;
-GRANT EXECUTE ON FUNCTION api.z_20250409_update_template_field() TO bombadil WITH GRANT OPTION;
+GRANT EXECUTE ON FUNCTION api.z_20250409_update_template_field() TO tendreladmin WITH GRANT OPTION;

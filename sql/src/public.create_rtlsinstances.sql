@@ -1,5 +1,5 @@
 
--- Type: PROCEDURE ; Name: create_rtlsinstances(text,text,text,text,text,text,numeric,text,numeric,numeric,numeric,numeric,numeric,numeric,numeric,bigint); Owner: bombadil
+-- Type: PROCEDURE ; Name: create_rtlsinstances(text,text,text,text,text,text,numeric,text,numeric,numeric,numeric,numeric,numeric,numeric,numeric,bigint); Owner: tendreladmin
 
 CREATE OR REPLACE PROCEDURE public.create_rtlsinstances(IN create_customeruuid text, IN create_locationuuid text, IN create_workerinstanceuuid text, IN create_localuuid text, IN create_previouslocaluuid text, IN create_rtlsactivitytype text, IN create_createddate numeric, IN create_onlinestatus text, IN create_accuracy numeric, IN create_altitude numeric, IN create_altitudeaccuracy numeric, IN create_heading numeric, IN create_latitude numeric, IN create_longitude numeric, IN create_speed numeric, IN create_modifiedbyid bigint)
  LANGUAGE plpgsql
@@ -506,4 +506,4 @@ $procedure$;
 
 REVOKE ALL ON PROCEDURE create_rtlsinstances(text,text,text,text,text,text,numeric,text,numeric,numeric,numeric,numeric,numeric,numeric,numeric,bigint) FROM PUBLIC;
 GRANT EXECUTE ON PROCEDURE create_rtlsinstances(text,text,text,text,text,text,numeric,text,numeric,numeric,numeric,numeric,numeric,numeric,numeric,bigint) TO PUBLIC;
-GRANT EXECUTE ON PROCEDURE create_rtlsinstances(text,text,text,text,text,text,numeric,text,numeric,numeric,numeric,numeric,numeric,numeric,numeric,bigint) TO bombadil WITH GRANT OPTION;
+GRANT EXECUTE ON PROCEDURE create_rtlsinstances(text,text,text,text,text,text,numeric,text,numeric,numeric,numeric,numeric,numeric,numeric,numeric,bigint) TO tendreladmin WITH GRANT OPTION;

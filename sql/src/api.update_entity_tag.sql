@@ -1,5 +1,5 @@
 
--- Type: FUNCTION ; Name: api.update_entity_tag(); Owner: bombadil
+-- Type: FUNCTION ; Name: api.update_entity_tag(); Owner: tendreladmin
 
 CREATE OR REPLACE FUNCTION api.update_entity_tag()
  RETURNS trigger
@@ -9,9 +9,20 @@ AS $function$
 declare
   ins_entity uuid;
   ins_row api.entity_tag%rowtype;
+  ins_useruuid text;
+	ins_userid bigint;
+	ins_languagetypeuuid text;	
+	ins_languagetypeentityuuid uuid;
+	ins_languagetypeid bigint;
 begin
 
-if old.id = new.id 
+select get_workerinstanceid, get_workerinstanceuuid, get_languagetypeid, get_languagetypeuuid, get_languagetypeentityuuid
+into ins_userid, ins_useruuid, ins_languagetypeid,ins_languagetypeuuid, ins_languagetypeentityuuid
+from _api.util_user_details();
+
+if (old.id = new.id) 
+		and (select old.owner in (select * from _api.util_get_onwership())) 
+		and (select new.owner in (select * from _api.util_get_onwership()))
 	then 
 		call entity.crud_entitytag_update(
 			update_entitytaguuid := new.id, 
@@ -26,6 +37,8 @@ if old.id = new.id
 			update_entitytagenddate := new.deactivated_at, 
 			update_modifiedbyid :=  null::bigint  -- Fix this later 
 		);
+	else  
+		return null;
 end if;
 
   select * into ins_row
@@ -38,10 +51,10 @@ end if;
 
   return ins_row;
 
-
 end 
 $function$;
 
 
 REVOKE ALL ON FUNCTION api.update_entity_tag() FROM PUBLIC;
-GRANT EXECUTE ON FUNCTION api.update_entity_tag() TO bombadil WITH GRANT OPTION;
+GRANT EXECUTE ON FUNCTION api.update_entity_tag() TO PUBLIC;
+GRANT EXECUTE ON FUNCTION api.update_entity_tag() TO tendreladmin WITH GRANT OPTION;

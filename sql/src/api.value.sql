@@ -1,5 +1,5 @@
 
--- Type: FUNCTION ; Name: api.value(api.z_20250409_instance_field); Owner: bombadil
+-- Type: FUNCTION ; Name: api.value(api.z_20250409_instance_field); Owner: tendreladmin
 
 CREATE OR REPLACE FUNCTION api.value(api.z_20250409_instance_field)
  RETURNS SETOF text
@@ -26,4 +26,4 @@ $function$;
 
 
 REVOKE ALL ON FUNCTION api.value(api.z_20250409_instance_field) FROM PUBLIC;
-GRANT EXECUTE ON FUNCTION api.value(api.z_20250409_instance_field) TO bombadil WITH GRANT OPTION;
+GRANT EXECUTE ON FUNCTION api.value(api.z_20250409_instance_field) TO tendreladmin WITH GRANT OPTION;

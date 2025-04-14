@@ -1,5 +1,5 @@
 
--- Type: FUNCTION ; Name: engine1.set_worktemplateisauditable(jsonb); Owner: bombadil
+-- Type: FUNCTION ; Name: engine1.set_worktemplateisauditable(jsonb); Owner: tendreladmin
 
 CREATE OR REPLACE FUNCTION engine1.set_worktemplateisauditable(ctx jsonb)
  RETURNS SETOF engine1.closure
@@ -28,4 +28,4 @@ $function$;
 
 REVOKE ALL ON FUNCTION engine1.set_worktemplateisauditable(jsonb) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION engine1.set_worktemplateisauditable(jsonb) TO PUBLIC;
-GRANT EXECUTE ON FUNCTION engine1.set_worktemplateisauditable(jsonb) TO bombadil WITH GRANT OPTION;
+GRANT EXECUTE ON FUNCTION engine1.set_worktemplateisauditable(jsonb) TO tendreladmin WITH GRANT OPTION;

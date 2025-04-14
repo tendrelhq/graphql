@@ -1,5 +1,5 @@
 
--- Type: FUNCTION ; Name: entity.util_test_createlog(bigint,bigint,boolean,text,text,text,text,timestamp with time zone,boolean); Owner: bombadil
+-- Type: FUNCTION ; Name: entity.util_test_createlog(bigint,bigint,boolean,text,text,text,text,timestamp with time zone,boolean); Owner: tendreladmin
 
 CREATE OR REPLACE FUNCTION entity.util_test_createlog(test_failedtestcount bigint, test_successtestcount bigint, test_failedtest boolean, test_passedtext text, test_failedtext text, test_type text, test_text text, test_start timestamp with time zone, test_passed boolean)
  RETURNS TABLE(failedtestcount bigint, successtestcount bigint, failedtest boolean, passedtext text, failedtext text, next_start timestamp with time zone)
@@ -53,4 +53,4 @@ $function$;
 
 REVOKE ALL ON FUNCTION entity.util_test_createlog(bigint,bigint,boolean,text,text,text,text,timestamp with time zone,boolean) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION entity.util_test_createlog(bigint,bigint,boolean,text,text,text,text,timestamp with time zone,boolean) TO PUBLIC;
-GRANT EXECUTE ON FUNCTION entity.util_test_createlog(bigint,bigint,boolean,text,text,text,text,timestamp with time zone,boolean) TO bombadil WITH GRANT OPTION;
+GRANT EXECUTE ON FUNCTION entity.util_test_createlog(bigint,bigint,boolean,text,text,text,text,timestamp with time zone,boolean) TO tendreladmin WITH GRANT OPTION;

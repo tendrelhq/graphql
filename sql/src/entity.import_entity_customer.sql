@@ -1,5 +1,5 @@
 
--- Type: PROCEDURE ; Name: entity.import_entity_customer(text); Owner: bombadil
+-- Type: PROCEDURE ; Name: entity.import_entity_customer(text); Owner: tendreladmin
 
 CREATE OR REPLACE PROCEDURE entity.import_entity_customer(IN intervaltype text)
  LANGUAGE plpgsql
@@ -327,13 +327,11 @@ englishuuid = 'bcbe750d-1b3b-4e2b-82ec-448bb8b116f9';
 
 end if;
 
-if exists (select 1 from pg_namespace where nspname = 'datawarehouse') then
-  if  (select dwlogginglevel4 from datawarehouse.dw_logginglevels) = false
-    Then Return;
-  end if;
-
-  call datawarehouse.insert_tendy_tracker(0, 2520, 12496, 811, 844, 20782, 18068, 20783,20781, customer_start);
+if  (select dwlogginglevel4 from datawarehouse.dw_logginglevels) = false
+	Then Return;
 end if;
+
+call datawarehouse.insert_tendy_tracker(0, 2520, 12496, 811, 844, 20782, 18068, 20783,20781, customer_start);
 
 End;
 
@@ -342,4 +340,4 @@ $procedure$;
 
 REVOKE ALL ON PROCEDURE entity.import_entity_customer(text) FROM PUBLIC;
 GRANT EXECUTE ON PROCEDURE entity.import_entity_customer(text) TO PUBLIC;
-GRANT EXECUTE ON PROCEDURE entity.import_entity_customer(text) TO bombadil WITH GRANT OPTION;
+GRANT EXECUTE ON PROCEDURE entity.import_entity_customer(text) TO tendreladmin WITH GRANT OPTION;

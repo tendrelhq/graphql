@@ -1,5 +1,5 @@
 
--- Type: FUNCTION ; Name: api.create_entity_template(); Owner: bombadil
+-- Type: FUNCTION ; Name: api.create_entity_template(); Owner: tendreladmin
 
 CREATE OR REPLACE FUNCTION api.create_entity_template()
  RETURNS trigger
@@ -32,8 +32,8 @@ begin
       create_entitytemplatescanid := new.scan_code,  
       create_entitytemplatetag := null::text,  -- save for an all in rpc
       create_entitytemplatetaguuid := null::uuid, -- save for an all in rpc
-      create_languagetypeuuid := null::uuid,  -- Fix this later
-      create_modifiedbyid :=null::bigint,  -- Fix this later
+      create_languagetypeuuid := ins_languagetypeentityuuid,  -- Fix this later
+      create_modifiedbyid :=ins_userid,  -- Fix this later
       create_entitytemplateentityuuid := ins_entity
   );
 
@@ -57,4 +57,6 @@ A bunch of comments explaining post
 	';
 
 REVOKE ALL ON FUNCTION api.create_entity_template() FROM PUBLIC;
-GRANT EXECUTE ON FUNCTION api.create_entity_template() TO bombadil WITH GRANT OPTION;
+GRANT EXECUTE ON FUNCTION api.create_entity_template() TO authenticated;
+GRANT EXECUTE ON FUNCTION api.create_entity_template() TO god;
+GRANT EXECUTE ON FUNCTION api.create_entity_template() TO tendreladmin WITH GRANT OPTION;

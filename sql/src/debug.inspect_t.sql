@@ -1,5 +1,5 @@
 
--- Type: FUNCTION ; Name: debug.inspect_t(text,anyelement); Owner: bombadil
+-- Type: FUNCTION ; Name: debug.inspect_t(text,anyelement); Owner: tendreladmin
 
 CREATE OR REPLACE FUNCTION debug.inspect_t(t text, r anyelement)
  RETURNS anyelement
@@ -36,4 +36,4 @@ NOTICE:  inspect: foo.id := 1009
 
 REVOKE ALL ON FUNCTION debug.inspect_t(text,anyelement) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION debug.inspect_t(text,anyelement) TO PUBLIC;
-GRANT EXECUTE ON FUNCTION debug.inspect_t(text,anyelement) TO bombadil WITH GRANT OPTION;
+GRANT EXECUTE ON FUNCTION debug.inspect_t(text,anyelement) TO tendreladmin WITH GRANT OPTION;

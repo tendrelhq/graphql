@@ -1,5 +1,5 @@
 
--- Type: FUNCTION ; Name: engine1.delete_worktemplate(jsonb); Owner: bombadil
+-- Type: FUNCTION ; Name: engine1.delete_worktemplate(jsonb); Owner: tendreladmin
 
 CREATE OR REPLACE FUNCTION engine1.delete_worktemplate(ctx jsonb)
  RETURNS SETOF engine1.closure
@@ -38,4 +38,4 @@ $function$;
 
 REVOKE ALL ON FUNCTION engine1.delete_worktemplate(jsonb) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION engine1.delete_worktemplate(jsonb) TO PUBLIC;
-GRANT EXECUTE ON FUNCTION engine1.delete_worktemplate(jsonb) TO bombadil WITH GRANT OPTION;
+GRANT EXECUTE ON FUNCTION engine1.delete_worktemplate(jsonb) TO tendreladmin WITH GRANT OPTION;

@@ -1,5 +1,5 @@
 
--- Type: PROCEDURE ; Name: entity.crud_custag_create(uuid,uuid,uuid,integer,text,uuid,text,uuid,boolean,boolean,bigint); Owner: bombadil
+-- Type: PROCEDURE ; Name: entity.crud_custag_create(uuid,uuid,uuid,integer,text,uuid,text,uuid,boolean,boolean,bigint); Owner: tendreladmin
 
 CREATE OR REPLACE PROCEDURE entity.crud_custag_create(IN create_custagownerentityuuid uuid, IN create_custagparententityuuid uuid, IN create_custagcornerstoneentityuuid uuid, IN create_custagcornerstoneorder integer, IN create_custag text, IN create_languagetypeuuid uuid, IN create_custagexternalid text, IN create_custagexternalsystemuuid uuid, IN create_custagdeleted boolean, IN create_custagdraft boolean, OUT create_custagid bigint, OUT create_custaguuid text, OUT create_custagentityuuid uuid, IN create_modifiedbyid bigint)
  LANGUAGE plpgsql
@@ -379,4 +379,4 @@ $procedure$;
 
 REVOKE ALL ON PROCEDURE entity.crud_custag_create(uuid,uuid,uuid,integer,text,uuid,text,uuid,boolean,boolean,bigint) FROM PUBLIC;
 GRANT EXECUTE ON PROCEDURE entity.crud_custag_create(uuid,uuid,uuid,integer,text,uuid,text,uuid,boolean,boolean,bigint) TO PUBLIC;
-GRANT EXECUTE ON PROCEDURE entity.crud_custag_create(uuid,uuid,uuid,integer,text,uuid,text,uuid,boolean,boolean,bigint) TO bombadil WITH GRANT OPTION;
+GRANT EXECUTE ON PROCEDURE entity.crud_custag_create(uuid,uuid,uuid,integer,text,uuid,text,uuid,boolean,boolean,bigint) TO tendreladmin WITH GRANT OPTION;

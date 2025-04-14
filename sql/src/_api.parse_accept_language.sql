@@ -1,5 +1,5 @@
 
--- Type: FUNCTION ; Name: _api.parse_accept_language(text); Owner: bombadil
+-- Type: FUNCTION ; Name: _api.parse_accept_language(text); Owner: tendreladmin
 
 CREATE OR REPLACE FUNCTION _api.parse_accept_language(accept_language text)
  RETURNS TABLE(tag text, quality double precision)
@@ -44,4 +44,4 @@ end $function$;
 
 
 REVOKE ALL ON FUNCTION _api.parse_accept_language(text) FROM PUBLIC;
-GRANT EXECUTE ON FUNCTION _api.parse_accept_language(text) TO bombadil WITH GRANT OPTION;
+GRANT EXECUTE ON FUNCTION _api.parse_accept_language(text) TO tendreladmin WITH GRANT OPTION;

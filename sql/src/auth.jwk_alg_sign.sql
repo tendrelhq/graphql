@@ -1,5 +1,5 @@
 
--- Type: FUNCTION ; Name: auth.jwk_alg_sign(auth._jwk,text); Owner: bombadil
+-- Type: FUNCTION ; Name: auth.jwk_alg_sign(auth._jwk,text); Owner: tendreladmin
 
 CREATE OR REPLACE FUNCTION auth.jwk_alg_sign(jwk auth._jwk, signables text)
  RETURNS text
@@ -12,4 +12,4 @@ $function$;
 
 REVOKE ALL ON FUNCTION auth.jwk_alg_sign(auth._jwk,text) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION auth.jwk_alg_sign(auth._jwk,text) TO PUBLIC;
-GRANT EXECUTE ON FUNCTION auth.jwk_alg_sign(auth._jwk,text) TO bombadil WITH GRANT OPTION;
+GRANT EXECUTE ON FUNCTION auth.jwk_alg_sign(auth._jwk,text) TO tendreladmin WITH GRANT OPTION;

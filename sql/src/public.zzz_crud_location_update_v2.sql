@@ -1,5 +1,5 @@
 
--- Type: PROCEDURE ; Name: zzz_crud_location_update_v2(text,text,text,bigint,bigint,bigint,text,text,text,text,text,boolean,bigint,bigint,text,bigint); Owner: bombadil
+-- Type: PROCEDURE ; Name: zzz_crud_location_update_v2(text,text,text,bigint,bigint,bigint,text,text,text,text,text,boolean,bigint,bigint,text,bigint); Owner: tendreladmin
 
 CREATE OR REPLACE PROCEDURE public.zzz_crud_location_update_v2(IN update_customeruuid text, IN update_customerexternalid text, IN update_customerexternalsystemuuid text, IN update_siteid bigint, IN update_parentid bigint, INOUT update_locationid bigint, IN update_locationexternalid text, IN update_locationexternalsystemuuid text, IN update_locationfullname text, IN update_locationlookupname text, IN update_locationscanid text, IN update_locationiscornerstone boolean, IN update_locationcornerstoneid bigint, IN update_locationcornerstoneorder bigint, IN update_languagetypeuuid text, IN update_modifiedbyid bigint)
  LANGUAGE plpgsql
@@ -165,4 +165,4 @@ $procedure$;
 
 REVOKE ALL ON PROCEDURE zzz_crud_location_update_v2(text,text,text,bigint,bigint,bigint,text,text,text,text,text,boolean,bigint,bigint,text,bigint) FROM PUBLIC;
 GRANT EXECUTE ON PROCEDURE zzz_crud_location_update_v2(text,text,text,bigint,bigint,bigint,text,text,text,text,text,boolean,bigint,bigint,text,bigint) TO PUBLIC;
-GRANT EXECUTE ON PROCEDURE zzz_crud_location_update_v2(text,text,text,bigint,bigint,bigint,text,text,text,text,text,boolean,bigint,bigint,text,bigint) TO bombadil WITH GRANT OPTION;
+GRANT EXECUTE ON PROCEDURE zzz_crud_location_update_v2(text,text,text,bigint,bigint,bigint,text,text,text,text,text,boolean,bigint,bigint,text,bigint) TO tendreladmin WITH GRANT OPTION;

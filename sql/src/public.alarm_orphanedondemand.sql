@@ -1,5 +1,5 @@
 
--- Type: PROCEDURE ; Name: alarm_orphanedondemand(); Owner: bombadil
+-- Type: PROCEDURE ; Name: alarm_orphanedondemand(); Owner: tendreladmin
 
 CREATE OR REPLACE PROCEDURE public.alarm_orphanedondemand(OUT tempcount bigint)
  LANGUAGE plpgsql
@@ -93,4 +93,4 @@ $procedure$;
 
 REVOKE ALL ON PROCEDURE alarm_orphanedondemand() FROM PUBLIC;
 GRANT EXECUTE ON PROCEDURE alarm_orphanedondemand() TO PUBLIC;
-GRANT EXECUTE ON PROCEDURE alarm_orphanedondemand() TO bombadil WITH GRANT OPTION;
+GRANT EXECUTE ON PROCEDURE alarm_orphanedondemand() TO tendreladmin WITH GRANT OPTION;

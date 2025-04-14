@@ -1,5 +1,5 @@
 
--- Type: PROCEDURE ; Name: backfill_swiss_army_knife(); Owner: bombadil
+-- Type: PROCEDURE ; Name: backfill_swiss_army_knife(); Owner: tendreladmin
 
 CREATE OR REPLACE PROCEDURE public.backfill_swiss_army_knife()
  LANGUAGE plpgsql
@@ -32,4 +32,4 @@ $procedure$;
 
 REVOKE ALL ON PROCEDURE backfill_swiss_army_knife() FROM PUBLIC;
 GRANT EXECUTE ON PROCEDURE backfill_swiss_army_knife() TO PUBLIC;
-GRANT EXECUTE ON PROCEDURE backfill_swiss_army_knife() TO bombadil WITH GRANT OPTION;
+GRANT EXECUTE ON PROCEDURE backfill_swiss_army_knife() TO tendreladmin WITH GRANT OPTION;

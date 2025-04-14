@@ -1,5 +1,5 @@
 
--- Type: FUNCTION ; Name: api.display_name(api.z_20250407_instance); Owner: bombadil
+-- Type: FUNCTION ; Name: api.display_name(api.z_20250407_instance); Owner: tendreladmin
 
 CREATE OR REPLACE FUNCTION api.display_name(api.z_20250407_instance)
  RETURNS SETOF api.localized
@@ -15,4 +15,4 @@ $function$;
 
 
 REVOKE ALL ON FUNCTION api.display_name(api.z_20250407_instance) FROM PUBLIC;
-GRANT EXECUTE ON FUNCTION api.display_name(api.z_20250407_instance) TO bombadil WITH GRANT OPTION;
+GRANT EXECUTE ON FUNCTION api.display_name(api.z_20250407_instance) TO tendreladmin WITH GRANT OPTION;

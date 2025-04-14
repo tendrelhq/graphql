@@ -1,5 +1,5 @@
 
--- Type: FUNCTION ; Name: entity.crud_entityinstance_read_min(uuid,uuid,uuid,uuid,uuid,uuid,boolean,uuid,boolean,boolean,boolean,uuid); Owner: bombadil
+-- Type: FUNCTION ; Name: entity.crud_entityinstance_read_min(uuid,uuid,uuid,uuid,uuid,uuid,boolean,uuid,boolean,boolean,boolean,uuid); Owner: tendreladmin
 
 CREATE OR REPLACE FUNCTION entity.crud_entityinstance_read_min(read_entityinstanceownerentityuuid uuid, read_entityinstanceentityuuid uuid, read_entityinstanceparententityuuid uuid, read_entityinstancecornerstoneentityuuid uuid, read_entityinstanceentitytemplateentityuuid uuid, read_entityinstancetypeentityuuid uuid, read_allentityinstances boolean, read_entityinstancetag uuid, read_entityinstancesenddeleted boolean, read_entityinstancesenddrafts boolean, read_entityinstancesendinactive boolean, read_languagetranslationtypeentityuuid uuid)
  RETURNS TABLE(languagetranslationtypeentityuuid uuid, entityinstanceoriginalid bigint, entityinstanceoriginaluuid text, entityinstanceuuid uuid, entityinstanceownerentityuuid uuid, entityinstanceparententityuuid uuid, entityinstancecornerstoneentityuuid uuid, entityinstancecornerstoneorder integer, entityinstanceentitytemplateentityuuid uuid, entityinstanceentitytemplatename text, entityinstancetypeentityuuid uuid, entityinstancetype text, entityinstancenameuuid text, entityinstancescanid text, entityinstancesiteentityuuid uuid, entityinstancecreateddate timestamp with time zone, entityinstancemodifieddate timestamp with time zone, entityinstancemodifiedbyuuid text, entityinstancestartdate timestamp with time zone, entityinstanceenddate timestamp with time zone, entityinstanceexternalid text, entityinstanceexternalsystementityuuid uuid, entityinstancerefid bigint, entityinstancerefuuid text, entityinstancedeleted boolean, entityinstancedraft boolean, entityinstanceactive boolean, entityinstancetagentityuuid uuid)
@@ -406,4 +406,4 @@ $function$;
 
 REVOKE ALL ON FUNCTION entity.crud_entityinstance_read_min(uuid,uuid,uuid,uuid,uuid,uuid,boolean,uuid,boolean,boolean,boolean,uuid) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION entity.crud_entityinstance_read_min(uuid,uuid,uuid,uuid,uuid,uuid,boolean,uuid,boolean,boolean,boolean,uuid) TO PUBLIC;
-GRANT EXECUTE ON FUNCTION entity.crud_entityinstance_read_min(uuid,uuid,uuid,uuid,uuid,uuid,boolean,uuid,boolean,boolean,boolean,uuid) TO bombadil WITH GRANT OPTION;
+GRANT EXECUTE ON FUNCTION entity.crud_entityinstance_read_min(uuid,uuid,uuid,uuid,uuid,uuid,boolean,uuid,boolean,boolean,boolean,uuid) TO tendreladmin WITH GRANT OPTION;

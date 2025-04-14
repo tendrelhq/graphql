@@ -1,5 +1,5 @@
 
--- Type: FUNCTION ; Name: engine0.execute(text,bigint); Owner: bombadil
+-- Type: FUNCTION ; Name: engine0.execute(text,bigint); Owner: tendreladmin
 
 CREATE OR REPLACE FUNCTION engine0.execute(task_id text, modified_by bigint)
  RETURNS TABLE(instance text)
@@ -69,4 +69,4 @@ COMMENT ON FUNCTION engine0.execute(text,bigint) IS '
 
 REVOKE ALL ON FUNCTION engine0.execute(text,bigint) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION engine0.execute(text,bigint) TO PUBLIC;
-GRANT EXECUTE ON FUNCTION engine0.execute(text,bigint) TO bombadil WITH GRANT OPTION;
+GRANT EXECUTE ON FUNCTION engine0.execute(text,bigint) TO tendreladmin WITH GRANT OPTION;

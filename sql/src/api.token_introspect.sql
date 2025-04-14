@@ -1,5 +1,5 @@
 
--- Type: FUNCTION ; Name: api.token_introspect(text); Owner: bombadil
+-- Type: FUNCTION ; Name: api.token_introspect(text); Owner: tendreladmin
 
 CREATE OR REPLACE FUNCTION api.token_introspect(token text)
  RETURNS jsonb
@@ -18,5 +18,5 @@ $function$;
 
 
 REVOKE ALL ON FUNCTION api.token_introspect(text) FROM PUBLIC;
-GRANT EXECUTE ON FUNCTION api.token_introspect(text) TO bombadil WITH GRANT OPTION;
-GRANT EXECUTE ON FUNCTION api.token_introspect(text) TO authenticated;
+GRANT EXECUTE ON FUNCTION api.token_introspect(text) TO PUBLIC;
+GRANT EXECUTE ON FUNCTION api.token_introspect(text) TO tendreladmin WITH GRANT OPTION;

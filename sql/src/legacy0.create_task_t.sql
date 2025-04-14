@@ -1,5 +1,5 @@
 
--- Type: FUNCTION ; Name: legacy0.create_task_t(text,text,text,text,bigint,integer); Owner: bombadil
+-- Type: FUNCTION ; Name: legacy0.create_task_t(text,text,text,text,bigint,integer); Owner: tendreladmin
 
 CREATE OR REPLACE FUNCTION legacy0.create_task_t(customer_id text, language_type text, task_name text, task_parent_id text, modified_by bigint, task_order integer DEFAULT 0)
  RETURNS TABLE(_id bigint, id text)
@@ -87,4 +87,4 @@ end $function$;
 
 REVOKE ALL ON FUNCTION legacy0.create_task_t(text,text,text,text,bigint,integer) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION legacy0.create_task_t(text,text,text,text,bigint,integer) TO PUBLIC;
-GRANT EXECUTE ON FUNCTION legacy0.create_task_t(text,text,text,text,bigint,integer) TO bombadil WITH GRANT OPTION;
+GRANT EXECUTE ON FUNCTION legacy0.create_task_t(text,text,text,text,bigint,integer) TO tendreladmin WITH GRANT OPTION;

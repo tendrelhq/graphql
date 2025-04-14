@@ -1,5 +1,5 @@
 
--- Type: FUNCTION ; Name: alarm_missingexpirationdate_details(); Owner: bombadil
+-- Type: FUNCTION ; Name: alarm_missingexpirationdate_details(); Owner: tendreladmin
 
 CREATE OR REPLACE FUNCTION public.alarm_missingexpirationdate_details()
  RETURNS TABLE(workinstancecustomerid bigint, workinstancesiteid bigint, workinstanceworktemplateid bigint, workinstanceid bigint, workinstancepreviousid bigint)
@@ -37,4 +37,4 @@ $function$;
 
 REVOKE ALL ON FUNCTION alarm_missingexpirationdate_details() FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION alarm_missingexpirationdate_details() TO PUBLIC;
-GRANT EXECUTE ON FUNCTION alarm_missingexpirationdate_details() TO bombadil WITH GRANT OPTION;
+GRANT EXECUTE ON FUNCTION alarm_missingexpirationdate_details() TO tendreladmin WITH GRANT OPTION;

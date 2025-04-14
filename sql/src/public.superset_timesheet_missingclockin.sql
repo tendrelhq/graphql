@@ -1,5 +1,5 @@
 
--- Type: FUNCTION ; Name: superset_timesheet_missingclockin(text,integer,date); Owner: bombadil
+-- Type: FUNCTION ; Name: superset_timesheet_missingclockin(text,integer,date); Owner: tendreladmin
 
 CREATE OR REPLACE FUNCTION public.superset_timesheet_missingclockin(read_customeruuid text, read_days integer, reference_day date)
  RETURNS TABLE(workerinstanceid bigint, workerusername text, workerfullname text, workerfirstname text, workerlastname text, workerinstancescanid text, workerinstancestartdate timestamp with time zone, workerinstanceenddate timestamp with time zone, workerinstancecountit boolean, workerinstancetendreluser boolean, workerlastclockin date, sitename text, customer text)
@@ -102,4 +102,4 @@ $function$;
 
 REVOKE ALL ON FUNCTION superset_timesheet_missingclockin(text,integer,date) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION superset_timesheet_missingclockin(text,integer,date) TO PUBLIC;
-GRANT EXECUTE ON FUNCTION superset_timesheet_missingclockin(text,integer,date) TO bombadil WITH GRANT OPTION;
+GRANT EXECUTE ON FUNCTION superset_timesheet_missingclockin(text,integer,date) TO tendreladmin WITH GRANT OPTION;

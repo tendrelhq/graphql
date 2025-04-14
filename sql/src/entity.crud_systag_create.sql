@@ -1,5 +1,5 @@
 
--- Type: PROCEDURE ; Name: entity.crud_systag_create(uuid,uuid,uuid,integer,text,uuid,text,uuid,boolean,boolean,bigint); Owner: bombadil
+-- Type: PROCEDURE ; Name: entity.crud_systag_create(uuid,uuid,uuid,integer,text,uuid,text,uuid,boolean,boolean,bigint); Owner: tendreladmin
 
 CREATE OR REPLACE PROCEDURE entity.crud_systag_create(IN create_systagownerentityuuid uuid, IN create_systagparententityuuid uuid, IN create_systagcornerstoneentityuuid uuid, IN create_systagcornerstoneorder integer, IN create_systag text, IN create_languagetypeuuid uuid, IN create_systagexternalid text, IN create_systagexternalsystemuuid uuid, IN create_systagdeleted boolean, IN create_systagdraft boolean, OUT create_systagid bigint, OUT create_systaguuid text, OUT create_systagentityuuid uuid, IN create_modifiedbyid bigint)
  LANGUAGE plpgsql
@@ -381,4 +381,4 @@ $procedure$;
 
 REVOKE ALL ON PROCEDURE entity.crud_systag_create(uuid,uuid,uuid,integer,text,uuid,text,uuid,boolean,boolean,bigint) FROM PUBLIC;
 GRANT EXECUTE ON PROCEDURE entity.crud_systag_create(uuid,uuid,uuid,integer,text,uuid,text,uuid,boolean,boolean,bigint) TO PUBLIC;
-GRANT EXECUTE ON PROCEDURE entity.crud_systag_create(uuid,uuid,uuid,integer,text,uuid,text,uuid,boolean,boolean,bigint) TO bombadil WITH GRANT OPTION;
+GRANT EXECUTE ON PROCEDURE entity.crud_systag_create(uuid,uuid,uuid,integer,text,uuid,text,uuid,boolean,boolean,bigint) TO tendreladmin WITH GRANT OPTION;

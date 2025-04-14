@@ -1,5 +1,5 @@
 
--- Type: FUNCTION ; Name: i18n.add_language_to_customer(text,text,bigint); Owner: bombadil
+-- Type: FUNCTION ; Name: i18n.add_language_to_customer(text,text,bigint); Owner: tendreladmin
 
 CREATE OR REPLACE FUNCTION i18n.add_language_to_customer(customer_id text, language_code text, modified_by bigint)
  RETURNS TABLE(id text)
@@ -45,4 +45,4 @@ $function$;
 
 REVOKE ALL ON FUNCTION i18n.add_language_to_customer(text,text,bigint) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION i18n.add_language_to_customer(text,text,bigint) TO PUBLIC;
-GRANT EXECUTE ON FUNCTION i18n.add_language_to_customer(text,text,bigint) TO bombadil WITH GRANT OPTION;
+GRANT EXECUTE ON FUNCTION i18n.add_language_to_customer(text,text,bigint) TO tendreladmin WITH GRANT OPTION;

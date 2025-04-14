@@ -1,5 +1,5 @@
 
--- Type: FUNCTION ; Name: crud_customer_config_templates_list(bigint); Owner: bombadil
+-- Type: FUNCTION ; Name: crud_customer_config_templates_list(bigint); Owner: tendreladmin
 
 CREATE OR REPLACE FUNCTION public.crud_customer_config_templates_list(language_id bigint)
  RETURNS TABLE(uuid text, type_uuid text, type text, value text, value_type text, value_type_uuid text, category text, category_uuid text, name text)
@@ -32,4 +32,4 @@ $function$;
 
 REVOKE ALL ON FUNCTION crud_customer_config_templates_list(bigint) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION crud_customer_config_templates_list(bigint) TO PUBLIC;
-GRANT EXECUTE ON FUNCTION crud_customer_config_templates_list(bigint) TO bombadil WITH GRANT OPTION;
+GRANT EXECUTE ON FUNCTION crud_customer_config_templates_list(bigint) TO tendreladmin WITH GRANT OPTION;

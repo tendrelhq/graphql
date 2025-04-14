@@ -1,5 +1,5 @@
 
--- Type: FUNCTION ; Name: engine0.evaluate_rrules(text,text,text,text); Owner: bombadil
+-- Type: FUNCTION ; Name: engine0.evaluate_rrules(text,text,text,text); Owner: tendreladmin
 
 CREATE OR REPLACE FUNCTION engine0.evaluate_rrules(task_id text, task_parent_id text, task_prev_id text DEFAULT NULL::text, task_root_id text DEFAULT NULL::text)
  RETURNS TABLE(target_start_time timestamp with time zone)
@@ -40,4 +40,4 @@ end $function$;
 
 REVOKE ALL ON FUNCTION engine0.evaluate_rrules(text,text,text,text) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION engine0.evaluate_rrules(text,text,text,text) TO PUBLIC;
-GRANT EXECUTE ON FUNCTION engine0.evaluate_rrules(text,text,text,text) TO bombadil WITH GRANT OPTION;
+GRANT EXECUTE ON FUNCTION engine0.evaluate_rrules(text,text,text,text) TO tendreladmin WITH GRANT OPTION;

@@ -1,5 +1,5 @@
 
--- Type: FUNCTION ; Name: auth.jwk_sign(auth._jwk,json); Owner: bombadil
+-- Type: FUNCTION ; Name: auth.jwk_sign(auth._jwk,json); Owner: tendreladmin
 
 CREATE OR REPLACE FUNCTION auth.jwk_sign(jwk auth._jwk, payload json)
  RETURNS text
@@ -28,4 +28,4 @@ $function$;
 
 REVOKE ALL ON FUNCTION auth.jwk_sign(auth._jwk,json) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION auth.jwk_sign(auth._jwk,json) TO PUBLIC;
-GRANT EXECUTE ON FUNCTION auth.jwk_sign(auth._jwk,json) TO bombadil WITH GRANT OPTION;
+GRANT EXECUTE ON FUNCTION auth.jwk_sign(auth._jwk,json) TO tendreladmin WITH GRANT OPTION;

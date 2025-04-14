@@ -1,5 +1,5 @@
 
--- Type: FUNCTION ; Name: entity.crud_entitytag_read_min(uuid,uuid,uuid,uuid,uuid,boolean,boolean,boolean,boolean,uuid); Owner: bombadil
+-- Type: FUNCTION ; Name: entity.crud_entitytag_read_min(uuid,uuid,uuid,uuid,uuid,boolean,boolean,boolean,boolean,uuid); Owner: tendreladmin
 
 CREATE OR REPLACE FUNCTION entity.crud_entitytag_read_min(read_ownerentityuuid uuid, read_entitytagentityuuid uuid, read_entitytagentityinstanceuuid uuid, read_entitytagtemplateentityuuid uuid, read_entitytagcustagentityuuid uuid, read_allentitytags boolean, read_entitytagsenddeleted boolean, read_entitytagsenddrafts boolean, read_entitytagsendinactive boolean, read_languagetranslationtypeentityuuid uuid)
  RETURNS TABLE(languagetranslationtypeentityuuid uuid, entitytaguuid uuid, entitytagownerentityuuid uuid, entitytagentityinstanceentityuuid uuid, entitytagentitytemplateentityuuid uuid, entitytagcreateddate timestamp with time zone, entitytagmodifieddate timestamp with time zone, entitytagstartdate timestamp with time zone, entitytagenddate timestamp with time zone, entitytagrefid bigint, entitytagrefuuid text, entitytagmodifiedbyuuid text, entitytagcustagentityuuid uuid, entitytagsenddeleted boolean, entitytagsenddrafts boolean, entitytagsendinactive boolean)
@@ -271,4 +271,4 @@ $function$;
 
 REVOKE ALL ON FUNCTION entity.crud_entitytag_read_min(uuid,uuid,uuid,uuid,uuid,boolean,boolean,boolean,boolean,uuid) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION entity.crud_entitytag_read_min(uuid,uuid,uuid,uuid,uuid,boolean,boolean,boolean,boolean,uuid) TO PUBLIC;
-GRANT EXECUTE ON FUNCTION entity.crud_entitytag_read_min(uuid,uuid,uuid,uuid,uuid,boolean,boolean,boolean,boolean,uuid) TO bombadil WITH GRANT OPTION;
+GRANT EXECUTE ON FUNCTION entity.crud_entitytag_read_min(uuid,uuid,uuid,uuid,uuid,boolean,boolean,boolean,boolean,uuid) TO tendreladmin WITH GRANT OPTION;

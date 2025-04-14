@@ -1,5 +1,5 @@
 
--- Type: FUNCTION ; Name: func_readrtls(timestamp with time zone,timestamp with time zone,bigint[],text[],text[],text[],text[]); Owner: bombadil
+-- Type: FUNCTION ; Name: func_readrtls(timestamp with time zone,timestamp with time zone,bigint[],text[],text[],text[],text[]); Owner: tendreladmin
 
 CREATE OR REPLACE FUNCTION public.func_readrtls(read_startdate timestamp with time zone, read_enddate timestamp with time zone, read_originationidarray bigint[], read_customeruuidarray text[], read_workinstanceuuidarray text[], read_locationuuidarray text[], read_workerinstanceuuidarray text[])
  RETURNS TABLE(workinstanceid bigint, workinstanceuuid text, workinstancecustomerid bigint, workinstanceworktemplateid bigint, workinstancesiteid bigint, workinstancepreviousid bigint, workinstanceoriginatorworkinstanceid bigint, workinstancestartdate timestamp with time zone, workinstancecompleteddate timestamp with time zone, workinstanceexternalid text, workinstancetimezone text, locationid bigint, workerinstanceid bigint, workerinstanceuuid text, latitude numeric, longitude numeric, onlinestatus text, accuracy numeric, altitude numeric, altaccuracy numeric, heading numeric, speed numeric, previousworkinstanceexternalid text)
@@ -199,4 +199,4 @@ $function$;
 
 REVOKE ALL ON FUNCTION func_readrtls(timestamp with time zone,timestamp with time zone,bigint[],text[],text[],text[],text[]) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION func_readrtls(timestamp with time zone,timestamp with time zone,bigint[],text[],text[],text[],text[]) TO PUBLIC;
-GRANT EXECUTE ON FUNCTION func_readrtls(timestamp with time zone,timestamp with time zone,bigint[],text[],text[],text[],text[]) TO bombadil WITH GRANT OPTION;
+GRANT EXECUTE ON FUNCTION func_readrtls(timestamp with time zone,timestamp with time zone,bigint[],text[],text[],text[],text[]) TO tendreladmin WITH GRANT OPTION;

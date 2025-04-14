@@ -1,5 +1,5 @@
 
--- Type: PROCEDURE ; Name: zzz_crud_site_restart_v2(text,text,text,bigint,bigint); Owner: bombadil
+-- Type: PROCEDURE ; Name: zzz_crud_site_restart_v2(text,text,text,bigint,bigint); Owner: tendreladmin
 
 CREATE OR REPLACE PROCEDURE public.zzz_crud_site_restart_v2(IN update_customeruuid text, IN update_customerexternalid text, IN update_customerexternalsystemuuid text, INOUT update_siteid bigint, IN update_modifiedbyid bigint)
  LANGUAGE plpgsql
@@ -55,4 +55,4 @@ $procedure$;
 
 REVOKE ALL ON PROCEDURE zzz_crud_site_restart_v2(text,text,text,bigint,bigint) FROM PUBLIC;
 GRANT EXECUTE ON PROCEDURE zzz_crud_site_restart_v2(text,text,text,bigint,bigint) TO PUBLIC;
-GRANT EXECUTE ON PROCEDURE zzz_crud_site_restart_v2(text,text,text,bigint,bigint) TO bombadil WITH GRANT OPTION;
+GRANT EXECUTE ON PROCEDURE zzz_crud_site_restart_v2(text,text,text,bigint,bigint) TO tendreladmin WITH GRANT OPTION;

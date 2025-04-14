@@ -1,5 +1,5 @@
 
--- Type: FUNCTION ; Name: api.update_entity_field(); Owner: bombadil
+-- Type: FUNCTION ; Name: api.update_entity_field(); Owner: tendreladmin
 
 CREATE OR REPLACE FUNCTION api.update_entity_field()
  RETURNS trigger
@@ -9,6 +9,11 @@ AS $function$
 declare
   ins_entity uuid;
   ins_row api.entity_field%rowtype;
+  ins_useruuid text;
+	ins_userid bigint;
+	ins_languagetypeuuid text;	
+	ins_languagetypeentityuuid uuid;
+	ins_languagetypeid bigint;
 begin
 
   	if new.owner = 'f90d618d-5de7-4126-8c65-0afb700c6c61' and new._primary = true
@@ -16,7 +21,13 @@ begin
 		else new._primary = false;
 	end if;
 
-if old.id = new.id 
+select get_workerinstanceid, get_workerinstanceuuid, get_languagetypeid, get_languagetypeuuid, get_languagetypeentityuuid
+into ins_userid, ins_useruuid, ins_languagetypeid,ins_languagetypeuuid, ins_languagetypeentityuuid
+from _api.util_user_details();
+
+if (old.id = new.id) 
+		and (select old.owner in (select * from _api.util_get_onwership())) 
+		and (select new.owner in (select * from _api.util_get_onwership()))
 	then 
 		call entity.crud_entityfield_update(
 			update_entityfielduuid := new.id, 
@@ -46,7 +57,8 @@ if old.id = new.id
 			update_entityfieldmodifiedbyuuid := null::text,
 			update_languagetypeuuid :=  null::uuid
 		);
-
+	else  
+		return null;
 end if;
 
   select * into ins_row
@@ -64,4 +76,5 @@ $function$;
 
 
 REVOKE ALL ON FUNCTION api.update_entity_field() FROM PUBLIC;
-GRANT EXECUTE ON FUNCTION api.update_entity_field() TO bombadil WITH GRANT OPTION;
+GRANT EXECUTE ON FUNCTION api.update_entity_field() TO PUBLIC;
+GRANT EXECUTE ON FUNCTION api.update_entity_field() TO tendreladmin WITH GRANT OPTION;

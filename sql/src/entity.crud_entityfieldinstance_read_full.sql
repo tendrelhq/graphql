@@ -1,5 +1,5 @@
 
--- Type: FUNCTION ; Name: entity.crud_entityfieldinstance_read_full(uuid,uuid,uuid,boolean,boolean,boolean,boolean,uuid); Owner: bombadil
+-- Type: FUNCTION ; Name: entity.crud_entityfieldinstance_read_full(uuid,uuid,uuid,boolean,boolean,boolean,boolean,uuid); Owner: tendreladmin
 
 CREATE OR REPLACE FUNCTION entity.crud_entityfieldinstance_read_full(read_entityfieldinstanceownerentityuuid uuid, read_entityfieldinstanceentityinstanceentityuuid uuid, read_entityfieldinstanceentityuuid uuid, read_allentityfieldinstances boolean, read_entityfieldinstancesenddeleted boolean, read_entityfieldinstancesenddrafts boolean, read_entityfieldinstancesendinactive boolean, read_languagetranslationtypeentityuuid uuid)
  RETURNS TABLE(languagetranslationtypeentityuuid uuid, entityfieldinstanceuuid uuid, entityfieldinstanceentityinstanceentityuuid uuid, entityfieldinstanceentityinstanceentityname text, entityfieldinstanceownerentityuuid uuid, entityfieldinstanceownerentityname text, entityfieldinstancevalue text, entityfieldinstancevaluelanguagemasteruuid text, entityfieldinstancecreateddate timestamp with time zone, entityfieldinstancemodifieddate timestamp with time zone, entityfieldinstancestartdate timestamp with time zone, entityfieldinstanceenddate timestamp with time zone, entityfieldinstanceentityfieldentityuuid uuid, entityfieldinstancemodifiedbyuuid text, entityfieldinstancerefid bigint, entityfieldinstancerefuuid text, entityfieldinstanceentityfieldname text, entityfieldinstancevaluelanguagetypeentityuuid uuid, entityfieldinstancedeleted boolean, entityfieldinstancedraft boolean, entityfieldinstanceinactive boolean)
@@ -313,4 +313,4 @@ $function$;
 
 REVOKE ALL ON FUNCTION entity.crud_entityfieldinstance_read_full(uuid,uuid,uuid,boolean,boolean,boolean,boolean,uuid) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION entity.crud_entityfieldinstance_read_full(uuid,uuid,uuid,boolean,boolean,boolean,boolean,uuid) TO PUBLIC;
-GRANT EXECUTE ON FUNCTION entity.crud_entityfieldinstance_read_full(uuid,uuid,uuid,boolean,boolean,boolean,boolean,uuid) TO bombadil WITH GRANT OPTION;
+GRANT EXECUTE ON FUNCTION entity.crud_entityfieldinstance_read_full(uuid,uuid,uuid,boolean,boolean,boolean,boolean,uuid) TO tendreladmin WITH GRANT OPTION;

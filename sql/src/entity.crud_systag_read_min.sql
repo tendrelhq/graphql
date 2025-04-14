@@ -1,5 +1,5 @@
 
--- Type: FUNCTION ; Name: entity.crud_systag_read_min(uuid,uuid,uuid,uuid,boolean,boolean,boolean,boolean,uuid); Owner: bombadil
+-- Type: FUNCTION ; Name: entity.crud_systag_read_min(uuid,uuid,uuid,uuid,boolean,boolean,boolean,boolean,uuid); Owner: tendreladmin
 
 CREATE OR REPLACE FUNCTION entity.crud_systag_read_min(read_ownerentityuuid uuid, read_siteentityuuid uuid, read_systagentityuuid uuid, read_systagparententityuuid uuid, read_allsystags boolean, read_systagsenddeleted boolean, read_systagsenddrafts boolean, read_systagsendinactive boolean, read_languagetranslationtypeentityuuid uuid)
  RETURNS TABLE(languagetranslationtypeentityuuid uuid, systagid bigint, systaguuid text, systagentityuuid uuid, systagcustomerid bigint, systagcustomeruuid text, systagcustomerentityuuid uuid, systagnameuuid text, systagdisplaynameuuid text, systagtype text, systagcreateddate timestamp with time zone, systagmodifieddate timestamp with time zone, systagstartdate timestamp with time zone, systagenddate timestamp with time zone, systagexternalid text, systagexternalsystementityuuid uuid, systagmodifiedbyuuid text, systagabbreviationentityuuid uuid, systagparententityuuid uuid, systagorder integer, systagsenddeleted boolean, systagsenddrafts boolean, systagsendinactive boolean)
@@ -268,4 +268,4 @@ $function$;
 
 REVOKE ALL ON FUNCTION entity.crud_systag_read_min(uuid,uuid,uuid,uuid,boolean,boolean,boolean,boolean,uuid) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION entity.crud_systag_read_min(uuid,uuid,uuid,uuid,boolean,boolean,boolean,boolean,uuid) TO PUBLIC;
-GRANT EXECUTE ON FUNCTION entity.crud_systag_read_min(uuid,uuid,uuid,uuid,boolean,boolean,boolean,boolean,uuid) TO bombadil WITH GRANT OPTION;
+GRANT EXECUTE ON FUNCTION entity.crud_systag_read_min(uuid,uuid,uuid,uuid,boolean,boolean,boolean,boolean,uuid) TO tendreladmin WITH GRANT OPTION;

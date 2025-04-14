@@ -1,5 +1,5 @@
 
--- Type: FUNCTION ; Name: api.z_20250409_create_instance(); Owner: bombadil
+-- Type: FUNCTION ; Name: api.z_20250409_create_instance(); Owner: tendreladmin
 
 CREATE OR REPLACE FUNCTION api.z_20250409_create_instance()
  RETURNS trigger
@@ -44,4 +44,4 @@ end $function$;
 
 
 REVOKE ALL ON FUNCTION api.z_20250409_create_instance() FROM PUBLIC;
-GRANT EXECUTE ON FUNCTION api.z_20250409_create_instance() TO bombadil WITH GRANT OPTION;
+GRANT EXECUTE ON FUNCTION api.z_20250409_create_instance() TO tendreladmin WITH GRANT OPTION;

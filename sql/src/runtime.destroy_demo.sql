@@ -1,5 +1,5 @@
 
--- Type: FUNCTION ; Name: runtime.destroy_demo(text); Owner: bombadil
+-- Type: FUNCTION ; Name: runtime.destroy_demo(text); Owner: tendreladmin
 
 CREATE OR REPLACE FUNCTION runtime.destroy_demo(customer_id text)
  RETURNS text
@@ -41,4 +41,4 @@ end $function$;
 
 REVOKE ALL ON FUNCTION runtime.destroy_demo(text) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION runtime.destroy_demo(text) TO PUBLIC;
-GRANT EXECUTE ON FUNCTION runtime.destroy_demo(text) TO bombadil WITH GRANT OPTION;
+GRANT EXECUTE ON FUNCTION runtime.destroy_demo(text) TO tendreladmin WITH GRANT OPTION;

@@ -1,5 +1,5 @@
 
--- Type: FUNCTION ; Name: legacy0.create_worker(text,text,text,bigint); Owner: bombadil
+-- Type: FUNCTION ; Name: legacy0.create_worker(text,text,text,bigint); Owner: tendreladmin
 
 CREATE OR REPLACE FUNCTION legacy0.create_worker(customer_id text, user_id text, user_role text, modified_by bigint)
  RETURNS TABLE(_id bigint, id text)
@@ -41,4 +41,4 @@ $function$;
 
 REVOKE ALL ON FUNCTION legacy0.create_worker(text,text,text,bigint) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION legacy0.create_worker(text,text,text,bigint) TO PUBLIC;
-GRANT EXECUTE ON FUNCTION legacy0.create_worker(text,text,text,bigint) TO bombadil WITH GRANT OPTION;
+GRANT EXECUTE ON FUNCTION legacy0.create_worker(text,text,text,bigint) TO tendreladmin WITH GRANT OPTION;

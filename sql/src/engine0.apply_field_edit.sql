@@ -1,5 +1,5 @@
 
--- Type: FUNCTION ; Name: engine0.apply_field_edit(text,text,anyelement,text,engine0.on_error); Owner: bombadil
+-- Type: FUNCTION ; Name: engine0.apply_field_edit(text,text,anyelement,text,engine0.on_error); Owner: tendreladmin
 
 CREATE OR REPLACE FUNCTION engine0.apply_field_edit(entity text, field text, field_v anyelement, field_vt text, on_error engine0.on_error DEFAULT 'diagnostic'::engine0.on_error)
  RETURNS SETOF engine0.diagnostic
@@ -236,4 +236,4 @@ end $function$;
 
 REVOKE ALL ON FUNCTION engine0.apply_field_edit(text,text,anyelement,text,engine0.on_error) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION engine0.apply_field_edit(text,text,anyelement,text,engine0.on_error) TO PUBLIC;
-GRANT EXECUTE ON FUNCTION engine0.apply_field_edit(text,text,anyelement,text,engine0.on_error) TO bombadil WITH GRANT OPTION;
+GRANT EXECUTE ON FUNCTION engine0.apply_field_edit(text,text,anyelement,text,engine0.on_error) TO tendreladmin WITH GRANT OPTION;

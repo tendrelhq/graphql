@@ -1,5 +1,5 @@
 
--- Type: FUNCTION ; Name: auth.jwt_sign(json); Owner: bombadil
+-- Type: FUNCTION ; Name: auth.jwt_sign(json); Owner: tendreladmin
 
 CREATE OR REPLACE FUNCTION auth.jwt_sign(payload json)
  RETURNS text
@@ -16,4 +16,4 @@ $function$;
 
 REVOKE ALL ON FUNCTION auth.jwt_sign(json) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION auth.jwt_sign(json) TO PUBLIC;
-GRANT EXECUTE ON FUNCTION auth.jwt_sign(json) TO bombadil WITH GRANT OPTION;
+GRANT EXECUTE ON FUNCTION auth.jwt_sign(json) TO tendreladmin WITH GRANT OPTION;

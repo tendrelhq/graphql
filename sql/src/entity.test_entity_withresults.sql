@@ -1,5 +1,5 @@
 
--- Type: PROCEDURE ; Name: entity.test_entity_withresults(); Owner: bombadil
+-- Type: PROCEDURE ; Name: entity.test_entity_withresults(); Owner: tendreladmin
 
 CREATE OR REPLACE PROCEDURE entity.test_entity_withresults(OUT failedtestcount bigint, OUT successtestcount bigint, OUT failedtest boolean)
  LANGUAGE plpgsql
@@ -627,4 +627,4 @@ $procedure$;
 
 REVOKE ALL ON PROCEDURE entity.test_entity_withresults() FROM PUBLIC;
 GRANT EXECUTE ON PROCEDURE entity.test_entity_withresults() TO PUBLIC;
-GRANT EXECUTE ON PROCEDURE entity.test_entity_withresults() TO bombadil WITH GRANT OPTION;
+GRANT EXECUTE ON PROCEDURE entity.test_entity_withresults() TO tendreladmin WITH GRANT OPTION;

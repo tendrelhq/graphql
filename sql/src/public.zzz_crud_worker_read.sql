@@ -1,5 +1,5 @@
 
--- Type: FUNCTION ; Name: zzz_crud_worker_read(text,text,text,bigint,bigint,text,text,bigint,text,text,bigint,text,text); Owner: bombadil
+-- Type: FUNCTION ; Name: zzz_crud_worker_read(text,text,text,bigint,bigint,text,text,bigint,text,text,bigint,text,text); Owner: tendreladmin
 
 CREATE OR REPLACE FUNCTION public.zzz_crud_worker_read(read_customeruuid text, read_customerexternalid text, read_customerexternalsystemuuid text, read_siteid bigint, read_workerinstanceid bigint, read_workerinstanceuuid text, read_workerexternalid text, read_workerexternalsystemid bigint, read_workerexternalsystemuuid text, read_workeridentityid text, read_workeridentitysystemid bigint, read_workeridentitysystemuuid text, read_read_languagetypeuuid text)
  RETURNS TABLE(workerinstanceid bigint, workerinstanceuuid text, workerinstancecustomerid bigint, workerinstancecustomeruuid text, workerinstancecustomername text, workerinstancesiteid bigint, workerinstancestartdate timestamp with time zone, workerinstanceenddate timestamp with time zone, workerinstancelanguageid bigint, workerinstancelanguageuuid text, workerinstancelanguagetype text, workerinstanceexternalid text, workerinstanceexternalsystemid bigint, workerinstanceexternalsystemuuid text, workerinstanceexternalsystemname text, workerinstancescanid text, workerinstanceuserroleid bigint, workerinstanceuserroleuuid text, workerinstanceuserrolename text, workerid bigint, workeruuid text, workerfirstname text, workerlastname text, workeremail text, workerfullname text, workerusername text, workerphonenumber text, workerexternalid text, workeridentityid text, workeridentitysystemid bigint, workeridentitysystemuuid text, workeridentitysystemname text)
@@ -138,4 +138,4 @@ $function$;
 
 REVOKE ALL ON FUNCTION zzz_crud_worker_read(text,text,text,bigint,bigint,text,text,bigint,text,text,bigint,text,text) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION zzz_crud_worker_read(text,text,text,bigint,bigint,text,text,bigint,text,text,bigint,text,text) TO PUBLIC;
-GRANT EXECUTE ON FUNCTION zzz_crud_worker_read(text,text,text,bigint,bigint,text,text,bigint,text,text,bigint,text,text) TO bombadil WITH GRANT OPTION;
+GRANT EXECUTE ON FUNCTION zzz_crud_worker_read(text,text,text,bigint,bigint,text,text,bigint,text,text,bigint,text,text) TO tendreladmin WITH GRANT OPTION;

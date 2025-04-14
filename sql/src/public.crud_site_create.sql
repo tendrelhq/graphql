@@ -1,5 +1,5 @@
 
--- Type: PROCEDURE ; Name: crud_site_create(text,text,text,text,text,text,text,text,text,bigint,bigint); Owner: bombadil
+-- Type: PROCEDURE ; Name: crud_site_create(text,text,text,text,text,text,text,text,text,bigint,bigint); Owner: tendreladmin
 
 CREATE OR REPLACE PROCEDURE public.crud_site_create(IN create_customeruuid text, IN create_customerexternalid text, IN create_customerexternalsystemuuid text, IN create_sitename text, IN create_sitetype text, IN create_siteexternaluuid text, IN create_siteexternalsystemuuid text, IN create_locationtimezone text, IN create_languagetypeuuid text, IN create_modifiedbyid bigint, INOUT tempsiteid bigint)
  LANGUAGE plpgsql
@@ -174,4 +174,4 @@ $procedure$;
 
 REVOKE ALL ON PROCEDURE crud_site_create(text,text,text,text,text,text,text,text,text,bigint,bigint) FROM PUBLIC;
 GRANT EXECUTE ON PROCEDURE crud_site_create(text,text,text,text,text,text,text,text,text,bigint,bigint) TO PUBLIC;
-GRANT EXECUTE ON PROCEDURE crud_site_create(text,text,text,text,text,text,text,text,text,bigint,bigint) TO bombadil WITH GRANT OPTION;
+GRANT EXECUTE ON PROCEDURE crud_site_create(text,text,text,text,text,text,text,text,text,bigint,bigint) TO tendreladmin WITH GRANT OPTION;

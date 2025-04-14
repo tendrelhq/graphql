@@ -1,5 +1,5 @@
 
--- Type: PROCEDURE ; Name: entity.crud_location_create(uuid,uuid,uuid,integer,uuid,text,text,text,text,text,uuid,text,uuid,text,text,text,boolean,boolean,bigint); Owner: bombadil
+-- Type: PROCEDURE ; Name: entity.crud_location_create(uuid,uuid,uuid,integer,uuid,text,text,text,text,text,uuid,text,uuid,text,text,text,boolean,boolean,bigint); Owner: tendreladmin
 
 CREATE OR REPLACE PROCEDURE entity.crud_location_create(IN create_locationownerentityuuid uuid, IN create_locationparententityuuid uuid, IN create_locationcornerstoneentityuuid uuid, IN create_locationcornerstoneorder integer, IN create_locationtaguuid uuid, IN create_locationtag text, IN create_locationname text, IN create_locationdisplayname text, IN create_locationscanid text, IN create_locationtimezone text, IN create_languagetypeuuid uuid, IN create_locationexternalid text, IN create_locationexternalsystemuuid uuid, IN create_locationlatitude text, IN create_locationlongitude text, IN create_locationradius text, IN create_locationdeleted boolean, IN create_locationdraft boolean, OUT create_locationentityuuid uuid, IN create_modifiedbyid bigint)
  LANGUAGE plpgsql
@@ -266,7 +266,10 @@ end if;
 		languagemastermodifiedby)
 	values(tempcustomerid,
 		templanguagetypeid, 	
-		create_locationdisplayname,   
+		case when create_locationdisplayname notnull or (coalesce(create_locationdisplayname, '') <> '')
+			then create_locationdisplayname
+			else create_locationname
+		end,   
 		create_modifiedbyid)
 	Returning languagemasterid into tempdisplaylanguagemasterid;
 
@@ -361,7 +364,10 @@ end if;
 	values( 
 		templocationentityuuid,
 		create_locationownerentityuuid,
-		create_locationdisplayname,
+		case when create_locationdisplayname notnull or (coalesce(create_locationdisplayname, '') <> '')
+			then create_locationdisplayname
+			else create_locationname
+		end,
 		(select languagemasteruuid from languagemaster where languagemasterid = tempdisplaylanguagemasterid),
 		templanguagetypeentityuuid,
 		now(),
@@ -469,28 +475,30 @@ end if;
 		'locationradius');
 
 	--	locationcategoryid 
-	
-	INSERT INTO entity.entitytag(
-		entitytagownerentityuuid, 
-		entitytagentityinstanceentityuuid,
-		entitytagentitytemplateentityuuid,
-		entitytagcreateddate, 
-		entitytagmodifieddate, 
-		entitytagstartdate, 
-		entitytagenddate, 
-		entitytagmodifiedbyuuid,
-		entitytagcustagentityuuid)
-	values (
-		create_locationownerentityuuid,
-		templocationentityuuid,
-		(select entitytemplateuuid from entity.entitytemplate where entitytemplatescanid = 'Location'),
-		now(),
-		now(),
-		now(),
-		null,
-		(select workerinstanceuuid from workerinstance where workerinstanceid = create_modifiedbyid),
-		tempcustagentityuuid
-	);
+if tempcustagentityuuid notNull
+	then
+		INSERT INTO entity.entitytag(
+			entitytagownerentityuuid, 
+			entitytagentityinstanceentityuuid,
+			entitytagentitytemplateentityuuid,
+			entitytagcreateddate, 
+			entitytagmodifieddate, 
+			entitytagstartdate, 
+			entitytagenddate, 
+			entitytagmodifiedbyuuid,
+			entitytagcustagentityuuid)
+		values (
+			create_locationownerentityuuid,
+			templocationentityuuid,
+			(select entitytemplateuuid from entity.entitytemplate where entitytemplatescanid = 'Location'),
+			now(),
+			now(),
+			now(),
+			null,
+			(select workerinstanceuuid from workerinstance where workerinstanceid = create_modifiedbyid),
+			tempcustagentityuuid
+		);
+end if;
 
 -- now load the location table
 
@@ -530,23 +538,23 @@ end if;
 		create_modifiedbyid)
 	returning locationid,locationuuid into  templocationid, templocationuuid;
 
-	update location
+	update public.location
 	set locationsiteid = locationid,
 		locationistop = true
 	where locationsiteid isNull
 		and locationid = templocationid;
 
-	update location
+	update public.location
 	set locationparentid = locationid
 	where locationparentid isNull
 		and locationid = templocationid;
 
-	update location
+	update public.location
 	set locationcornerstoneid = locationid,
 		locationiscornerstone = true
 	where locationcornerstoneid isNull
 		and locationid = templocationid;
-		
+
 	update entity.entityinstance
 	set entityinstanceoriginalid = templocationid,
 		entityinstanceoriginaluuid = templocationuuid
@@ -561,4 +569,4 @@ $procedure$;
 
 REVOKE ALL ON PROCEDURE entity.crud_location_create(uuid,uuid,uuid,integer,uuid,text,text,text,text,text,uuid,text,uuid,text,text,text,boolean,boolean,bigint) FROM PUBLIC;
 GRANT EXECUTE ON PROCEDURE entity.crud_location_create(uuid,uuid,uuid,integer,uuid,text,text,text,text,text,uuid,text,uuid,text,text,text,boolean,boolean,bigint) TO PUBLIC;
-GRANT EXECUTE ON PROCEDURE entity.crud_location_create(uuid,uuid,uuid,integer,uuid,text,text,text,text,text,uuid,text,uuid,text,text,text,boolean,boolean,bigint) TO bombadil WITH GRANT OPTION;
+GRANT EXECUTE ON PROCEDURE entity.crud_location_create(uuid,uuid,uuid,integer,uuid,text,text,text,text,text,uuid,text,uuid,text,text,text,boolean,boolean,bigint) TO tendreladmin WITH GRANT OPTION;

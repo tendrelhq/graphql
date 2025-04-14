@@ -1,5 +1,5 @@
 
--- Type: PROCEDURE ; Name: entity.import_entity_systag(text); Owner: bombadil
+-- Type: PROCEDURE ; Name: entity.import_entity_systag(text); Owner: tendreladmin
 
 CREATE OR REPLACE PROCEDURE entity.import_entity_systag(IN intervaltype text)
  LANGUAGE plpgsql
@@ -323,4 +323,4 @@ $procedure$;
 
 REVOKE ALL ON PROCEDURE entity.import_entity_systag(text) FROM PUBLIC;
 GRANT EXECUTE ON PROCEDURE entity.import_entity_systag(text) TO PUBLIC;
-GRANT EXECUTE ON PROCEDURE entity.import_entity_systag(text) TO bombadil WITH GRANT OPTION;
+GRANT EXECUTE ON PROCEDURE entity.import_entity_systag(text) TO tendreladmin WITH GRANT OPTION;

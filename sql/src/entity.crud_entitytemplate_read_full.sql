@@ -1,5 +1,5 @@
 
--- Type: FUNCTION ; Name: entity.crud_entitytemplate_read_full(uuid,uuid,boolean,boolean,boolean,uuid); Owner: bombadil
+-- Type: FUNCTION ; Name: entity.crud_entitytemplate_read_full(uuid,uuid,boolean,boolean,boolean,uuid); Owner: tendreladmin
 
 CREATE OR REPLACE FUNCTION entity.crud_entitytemplate_read_full(read_ownerentityuuid uuid, read_entitytemplateentityuuid uuid, read_entitytemplatesenddeleted boolean, read_entitytemplatesenddrafts boolean, read_entitytemplatesendinactive boolean, read_languagetranslationtypeuuid uuid)
  RETURNS TABLE(languagetranslationtypeuuid uuid, entitytemplateuuid uuid, entitytemplateownerentityuuid uuid, entitytemplatecustomername text, entitytemplateparententityuuid uuid, entitytemplatesitename text, entitytemplatetypeentityuuid uuid, entitytemplatetype text, entitytemplateisprimary boolean, entitytemplatescanid text, entitytemplatenameuuid text, entitytemplatename text, entitytemplateorder integer, entitytemplatemodifiedbyuuid text, entitytemplatemodifiedby text, entitytemplatestartdate timestamp with time zone, entitytemplateenddate timestamp with time zone, entitytemplatecreateddate timestamp with time zone, entitytemplatemodifieddate timestamp with time zone, entitytemplateexternalid text, entitytemplaterefid bigint, entitytemplaterefuuid text, entitytemplateexternalsystementityuuid uuid, entitytemplateexternalsystem text, entitytemplatedeleted boolean, entitytemplatedraft boolean, entitytemplateactive boolean)
@@ -259,4 +259,4 @@ $function$;
 
 REVOKE ALL ON FUNCTION entity.crud_entitytemplate_read_full(uuid,uuid,boolean,boolean,boolean,uuid) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION entity.crud_entitytemplate_read_full(uuid,uuid,boolean,boolean,boolean,uuid) TO PUBLIC;
-GRANT EXECUTE ON FUNCTION entity.crud_entitytemplate_read_full(uuid,uuid,boolean,boolean,boolean,uuid) TO bombadil WITH GRANT OPTION;
+GRANT EXECUTE ON FUNCTION entity.crud_entitytemplate_read_full(uuid,uuid,boolean,boolean,boolean,uuid) TO tendreladmin WITH GRANT OPTION;

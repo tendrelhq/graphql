@@ -1,5 +1,5 @@
 
--- Type: PROCEDURE ; Name: entity.crud_entityinstance_update(uuid,uuid,uuid,text,uuid,uuid,integer,text,text,text,uuid,text,uuid,boolean,boolean,timestamp with time zone,timestamp with time zone,text,uuid); Owner: bombadil
+-- Type: PROCEDURE ; Name: entity.crud_entityinstance_update(uuid,uuid,uuid,text,uuid,uuid,integer,text,text,text,uuid,text,uuid,boolean,boolean,timestamp with time zone,timestamp with time zone,text,uuid); Owner: tendreladmin
 
 CREATE OR REPLACE PROCEDURE entity.crud_entityinstance_update(IN update_entityinstanceentityuuid uuid, IN update_entityinstanceownerentityuuid uuid, IN update_entityinstanceentitytemplateentityuuid uuid, IN update_entityinstanceentitytemplateentityname text, IN update_entityinstanceparententityuuid uuid, IN update_entityinstanceecornerstoneentityuuid uuid, IN update_entityinstancecornerstoneorder integer, IN update_entityinstancename text, IN update_entityinstancenameuuid text, IN update_entityinstancescanid text, IN update_entityinstancetypeuuid uuid, IN update_entityinstanceexternalid text, IN update_entityinstanceexternalsystemuuid uuid, IN update_entityinstancedeleted boolean, IN update_entityinstancedraft boolean, IN update_entityinstancestartdate timestamp with time zone, IN update_entityinstanceenddate timestamp with time zone, IN update_entityinstancemodifiedbyuuid text, IN update_languagetypeuuid uuid)
  LANGUAGE plpgsql
@@ -35,6 +35,9 @@ End if;
 				entityinstanceentitytemplateentityuuid = case when update_entityinstanceentitytemplateentityuuid notnull 
 												then update_entityinstanceentitytemplateentityuuid
 												else entityinstanceentitytemplateentityuuid end,
+				entityinstancetype = case when update_entityinstancename notnull and (coalesce(update_entityinstancename,'') <> '')
+												then update_entityinstancename
+												else entityinstancetype end,
 				entityinstanceexternalid = case when update_entityinstanceexternalid notnull 
 												then update_entityinstanceexternalid
 												else entityinstanceexternalid end,
@@ -71,6 +74,9 @@ End if;
 			SET entityinstanceparententityuuid = case when update_entityinstanceparententityuuid notnull 
 												then update_entityinstanceparententityuuid
 												else entityinstanceparententityuuid end,
+				entityinstancetype = case when update_entityinstancename notnull and (coalesce(update_entityinstancename,'') <> '')
+												then update_entityinstancename
+												else entityinstancetype end,
 				entityinstanceexternalid = case when update_entityinstanceexternalid notnull 
 												then update_entityinstanceexternalid
 												else entityinstanceexternalid end,
@@ -109,6 +115,10 @@ if  update_entityinstancename notNull and (coalesce(update_entityinstancename,''
 			and languagemasteruuid = entityinstancenameuuid
 			and languagemastersource <> update_entityinstancename;
 
+
+----------------------
+-- need to update tempaltename if templateuuid changes.  
+
 END IF;
 
 End;
@@ -118,4 +128,4 @@ $procedure$;
 
 REVOKE ALL ON PROCEDURE entity.crud_entityinstance_update(uuid,uuid,uuid,text,uuid,uuid,integer,text,text,text,uuid,text,uuid,boolean,boolean,timestamp with time zone,timestamp with time zone,text,uuid) FROM PUBLIC;
 GRANT EXECUTE ON PROCEDURE entity.crud_entityinstance_update(uuid,uuid,uuid,text,uuid,uuid,integer,text,text,text,uuid,text,uuid,boolean,boolean,timestamp with time zone,timestamp with time zone,text,uuid) TO PUBLIC;
-GRANT EXECUTE ON PROCEDURE entity.crud_entityinstance_update(uuid,uuid,uuid,text,uuid,uuid,integer,text,text,text,uuid,text,uuid,boolean,boolean,timestamp with time zone,timestamp with time zone,text,uuid) TO bombadil WITH GRANT OPTION;
+GRANT EXECUTE ON PROCEDURE entity.crud_entityinstance_update(uuid,uuid,uuid,text,uuid,uuid,integer,text,text,text,uuid,text,uuid,boolean,boolean,timestamp with time zone,timestamp with time zone,text,uuid) TO tendreladmin WITH GRANT OPTION;

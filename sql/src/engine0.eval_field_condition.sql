@@ -1,5 +1,5 @@
 
--- Type: FUNCTION ; Name: engine0.eval_field_condition(jsonb); Owner: bombadil
+-- Type: FUNCTION ; Name: engine0.eval_field_condition(jsonb); Owner: tendreladmin
 
 CREATE OR REPLACE FUNCTION engine0.eval_field_condition(ctx jsonb)
  RETURNS TABLE(ok boolean)
@@ -33,4 +33,4 @@ $function$;
 
 REVOKE ALL ON FUNCTION engine0.eval_field_condition(jsonb) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION engine0.eval_field_condition(jsonb) TO PUBLIC;
-GRANT EXECUTE ON FUNCTION engine0.eval_field_condition(jsonb) TO bombadil WITH GRANT OPTION;
+GRANT EXECUTE ON FUNCTION engine0.eval_field_condition(jsonb) TO tendreladmin WITH GRANT OPTION;

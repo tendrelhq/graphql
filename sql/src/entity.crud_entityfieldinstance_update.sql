@@ -1,5 +1,5 @@
 
--- Type: PROCEDURE ; Name: entity.crud_entityfieldinstance_update(uuid,uuid,uuid,uuid,text,text,text,uuid,boolean,boolean,timestamp with time zone,timestamp with time zone,text,uuid); Owner: bombadil
+-- Type: PROCEDURE ; Name: entity.crud_entityfieldinstance_update(uuid,uuid,uuid,uuid,text,text,text,uuid,boolean,boolean,timestamp with time zone,timestamp with time zone,text,uuid); Owner: tendreladmin
 
 CREATE OR REPLACE PROCEDURE entity.crud_entityfieldinstance_update(IN update_entityfieldinstanceentityuuid uuid, IN update_entityfieldinstanceownerentityuuid uuid, IN update_entityfieldinstanceentityinstanceentityuuid uuid, IN update_entityfieldinstanceentityfieldentityuuid uuid, IN update_entityfieldinstancevalue text, IN update_entityfieldinstanceentityfieldname text, IN update_entityfieldinstanceexternalid text, IN update_entityfieldinstanceexternalsystemuuid uuid, IN update_entityfieldinstancedeleted boolean, IN update_entityfieldinstancedraft boolean, IN update_entityfieldinstancestartdate timestamp with time zone, IN update_entityfieldinstanceenddate timestamp with time zone, IN update_entityfieldinstancemodifiedbyuuid text, IN update_languagetypeuuid uuid)
  LANGUAGE plpgsql
@@ -91,4 +91,4 @@ $procedure$;
 
 REVOKE ALL ON PROCEDURE entity.crud_entityfieldinstance_update(uuid,uuid,uuid,uuid,text,text,text,uuid,boolean,boolean,timestamp with time zone,timestamp with time zone,text,uuid) FROM PUBLIC;
 GRANT EXECUTE ON PROCEDURE entity.crud_entityfieldinstance_update(uuid,uuid,uuid,uuid,text,text,text,uuid,boolean,boolean,timestamp with time zone,timestamp with time zone,text,uuid) TO PUBLIC;
-GRANT EXECUTE ON PROCEDURE entity.crud_entityfieldinstance_update(uuid,uuid,uuid,uuid,text,text,text,uuid,boolean,boolean,timestamp with time zone,timestamp with time zone,text,uuid) TO bombadil WITH GRANT OPTION;
+GRANT EXECUTE ON PROCEDURE entity.crud_entityfieldinstance_update(uuid,uuid,uuid,uuid,text,text,text,uuid,boolean,boolean,timestamp with time zone,timestamp with time zone,text,uuid) TO tendreladmin WITH GRANT OPTION;

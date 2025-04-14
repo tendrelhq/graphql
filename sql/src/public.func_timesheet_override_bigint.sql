@@ -1,5 +1,5 @@
 
--- Type: FUNCTION ; Name: func_timesheet_override_bigint(bigint,date); Owner: bombadil
+-- Type: FUNCTION ; Name: func_timesheet_override_bigint(bigint,date); Owner: tendreladmin
 
 CREATE OR REPLACE FUNCTION public.func_timesheet_override_bigint(temcustomerid bigint, tempdate date)
  RETURNS TABLE(workresultinstancevalue bigint, workresultinstanceworkinstanceid bigint)
@@ -52,4 +52,4 @@ $function$;
 
 REVOKE ALL ON FUNCTION func_timesheet_override_bigint(bigint,date) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION func_timesheet_override_bigint(bigint,date) TO PUBLIC;
-GRANT EXECUTE ON FUNCTION func_timesheet_override_bigint(bigint,date) TO bombadil WITH GRANT OPTION;
+GRANT EXECUTE ON FUNCTION func_timesheet_override_bigint(bigint,date) TO tendreladmin WITH GRANT OPTION;

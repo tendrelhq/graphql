@@ -1,5 +1,5 @@
 
--- Type: FUNCTION ; Name: crud_timesheet_dashboard_list(timestamp with time zone,timestamp with time zone,bigint); Owner: bombadil
+-- Type: FUNCTION ; Name: crud_timesheet_dashboard_list(timestamp with time zone,timestamp with time zone,bigint); Owner: tendreladmin
 
 CREATE OR REPLACE FUNCTION public.crud_timesheet_dashboard_list(min_date timestamp with time zone, max_date timestamp with time zone, read_customer_id bigint)
  RETURNS TABLE(worker_name text, worker_first_name text, worker_last_name text, worker_scanid text, worker_id bigint, workinstance_uuid text, template_type text, trust_reason text, start_time timestamp without time zone, start_location_name text, start_override timestamp without time zone, start_override_by text, end_time timestamp without time zone, end_location_name text, end_override timestamp without time zone, end_override_by text, start_display timestamp without time zone, end_display timestamp without time zone, site_timezone text)
@@ -213,4 +213,4 @@ $function$;
 
 REVOKE ALL ON FUNCTION crud_timesheet_dashboard_list(timestamp with time zone,timestamp with time zone,bigint) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION crud_timesheet_dashboard_list(timestamp with time zone,timestamp with time zone,bigint) TO PUBLIC;
-GRANT EXECUTE ON FUNCTION crud_timesheet_dashboard_list(timestamp with time zone,timestamp with time zone,bigint) TO bombadil WITH GRANT OPTION;
+GRANT EXECUTE ON FUNCTION crud_timesheet_dashboard_list(timestamp with time zone,timestamp with time zone,bigint) TO tendreladmin WITH GRANT OPTION;

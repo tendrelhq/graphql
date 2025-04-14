@@ -1,5 +1,5 @@
 
--- Type: FUNCTION ; Name: api.create_entity_tag(); Owner: bombadil
+-- Type: FUNCTION ; Name: api.create_entity_tag(); Owner: tendreladmin
 
 CREATE OR REPLACE FUNCTION api.create_entity_tag()
  RETURNS trigger
@@ -17,13 +17,12 @@ begin
 		create_entitytagentityinstanceuuid := new.instance, 
 		create_entitytagentitytemplateuuid := new.template , 
 		create_entitytagcustaguuid := new.customer_tag, 
-		create_languagetypeuuid := null::uuid,    -- Fix this later
+		create_languagetypeuuid := ins_languagetypeentityuuid,    
 		create_entitytagdeleted := false,  
 		create_entitytagdraft := new._draft,  
 		create_entitytaguuid := ins_entity, 
-		create_modifiedbyid := null::bigint -- Fix this later
+		create_modifiedbyid :=ins_userid 
 	);
-
 
   select * into ins_row
   from api.entity_tag
@@ -45,4 +44,6 @@ A bunch of comments explaining post
 	';
 
 REVOKE ALL ON FUNCTION api.create_entity_tag() FROM PUBLIC;
-GRANT EXECUTE ON FUNCTION api.create_entity_tag() TO bombadil WITH GRANT OPTION;
+GRANT EXECUTE ON FUNCTION api.create_entity_tag() TO authenticated;
+GRANT EXECUTE ON FUNCTION api.create_entity_tag() TO god;
+GRANT EXECUTE ON FUNCTION api.create_entity_tag() TO tendreladmin WITH GRANT OPTION;

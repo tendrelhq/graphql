@@ -1,5 +1,5 @@
 
--- Type: PROCEDURE ; Name: entity.enable_checklist(uuid,text,uuid,text,uuid,text,text,bigint); Owner: bombadil
+-- Type: PROCEDURE ; Name: entity.enable_checklist(uuid,text,uuid,text,uuid,text,text,bigint); Owner: tendreladmin
 
 CREATE OR REPLACE PROCEDURE entity.enable_checklist(IN create_customer_uuid uuid, IN create_original_customer_uuid text, IN create_site_uuid uuid, IN create_original_site_uuid text, IN create_language_type_uuid uuid, IN create_original_language_type_uuid text, IN create_timezone text, IN create_modifiedby bigint)
  LANGUAGE plpgsql
@@ -716,4 +716,4 @@ $procedure$;
 
 REVOKE ALL ON PROCEDURE entity.enable_checklist(uuid,text,uuid,text,uuid,text,text,bigint) FROM PUBLIC;
 GRANT EXECUTE ON PROCEDURE entity.enable_checklist(uuid,text,uuid,text,uuid,text,text,bigint) TO PUBLIC;
-GRANT EXECUTE ON PROCEDURE entity.enable_checklist(uuid,text,uuid,text,uuid,text,text,bigint) TO bombadil WITH GRANT OPTION;
+GRANT EXECUTE ON PROCEDURE entity.enable_checklist(uuid,text,uuid,text,uuid,text,text,bigint) TO tendreladmin WITH GRANT OPTION;

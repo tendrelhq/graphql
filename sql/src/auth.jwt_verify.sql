@@ -1,5 +1,5 @@
 
--- Type: FUNCTION ; Name: auth.jwt_verify(text); Owner: bombadil
+-- Type: FUNCTION ; Name: auth.jwt_verify(text); Owner: tendreladmin
 
 CREATE OR REPLACE FUNCTION auth.jwt_verify(token text)
  RETURNS TABLE(header json, payload json, valid boolean)
@@ -39,4 +39,4 @@ $function$;
 
 REVOKE ALL ON FUNCTION auth.jwt_verify(text) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION auth.jwt_verify(text) TO PUBLIC;
-GRANT EXECUTE ON FUNCTION auth.jwt_verify(text) TO bombadil WITH GRANT OPTION;
+GRANT EXECUTE ON FUNCTION auth.jwt_verify(text) TO tendreladmin WITH GRANT OPTION;

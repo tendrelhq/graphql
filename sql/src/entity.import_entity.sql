@@ -1,5 +1,5 @@
 
--- Type: PROCEDURE ; Name: entity.import_entity(text); Owner: bombadil
+-- Type: PROCEDURE ; Name: entity.import_entity(text); Owner: tendreladmin
 
 CREATE OR REPLACE PROCEDURE entity.import_entity(IN intervaltype text)
  LANGUAGE plpgsql
@@ -26,7 +26,6 @@ end if;
 	call entity.import_entity_custag(intervaltype);
 	call entity.import_workresultinstanceentityvalue(intervaltype);
 
-  if exists (select 1 from pg_namespace where nspname = 'datawarehouse') then
 -- Insert into the tendy tracker
 
     if (select dwlogginglevel2 from datawarehouse.dw_logginglevels) = false
@@ -48,7 +47,7 @@ end if;
 
     call datawarehouse.insert_tendy_tracker(0, 2519, 12496, 980, 844, 20778, 18068, 20779, 20777, fact_start);
 
-  end if;
+    commit;
 End;
 
 $procedure$;
@@ -56,4 +55,4 @@ $procedure$;
 
 REVOKE ALL ON PROCEDURE entity.import_entity(text) FROM PUBLIC;
 GRANT EXECUTE ON PROCEDURE entity.import_entity(text) TO PUBLIC;
-GRANT EXECUTE ON PROCEDURE entity.import_entity(text) TO bombadil WITH GRANT OPTION;
+GRANT EXECUTE ON PROCEDURE entity.import_entity(text) TO tendreladmin WITH GRANT OPTION;

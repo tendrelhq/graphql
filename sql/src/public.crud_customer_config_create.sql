@@ -1,5 +1,5 @@
 
--- Type: PROCEDURE ; Name: crud_customer_config_create(text,text,text,text,text); Owner: bombadil
+-- Type: PROCEDURE ; Name: crud_customer_config_create(text,text,text,text,text); Owner: tendreladmin
 
 CREATE OR REPLACE PROCEDURE public.crud_customer_config_create(IN customer_uuid text, IN site_uuid text, IN config_template_uuid text, IN config_value text, IN modified_by text, OUT config_id text)
  LANGUAGE plpgsql
@@ -43,4 +43,4 @@ $procedure$;
 
 REVOKE ALL ON PROCEDURE crud_customer_config_create(text,text,text,text,text) FROM PUBLIC;
 GRANT EXECUTE ON PROCEDURE crud_customer_config_create(text,text,text,text,text) TO PUBLIC;
-GRANT EXECUTE ON PROCEDURE crud_customer_config_create(text,text,text,text,text) TO bombadil WITH GRANT OPTION;
+GRANT EXECUTE ON PROCEDURE crud_customer_config_create(text,text,text,text,text) TO tendreladmin WITH GRANT OPTION;

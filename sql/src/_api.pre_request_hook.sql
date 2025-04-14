@@ -1,5 +1,5 @@
 
--- Type: FUNCTION ; Name: _api.pre_request_hook(); Owner: bombadil
+-- Type: FUNCTION ; Name: _api.pre_request_hook(); Owner: tendreladmin
 
 CREATE OR REPLACE FUNCTION _api.pre_request_hook()
  RETURNS void
@@ -26,5 +26,4 @@ end $function$;
 
 
 REVOKE ALL ON FUNCTION _api.pre_request_hook() FROM PUBLIC;
-GRANT EXECUTE ON FUNCTION _api.pre_request_hook() TO bombadil WITH GRANT OPTION;
-GRANT EXECUTE ON FUNCTION _api.pre_request_hook() TO anonymous;
+GRANT EXECUTE ON FUNCTION _api.pre_request_hook() TO tendreladmin WITH GRANT OPTION;

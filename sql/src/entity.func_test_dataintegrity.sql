@@ -1,5 +1,5 @@
 
--- Type: FUNCTION ; Name: entity.func_test_dataintegrity(bigint,bigint,boolean,text,text); Owner: bombadil
+-- Type: FUNCTION ; Name: entity.func_test_dataintegrity(bigint,bigint,boolean,text,text); Owner: tendreladmin
 
 CREATE OR REPLACE FUNCTION entity.func_test_dataintegrity(test_failedtestcount bigint, test_successtestcount bigint, test_failedtest boolean, test_passedtext text, test_failedtext text)
  RETURNS TABLE(failedtestcount bigint, successtestcount bigint, failedtest boolean, passedtext text, failedtext text)
@@ -331,4 +331,4 @@ $function$;
 
 REVOKE ALL ON FUNCTION entity.func_test_dataintegrity(bigint,bigint,boolean,text,text) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION entity.func_test_dataintegrity(bigint,bigint,boolean,text,text) TO PUBLIC;
-GRANT EXECUTE ON FUNCTION entity.func_test_dataintegrity(bigint,bigint,boolean,text,text) TO bombadil WITH GRANT OPTION;
+GRANT EXECUTE ON FUNCTION entity.func_test_dataintegrity(bigint,bigint,boolean,text,text) TO tendreladmin WITH GRANT OPTION;

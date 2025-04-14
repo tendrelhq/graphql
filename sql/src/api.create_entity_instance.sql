@@ -1,5 +1,5 @@
 
--- Type: FUNCTION ; Name: api.create_entity_instance(); Owner: bombadil
+-- Type: FUNCTION ; Name: api.create_entity_instance(); Owner: tendreladmin
 
 CREATE OR REPLACE FUNCTION api.create_entity_instance()
  RETURNS trigger
@@ -26,8 +26,8 @@ begin
       create_entityinstanceexternalsystemuuid := new.external_system,
       create_entityinstancedeleted := new._deleted,
       create_entityinstancedraft := new._draft,
-      create_languagetypeuuid := null::uuid,  -- wire this in later
-      create_modifiedbyid := 895,  -- wire this in later
+      create_languagetypeuuid := ins_languagetypeentityuuid,  
+      create_modifiedbyid := ins_userid,  
       create_entityinstanceentityuuid := ins_entity
   );
 
@@ -45,4 +45,6 @@ $function$;
 
 
 REVOKE ALL ON FUNCTION api.create_entity_instance() FROM PUBLIC;
-GRANT EXECUTE ON FUNCTION api.create_entity_instance() TO bombadil WITH GRANT OPTION;
+GRANT EXECUTE ON FUNCTION api.create_entity_instance() TO authenticated;
+GRANT EXECUTE ON FUNCTION api.create_entity_instance() TO god;
+GRANT EXECUTE ON FUNCTION api.create_entity_instance() TO tendreladmin WITH GRANT OPTION;

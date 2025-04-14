@@ -1,5 +1,5 @@
 
--- Type: PROCEDURE ; Name: entity.crud_entitytemplate_create(uuid,uuid,integer,uuid,text,text,boolean,text,uuid,text,uuid,boolean,boolean,bigint); Owner: bombadil
+-- Type: PROCEDURE ; Name: entity.crud_entitytemplate_create(uuid,uuid,integer,uuid,text,text,boolean,text,uuid,text,uuid,boolean,boolean,bigint); Owner: tendreladmin
 
 CREATE OR REPLACE PROCEDURE entity.crud_entitytemplate_create(IN create_entitytemplateownerentityuuid uuid, IN create_entitytemplateparententityuuid uuid, IN create_entitytemplatecornerstoneorder integer, IN create_entitytemplatetaguuid uuid, IN create_entitytemplatetag text, IN create_entitytemplatename text, IN create_entitytemplateisprimary boolean, IN create_entitytemplatescanid text, IN create_languagetypeuuid uuid, IN create_entitytemplateexternalid text, IN create_entitytemplateexternalsystemuuid uuid, IN create_entitytemplatedeleted boolean, IN create_entitytemplatedraft boolean, OUT create_entitytemplateentityuuid uuid, IN create_modifiedbyid bigint)
  LANGUAGE plpgsql
@@ -341,4 +341,4 @@ $procedure$;
 
 REVOKE ALL ON PROCEDURE entity.crud_entitytemplate_create(uuid,uuid,integer,uuid,text,text,boolean,text,uuid,text,uuid,boolean,boolean,bigint) FROM PUBLIC;
 GRANT EXECUTE ON PROCEDURE entity.crud_entitytemplate_create(uuid,uuid,integer,uuid,text,text,boolean,text,uuid,text,uuid,boolean,boolean,bigint) TO PUBLIC;
-GRANT EXECUTE ON PROCEDURE entity.crud_entitytemplate_create(uuid,uuid,integer,uuid,text,text,boolean,text,uuid,text,uuid,boolean,boolean,bigint) TO bombadil WITH GRANT OPTION;
+GRANT EXECUTE ON PROCEDURE entity.crud_entitytemplate_create(uuid,uuid,integer,uuid,text,text,boolean,text,uuid,text,uuid,boolean,boolean,bigint) TO tendreladmin WITH GRANT OPTION;

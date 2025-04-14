@@ -1,5 +1,5 @@
 
--- Type: FUNCTION ; Name: auth.set_actor(text,text,boolean); Owner: bombadil
+-- Type: FUNCTION ; Name: auth.set_actor(text,text,boolean); Owner: tendreladmin
 
 CREATE OR REPLACE FUNCTION auth.set_actor(actor_id text, actor_locale text, is_local boolean DEFAULT true)
  RETURNS TABLE(id text, locale text)
@@ -51,4 +51,4 @@ end $function$;
 
 REVOKE ALL ON FUNCTION auth.set_actor(text,text,boolean) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION auth.set_actor(text,text,boolean) TO PUBLIC;
-GRANT EXECUTE ON FUNCTION auth.set_actor(text,text,boolean) TO bombadil WITH GRANT OPTION;
+GRANT EXECUTE ON FUNCTION auth.set_actor(text,text,boolean) TO tendreladmin WITH GRANT OPTION;

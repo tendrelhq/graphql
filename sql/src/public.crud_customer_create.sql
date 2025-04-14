@@ -1,5 +1,5 @@
 
--- Type: PROCEDURE ; Name: crud_customer_create(text,text,text,text,text,text,text,text,text,text,text,text[],bigint); Owner: bombadil
+-- Type: PROCEDURE ; Name: crud_customer_create(text,text,text,text,text,text,text,text,text,text,text,text[],bigint); Owner: tendreladmin
 
 CREATE OR REPLACE PROCEDURE public.crud_customer_create(IN create_customername text, IN create_sitename text, OUT create_customeruuid text, IN create_customerbillingid text, IN create_customerbillingsystemid text, INOUT create_adminfirstname text, INOUT create_adminlastname text, IN create_adminemailaddress text, IN create_adminphonenumber text, IN create_adminidentityid text, IN create_adminidentitysystemuuid text, OUT create_adminuuid text, OUT create_siteuuid text, IN create_timezone text, IN create_languagetypeuuids text[], IN create_modifiedby bigint)
  LANGUAGE plpgsql
@@ -329,4 +329,4 @@ $procedure$;
 
 REVOKE ALL ON PROCEDURE crud_customer_create(text,text,text,text,text,text,text,text,text,text,text,text[],bigint) FROM PUBLIC;
 GRANT EXECUTE ON PROCEDURE crud_customer_create(text,text,text,text,text,text,text,text,text,text,text,text[],bigint) TO PUBLIC;
-GRANT EXECUTE ON PROCEDURE crud_customer_create(text,text,text,text,text,text,text,text,text,text,text,text[],bigint) TO bombadil WITH GRANT OPTION;
+GRANT EXECUTE ON PROCEDURE crud_customer_create(text,text,text,text,text,text,text,text,text,text,text,text[],bigint) TO tendreladmin WITH GRANT OPTION;

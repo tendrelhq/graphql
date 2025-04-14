@@ -1,5 +1,5 @@
 
--- Type: PROCEDURE ; Name: zzz_crud_customer_config_create_v2(text,text,text,text,text,text); Owner: bombadil
+-- Type: PROCEDURE ; Name: zzz_crud_customer_config_create_v2(text,text,text,text,text,text); Owner: tendreladmin
 
 CREATE OR REPLACE PROCEDURE public.zzz_crud_customer_config_create_v2(IN customer_uuid text, IN site_uuid text, IN config_uuid text, IN value_type_uuid text, IN config_value text, IN modified_by text, OUT config_id text)
  LANGUAGE plpgsql
@@ -76,4 +76,4 @@ $procedure$;
 
 REVOKE ALL ON PROCEDURE zzz_crud_customer_config_create_v2(text,text,text,text,text,text) FROM PUBLIC;
 GRANT EXECUTE ON PROCEDURE zzz_crud_customer_config_create_v2(text,text,text,text,text,text) TO PUBLIC;
-GRANT EXECUTE ON PROCEDURE zzz_crud_customer_config_create_v2(text,text,text,text,text,text) TO bombadil WITH GRANT OPTION;
+GRANT EXECUTE ON PROCEDURE zzz_crud_customer_config_create_v2(text,text,text,text,text,text) TO tendreladmin WITH GRANT OPTION;

@@ -1,5 +1,5 @@
 
--- Type: FUNCTION ; Name: zzz_crud_customer_config_list_v2(text,bigint,bigint); Owner: bombadil
+-- Type: FUNCTION ; Name: zzz_crud_customer_config_list_v2(text,bigint,bigint); Owner: tendreladmin
 
 CREATE OR REPLACE FUNCTION public.zzz_crud_customer_config_list_v2(customer_uuid_param text, site_id_param bigint, language_id bigint)
  RETURNS TABLE(uuid text, started_at timestamp without time zone, ended_at timestamp without time zone, updated_by_uuid text, type_uuid text, type text, value text, value_type text)
@@ -81,4 +81,4 @@ $function$;
 
 REVOKE ALL ON FUNCTION zzz_crud_customer_config_list_v2(text,bigint,bigint) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION zzz_crud_customer_config_list_v2(text,bigint,bigint) TO PUBLIC;
-GRANT EXECUTE ON FUNCTION zzz_crud_customer_config_list_v2(text,bigint,bigint) TO bombadil WITH GRANT OPTION;
+GRANT EXECUTE ON FUNCTION zzz_crud_customer_config_list_v2(text,bigint,bigint) TO tendreladmin WITH GRANT OPTION;

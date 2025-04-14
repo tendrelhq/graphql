@@ -1,5 +1,5 @@
 
--- Type: FUNCTION ; Name: legacy0.create_template_constraint_on_location(text,text,bigint); Owner: bombadil
+-- Type: FUNCTION ; Name: legacy0.create_template_constraint_on_location(text,text,bigint); Owner: tendreladmin
 
 CREATE OR REPLACE FUNCTION legacy0.create_template_constraint_on_location(template_id text, location_id text, modified_by bigint)
  RETURNS TABLE(id text)
@@ -81,4 +81,4 @@ instantiated at the given location.
 
 REVOKE ALL ON FUNCTION legacy0.create_template_constraint_on_location(text,text,bigint) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION legacy0.create_template_constraint_on_location(text,text,bigint) TO PUBLIC;
-GRANT EXECUTE ON FUNCTION legacy0.create_template_constraint_on_location(text,text,bigint) TO bombadil WITH GRANT OPTION;
+GRANT EXECUTE ON FUNCTION legacy0.create_template_constraint_on_location(text,text,bigint) TO tendreladmin WITH GRANT OPTION;

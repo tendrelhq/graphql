@@ -1,5 +1,5 @@
 
--- Type: FUNCTION ; Name: zzz_crud_site_read_v2(text,text,text,bigint,text); Owner: bombadil
+-- Type: FUNCTION ; Name: zzz_crud_site_read_v2(text,text,text,bigint,text); Owner: tendreladmin
 
 CREATE OR REPLACE FUNCTION public.zzz_crud_site_read_v2(read_customeruuid text, read_customerexternalid text, read_customerexternalsystemuuid text, read_siteid bigint, read_languagetypeuuid text)
  RETURNS TABLE(locationid bigint, locationcustomerid bigint, locationcategoryid bigint, locationcategory text, locationlanguagetypeid bigint, locationlanguagetypename text, locationnameid bigint, locationfullname text, locationscanid text, locationlookupname text, locationtimezone text, locationsiteid bigint, locationsitename text, locationparentid bigint, locationparentname text, locationiscornerstone boolean, locationcornerstoneid bigint, locationcornerstonename text, locationcornerstoneorder bigint, locationstartdate timestamp with time zone, locationenddate timestamp with time zone, locationexternalsystemid bigint, locationexternalid text)
@@ -107,4 +107,4 @@ $function$;
 
 REVOKE ALL ON FUNCTION zzz_crud_site_read_v2(text,text,text,bigint,text) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION zzz_crud_site_read_v2(text,text,text,bigint,text) TO PUBLIC;
-GRANT EXECUTE ON FUNCTION zzz_crud_site_read_v2(text,text,text,bigint,text) TO bombadil WITH GRANT OPTION;
+GRANT EXECUTE ON FUNCTION zzz_crud_site_read_v2(text,text,text,bigint,text) TO tendreladmin WITH GRANT OPTION;
