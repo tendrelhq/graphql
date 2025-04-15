@@ -1248,7 +1248,7 @@ export function applyAssignments_(
 }
 
 /**
- * TODO: description.
+ * The set of Fields for the given Task.
  *
  * @gqlField
  */

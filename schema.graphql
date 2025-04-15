@@ -835,6 +835,11 @@ type EntityInstanceConnection {
 }
 
 type EntityInstanceEdge {
+  """
+  Lift an EntityInstance to a set of Fields where the given EntityInstance
+  identifies as the Field's ValueType.
+  """
+  asFieldTemplateValueType: FieldConnection @semanticNonNull
   cursor: String @semanticNonNull
   node: EntityInstance @semanticNonNull
 }
@@ -900,6 +905,7 @@ type Field {
   Display name for a Field.
   """
   name: DisplayName @semanticNonNull
+  parent: Task @semanticNonNull
   """
   The value for this Field, if any. This field will always be present (when
   requested) for the given Field so as to convey the underlying data type of
@@ -1706,7 +1712,7 @@ type Task implements Assignable & Component & Node & Trackable {
     @semanticNonNull
   field(byName: String): Field
   """
-  TODO: description.
+  The set of Fields for the given Task.
   """
   fields: FieldConnection @semanticNonNull
   """

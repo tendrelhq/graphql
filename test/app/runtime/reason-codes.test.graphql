@@ -6,6 +6,20 @@ query ListReasonCodes($owner: ID!, $parent: [ID!]!) {
           value
         }
       }
+      asFieldTemplateValueType {
+        edges {
+          node {
+            name {
+              value
+            }
+            parent {
+              name {
+                value
+              }
+            }
+          }
+        }
+      }
     }
   }
 }

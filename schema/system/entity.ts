@@ -5,8 +5,9 @@ import { GraphQLError } from "graphql";
 import type { ID, Int } from "grats";
 import { encodeGlobalId } from ".";
 import type { Context } from "../types";
+import { type Field, field$fragment } from "./component";
 import type { DisplayName } from "./component/name";
-import type { Connection } from "./pagination";
+import type { Connection, Edge } from "./pagination";
 
 /**
  * Entities represent distinct objects in the system. They can be physical
@@ -104,6 +105,58 @@ export async function instances(
   };
 }
 
+/**
+ * Lift an EntityInstance to a set of Fields where the given EntityInstance
+ * identifies as the Field's ValueType.
+ *
+ * @gqlField
+ */
+export async function asFieldTemplateValueType(
+  edge: Edge<EntityInstance>,
+): Promise<Connection<Field>> {
+  // This is sort of half baked at the moment since we are only using this for
+  // Runtime "reason codes". Additionally, work instances and templates are not
+  // yet covered by the entity model.
+
+  // The EntityInstance we have here is really a custag. We need to:
+  // 1. Find the custag
+  // 2. Find the systag for (1)
+  // 3. Find workresults whose type is (2)
+
+  // Note however that we are cheating, in that the workresults we create are of
+  // type String. So we can't naively lookup the Fields using canonical foreign
+  // keys. Rather, we must go through worktemplateconstraint.
+
+  const rows = await sql<Field[]>`
+    with field as (
+      select
+        engine1.base64_encode(convert_to('workresult:' || wr.id, 'utf8')) as id,
+        s.systagtype as "type",
+        wr.workresultdefaultvalue as "value"
+      from entity.entityinstance
+      inner join public.custag on entityinstanceoriginaluuid = custaguuid
+      inner join public.worktemplateconstraint
+        on custagcustomerid = worktemplateconstraintcustomerid
+        and custaguuid = worktemplateconstraintconstraintid
+      inner join public.workresult as wr
+        on worktemplateconstraintresultid = wr.id
+      inner join public.systag as s
+        on wr.workresulttypeid = s.systagid
+      where entityinstanceuuid = ${edge.node._id}
+    )
+    ${field$fragment}
+  `;
+
+  return {
+    edges: rows.map(row => ({ cursor: row.id, node: row })),
+    pageInfo: {
+      hasNextPage: false,
+      hasPreviousPage: false,
+    },
+    totalCount: rows.length,
+  };
+}
+
 /** @gqlMutationField */
 export async function createEntityInstance(
   ctx: Context,
@@ -146,7 +199,7 @@ export interface EntityTemplate {
 }
 
 /** @gqlField name */
-export async function entityTemplate_name(
+export async function entityTemplateName(
   entity: EntityTemplate,
   ctx: Context,
 ): Promise<DisplayName> {

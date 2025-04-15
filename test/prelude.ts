@@ -102,11 +102,14 @@ export function findAndEncode(
 
 export async function assertTaskIsNamed(
   t: Task,
-  displayName: string,
+  expectedDisplayName: string,
   ctx: Context,
 ) {
-  const n = await t.name(ctx);
-  return assert(displayName === (await n.value(ctx)));
+  const actualDisplayName = await t.name(ctx).then(n => n.value(ctx));
+  return assert(
+    expectedDisplayName === actualDisplayName,
+    `Expected Task named '${expectedDisplayName}' but got '${actualDisplayName}'`,
+  );
 }
 
 export function assertNoDiagnostics<

@@ -7,6 +7,28 @@ exports[`runtime + reason codes list reason codes 1`] = `
     "edges": [
       {
         "__typename": "EntityInstanceEdge",
+        "asFieldTemplateValueType": {
+          "__typename": "FieldConnection",
+          "edges": [
+            {
+              "__typename": "FieldEdge",
+              "node": {
+                "__typename": "Field",
+                "name": {
+                  "__typename": "DisplayName",
+                  "value": "Reason Code",
+                },
+                "parent": {
+                  "__typename": "Task",
+                  "name": {
+                    "__typename": "DisplayName",
+                    "value": "Downtime",
+                  },
+                },
+              },
+            },
+          ],
+        },
         "node": {
           "__typename": "EntityInstance",
           "name": {
@@ -17,6 +39,28 @@ exports[`runtime + reason codes list reason codes 1`] = `
       },
       {
         "__typename": "EntityInstanceEdge",
+        "asFieldTemplateValueType": {
+          "__typename": "FieldConnection",
+          "edges": [
+            {
+              "__typename": "FieldEdge",
+              "node": {
+                "__typename": "Field",
+                "name": {
+                  "__typename": "DisplayName",
+                  "value": "Reason Code",
+                },
+                "parent": {
+                  "__typename": "Task",
+                  "name": {
+                    "__typename": "DisplayName",
+                    "value": "Downtime",
+                  },
+                },
+              },
+            },
+          ],
+        },
         "node": {
           "__typename": "EntityInstance",
           "name": {
@@ -27,6 +71,28 @@ exports[`runtime + reason codes list reason codes 1`] = `
       },
       {
         "__typename": "EntityInstanceEdge",
+        "asFieldTemplateValueType": {
+          "__typename": "FieldConnection",
+          "edges": [
+            {
+              "__typename": "FieldEdge",
+              "node": {
+                "__typename": "Field",
+                "name": {
+                  "__typename": "DisplayName",
+                  "value": "Reason Code",
+                },
+                "parent": {
+                  "__typename": "Task",
+                  "name": {
+                    "__typename": "DisplayName",
+                    "value": "Downtime",
+                  },
+                },
+              },
+            },
+          ],
+        },
         "node": {
           "__typename": "EntityInstance",
           "name": {
@@ -37,6 +103,28 @@ exports[`runtime + reason codes list reason codes 1`] = `
       },
       {
         "__typename": "EntityInstanceEdge",
+        "asFieldTemplateValueType": {
+          "__typename": "FieldConnection",
+          "edges": [
+            {
+              "__typename": "FieldEdge",
+              "node": {
+                "__typename": "Field",
+                "name": {
+                  "__typename": "DisplayName",
+                  "value": "Reason Code",
+                },
+                "parent": {
+                  "__typename": "Task",
+                  "name": {
+                    "__typename": "DisplayName",
+                    "value": "Idle Time",
+                  },
+                },
+              },
+            },
+          ],
+        },
         "node": {
           "__typename": "EntityInstance",
           "name": {
@@ -47,6 +135,28 @@ exports[`runtime + reason codes list reason codes 1`] = `
       },
       {
         "__typename": "EntityInstanceEdge",
+        "asFieldTemplateValueType": {
+          "__typename": "FieldConnection",
+          "edges": [
+            {
+              "__typename": "FieldEdge",
+              "node": {
+                "__typename": "Field",
+                "name": {
+                  "__typename": "DisplayName",
+                  "value": "Reason Code",
+                },
+                "parent": {
+                  "__typename": "Task",
+                  "name": {
+                    "__typename": "DisplayName",
+                    "value": "Idle Time",
+                  },
+                },
+              },
+            },
+          ],
+        },
         "node": {
           "__typename": "EntityInstance",
           "name": {

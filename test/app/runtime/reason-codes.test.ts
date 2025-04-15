@@ -6,6 +6,7 @@ import { decodeGlobalId } from "@/schema/system";
 import type { Field } from "@/schema/system/component";
 import { Task } from "@/schema/system/component/task";
 import {
+  assertTaskIsNamed,
   createTestContext,
   execute,
   findAndEncode,
@@ -36,7 +37,7 @@ describe.skipIf(!!process.env.CI)("runtime + reason codes", () => {
       owner: decodeGlobalId(CUSTOMER).id,
       // FIXME: This is not particularly ergonomic :/
       // Note that this is the entityinstanceuuid for the "Reason Code" systag:
-      parent: ["d9b10b97-73aa-4407-948a-29f8434d525e"],
+      parent: ["f875b28c-ccc9-4c69-b5b4-9f10ad89d23b"],
     });
     expect(result.errors).toBeFalsy();
     expect(result.data).toMatchSnapshot();
@@ -53,7 +54,7 @@ describe.skipIf(!!process.env.CI)("runtime + reason codes", () => {
       name: "Overwhelming Confusion",
       // FIXME: Should not be required:
       owner: decodeGlobalId(CUSTOMER).id,
-      parent: "d9b10b97-73aa-4407-948a-29f8434d525e",
+      parent: "f875b28c-ccc9-4c69-b5b4-9f10ad89d23b",
       templates: [DOWN_TIME.id],
     });
     expect(result.errors).toBeFalsy();
@@ -94,13 +95,15 @@ describe.skipIf(!!process.env.CI)("runtime + reason codes", () => {
     const logs = await setup(ctx);
     CUSTOMER = findAndEncode("customer", "organization", logs);
     DOWN_TIME = map(
-      findAndEncode("next", "worktemplate", logs),
-      id => new Task({ id }),
-    );
-    IDLE_TIME = map(
       findAndEncode("next", "worktemplate", logs, { skip: 1 }),
       id => new Task({ id }),
     );
+    assertTaskIsNamed(DOWN_TIME, "Downtime", ctx);
+    IDLE_TIME = map(
+      findAndEncode("next", "worktemplate", logs),
+      id => new Task({ id }),
+    );
+    assertTaskIsNamed(IDLE_TIME, "Idle Time", ctx);
     await sql.begin(async sql => {
       await setCurrentIdentity(sql, ctx);
 
@@ -173,7 +176,7 @@ async function addReasonCodeToTemplate(
   >`
     call entity.crud_custag_create(
       ${owner},
-      'd9b10b97-73aa-4407-948a-29f8434d525e',
+      'f875b28c-ccc9-4c69-b5b4-9f10ad89d23b',
       null,
       ${order},
       ${code},

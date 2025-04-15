@@ -1,5 +1,6 @@
 import { sql } from "@/datasources/postgres";
-import { assertNonNull, buildPaginationArgs, mapOrElse } from "@/util";
+import { assert, assertNonNull, buildPaginationArgs, mapOrElse } from "@/util";
+import { GraphQLError } from "graphql";
 import type { ID, Int } from "grats";
 import type { Fragment } from "postgres";
 import { match } from "ts-pattern";
@@ -11,6 +12,7 @@ import {
 import type { Context } from "../types";
 import type { Description } from "./component/description";
 import type { DisplayName } from "./component/name";
+import { type ConstructorArgs, Task } from "./component/task";
 import type { Connection, Edge, PageInfo } from "./pagination";
 import type { Timestamp } from "./temporal";
 
@@ -322,6 +324,37 @@ export async function description(
  */
 export async function name(field: Field, ctx: Context): Promise<DisplayName> {
   return await ctx.orm.displayName.load(field.id);
+}
+
+/** @gqlField */
+export async function parent(field: Field): Promise<Task> {
+  const { type, id } = decodeGlobalId(field.id);
+  const [row] = await match(type)
+    .with(
+      "workresult",
+      () => sql<[ConstructorArgs]>`
+        select engine1.base64_encode(convert_to('worktemplate:' || id, 'utf8')) as id
+        from public.worktemplate
+        where worktemplateid in (
+          select workresultworktemplateid
+          from public.workresult
+          where id = ${id}
+        )
+      `,
+    )
+    .with(
+      "workresultinstance",
+      () => sql<[ConstructorArgs]>`
+        select engine1.base64_encode(convert_to('workinstance:' || id, 'utf8')) as id
+        from public.workinstance
+        where id = ${id}
+      `,
+    )
+    .otherwise(() => {
+      throw "invariant violated";
+    });
+
+  return new Task(row);
 }
 
 export type FieldDefinitionInput = {
