@@ -351,8 +351,8 @@ end if;
 			custagnameid, 
 			custagtype,
 			custagstartdate,
-			custagmodifiedby
-			)
+			custagmodifiedby,
+			custagorder)
 	values (tempcustomerid,
 			tempcustomeruuid,
 			(select entityinstanceoriginalid from entity.entityinstance where entityinstanceuuid = tempcustagparententityuuid),
@@ -360,7 +360,8 @@ end if;
 			templanguagemasterid,
 			create_custag,
 			clock_timestamp(),
-			create_modifiedbyid)
+			create_modifiedbyid,
+      tempcustagcornerstoneorder)
 			Returning custaguuid, custagid into tempcustaguuid,tempcustagid;
 
 	update entity.entityinstance

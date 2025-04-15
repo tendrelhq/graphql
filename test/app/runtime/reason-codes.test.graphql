@@ -21,25 +21,26 @@ query ListReasonCodes($owner: ID!, $parent: [ID!]!) {
         }
       }
     }
+    totalCount
   }
 }
 
-query ListRuntimeTemplates {
-  templates(ofType: ["Run"]) {
-    edges {
-      node {
-        name {
-          value
-        }
+mutation CreateReasonCode(
+  $field: ID!
+  $name: String!
+  $parent: ID!
+  $order: Int
+) {
+  createCustagAsFieldTemplateValueTypeConstraint(
+    field: $field
+    name: $name
+    parent: $parent
+    order: $order
+  ) {
+    node {
+      name {
+        value
       }
-    }
-  }
-}
-
-mutation CreateReasonCode($owner: ID!, $name: String!, $templates: [ID!]!) {
-  createEntityInstance(name: $name, owner: $owner, template: "", type: "") {
-    name {
-      value
     }
   }
 }

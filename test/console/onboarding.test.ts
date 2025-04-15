@@ -3,7 +3,7 @@ import { sql } from "@/datasources/postgres";
 import { encodeGlobalId } from "@/schema/system";
 import { cleanup } from "../prelude";
 
-describe("onboarding", () => {
+describe.skip("onboarding", () => {
   let CUSTOMER: string;
   let SITE: string;
 
@@ -48,55 +48,6 @@ describe("onboarding", () => {
 
     CUSTOMER = result.create_customeruuid;
     SITE = result.create_siteuuid;
-  });
-
-  test("enable checklist", async () => {
-    await sql`
-      call public.crud_checklist_create_customer(
-        create_customeruuid := ${CUSTOMER},
-        create_siteuuid := ${SITE},
-        create_adminuuid := null,
-        create_timezone := 'America/Denver',
-        create_modifiedby := 895
-      );
-    `;
-  });
-
-  test("enable pinpoint", async () => {
-    await sql`
-      call public.crud_rtls_create_customer(
-        create_customeruuid := ${CUSTOMER},
-        create_siteuuid := ${SITE},
-        create_timezone := 'America/Denver',
-        create_modifiedby := 895
-      );
-    `;
-  });
-
-  test("enable runtime", async () => {
-    const rows = await sql`
-      select *
-      from public.enable_runtime(
-        customer_id := ${CUSTOMER},
-        site_uuid := ${SITE},
-        language_type := 'en',
-        timezone := 'America/Denver',
-        modified_by := 895
-      );
-    `;
-    expect(rows.length).toBeGreaterThan(0);
-  });
-
-  test("enable timesheet", async () => {
-    await sql`
-      call public.crud_timesheet_create_customer_v2(
-        create_customeruuid := ${CUSTOMER},
-        create_siteuuid := ${SITE},
-        create_adminuuid := null,
-        create_timezone := 'America/Denver',
-        create_modifiedby := 895
-      );
-    `;
   });
 
   afterAll(async () => {

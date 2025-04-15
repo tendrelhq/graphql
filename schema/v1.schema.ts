@@ -45,11 +45,8 @@ import { createTemplateConstraint as mutationCreateTemplateConstraintResolver } 
 import {
   asFieldTemplateValueType as entityInstanceEdgeAsFieldTemplateValueTypeResolver,
   entityInstanceName as entityInstanceNameResolver,
-  entityTemplateName as entityTemplateNameResolver,
-  createEntityInstance as mutationCreateEntityInstanceResolver,
-  createEntityTemplate as mutationCreateEntityTemplateResolver,
+  createCustagAsFieldTemplateValueTypeConstraint as mutationCreateCustagAsFieldTemplateValueTypeConstraintResolver,
   instances as queryInstancesResolver,
-  templates as queryTemplatesResolver,
 } from "./system/entity";
 import {
   id as assignmentIdResolver,
@@ -1421,90 +1418,6 @@ export function getSchema(): GraphQLSchema {
       },
     },
   );
-  const EntityTemplateType: GraphQLObjectType = new GraphQLObjectType({
-    name: "EntityTemplate",
-    fields() {
-      return {
-        id: {
-          name: "id",
-          type: GraphQLID,
-          resolve(source, args, context, info) {
-            return assertNonNull(
-              defaultFieldResolver(source, args, context, info),
-            );
-          },
-        },
-        name: {
-          name: "name",
-          type: DisplayNameType,
-          resolve(source, _args, context) {
-            return assertNonNull(entityTemplateNameResolver(source, context));
-          },
-        },
-      };
-    },
-  });
-  const EntityTemplateEdgeType: GraphQLObjectType = new GraphQLObjectType({
-    name: "EntityTemplateEdge",
-    fields() {
-      return {
-        cursor: {
-          name: "cursor",
-          type: GraphQLString,
-          resolve(source, args, context, info) {
-            return assertNonNull(
-              defaultFieldResolver(source, args, context, info),
-            );
-          },
-        },
-        node: {
-          name: "node",
-          type: EntityTemplateType,
-          resolve(source, args, context, info) {
-            return assertNonNull(
-              defaultFieldResolver(source, args, context, info),
-            );
-          },
-        },
-      };
-    },
-  });
-  const EntityTemplateConnectionType: GraphQLObjectType = new GraphQLObjectType(
-    {
-      name: "EntityTemplateConnection",
-      fields() {
-        return {
-          edges: {
-            name: "edges",
-            type: new GraphQLList(new GraphQLNonNull(EntityTemplateEdgeType)),
-            resolve(source, args, context, info) {
-              return assertNonNull(
-                defaultFieldResolver(source, args, context, info),
-              );
-            },
-          },
-          pageInfo: {
-            name: "pageInfo",
-            type: PageInfoType,
-            resolve(source, args, context, info) {
-              return assertNonNull(
-                defaultFieldResolver(source, args, context, info),
-              );
-            },
-          },
-          totalCount: {
-            name: "totalCount",
-            type: GraphQLInt,
-            resolve(source, args, context, info) {
-              return assertNonNull(
-                defaultFieldResolver(source, args, context, info),
-              );
-            },
-          },
-        };
-      },
-    },
-  );
   const QueryType: GraphQLObjectType = new GraphQLObjectType({
     name: "Query",
     fields() {
@@ -1548,29 +1461,6 @@ export function getSchema(): GraphQLSchema {
           },
           resolve(_source, args, context) {
             return queryNodeResolver(args, context);
-          },
-        },
-        templates: {
-          name: "templates",
-          type: EntityTemplateConnectionType,
-          args: {
-            after: {
-              name: "after",
-              type: GraphQLString,
-            },
-            first: {
-              name: "first",
-              type: GraphQLInt,
-            },
-            ofType: {
-              description:
-                "Only Entities of the given type. The type is the *canonical* type, i.e.\nnot localized. This is best for programmatic usage.",
-              name: "ofType",
-              type: new GraphQLList(new GraphQLNonNull(GraphQLString)),
-            },
-          },
-          resolve(_source, args, context) {
-            return assertNonNull(queryTemplatesResolver(context, args));
           },
         },
         trackables: {
@@ -2122,68 +2012,35 @@ export function getSchema(): GraphQLSchema {
             );
           },
         },
-        createEntityInstance: {
-          name: "createEntityInstance",
-          type: EntityInstanceType,
+        createCustagAsFieldTemplateValueTypeConstraint: {
+          name: "createCustagAsFieldTemplateValueTypeConstraint",
+          type: EntityInstanceEdgeType,
           args: {
+            field: {
+              name: "field",
+              type: new GraphQLNonNull(GraphQLID),
+            },
             name: {
               name: "name",
               type: new GraphQLNonNull(GraphQLString),
             },
-            owner: {
-              name: "owner",
-              type: new GraphQLNonNull(GraphQLID),
+            order: {
+              name: "order",
+              type: GraphQLInt,
             },
-            template: {
-              name: "template",
-              type: new GraphQLNonNull(GraphQLID),
-            },
-            type: {
-              name: "type",
+            parent: {
+              name: "parent",
               type: new GraphQLNonNull(GraphQLID),
             },
           },
           resolve(_source, args, context) {
             return assertNonNull(
-              mutationCreateEntityInstanceResolver(
+              mutationCreateCustagAsFieldTemplateValueTypeConstraintResolver(
                 context,
-                args.owner,
-                args.template,
+                args.field,
                 args.name,
-                args.type,
-              ),
-            );
-          },
-        },
-        createEntityTemplate: {
-          name: "createEntityTemplate",
-          type: EntityTemplateType,
-          args: {
-            name: {
-              name: "name",
-              type: new GraphQLNonNull(GraphQLString),
-            },
-            owner: {
-              name: "owner",
-              type: new GraphQLNonNull(GraphQLID),
-            },
-            template: {
-              name: "template",
-              type: new GraphQLNonNull(GraphQLID),
-            },
-            type: {
-              name: "type",
-              type: new GraphQLNonNull(GraphQLID),
-            },
-          },
-          resolve(_source, args, context) {
-            return assertNonNull(
-              mutationCreateEntityTemplateResolver(
-                context,
-                args.owner,
-                args.template,
-                args.name,
-                args.type,
+                args.parent,
+                args.order,
               ),
             );
           },
@@ -2460,9 +2317,6 @@ export function getSchema(): GraphQLSchema {
       EntityInstanceType,
       EntityInstanceConnectionType,
       EntityInstanceEdgeType,
-      EntityTemplateType,
-      EntityTemplateConnectionType,
-      EntityTemplateEdgeType,
       EntityValueType,
       FieldType,
       FieldConnectionType,

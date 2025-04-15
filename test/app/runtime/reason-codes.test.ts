@@ -1,40 +1,73 @@
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 import { setCurrentIdentity } from "@/auth";
-import { type TxSql, sql } from "@/datasources/postgres";
+import { sql } from "@/datasources/postgres";
 import { schema } from "@/schema/final";
-import { decodeGlobalId } from "@/schema/system";
-import type { Field } from "@/schema/system/component";
 import { Task } from "@/schema/system/component/task";
 import {
   assertTaskIsNamed,
   createTestContext,
   execute,
   findAndEncode,
+  getFieldByName,
   setup,
 } from "@/test/prelude";
-import { assert, map } from "@/util";
+import { map } from "@/util";
 import {
   CreateReasonCodeDocument,
   GetReasonCodeCompletionsDocument,
   ListReasonCodesDocument,
 } from "./reason-codes.test.generated";
 
-// Not yet ready for primetime :(
-// `entity.import_entity` depends on some datawarehouse bullshit and I simply
-// refuse to pull in that dependency here.
-describe.skipIf(!!process.env.CI)("runtime + reason codes", () => {
+describe("runtime + reason codes", () => {
   // See beforeAll for initialization of these variables.
   let CUSTOMER: string;
   let DOWN_TIME: Task;
   let IDLE_TIME: Task;
 
-  // FIXME: This does not list associated templates, which is necessary in the
-  // console view.
-  test("list reason codes", async () => {
-    // Name, Category (template)
+  test("demo has no reason codes set up at first", async () => {
     const result = await execute(schema, ListReasonCodesDocument, {
       // FIXME: Should not be required:
-      owner: decodeGlobalId(CUSTOMER).id,
+      owner: CUSTOMER,
+      // FIXME: This is not particularly ergonomic :/
+      // Note that this is the entityinstanceuuid for the "Reason Code" systag:
+      parent: ["f875b28c-ccc9-4c69-b5b4-9f10ad89d23b"],
+    });
+    expect(result.errors).toBeFalsy();
+    expect(result.data?.instances?.totalCount).toBe(0);
+  });
+
+  test("create some reason codes (for Downtime)", async () => {
+    const f = await getFieldByName(DOWN_TIME, "Reason Code");
+
+    let order = 0;
+    for (const code of [
+      "Machine Down",
+      "Scheduled Maintenance",
+      "Waiting for Materials",
+    ]) {
+      const result = await execute(schema, CreateReasonCodeDocument, {
+        field: f.id,
+        name: code,
+        // FIXME: This is not particularly ergonomic :/
+        // Note that this is the entityinstanceuuid for the "Reason Code" systag:
+        parent: "f875b28c-ccc9-4c69-b5b4-9f10ad89d23b",
+        order: order++,
+      });
+      expect(result.errors).toBeFalsy();
+      expect(result.data).toMatchObject({
+        createCustagAsFieldTemplateValueTypeConstraint: {
+          node: {
+            name: {
+              value: code,
+            },
+          },
+        },
+      });
+    }
+
+    const result = await execute(schema, ListReasonCodesDocument, {
+      // FIXME: Should not be required:
+      owner: CUSTOMER,
       // FIXME: This is not particularly ergonomic :/
       // Note that this is the entityinstanceuuid for the "Reason Code" systag:
       parent: ["f875b28c-ccc9-4c69-b5b4-9f10ad89d23b"],
@@ -47,20 +80,6 @@ describe.skipIf(!!process.env.CI)("runtime + reason codes", () => {
     // Filters: active
   });
 
-  // FIXME: Ditto above: does not list associated templates.
-  test.todo("create a new reason code", async () => {
-    // Name, Category (template)
-    const result = await execute(schema, CreateReasonCodeDocument, {
-      name: "Overwhelming Confusion",
-      // FIXME: Should not be required:
-      owner: decodeGlobalId(CUSTOMER).id,
-      parent: "f875b28c-ccc9-4c69-b5b4-9f10ad89d23b",
-      templates: [DOWN_TIME.id],
-    });
-    expect(result.errors).toBeFalsy();
-    expect(result.data).toMatchSnapshot();
-  });
-
   test.todo("update a reason code", async () => {
     // e.g. rename, add to more templates?
   });
@@ -71,6 +90,32 @@ describe.skipIf(!!process.env.CI)("runtime + reason codes", () => {
 
   test.todo("delete a reason code", async () => {
     // Soft.
+  });
+
+  test("create some reason codes (for Idle Time)", async () => {
+    const f = await getFieldByName(IDLE_TIME, "Reason Code");
+
+    let order = 0;
+    for (const code of ["Lunch Break", "Nothin to do!"]) {
+      const result = await execute(schema, CreateReasonCodeDocument, {
+        field: f.id,
+        name: code,
+        // FIXME: This is not particularly ergonomic :/
+        // Note that this is the entityinstanceuuid for the "Reason Code" systag:
+        parent: "f875b28c-ccc9-4c69-b5b4-9f10ad89d23b",
+        order: order++,
+      });
+      expect(result.errors).toBeFalsy();
+      expect(result.data).toMatchObject({
+        createCustagAsFieldTemplateValueTypeConstraint: {
+          node: {
+            name: {
+              value: code,
+            },
+          },
+        },
+      });
+    }
   });
 
   test("in the app, get completions", async () => {
@@ -104,42 +149,20 @@ describe.skipIf(!!process.env.CI)("runtime + reason codes", () => {
       id => new Task({ id }),
     );
     assertTaskIsNamed(IDLE_TIME, "Idle Time", ctx);
+
     await sql.begin(async sql => {
       await setCurrentIdentity(sql, ctx);
-
-      // 2. Import the new customer into the entity model
       // FIXME: use Keller's API for customer create through the entity model.
       await sql`call entity.import_entity(null)`;
-
-      const DOWN_TIME_CODES = [
-        "Machine Down",
-        "Waiting for Materials",
-        "Scheduled Maintenance",
-      ];
-      const IDLE_TIME_CODES = ["Lunch Break", "Nothin to do!"];
-      for (const [t, codes] of [
-        [DOWN_TIME, DOWN_TIME_CODES],
-        [IDLE_TIME, IDLE_TIME_CODES],
-      ] as const) {
-        // 3. Patch our template to have a 'Reason Code' field
-        const field = await t.addField(ctx, {
-          name: "Reason Code",
-          type: "String",
-        });
-
-        // 4. Create demo reason codes for Downtime
-        let order = 0;
-        for (const code of codes) {
-          await addReasonCodeToTemplate(
-            sql,
-            decodeGlobalId(CUSTOMER).id,
-            code,
-            order++,
-            t,
-            field,
-          );
-        }
-      }
+      // Patch our templates to have 'Reason Code' fields:
+      await DOWN_TIME.addField(ctx, {
+        name: "Reason Code",
+        type: "String",
+      });
+      await IDLE_TIME.addField(ctx, {
+        name: "Reason Code",
+        type: "String",
+      });
     });
   });
 
@@ -151,75 +174,3 @@ describe.skipIf(!!process.env.CI)("runtime + reason codes", () => {
     // 3. Call entity.import()?
   });
 });
-
-async function addReasonCodeToTemplate(
-  sql: TxSql,
-  customer: string,
-  code: string,
-  order: number,
-  template: Task,
-  field: Field,
-) {
-  assert(template._type === "worktemplate");
-  const { id: fieldId, type: fieldType } = decodeGlobalId(field.id);
-  assert(fieldType === "workresult");
-
-  // Grab the owner id.
-  const [{ owner }] = await sql`
-    select entityinstanceuuid as owner
-    from entity.entityinstance
-    where entityinstanceoriginaluuid = ${customer}
-  `;
-  // Create the custag and entity_instance first.
-  const [{ create_custaguuid: custag_id }] = await sql<
-    [{ create_custaguuid: string }]
-  >`
-    call entity.crud_custag_create(
-      ${owner},
-      'f875b28c-ccc9-4c69-b5b4-9f10ad89d23b',
-      null,
-      ${order},
-      ${code},
-      null,
-      null,
-      null,
-      null, 
-      null, 
-      null,
-      null,
-      null,
-      337::bigint
-    );
-  `;
-  // Then create the template constraint.
-  await sql`
-    insert into public.worktemplateconstraint (
-      worktemplateconstraintcustomerid,
-      worktemplateconstraintcustomeruuid,
-      worktemplateconstrainttemplateid,
-      worktemplateconstraintresultid,
-      worktemplateconstraintconstrainedtypeid,
-      worktemplateconstraintconstraintid,
-      worktemplateconstraintmodifiedby
-    )
-    select
-      customerid,
-      customeruuid,
-      worktemplate.id,
-      workresult.id,
-      systag.systaguuid,
-      custag.custaguuid,
-      895
-    from
-      public.customer,
-      public.worktemplate,
-      public.workresult,
-      public.systag,
-      public.custag
-    where customeruuid = ${customer}
-      and worktemplate.id = ${template._id}
-      and workresult.id = ${fieldId}
-      and systag.systagtype = 'Reason Code'
-      and custag.custaguuid = ${custag_id}
-  `;
-}

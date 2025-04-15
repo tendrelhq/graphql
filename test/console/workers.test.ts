@@ -48,7 +48,7 @@ describe("[console] workers", () => {
       expect(page.errors).toBeFalsy();
       i++;
     }
-    expect(i).toBe(3); // 12 total, 5 per page
+    expect(i).toBe(2); // 7 total, 5 per page
   });
 
   test("search", async () => {
@@ -64,7 +64,7 @@ describe("[console] workers", () => {
     expect(result.errors).toBeFalsy();
     expect(result.data?.node.__typename).toBe("Organization");
     if (result.data?.node.__typename === "Organization") {
-      expect(result.data.node.workers.totalCount).toBe(8);
+      expect(result.data.node.workers.totalCount).toBe(2);
     }
   });
 
@@ -82,8 +82,7 @@ describe("[console] workers", () => {
                     where workerfullname in (
                         'Jerry Garcia',
                         'Mike Heavner',
-                        'Will Ruggiano',
-                        'Will Twait'
+                        'Will Ruggiano'
                     )
                 ),
                 modified_by := 895

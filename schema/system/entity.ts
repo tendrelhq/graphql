@@ -1,9 +1,10 @@
 import { constructHeadersFromArgs, extractPageInfo } from "@/api";
 import { getAccessToken } from "@/auth";
 import { sql } from "@/datasources/postgres";
+import { assert } from "@/util";
 import { GraphQLError } from "graphql";
 import type { ID, Int } from "grats";
-import { encodeGlobalId } from ".";
+import { decodeGlobalId, encodeGlobalId } from ".";
 import type { Context } from "../types";
 import { type Field, field$fragment } from "./component";
 import type { DisplayName } from "./component/name";
@@ -50,19 +51,23 @@ export async function instances(
     .then(r => r.json())
     .then(r => r.access_token);
 
-  const headers = constructHeadersFromArgs(args);
+  const headers = constructHeadersFromArgs(args, { count: "exact" });
   headers.set("Authorization", `Bearer ${token}`);
+
+  const { type: ownerType, id: ownerId } = decodeGlobalId(args.owner);
+  assert(ownerType === "organization", "`owner` must point to a customer!");
 
   // FIXME: Should not be required?
   const [{ owner }] = await sql`
     select entityinstanceuuid as owner
     from entity.entityinstance
-    where entityinstanceoriginaluuid = ${args.owner}
+    where entityinstanceoriginaluuid = ${ownerId}
   `;
 
   const q = new URLSearchParams({
     select: "id",
     owner: `eq.${owner}`,
+    order: "_order.asc",
   });
   if (args.parent?.length) {
     // FIXME: This is a weird one in Keller's entity model. Every entityinstance
@@ -158,130 +163,95 @@ export async function asFieldTemplateValueType(
 }
 
 /** @gqlMutationField */
-export async function createEntityInstance(
+export async function createCustagAsFieldTemplateValueTypeConstraint(
   ctx: Context,
-  // Temporary. This should ideally come via the JWT, but we aren't there yet.
-  owner: ID,
-  template: ID,
+  field: ID,
   name: string,
-  type: ID,
-): Promise<EntityInstance> {
-  const token = await getAccessToken(ctx.auth.userId)
-    .then(r => r.json())
-    .then(r => r.access_token);
+  parent: ID,
+  order?: Int | null,
+): Promise<Edge<EntityInstance>> {
+  const { type: fieldType, id: fieldId } = decodeGlobalId(field);
+  assert(fieldType === "workresult", "`field` must point to a workresult!");
 
-  const r = await fetch("http://localhost:4001/entity_instance?select=id", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${token}`,
-      Prefer: "return=representation",
-    },
-    body: JSON.stringify({ owner, template, name, type }),
+  const entity_id = await sql.begin(async sql => {
+    // Grab the owner id.
+    const [{ owningEntity, owningLegacyCustomer }] = await sql`
+      select
+        entityinstance.entityinstanceuuid as "owningEntity",
+        customer.customerid as "owningLegacyCustomer"
+      from public.workresult
+      inner join public.customer on workresultcustomerid = customerid
+      inner join entity.entityinstance on customeruuid = entityinstanceoriginaluuid
+      where workresult.id = ${fieldId}
+    `;
+
+    // Create the custag and entity instance.
+    const [
+      { create_custaguuid: custag_id, create_custagentityuuid: entity_id },
+    ] = await sql`
+      call entity.crud_custag_create(
+        ${owningEntity},
+        ${parent},
+        null,
+        ${order ?? null},
+        ${name},
+        null,
+        null,
+        null,
+        null, 
+        null, 
+        null,
+        null,
+        null,
+        auth.current_identity(${owningLegacyCustomer}, ${ctx.auth.userId})
+      );
+    `;
+
+    // Create the template constraint.
+    await sql`
+      insert into public.worktemplateconstraint (
+        worktemplateconstraintcustomerid,
+        worktemplateconstraintcustomeruuid,
+        worktemplateconstrainttemplateid,
+        worktemplateconstraintresultid,
+        worktemplateconstraintconstrainedtypeid,
+        worktemplateconstraintconstraintid,
+        worktemplateconstraintmodifiedby
+      )
+      select
+        customerid,
+        customeruuid,
+        worktemplate.id,
+        workresult.id,
+        systag.systaguuid,
+        custag.custaguuid,
+        auth.current_identity(customerid, ${ctx.auth.userId})
+      from
+        public.customer,
+        public.workresult,
+        public.worktemplate,
+        public.systag,
+        public.custag
+      where customerid = ${owningLegacyCustomer}
+        and workresult.id = ${fieldId}
+        and workresult.workresultworktemplateid = worktemplate.worktemplateid
+        and custag.custaguuid = ${custag_id}
+        and systag.systaguuid = (
+            select entityinstanceoriginaluuid
+            from entity.entityinstance
+            where entityinstanceuuid = ${parent}
+        )
+    `;
+
+    return entity_id;
   });
 
-  const [entity]: [{ id: ID }] = await r.json();
   return {
-    _id: entity.id,
-    _type: "entity_instance",
-    id: encodeGlobalId({ type: "entity_instance", id: entity.id }),
-  };
-}
-
-/**
- * @gqlType
- */
-export interface EntityTemplate {
-  readonly _type: string;
-  readonly _id: string;
-
-  /** @gqlField */
-  id: ID;
-}
-
-/** @gqlField name */
-export async function entityTemplateName(
-  entity: EntityTemplate,
-  ctx: Context,
-): Promise<DisplayName> {
-  return await ctx.orm.displayName.load(entity.id);
-}
-
-/**
- * @gqlQueryField
- */
-export async function templates(
-  ctx: Context,
-  args: {
-    first?: Int | null;
-    after?: string | null;
-    /**
-     * Only Entities of the given type. The type is the *canonical* type, i.e.
-     * not localized. This is best for programmatic usage.
-     */
-    ofType?: string[] | null;
-  },
-): Promise<Connection<EntityTemplate>> {
-  const token = await getAccessToken(ctx.auth.userId)
-    .then(r => r.json())
-    .then(r => r.access_token);
-
-  const headers = constructHeadersFromArgs(args);
-  headers.set("Authorization", `Bearer ${token}`);
-
-  const q = new URLSearchParams({ select: "id" });
-  if (args.ofType?.length) {
-    // FIXME: This is wrong!
-    q.append("type", `in.(${args.ofType.join(",")})`);
-  }
-
-  const r = await fetch(
-    `http://localhost:4001/entity_template?${q.toString()}`,
-    {
-      method: "GET",
-      headers: headers,
+    cursor: "",
+    node: {
+      _id: entity_id,
+      _type: "entity_instance",
+      id: encodeGlobalId({ type: "entity_instance", id: entity_id }),
     },
-  );
-
-  const rows: { id: string }[] = await r.json();
-  return {
-    edges: rows.map(e => ({
-      cursor: "", // ignored but technically required by the connection spec
-      node: {
-        _id: e.id,
-        _type: "entity_template",
-        id: encodeGlobalId({ id: e.id, type: "entity_template" }),
-      },
-    })),
-    ...extractPageInfo(r),
-  };
-}
-
-/** @gqlMutationField */
-export async function createEntityTemplate(
-  ctx: Context,
-  // Temporary. This should ideally come via the JWT, but we aren't there yet.
-  owner: ID,
-  template: ID,
-  name: string,
-  type: ID,
-): Promise<EntityTemplate> {
-  const token = await getAccessToken(ctx.auth.userId)
-    .then(r => r.json())
-    .then(r => r.access_token);
-
-  const r = await fetch("http://localhost:4001/entity_template?select=id", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${token}`,
-      Prefer: "return=representation",
-    },
-    body: JSON.stringify({ owner, template, name, type }),
-  });
-
-  const [row]: [{ id: ID }] = await r.json();
-  return {
-    _id: row.id,
-    _type: "entity_instance",
-    id: encodeGlobalId({ type: "entity_template", id: row.id }),
   };
 }

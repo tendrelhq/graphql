@@ -1,6 +1,6 @@
 // Bun Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`runtime + reason codes list reason codes 1`] = `
+exports[`runtime + reason codes create some reason codes (for Downtime) 1`] = `
 {
   "instances": {
     "__typename": "EntityInstanceConnection",
@@ -65,7 +65,7 @@ exports[`runtime + reason codes list reason codes 1`] = `
           "__typename": "EntityInstance",
           "name": {
             "__typename": "DisplayName",
-            "value": "Waiting for Materials",
+            "value": "Scheduled Maintenance",
           },
         },
       },
@@ -97,75 +97,12 @@ exports[`runtime + reason codes list reason codes 1`] = `
           "__typename": "EntityInstance",
           "name": {
             "__typename": "DisplayName",
-            "value": "Scheduled Maintenance",
-          },
-        },
-      },
-      {
-        "__typename": "EntityInstanceEdge",
-        "asFieldTemplateValueType": {
-          "__typename": "FieldConnection",
-          "edges": [
-            {
-              "__typename": "FieldEdge",
-              "node": {
-                "__typename": "Field",
-                "name": {
-                  "__typename": "DisplayName",
-                  "value": "Reason Code",
-                },
-                "parent": {
-                  "__typename": "Task",
-                  "name": {
-                    "__typename": "DisplayName",
-                    "value": "Idle Time",
-                  },
-                },
-              },
-            },
-          ],
-        },
-        "node": {
-          "__typename": "EntityInstance",
-          "name": {
-            "__typename": "DisplayName",
-            "value": "Lunch Break",
-          },
-        },
-      },
-      {
-        "__typename": "EntityInstanceEdge",
-        "asFieldTemplateValueType": {
-          "__typename": "FieldConnection",
-          "edges": [
-            {
-              "__typename": "FieldEdge",
-              "node": {
-                "__typename": "Field",
-                "name": {
-                  "__typename": "DisplayName",
-                  "value": "Reason Code",
-                },
-                "parent": {
-                  "__typename": "Task",
-                  "name": {
-                    "__typename": "DisplayName",
-                    "value": "Idle Time",
-                  },
-                },
-              },
-            },
-          ],
-        },
-        "node": {
-          "__typename": "EntityInstance",
-          "name": {
-            "__typename": "DisplayName",
-            "value": "Nothin to do!",
+            "value": "Waiting for Materials",
           },
         },
       },
     ],
+    "totalCount": 3,
   },
 }
 `;
@@ -185,7 +122,7 @@ exports[`runtime + reason codes in the app, get completions 1`] = `
               "__typename": "ValueCompletion",
               "value": {
                 "__typename": "StringValue",
-                "string": "Waiting for Materials",
+                "string": "Machine Down",
               },
             },
           },
@@ -205,7 +142,7 @@ exports[`runtime + reason codes in the app, get completions 1`] = `
               "__typename": "ValueCompletion",
               "value": {
                 "__typename": "StringValue",
-                "string": "Machine Down",
+                "string": "Waiting for Materials",
               },
             },
           },

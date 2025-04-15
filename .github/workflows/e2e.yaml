@@ -44,7 +44,7 @@ jobs:
         uses: actions/cache/restore@v4
         with:
           path: db.dump
-          key: ${{ runner.os }}-db-dump-2025-03-28
+          key: ${{ runner.os }}-db-dump-2025-04-15
       - if: steps.check-cache.outputs.cache-hit != 'true'
         run: nix develop -c just dump
         env:
@@ -59,18 +59,30 @@ jobs:
           key: ${{ steps.check-cache.outputs.cache-primary-key }}
       - run: nix develop -c just dbname=tendrel restore
         env:
-          PGDATABASE: tendrel
           PGHOST: localhost
+          PGDATABASE: ci
+          PGUSER: postgres
+          PGPASSWORD: postgres
+      - run: nix develop -c just target=ci migrate
+        env:
           PGPASSWORD: postgres
           PGUSER: postgres
-      - run: nix develop -c just target=ci migrate
       - run: nix develop -c just install
+      - name: nix develop -c docker compose up -D
+        run: |
+          touch .env.local
+          echo "CLERK_PUBLISHABLE_KEY=${{ secrets.CLERK_PUBLISHABLE_KEY }}" >> .env.local
+          echo "CLERK_SECRET_KEY=${{ secrets.CLERK_SECRET_KEY }}" >> .env.local
+          echo "NODE_ENV=development" >> .env.local
+          echo "PGDATABASE=ci" >> .env.local
+          echo "PGHOST=localhost" >> .env.local
+          echo "PGRST_JWT_SECRET=\"${{ secrets.PGRST_JWT_SECRET }}\"" >> .env.local
+          echo "STAGE=dev" >> .env.local
+          nix develop -c docker compose up -D
       # - run: nix develop -c just test # pgTAP is not installed :(
       - run: nix develop -c bun test
         env:
-          BASE_URL: http://localhost:3001/api/v1
-          PGDATABASE: tendrel
           PGHOST: localhost
-          PGPASSWORD: postgres
-          PGUSER: postgres
+          PGDATABASE: ci
+          PGUSER: graphql
           X_TENDREL_USER: user_2jJ7Xl0LFewQGKKNYwfFWAM0Lmc

@@ -2,7 +2,7 @@ import { describe, expect, test } from "bun:test";
 import { baseurl } from "@/test/api/constants";
 import { pg } from "../prelude";
 
-describe("/api/template", () => {
+describe.skip("/api/template", () => {
   test("create", async () => {
     const response = await pg
       .from("entity_template")

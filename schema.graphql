@@ -844,22 +844,6 @@ type EntityInstanceEdge {
   node: EntityInstance @semanticNonNull
 }
 
-type EntityTemplate {
-  id: ID @semanticNonNull
-  name: DisplayName @semanticNonNull
-}
-
-type EntityTemplateConnection {
-  edges: [EntityTemplateEdge!] @semanticNonNull
-  pageInfo: PageInfo @semanticNonNull
-  totalCount: Int @semanticNonNull
-}
-
-type EntityTemplateEdge {
-  cursor: String @semanticNonNull
-  node: EntityTemplate @semanticNonNull
-}
-
 type EntityValue {
   entity: Component
 }
@@ -1150,18 +1134,12 @@ type Mutation {
   assign(entity: ID!, to: ID!): AssignmentPayload!
   attach(attachments: [URL!]!, entity: ID!): [AttachmentEdge!] @semanticNonNull
   copyFrom(entity: ID!, options: CopyFromOptions!): CopyFromPayload!
-  createEntityInstance(
+  createCustagAsFieldTemplateValueTypeConstraint(
+    field: ID!
     name: String!
-    owner: ID!
-    template: ID!
-    type: ID!
-  ): EntityInstance @semanticNonNull
-  createEntityTemplate(
-    name: String!
-    owner: ID!
-    template: ID!
-    type: ID!
-  ): EntityTemplate @semanticNonNull
+    order: Int
+    parent: ID!
+  ): EntityInstanceEdge @semanticNonNull
   createInvitation(input: CreateInvitationInput!): Worker!
   createLocation(input: CreateLocationInput!): Location @semanticNonNull
   """
@@ -1383,15 +1361,6 @@ type Query {
   languages: [Language!]!
   node(id: ID!): Node!
   roles: [Tag!]!
-  templates(
-    after: String
-    first: Int
-    """
-    Only Entities of the given type. The type is the *canonical* type, i.e.
-    not localized. This is best for programmatic usage.
-    """
-    ofType: [String!]
-  ): EntityTemplateConnection @semanticNonNull
   """
   Query for Trackable entities in the given `parent` hierarchy.
 

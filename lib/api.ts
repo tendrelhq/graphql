@@ -9,41 +9,54 @@ export function extractPageInfo(res: Response): PaginationMeta {
     "cannot paginate without content-range",
   );
 
-  const [start, end, count] = map(contentRange.split("/"), cr =>
-    [...cr[0].split("-"), cr[1]].map(Number),
-  );
-  assert(Number.isFinite(start), `invalid start: ${contentRange}`);
-  assert(Number.isFinite(end), `invalid start: ${contentRange}`);
-  assert(Number.isFinite(count), `invalid start: ${contentRange}`);
+  const range = map(contentRange.split("/"), cr => {
+    const [start, end] = cr[0].split("-");
+    return {
+      start: start,
+      end: end,
+      count: Number(cr[1]),
+    };
+  });
+  assert(Number.isFinite(range.count), `invalid count: ${contentRange}`);
 
-  if (res.status === 206) {
+  if (range.start === "*" || res.status !== 206) {
+    // Range not satisfiable
     return {
       pageInfo: {
-        hasNextPage: true,
+        hasNextPage: false,
         hasPreviousPage: false,
-        endCursor: end.toString(),
-        startCursor: start.toString(),
       },
-      totalCount: count,
+      totalCount: range.count,
     };
   }
 
+  const start = Number(range.start);
+  const end = Number(range.end);
+  assert(Number.isFinite(start), `invalid start: ${contentRange}`);
+  assert(Number.isFinite(end), `invalid end: ${contentRange}`);
   return {
     pageInfo: {
-      hasNextPage: false,
-      hasPreviousPage: false,
+      hasNextPage: end < range.count - 1,
+      hasPreviousPage: start > 0,
+      endCursor: end.toString(),
+      startCursor: start.toString(),
     },
-    totalCount: count,
+    totalCount: range.count,
   };
 }
 
 export function constructHeadersFromArgs(
   args: RawPaginationArgs,
-  preferences?: string[],
+  preferences?: Record<string, string> & {
+    count?: "estimated" | "exact" | "planned";
+  },
 ): Headers {
-  const headers = new Headers({
-    Prefer: ["count=estimated"].concat(preferences ?? []).join(","),
-  });
+  const prefers = preferences
+    ? Object.keys(preferences)
+        .map(key => `${key}=${preferences[key]}`)
+        .join(",")
+    : "count=estimated";
+  const headers = new Headers({ Prefer: prefers });
   const lower = Number(args.after ?? 0);
   const count = Math.min(args.first ?? 100, 100);
   const upper = lower + count - 1;

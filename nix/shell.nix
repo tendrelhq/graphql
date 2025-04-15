@@ -23,6 +23,7 @@
           config.packages.devenv
           pkgs.awscli2
           pkgs.bun
+          pkgs.docker
           pkgs.just
           pkgs.nodejs
           pkgs.python3

@@ -50,7 +50,6 @@ secrets:
     secretsmanager: "/database/service/graphql:dbname::"
 
 variables:
-  BASE_URL: https://${COPILOT_ENVIRONMENT_NAME}.${COPILOT_APPLICATION_NAME}.tendrel.io
   CLERK_PUBLISHABLE_KEY: pk_live_Y2xlcmsudGVuZHJlbC5pbyQ
   NODE_ENV: production
   STAGE: ${COPILOT_ENVIRONMENT_NAME}
