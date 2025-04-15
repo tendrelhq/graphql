@@ -57,7 +57,7 @@ jobs:
         with:
           path: db.dump
           key: ${{ steps.check-cache.outputs.cache-primary-key }}
-      - run: nix develop -c just dbname=tendrel restore
+      - run: nix develop -c just restore
         env:
           PGHOST: localhost
           PGDATABASE: ci
@@ -68,7 +68,7 @@ jobs:
           PGPASSWORD: postgres
           PGUSER: postgres
       - run: nix develop -c just install
-      - name: nix develop -c docker compose up -D
+      - name: nix develop -c docker compose up --build --detach
         run: |
           touch .env.local
           echo "CLERK_PUBLISHABLE_KEY=${{ secrets.CLERK_PUBLISHABLE_KEY }}" >> .env.local
