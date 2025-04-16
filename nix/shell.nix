@@ -31,6 +31,7 @@
           pkgs.vtsls
         ];
         BIOME_BINARY = lib.getExe config.packages.biome;
+        COMPOSE_FILE = "./config/compose.yaml";
         # Janky af I know, but an easy way to silently fail successfully
         TREEFMT = "treefmt";
       };

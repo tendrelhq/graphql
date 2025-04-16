@@ -78,7 +78,7 @@ jobs:
           echo "PGHOST=localhost" >> .env.local
           echo "PGRST_JWT_SECRET=\"${{ secrets.PGRST_JWT_SECRET }}\"" >> .env.local
           echo "STAGE=dev" >> .env.local
-          nix develop -c docker compose up --build --detach
+          nix develop -c docker compose up --build --wait
       # - run: nix develop -c just test # pgTAP is not installed :(
       - run: nix develop -c bun test
         env:
