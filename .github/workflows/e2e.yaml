@@ -68,7 +68,7 @@ jobs:
           PGPASSWORD: postgres
           PGUSER: postgres
       - run: nix develop -c just install
-      - name: nix develop -c docker compose up --build --detach
+      - name: nix develop -c docker compose up
         run: |
           touch .env.local
           echo "CLERK_PUBLISHABLE_KEY=${{ secrets.CLERK_PUBLISHABLE_KEY }}" >> .env.local
@@ -85,4 +85,5 @@ jobs:
           PGHOST: localhost
           PGDATABASE: ci
           PGUSER: graphql
+          PGPASSWORD: graphql
           X_TENDREL_USER: user_2jJ7Xl0LFewQGKKNYwfFWAM0Lmc
