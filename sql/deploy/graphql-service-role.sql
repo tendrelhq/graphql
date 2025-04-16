@@ -2,7 +2,7 @@
 
 BEGIN;
 
-create role graphql login;
+create role graphql login password 'graphql';
 
 grant usage on schema public to graphql;
 grant all on all tables in schema public to graphql;
