@@ -52,25 +52,6 @@ exports[`[console] workers list 1`] = `
             "active": {
               "active": true,
             },
-            "displayName": "Jerry Garcia",
-            "firstName": "Jerry",
-            "language": {
-              "code": "en",
-            },
-            "lastName": "Garcia",
-            "role": {
-              "type": "Admin",
-            },
-            "scanCode": null,
-          },
-        },
-        {
-          "__typename": "WorkerEdge",
-          "node": {
-            "__typename": "Worker",
-            "active": {
-              "active": true,
-            },
             "displayName": "Mike Heavner",
             "firstName": "Mike",
             "language": {
@@ -165,7 +146,7 @@ exports[`[console] workers list 1`] = `
         "hasNextPage": false,
         "hasPreviousPage": false,
       },
-      "totalCount": 8,
+      "totalCount": 7,
     },
   },
 }
