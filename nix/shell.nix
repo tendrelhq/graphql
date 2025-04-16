@@ -26,8 +26,9 @@
           pkgs.docker
           pkgs.just
           pkgs.nodejs
-          pkgs.python3
           pkgs.openssl
+          pkgs.python3
+          pkgs.ruff
           pkgs.vtsls
         ];
         BIOME_BINARY = lib.getExe config.packages.biome;
@@ -104,6 +105,7 @@
           enable = true;
           includes = ["*.yaml" "*.yml"];
         };
+        ruff-format.enable = true;
         shfmt.enable = true;
       };
       settings = {
@@ -124,10 +126,10 @@
           "*.sql"
           "*.template"
           "*.toml"
+          "*.txt"
           ".*" # hidden files
           "copilot/.workspace"
           "justfile"
-          "tests-to-fix.txt"
         ];
       };
     };

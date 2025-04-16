@@ -1,25 +1,14 @@
 # @tendrelhq/graphql
 
-Development requires bun. For best results, run locally with docker.
+To get started:
 
-1. `cp .envrc.template .envrc` and fill in the blanks.
-2. `cp .env.local.template .env.local` and fill in the blanks.
-3. for development, run `bun install`
-4. to run locally, run `just start`[^1] (`docker compose up`)
-
-If you have [nix] installed (which I highly recommend you do) you can use the
-dev environment via `devenv up`. This will start:
-
-1. postgresql at [localhost:5432]
-2. pgadmin at [localhost:5050]
-
-The first time you do this will require `syncdb`ing; I will fix this eventually.
-
-Lastly, there are a bunch of sql scripts in [./sql](./sql). I plan on manually keeping
-these things up to date in the production database. In development I've been
-using [sqitch] as a helpful little migration tool. Once installed, basically the
-only command you need is `sqitch rebase -y`. This will revert (if applicable)
-and deploy the scripts in [./sql](./sql) as per [./sql/sqitch.plan](./sql/sqitch.plan).
+0. Set up PostgreSQL. If you use [nix], you can use the devenv via `devenv up`.
+   - If this is your first time, run the [./sql/deploy](./sql/deploy) scripts in the order specified by [./sql/sqitch.plan](./sql/sqitch.plan).
+   - e.g. `psql -f ./sql/deploy/graphql-service-role.sql`
+   - You can use [sqitch] if you feel like it. I use it during development.
+1. `cp .env.local.template .env.local` and fill in the blanks.
+2. `cp .envrc.template .envrc` and fill in the blanks.
+3. `docker compose up`
 
 ### formatting
 
@@ -67,13 +56,5 @@ copilot/pipelines/graphql-workloads/buildspec.yml 4ms (unchanged)
 copilot/pipelines/graphql-workloads/manifest.yml 1ms (unchanged)
 ```
 
-[^1]:
-    If you don't have [just] installed, you can either install it or run the
-    underlying command directly by looking at [./justfile](./justfile)
-
-[bun]: https://github.com/oven-sh/bun
-[just]: https://github.com/casey/just
 [nix]: https://nixos.org/download/
-[ruru]: https://github.com/graphile/crystal/tree/main/grafast/ruru
-[pgweb]: https://github.com/sosedoff/pgweb
 [sqitch]: https://sqitch.org/
