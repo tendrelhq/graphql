@@ -1,6 +1,6 @@
 # vim: ft=sh
 
-dotenv_if_exits .env.local
+dotenv_if_exists .env.local
 
 layout node
 

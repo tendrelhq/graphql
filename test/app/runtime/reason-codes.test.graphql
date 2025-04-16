@@ -42,6 +42,21 @@ mutation CreateReasonCode(
         value
       }
     }
+    asFieldTemplateValueType {
+      edges {
+        node {
+          id
+          name {
+            value
+          }
+          parent {
+            name {
+              value
+            }
+          }
+        }
+      }
+    }
   }
 }
 

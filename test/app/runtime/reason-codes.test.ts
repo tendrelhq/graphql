@@ -61,6 +61,23 @@ describe("runtime + reason codes", () => {
               value: code,
             },
           },
+          asFieldTemplateValueType: {
+            edges: [
+              {
+                node: {
+                  id: expect.any(String),
+                  name: {
+                    value: "Reason Code",
+                  },
+                  parent: {
+                    name: {
+                      value: "Downtime",
+                    },
+                  },
+                },
+              },
+            ],
+          },
         },
       });
     }
@@ -112,6 +129,23 @@ describe("runtime + reason codes", () => {
             name: {
               value: code,
             },
+          },
+          asFieldTemplateValueType: {
+            edges: [
+              {
+                node: {
+                  id: expect.any(String),
+                  name: {
+                    value: "Reason Code",
+                  },
+                  parent: {
+                    name: {
+                      value: "Idle Time",
+                    },
+                  },
+                },
+              },
+            ],
           },
         },
       });

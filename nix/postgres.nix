@@ -79,9 +79,13 @@
 
       services.pgadmin.pga1 = {
         enable = true;
-        extraConfig.SERVER_MODE = false; # single user
-        initialEmail = "postgres@localhost";
-        initialPassword = "postgres";
+        extraConfig = {
+          # Run in desktop mode with the master password disabled.
+          MASTER_PASSWORD_REQUIRED = false;
+          SERVER_MODE = false;
+        };
+        initialEmail = "";
+        initialPassword = "";
       };
 
       settings.processes = {
