@@ -17,22 +17,22 @@ import {
   assertNonNull,
   assertUnderlyingType,
   buildPaginationArgs,
+  map,
   mapOrElse,
   normalizeBase64,
 } from "@/util";
+import { Temporal } from "@js-temporal/polyfill";
 import { GraphQLError } from "graphql/error";
 import type { ID, Int } from "grats";
 import type { Fragment } from "postgres";
-import { match } from "ts-pattern";
+import { P, match } from "ts-pattern";
 import { decodeGlobalId, encodeGlobalId } from "..";
 import type { Aggregate } from "../aggregation";
 import {
   type Component,
   type Field,
+  type FieldDefinitionInput,
   type FieldInput,
-  type FieldQuery,
-  type ValueInput,
-  type ValueType,
   field$fragment,
 } from "../component";
 import type { Refetchable } from "../node";
@@ -48,200 +48,6 @@ export type ConstructorArgs = {
 };
 
 /**
- * @gqlInput
- * @oneOf
- */
-type NodeOperations =
-  | {
-      activate: ActivateNodeOperation;
-    }
-  | {
-      delete: DeleteNodeOperation;
-    }
-  | {
-      publish: PublishNodeOperation;
-    }
-  | {
-      rename: RenameNodeOperation;
-    };
-
-/** @gqlInput */
-type ActivateNodeOperation = {
-  node: ID;
-  active: boolean;
-};
-
-/** @gqlInput */
-type DeleteNodeOperation = {
-  node: ID;
-};
-
-/** @gqlInput */
-type PublishNodeOperation = {
-  node: ID;
-};
-
-/** @gqlInput */
-type RenameNodeOperation = {
-  node: ID;
-  name: string;
-};
-
-/**
- * @gqlInput
- * @oneOf
- */
-type FieldOperations =
-  | {
-      add: AddFieldOperation;
-    }
-  | {
-      field: NodeOperations;
-    }
-  | {
-      set: SetFieldOperation;
-    };
-
-/** @gqlInput */
-type AddFieldOperation = {
-  parent: ID;
-  field?: ID | null;
-  value?: ValueInput | null;
-  valueType: ValueType;
-};
-
-/** @gqlInput */
-type SetFieldOperation = {
-  parent?: ID | null;
-  field?: ID | null;
-  value?: ValueInput | null;
-  valueType: ValueType;
-};
-
-/**
- * @gqlInput
- * @oneOf
- */
-type TaskOperations =
-  | {
-      advance: AdvanceTaskOperation;
-    }
-  | {
-      assign: AssignTaskOperation;
-    }
-  | {
-      instantiate: InstantiateTaskOperation;
-    };
-
-/** @gqlInput */
-type AdvanceTaskOperation = {
-  task: ID;
-  hash: string;
-  /// If not provided, then advance the Task in accordance with its internal
-  /// state machine. Typically this means: Open -> InProgress -> Closed.
-  // targetState?: TaskState | null;
-};
-
-/** @gqlInput */
-type AssignTaskOperation = {
-  task: ID;
-  assignTo?: ID[] | null;
-  unassignFrom?: ID[] | null;
-};
-
-/** @gqlInput */
-type InstantiateTaskOperation = {
-  task: ID;
-  /**
-   * Immediately assign the newly instantiated Task to the given identities.
-   */
-  assignees?: ID[] | null;
-  /**
-   * Apply the given field overrides to the newly instantiated Task.
-   */
-  fields?: FieldInput[] | null;
-  /**
-   * Instantiate the Task into the given TaskState.
-   */
-  state?: TaskStateInput | null;
-};
-
-/**
- * @gqlInput
- * @oneOf
- */
-type TaskOperation =
-  | {
-      field: FieldOperations;
-    }
-  | {
-      node: NodeOperations;
-    }
-  | {
-      task: TaskOperations;
-    };
-
-/** @gqlUnion */
-type TaskOperationResult = TaskOperationOk | TaskOperationErr;
-
-/** @gqlType */
-type TaskOperationOk = {
-  __typename: "TaskOperationOk";
-  /**
-   * The total count of operations applied as part of this operation.
-   *
-   * @gqlField
-   */
-  count: Int;
-  /**
-   * Nodes that were created as a result of this operation.
-   *
-   * @gqlField
-   */
-  created: Refetchable[];
-  /**
-   * Nodes that were deleted as a result of this operation.
-   *
-   * @gqlField
-   */
-  deleted: ID[];
-  /**
-   * Nodes that were updated as a result of this operation.
-   *
-   * @gqlField
-   */
-  updated: Refetchable[];
-};
-
-/** @gqlType */
-type TaskOperationErr = {
-  __typename: "TaskOperationErr";
-  /**
-   * Fatal errors that caused the operation to fail.
-   *
-   * @gqlField
-   */
-  errors: Diagnostic[];
-};
-
-/**
- * @gqlMutationField
- */
-export async function operateOnTask(
-  ops: TaskOperation[],
-): Promise<TaskOperationResult> {
-  return {
-    __typename: "TaskOperationErr",
-    errors: [
-      {
-        __typename: "Diagnostic",
-        code: DiagnosticKind.feature_not_available,
-      },
-    ],
-  };
-}
-
-/**
  * A system-level component that identifies an Entity as being applicable to
  * Tendrel's internal "task processing pipeline". In practice, Tasks most often
  * represent "jobs" performed by humans. However, this need not always be the
@@ -254,14 +60,14 @@ export async function operateOnTask(
  */
 export class Task implements Assignable, Component, Refetchable, Trackable {
   readonly __typename = "Task" as const;
-  readonly _type: string;
+  readonly _type: "workinstance" | "worktemplate";
   readonly _id: string;
   readonly id: ID;
 
   constructor(args: ConstructorArgs) {
     this.id = normalizeBase64(args.id);
     const { type, id } = decodeGlobalId(this.id);
-    this._type = type;
+    this._type = assertUnderlyingType(["workinstance", "worktemplate"], type);
     this._id = id;
   }
 
@@ -284,8 +90,10 @@ export class Task implements Assignable, Component, Refetchable, Trackable {
     return await ctx.orm.displayName.load(this.id);
   }
 
-  // Not exposed via GraphQL, yet.
-  async field(query: FieldQuery): Promise<Field | null> {
+  /**
+   * @gqlField
+   */
+  async field(args: { byName?: string | null }): Promise<Field | null> {
     const [row] = await match(this._type)
       .with(
         "workinstance",
@@ -304,15 +112,16 @@ export class Task implements Assignable, Component, Refetchable, Trackable {
                   on wri.workresultinstanceworkresultid = wr.workresultid
               inner join public.systag as t on wr.workresulttypeid = t.systagid
               ${
-                query.byName
+                args.byName
                   ? sql`
               inner join public.languagemaster as n
                   on wr.workresultlanguagemasterid = n.languagemasterid
-                  and n.languagemastersource = ${query.byName}
+                  and n.languagemastersource = ${args.byName}
                   `
                   : sql``
               }
               where wi.id = ${this._id}
+              limit 1
           )
 
           ${field$fragment}
@@ -332,24 +141,150 @@ export class Task implements Assignable, Component, Refetchable, Trackable {
                   on wt.worktemplateid = wr.workresultworktemplateid
               inner join public.systag as t on wr.workresulttypeid = t.systagid
               ${
-                query.byName
+                args.byName
                   ? sql`
               inner join
                   public.languagemaster as n
                   on wr.workresultlanguagemasterid = n.languagemasterid
-                  and n.languagemastersource = ${query.byName}
+                  and n.languagemastersource = ${args.byName}
                   `
                   : sql``
               }
               where wt.id = ${this._id}
+              limit 1
           )
 
           ${field$fragment}
         `,
       )
-      .otherwise(() => []);
+      .exhaustive();
 
     return row ?? null;
+  }
+
+  async addField(ctx: Context, input: FieldDefinitionInput): Promise<Field> {
+    const cte = match(this._type)
+      .with(
+        "workinstance",
+        () => sql`
+          select
+            customer.customeruuid as customer_id,
+            'en' as language_type,
+            auth.current_identity(customer.customerid, current_setting('user.id')) as modified_by,
+            worktemplate.id as template_id
+          from public.workinstance
+          inner join public.customer on workinstancecustomerid = customerid
+          inner join public.worktemplate on workinstanceworktemplateid = worktemplateid
+          where id = ${this._id}
+        `,
+      )
+      .with(
+        "worktemplate",
+        () => sql`
+          select
+            customer.customeruuid as customer_id,
+            'en' as language_type,
+            auth.current_identity(customer.customerid, current_setting('user.id')) as modified_by,
+            worktemplate.id as template_id
+          from public.worktemplate
+          inner join public.customer on worktemplatecustomerid = customerid
+          where id = ${this._id}
+        `,
+      )
+      .exhaustive();
+
+    const result = await sql.begin(async sql => {
+      await setCurrentIdentity(sql, ctx);
+      return await sql`
+        with cte as (${cte})
+        select t.*
+        from
+          cte,
+          engine1.upsert_field_t(
+            customer_id := cte.customer_id,
+            language_type := cte.language_type,
+            modified_by := cte.modified_by,
+            template_id := cte.template_id,
+            field_id := null,
+            field_name := ${input.name},
+            field_order := ${input.order ?? 0},
+            field_type := ${input.type}
+          ) as ops,
+          engine1.execute(ops.*) as t
+        ;
+      `;
+    });
+
+    // TODO: the return value could be more helpful.
+    // For now we know we the workresult will always be the first one.
+    const field: string = assertNonNull(
+      map(result.at(0)?.ctx.at(0)?.created.at(0)?.node, id =>
+        encodeGlobalId({ type: "workresult", id }),
+      ),
+      "failed to add field",
+    );
+
+    // This is still ugly...
+    // but honestly it's gotten way better since the Checklist days lmao.
+    return match(input.type)
+      .with("Boolean", () => ({
+        id: field,
+        value: {
+          __typename: "BooleanValue" as const,
+          boolean: match(input.value)
+            .with({ boolean: P.boolean }, v => v.boolean)
+            .otherwise(() => null),
+        },
+        valueType: "boolean" as const,
+      }))
+      .with("Entity", () => ({
+        id: field,
+        value: {
+          __typename: "EntityValue" as const,
+          entity: null,
+        },
+        valueType: "entity" as const,
+      }))
+      .with("Number", () => ({
+        id: field,
+        value: {
+          __typename: "NumberValue" as const,
+          number: match(input.value)
+            .with({ number: P.number }, v => v.number)
+            .otherwise(() => null),
+        },
+        valueType: "number" as const,
+      }))
+      .with("String", () => ({
+        id: field,
+        value: {
+          __typename: "StringValue" as const,
+          string: match(input.value)
+            .with({ string: P.string }, v => v.string)
+            .otherwise(() => null),
+        },
+        valueType: "string" as const,
+      }))
+      .with("Timestamp", () => ({
+        id: field,
+        value: {
+          __typename: "TimestampValue" as const,
+          timestamp: match(input.value)
+            .with({ timestamp: P.string }, v =>
+              Temporal.Instant.from(v.timestamp).epochSeconds.toString(),
+            )
+            .otherwise(() => null),
+        },
+        valueType: "timestamp" as const,
+      }))
+      .otherwise(() => {
+        throw new GraphQLError("Unknown Field value type", {
+          extensions: {
+            code: "BAD_REQUEST",
+            hint: "Expected one of: Boolean, Entity, Number, String, Timestamp",
+          },
+        });
+      });
   }
 
   /**
@@ -1313,7 +1248,7 @@ export function applyAssignments_(
 }
 
 /**
- * TODO: description.
+ * The set of Fields for the given Task.
  *
  * @gqlField
  */
@@ -1333,7 +1268,7 @@ export async function fields(
     };
   }
 
-  // FIXME: one last bit of jankiness down below: L114-118, L161-165.
+  // FIXME: one last bit of jankiness down below: L1168-1173, L1215-1220.
   // This hack is solely for the janky ass start/end time override "fields".
   const rows = await match(parent._type)
     .with(

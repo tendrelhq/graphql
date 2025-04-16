@@ -1,4 +1,3 @@
-dbname     := "dev"
 image_name := "tendrel-graphql-dev"
 node_env   := "development"
 target     := "dev"
@@ -9,8 +8,8 @@ dump:
     pg_dump --verbose --format=c --no-acl --no-owner --exclude-schema=datawarehouse --exclude-schema=upload --clean --if-exists --file db.dump
 
 restore:
-    createdb {{dbname}}
-    pg_restore --verbose --exit-on-error --no-acl --no-owner --clean --if-exists --dbname={{dbname}} db.dump
+    createdb $PGDATABASE
+    pg_restore --verbose --exit-on-error --no-acl --no-owner --clean --if-exists --dbname=$PGDATABASE db.dump
 
 install:
     bun install --frozen-lockfile

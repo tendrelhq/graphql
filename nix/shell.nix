@@ -23,12 +23,15 @@
           config.packages.devenv
           pkgs.awscli2
           pkgs.bun
+          pkgs.docker
           pkgs.just
           pkgs.nodejs
+          pkgs.python3
           pkgs.openssl
           pkgs.vtsls
         ];
         BIOME_BINARY = lib.getExe config.packages.biome;
+        COMPOSE_FILE = "./config/compose.yaml";
         # Janky af I know, but an easy way to silently fail successfully
         TREEFMT = "treefmt";
       };
@@ -119,6 +122,7 @@
           "*.plan"
           "*.snap"
           "*.sql"
+          "*.template"
           "*.toml"
           ".*" # hidden files
           "copilot/.workspace"

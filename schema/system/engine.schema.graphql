@@ -1,12 +1,3 @@
-# Entrypoints into the "engine"
-type Query {
-  entity(id: ID!): EntityConnection!
-}
-
-type Mutation {
-  createEntity(type: String!, id: String, suffix: [String!]): ID!
-}
-
 """
 State characterizes something, most commonly an entity, as existing in a
 particular state. For example, an entity could be in a "pending" state.
@@ -20,16 +11,6 @@ type DebugInfo {
   # createdBy: Identity
   updatedAt: String!
   updatedBy: Identity
-}
-
-type EntityConnection {
-  entity: ID!
-  components(
-    first: Int
-    last: Int
-    before: String
-    after: String
-  ): ComponentConnection!
 }
 
 type ComponentConnection {

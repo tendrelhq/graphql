@@ -1,0 +1,190 @@
+// Bun Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`runtime + reason codes create some reason codes (for Downtime) 1`] = `
+{
+  "instances": {
+    "__typename": "EntityInstanceConnection",
+    "edges": [
+      {
+        "__typename": "EntityInstanceEdge",
+        "asFieldTemplateValueType": {
+          "__typename": "FieldConnection",
+          "edges": [
+            {
+              "__typename": "FieldEdge",
+              "node": {
+                "__typename": "Field",
+                "name": {
+                  "__typename": "DisplayName",
+                  "value": "Reason Code",
+                },
+                "parent": {
+                  "__typename": "Task",
+                  "name": {
+                    "__typename": "DisplayName",
+                    "value": "Downtime",
+                  },
+                },
+              },
+            },
+          ],
+        },
+        "node": {
+          "__typename": "EntityInstance",
+          "name": {
+            "__typename": "DisplayName",
+            "value": "Machine Down",
+          },
+        },
+      },
+      {
+        "__typename": "EntityInstanceEdge",
+        "asFieldTemplateValueType": {
+          "__typename": "FieldConnection",
+          "edges": [
+            {
+              "__typename": "FieldEdge",
+              "node": {
+                "__typename": "Field",
+                "name": {
+                  "__typename": "DisplayName",
+                  "value": "Reason Code",
+                },
+                "parent": {
+                  "__typename": "Task",
+                  "name": {
+                    "__typename": "DisplayName",
+                    "value": "Downtime",
+                  },
+                },
+              },
+            },
+          ],
+        },
+        "node": {
+          "__typename": "EntityInstance",
+          "name": {
+            "__typename": "DisplayName",
+            "value": "Scheduled Maintenance",
+          },
+        },
+      },
+      {
+        "__typename": "EntityInstanceEdge",
+        "asFieldTemplateValueType": {
+          "__typename": "FieldConnection",
+          "edges": [
+            {
+              "__typename": "FieldEdge",
+              "node": {
+                "__typename": "Field",
+                "name": {
+                  "__typename": "DisplayName",
+                  "value": "Reason Code",
+                },
+                "parent": {
+                  "__typename": "Task",
+                  "name": {
+                    "__typename": "DisplayName",
+                    "value": "Downtime",
+                  },
+                },
+              },
+            },
+          ],
+        },
+        "node": {
+          "__typename": "EntityInstance",
+          "name": {
+            "__typename": "DisplayName",
+            "value": "Waiting for Materials",
+          },
+        },
+      },
+    ],
+    "totalCount": 3,
+  },
+}
+`;
+
+exports[`runtime + reason codes in the app, get completions 1`] = `
+{
+  "node": {
+    "__typename": "Task",
+    "reasonCode": {
+      "__typename": "Field",
+      "completions": {
+        "__typename": "ValueCompletionConnection",
+        "edges": [
+          {
+            "__typename": "ValueCompletionEdge",
+            "node": {
+              "__typename": "ValueCompletion",
+              "value": {
+                "__typename": "StringValue",
+                "string": "Machine Down",
+              },
+            },
+          },
+          {
+            "__typename": "ValueCompletionEdge",
+            "node": {
+              "__typename": "ValueCompletion",
+              "value": {
+                "__typename": "StringValue",
+                "string": "Scheduled Maintenance",
+              },
+            },
+          },
+          {
+            "__typename": "ValueCompletionEdge",
+            "node": {
+              "__typename": "ValueCompletion",
+              "value": {
+                "__typename": "StringValue",
+                "string": "Waiting for Materials",
+              },
+            },
+          },
+        ],
+      },
+    },
+  },
+}
+`;
+
+exports[`runtime + reason codes in the app, get completions 2`] = `
+{
+  "node": {
+    "__typename": "Task",
+    "reasonCode": {
+      "__typename": "Field",
+      "completions": {
+        "__typename": "ValueCompletionConnection",
+        "edges": [
+          {
+            "__typename": "ValueCompletionEdge",
+            "node": {
+              "__typename": "ValueCompletion",
+              "value": {
+                "__typename": "StringValue",
+                "string": "Lunch Break",
+              },
+            },
+          },
+          {
+            "__typename": "ValueCompletionEdge",
+            "node": {
+              "__typename": "ValueCompletion",
+              "value": {
+                "__typename": "StringValue",
+                "string": "Nothin to do!",
+              },
+            },
+          },
+        ],
+      },
+    },
+  },
+}
+`;

@@ -79,7 +79,6 @@
 
       services.pgadmin.pga1 = {
         enable = true;
-        #
         extraConfig.SERVER_MODE = false; # single user
         initialEmail = "postgres@localhost";
         initialPassword = "postgres";
@@ -88,21 +87,6 @@
       settings.processes = {
         pga1 = {
           depends_on.pg1.condition = "process_healthy";
-        };
-
-        postgrest = {
-          command = config.packages.postgrest;
-          depends_on.pg1.condition = "process_healthy";
-          liveness_probe.http_get = {
-            host = "localhost";
-            path = "/live";
-            port = 4002;
-          };
-          readiness_probe.http_get = {
-            host = "localhost";
-            path = "/ready";
-            port = 4002;
-          };
         };
       };
     };

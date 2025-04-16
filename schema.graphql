@@ -50,11 +50,6 @@ interface Activatable implements Component {
   id: ID!
 }
 
-input ActivateNodeOperation {
-  active: Boolean!
-  node: ID!
-}
-
 type ActivationStatus {
   activatedAt: String
   active: Boolean!
@@ -77,21 +72,9 @@ input ActiveInput {
   updatedAt: TemporalInput
 }
 
-input AddFieldOperation {
-  field: ID
-  parent: ID!
-  value: ValueInput
-  valueType: ValueType!
-}
-
 input AdvanceFsmOptions {
   fsm: AdvanceTaskOptions!
   task: AdvanceTaskOptions!
-}
-
-input AdvanceTaskOperation {
-  hash: String!
-  task: ID!
 }
 
 input AdvanceTaskOptions {
@@ -130,12 +113,6 @@ type Aggregate {
 
 enum ApplicationType {
   Checklist
-}
-
-input AssignTaskOperation {
-  assignTo: [ID!]
-  task: ID!
-  unassignFrom: [ID!]
 }
 
 """
@@ -698,10 +675,6 @@ type DebugInfo {
   updatedBy: Identity
 }
 
-input DeleteNodeOperation {
-  node: ID!
-}
-
 type Description implements Component & Node {
   description: DynamicString
     @deprecated(reason: "Use Description.locale and/or Description.value.")
@@ -845,14 +818,30 @@ input EnabledLanguageSearchOptions {
   primary: Boolean
 }
 
-type EntityConnection {
-  components(
-    after: String
-    before: String
-    first: Int
-    last: Int
-  ): ComponentConnection!
-  entity: ID!
+"""
+Entities represent distinct objects in the system. They can be physical
+objects, like Locations, Resources and Workers, or logical ones, like
+"Scan Codes".
+"""
+type EntityInstance {
+  id: ID @semanticNonNull
+  name: DisplayName @semanticNonNull
+}
+
+type EntityInstanceConnection {
+  edges: [EntityInstanceEdge!] @semanticNonNull
+  pageInfo: PageInfo @semanticNonNull
+  totalCount: Int @semanticNonNull
+}
+
+type EntityInstanceEdge {
+  """
+  Lift an EntityInstance to a set of Fields where the given EntityInstance
+  identifies as the Field's ValueType.
+  """
+  asFieldTemplateValueType: FieldConnection @semanticNonNull
+  cursor: String @semanticNonNull
+  node: EntityInstance @semanticNonNull
 }
 
 type EntityValue {
@@ -870,6 +859,25 @@ type Field {
     last: Int
   ): AttachmentConnection @semanticNonNull
   """
+  Intended to provide "auto-completion" in a frontend setting, this API returns
+  *distinct known values* for a given Field. For Fields without constraints
+  (which is most of them), this will return a "frecency" list of previously
+  used values for the given Field. When constraints are involved, the
+  completion list represents the *allowed* set of values for the given Field.
+
+  Note that "frecency" is not currently implemented. For such Fields (i.e. those
+  without constraints) you will simply get back an empty completion list.
+
+  Note also that currently there is no enforcement of the latter, constraint-based
+  semantic in the backend! The client *must* validate user input using the
+  completion list *before* issuing, for example, an `applyFieldEdits` mutation.
+  Otherwise the backend will gladly accept arbitrary values (assuming they are,
+  of course, of the correct type).
+
+  Note also that pagination is not currently implemented.
+  """
+  completions: ValueCompletionConnection @semanticNonNull
+  """
   Description of a Field.
   """
   description: Description
@@ -881,6 +889,7 @@ type Field {
   Display name for a Field.
   """
   name: DisplayName @semanticNonNull
+  parent: Task @semanticNonNull
   """
   The value for this Field, if any. This field will always be present (when
   requested) for the given Field so as to convey the underlying data type of
@@ -917,12 +926,6 @@ input FieldInput {
   ```
   """
   valueType: ValueType!
-}
-
-input FieldOperations @oneOf {
-  add: AddFieldOperation
-  field: NodeOperations
-  set: SetFieldOperation
 }
 
 """
@@ -1003,22 +1006,6 @@ input InstantToStringOptions {
 
 input InstantiateOptions {
   fields: [FieldInput!]
-}
-
-input InstantiateTaskOperation {
-  """
-  Immediately assign the newly instantiated Task to the given identities.
-  """
-  assignees: [ID!]
-  """
-  Apply the given field overrides to the newly instantiated Task.
-  """
-  fields: [FieldInput!]
-  """
-  Instantiate the Task into the given TaskState.
-  """
-  state: TaskStateInput
-  task: ID!
 }
 
 type Invitation {
@@ -1147,17 +1134,31 @@ type Mutation {
   assign(entity: ID!, to: ID!): AssignmentPayload!
   attach(attachments: [URL!]!, entity: ID!): [AttachmentEdge!] @semanticNonNull
   copyFrom(entity: ID!, options: CopyFromOptions!): CopyFromPayload!
-  createEntity(id: String, suffix: [String!], type: String!): ID!
+  createCustagAsFieldTemplateValueTypeConstraint(
+    field: ID!
+    name: String!
+    order: Int
+    parent: ID!
+  ): EntityInstanceEdge @semanticNonNull
   createInvitation(input: CreateInvitationInput!): Worker!
   createLocation(input: CreateLocationInput!): Location @semanticNonNull
   """
-  Create a new template constraint.
+  Template constraints allow you to limit the set of values that are valid for
+  a given template and, optionally, field. Practically, this allows you to
+  define *enumerations*, e.g. a "string enum" with members 'foo', 'bar' and 'baz'.
+
+  Note that currently constraints are *not* validated in the backend.
+  Validation *should* happen on the client, prior to invoking the API.
+  Otherwise, the backend willl gladly accept any arbitrary value (assuming, of
+  course, that it is of the correct type).
   """
   createTemplateConstraint(
     entity: ID!
     options: TemplateConstraintOptions
     template: ID!
-  ): CreateTemplateConstraintResult @semanticNonNull
+  ): CreateTemplateConstraintResult
+    @deprecated(reason: "No longer supported")
+    @semanticNonNull
   createUser(input: CreateUserInput!): User!
   createWorker(input: CreateWorkerInput!): WorkerEdge!
   """
@@ -1174,7 +1175,6 @@ type Mutation {
   deleteNode(node: ID!): [ID!] @semanticNonNull
   disableLanguage(languageId: ID!, orgId: ID!): EnabledLanguageEdge!
   enableLanguage(languageId: ID!, orgId: ID!): EnabledLanguageEdge!
-  operateOnTask(ops: [TaskOperation!]!): TaskOperationResult @semanticNonNull
   saveChecklist(input: ChecklistInput!): ChecklistEdge!
   setStatus(
     entity: ID!
@@ -1221,13 +1221,6 @@ interface Node {
   A globally unique opaque identifier for a node.
   """
   id: ID!
-}
-
-input NodeOperations @oneOf {
-  activate: ActivateNodeOperation
-  delete: DeleteNodeOperation
-  publish: PublishNodeOperation
-  rename: RenameNodeOperation
 }
 
 type NumberValue {
@@ -1329,10 +1322,6 @@ type PageInfo {
   startCursor: String
 }
 
-input PublishNodeOperation {
-  node: ID!
-}
-
 type Query {
   """
   For the given Assignable `entity`, returns a connection representing the set
@@ -1357,7 +1346,18 @@ type Query {
     withName: String
     withStatus: [ChecklistStatusStates!]
   ): ChecklistConnection!
-  entity(id: ID!): EntityConnection!
+  instances(
+    after: String
+    first: Int
+    """
+    TEMPORARY: this should be the customer/organization uuid.
+    """
+    owner: ID!
+    """
+    Instances with the given parent (instance).
+    """
+    parent: [ID!]
+  ): EntityInstanceConnection @semanticNonNull
   languages: [Language!]!
   node(id: ID!): Node!
   roles: [Tag!]!
@@ -1436,11 +1436,6 @@ them changed.
 """
 type Register {
   binary: String
-}
-
-input RenameNodeOperation {
-  name: String!
-  node: ID!
 }
 
 type Requirement implements Component {
@@ -1528,13 +1523,6 @@ type SetChecklistItemStatusPayload implements SetStatusPayload {
 type SetChecklistStatusPayload implements SetStatusPayload {
   delta: Int!
   edge: ChecklistEdge!
-}
-
-input SetFieldOperation {
-  field: ID
-  parent: ID
-  value: ValueInput
-  valueType: ValueType!
 }
 
 interface SetStatusPayload {
@@ -1691,8 +1679,9 @@ type Task implements Assignable & Component & Node & Trackable {
   displayName: DisplayName
     @deprecated(reason: "Use Task.name instead.")
     @semanticNonNull
+  field(byName: String): Field
   """
-  TODO: description.
+  The set of Fields for the given Task.
   """
   fields: FieldConnection @semanticNonNull
   """
@@ -1742,46 +1731,6 @@ type TaskConnection {
 type TaskEdge {
   cursor: String @semanticNonNull
   node: Task @semanticNonNull
-}
-
-input TaskOperation @oneOf {
-  field: FieldOperations
-  node: NodeOperations
-  task: TaskOperations
-}
-
-type TaskOperationErr {
-  """
-  Fatal errors that caused the operation to fail.
-  """
-  errors: [Diagnostic!] @semanticNonNull
-}
-
-type TaskOperationOk {
-  """
-  The total count of operations applied as part of this operation.
-  """
-  count: Int @semanticNonNull
-  """
-  Nodes that were created as a result of this operation.
-  """
-  created: [Node!] @semanticNonNull
-  """
-  Nodes that were deleted as a result of this operation.
-  """
-  deleted: [ID!] @semanticNonNull
-  """
-  Nodes that were updated as a result of this operation.
-  """
-  updated: [Node!] @semanticNonNull
-}
-
-union TaskOperationResult = TaskOperationErr | TaskOperationOk
-
-input TaskOperations @oneOf {
-  advance: AdvanceTaskOperation
-  assign: AssignTaskOperation
-  instantiate: InstantiateTaskOperation
 }
 
 union TaskState = Closed | InProgress | Open
@@ -2011,13 +1960,28 @@ union Value =
   | StringValue
   | TimestampValue
 
+type ValueCompletion {
+  value: Value @semanticNonNull
+}
+
+type ValueCompletionConnection {
+  edges: [ValueCompletionEdge!] @semanticNonNull
+  pageInfo: PageInfo @semanticNonNull
+  totalCount: Int @semanticNonNull
+}
+
+type ValueCompletionEdge {
+  cursor: String @semanticNonNull
+  node: ValueCompletion @semanticNonNull
+}
+
 input ValueInput @oneOf {
   boolean: Boolean
   id: ID
   number: Int
   string: String
   """
-  Date in either ISO or epoch millisecond format.
+  ISO 8601 format.
   """
   timestamp: String
 }

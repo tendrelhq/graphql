@@ -1,0 +1,11 @@
+{
+  "$schema": "https://pgtools.dev/schemas/0.0.0/schema.json",
+  "db": {
+    "host": "localhost",
+    "port": 5432,
+    "username": "postgres",
+    "password": "postgres",
+    "database": "postgres",
+    "connTimeoutSecs": 10
+  }
+}

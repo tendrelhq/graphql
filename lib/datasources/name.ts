@@ -23,6 +23,16 @@ export function makeDisplayNameLoader(_req: Request) {
     const qs = [...byUnderlyingType.entries()].flatMap(([type, ids]) =>
       match(type)
         .with(
+          "entity_instance",
+          () => sql`
+            select
+              entityinstanceuuid as _key,
+              engine1.base64_encode(convert_to('name:' || entityinstancenameuuid, 'utf8')) as id
+            from entity.entityinstance
+            where entityinstanceuuid in ${sql(ids.map(i => i.id))}
+          `,
+        )
+        .with(
           "workinstance",
           () => sql`
               SELECT

@@ -1,0 +1,66 @@
+query ListReasonCodes($owner: ID!, $parent: [ID!]!) {
+  instances(owner: $owner, parent: $parent) {
+    edges {
+      node {
+        name {
+          value
+        }
+      }
+      asFieldTemplateValueType {
+        edges {
+          node {
+            name {
+              value
+            }
+            parent {
+              name {
+                value
+              }
+            }
+          }
+        }
+      }
+    }
+    totalCount
+  }
+}
+
+mutation CreateReasonCode(
+  $field: ID!
+  $name: String!
+  $parent: ID!
+  $order: Int
+) {
+  createCustagAsFieldTemplateValueTypeConstraint(
+    field: $field
+    name: $name
+    parent: $parent
+    order: $order
+  ) {
+    node {
+      name {
+        value
+      }
+    }
+  }
+}
+
+query GetReasonCodeCompletions($task: ID!) {
+  node(id: $task) {
+    ... on Task {
+      reasonCode: field(byName: "Reason Code") {
+        completions {
+          edges {
+            node {
+              value {
+                ... on StringValue {
+                  string
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

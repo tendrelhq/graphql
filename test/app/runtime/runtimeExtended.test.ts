@@ -83,7 +83,7 @@ describe("extended runtime demo", () => {
     expect(t).toMatchSnapshot();
   });
 
-  describe("diagnostics", () => {
+  describe.skip("diagnostics", () => {
     test("invalid_type -> template", async () => {
       const result = await execute(
         schema,

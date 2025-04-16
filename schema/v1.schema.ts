@@ -24,12 +24,13 @@ import {
 import { trackables as queryTrackablesResolver } from "./platform/tracking";
 import {
   attachments as fieldAttachmentsResolver,
+  completions as fieldCompletionsResolver,
   description as fieldDescriptionResolver,
   name as fieldNameResolver,
+  parent as fieldParentResolver,
 } from "./system/component";
 import {
   applyFieldEdits as mutationApplyFieldEditsResolver,
-  operateOnTask as mutationOperateOnTaskResolver,
   assignees as taskAssigneesResolver,
   attachments as taskAttachmentsResolver,
   chainAgg as taskChainAggResolver,
@@ -41,6 +42,12 @@ import {
   fsm as taskFsmResolver,
 } from "./system/component/task_fsm";
 import { createTemplateConstraint as mutationCreateTemplateConstraintResolver } from "./system/engine0/createTemplateConstraint";
+import {
+  asFieldTemplateValueType as entityInstanceEdgeAsFieldTemplateValueTypeResolver,
+  entityInstanceName as entityInstanceNameResolver,
+  createCustagAsFieldTemplateValueTypeConstraint as mutationCreateCustagAsFieldTemplateValueTypeConstraintResolver,
+  instances as queryInstancesResolver,
+} from "./system/entity";
 import {
   id as assignmentIdResolver,
   id as attachmentIdResolver,
@@ -58,19 +65,6 @@ async function assertNonNull<T>(value: T | Promise<T>): Promise<T> {
   return awaited;
 }
 export function getSchema(): GraphQLSchema {
-  const NodeType: GraphQLInterfaceType = new GraphQLInterfaceType({
-    description: 'Indicates an object that is "refetchable".',
-    name: "Node",
-    fields() {
-      return {
-        id: {
-          description: "A globally unique opaque identifier for a node.",
-          name: "id",
-          type: new GraphQLNonNull(GraphQLID),
-        },
-      };
-    },
-  });
   const ComponentType: GraphQLInterfaceType = new GraphQLInterfaceType({
     description:
       "Components characterize Entities as possessing a particular trait.\nThey are just simple structs, holding all data necessary to model that trait.",
@@ -84,31 +78,13 @@ export function getSchema(): GraphQLSchema {
       };
     },
   });
-  const TrackableType: GraphQLInterfaceType = new GraphQLInterfaceType({
-    description:
-      'Identifies an Entity as being "trackable".\nWhat exactly this means depends on the type underlying said entity and is\nentirely user defined.',
-    name: "Trackable",
+  const IdentityType: GraphQLInterfaceType = new GraphQLInterfaceType({
+    name: "Identity",
     fields() {
       return {
         id: {
           name: "id",
           type: new GraphQLNonNull(GraphQLID),
-        },
-        tracking: {
-          description:
-            'Entrypoint into the "tracking system(s)" for a given Entity. Note that while\nmany types admit to being trackable, this does not mean that all in fact are\nin practice. In order for an Entity to be trackable, it must be explicitly\nconfigured as such.',
-          name: "tracking",
-          type: TrackableConnectionType,
-          args: {
-            after: {
-              name: "after",
-              type: GraphQLID,
-            },
-            first: {
-              name: "first",
-              type: GraphQLInt,
-            },
-          },
         },
       };
     },
@@ -116,8 +92,60 @@ export function getSchema(): GraphQLSchema {
       return [ComponentType];
     },
   });
-  const TrackableEdgeType: GraphQLObjectType = new GraphQLObjectType({
-    name: "TrackableEdge",
+  const URLType: GraphQLScalarType = new GraphQLScalarType({
+    name: "URL",
+  });
+  const NodeType: GraphQLInterfaceType = new GraphQLInterfaceType({
+    description: 'Indicates an object that is "refetchable".',
+    name: "Node",
+    fields() {
+      return {
+        id: {
+          description: "A globally unique opaque identifier for a node.",
+          name: "id",
+          type: new GraphQLNonNull(GraphQLID),
+        },
+      };
+    },
+  });
+  const AttachmentType: GraphQLObjectType = new GraphQLObjectType({
+    name: "Attachment",
+    fields() {
+      return {
+        attachedBy: {
+          name: "attachedBy",
+          type: IdentityType,
+          resolve(source, _args, context) {
+            return attachmentAttachedByResolver(source, context);
+          },
+        },
+        attachment: {
+          description:
+            "If you are using [Relay](https://relay.dev), make sure you annotate this\nfield with `@catch(to: RESULT)` to avoid intermittent S3 errors from\ncrashing the entire fragment.",
+          name: "attachment",
+          type: URLType,
+          resolve(source, args, context, info) {
+            return assertNonNull(
+              defaultFieldResolver(source, args, context, info),
+            );
+          },
+        },
+        id: {
+          description: "A globally unique opaque identifier for a node.",
+          name: "id",
+          type: new GraphQLNonNull(GraphQLID),
+          resolve(source) {
+            return attachmentIdResolver(source);
+          },
+        },
+      };
+    },
+    interfaces() {
+      return [ComponentType, NodeType];
+    },
+  });
+  const AttachmentEdgeType: GraphQLObjectType = new GraphQLObjectType({
+    name: "AttachmentEdge",
     fields() {
       return {
         cursor: {
@@ -131,7 +159,7 @@ export function getSchema(): GraphQLSchema {
         },
         node: {
           name: "node",
-          type: TrackableType,
+          type: AttachmentType,
           resolve(source, args, context, info) {
             return assertNonNull(
               defaultFieldResolver(source, args, context, info),
@@ -174,13 +202,13 @@ export function getSchema(): GraphQLSchema {
       };
     },
   });
-  const TrackableConnectionType: GraphQLObjectType = new GraphQLObjectType({
-    name: "TrackableConnection",
+  const AttachmentConnectionType: GraphQLObjectType = new GraphQLObjectType({
+    name: "AttachmentConnection",
     fields() {
       return {
         edges: {
           name: "edges",
-          type: new GraphQLList(new GraphQLNonNull(TrackableEdgeType)),
+          type: new GraphQLList(new GraphQLNonNull(AttachmentEdgeType)),
           resolve(source, args, context, info) {
             return assertNonNull(
               defaultFieldResolver(source, args, context, info),
@@ -208,129 +236,45 @@ export function getSchema(): GraphQLSchema {
       };
     },
   });
-  const QueryType: GraphQLObjectType = new GraphQLObjectType({
-    name: "Query",
+  const BooleanValueType: GraphQLObjectType = new GraphQLObjectType({
+    name: "BooleanValue",
     fields() {
       return {
-        node: {
-          name: "node",
-          type: new GraphQLNonNull(NodeType),
-          args: {
-            id: {
-              name: "id",
-              type: new GraphQLNonNull(GraphQLID),
-            },
-          },
-          resolve(_source, args, context) {
-            return queryNodeResolver(args, context);
-          },
-        },
-        trackables: {
-          description:
-            "Query for Trackable entities in the given `parent` hierarchy.\n\nNote that this api does not yet support pagination! The `first` argument is\nused purely for testing at the moment.",
-          name: "trackables",
-          type: TrackableConnectionType,
-          args: {
-            first: {
-              description:
-                "Forward pagination limit. Should only be used in conjunction with `after`.",
-              name: "first",
-              type: GraphQLInt,
-            },
-            includeInactive: {
-              description:
-                "By default, this api will only return Trackables that are active. This can\nbe overridden using the `includeInactive` flag.",
-              name: "includeInactive",
-              type: GraphQLBoolean,
-            },
-            parent: {
-              description:
-                "Identifies the root of the hierarchy in which to search for Trackable\nentities.\n\nValid parent types are currently:\n- Customer\n\nAll other parent types will be gracefully ignored.",
-              name: "parent",
-              type: new GraphQLNonNull(GraphQLID),
-            },
-            withImplementation: {
-              description:
-                "Allows filtering the returned set of Trackables by the *implementing* type.\n\nCurrently this is only 'Location' (the default) or 'Task'. Note that\nspecifying the latter will return a connection of trackable Tasks that\nrepresent the *chain roots* (i.e. originators). This is for you, Will\nTwait, so you can get started on the history screen. Note also that it will\nonly give you *closed* chains, i.e. `workinstancecompleteddate is not null`.",
-              name: "withImplementation",
-              type: GraphQLString,
-            },
-          },
-          resolve(source, args, context) {
-            return assertNonNull(
-              queryTrackablesResolver(
-                source,
-                context,
-                args.first,
-                args.parent,
-                args.includeInactive,
-                args.withImplementation,
-              ),
-            );
-          },
+        boolean: {
+          name: "boolean",
+          type: GraphQLBoolean,
         },
       };
     },
   });
-  const DiagnosticKindType: GraphQLEnumType = new GraphQLEnumType({
-    name: "DiagnosticKind",
-    values: {
-      candidate_change_discarded: {
-        value: "candidate_change_discarded",
-      },
-      candidate_choice_unavailable: {
-        value: "candidate_choice_unavailable",
-      },
-      expected_instance_got_template: {
-        description:
-          "Indicates that an operation expected an instance type to be provided but\nreceived a template type.",
-        value: "expected_instance_got_template",
-      },
-      expected_template_got_instance: {
-        description:
-          "Indicates that an operation expected a template type to be provided but\nreceived an instance type.",
-        value: "expected_template_got_instance",
-      },
-      feature_not_available: {
-        value: "feature_not_available",
-      },
-      hash_is_required: {
-        description:
-          "Some operations accept an optional hash. This is misleading. You should\n_always_ pass a hash for operations that accept them.",
-        value: "hash_is_required",
-      },
-      hash_mismatch_precludes_operation: {
-        description:
-          "Diagnostics of this kind indicates that the requested operation is no longer\na valid operation due to a state change that has not yet been observed by\nthe client. Typically this is due to data staleness but may also occur for\nthe _loser_ of a race under concurrency.\n\nHashes are opaque. Clients should not attempt to derive any meaning from them.",
-        value: "hash_mismatch_precludes_operation",
-      },
-      invalid_type: {
-        description:
-          "Indicates that an operation received a type that it is not allowed to\noperate on.",
-        value: "invalid_type",
-      },
-      no_associated_fsm: {
-        description:
-          "When you operate on a StateMachine<T>, there must obviously be a state\nmachine to operate *on*. This diagnostic is returned when no such state\nmachine exists.",
-        value: "no_associated_fsm",
-      },
-    },
-  });
-  const DiagnosticType: GraphQLObjectType = new GraphQLObjectType({
-    name: "Diagnostic",
+  const EntityValueType: GraphQLObjectType = new GraphQLObjectType({
+    name: "EntityValue",
     fields() {
       return {
-        code: {
-          name: "code",
-          type: DiagnosticKindType,
-          resolve(source, args, context, info) {
-            return assertNonNull(
-              defaultFieldResolver(source, args, context, info),
-            );
-          },
+        entity: {
+          name: "entity",
+          type: ComponentType,
         },
-        message: {
-          name: "message",
+      };
+    },
+  });
+  const NumberValueType: GraphQLObjectType = new GraphQLObjectType({
+    name: "NumberValue",
+    fields() {
+      return {
+        number: {
+          name: "number",
+          type: GraphQLInt,
+        },
+      };
+    },
+  });
+  const StringValueType: GraphQLObjectType = new GraphQLObjectType({
+    name: "StringValue",
+    fields() {
+      return {
+        string: {
+          name: "string",
           type: GraphQLString,
         },
       };
@@ -339,6 +283,218 @@ export function getSchema(): GraphQLSchema {
   const TimestampType: GraphQLScalarType = new GraphQLScalarType({
     description: "A date-time string in ISO 8601 format.",
     name: "Timestamp",
+  });
+  const TimestampValueType: GraphQLObjectType = new GraphQLObjectType({
+    name: "TimestampValue",
+    fields() {
+      return {
+        timestamp: {
+          name: "timestamp",
+          type: TimestampType,
+        },
+      };
+    },
+  });
+  const ValueType: GraphQLUnionType = new GraphQLUnionType({
+    name: "Value",
+    types() {
+      return [
+        BooleanValueType,
+        EntityValueType,
+        NumberValueType,
+        StringValueType,
+        TimestampValueType,
+      ];
+    },
+  });
+  const ValueCompletionType: GraphQLObjectType = new GraphQLObjectType({
+    name: "ValueCompletion",
+    fields() {
+      return {
+        value: {
+          name: "value",
+          type: ValueType,
+          resolve(source, args, context, info) {
+            return assertNonNull(
+              defaultFieldResolver(source, args, context, info),
+            );
+          },
+        },
+      };
+    },
+  });
+  const ValueCompletionEdgeType: GraphQLObjectType = new GraphQLObjectType({
+    name: "ValueCompletionEdge",
+    fields() {
+      return {
+        cursor: {
+          name: "cursor",
+          type: GraphQLString,
+          resolve(source, args, context, info) {
+            return assertNonNull(
+              defaultFieldResolver(source, args, context, info),
+            );
+          },
+        },
+        node: {
+          name: "node",
+          type: ValueCompletionType,
+          resolve(source, args, context, info) {
+            return assertNonNull(
+              defaultFieldResolver(source, args, context, info),
+            );
+          },
+        },
+      };
+    },
+  });
+  const ValueCompletionConnectionType: GraphQLObjectType =
+    new GraphQLObjectType({
+      name: "ValueCompletionConnection",
+      fields() {
+        return {
+          edges: {
+            name: "edges",
+            type: new GraphQLList(new GraphQLNonNull(ValueCompletionEdgeType)),
+            resolve(source, args, context, info) {
+              return assertNonNull(
+                defaultFieldResolver(source, args, context, info),
+              );
+            },
+          },
+          pageInfo: {
+            name: "pageInfo",
+            type: PageInfoType,
+            resolve(source, args, context, info) {
+              return assertNonNull(
+                defaultFieldResolver(source, args, context, info),
+              );
+            },
+          },
+          totalCount: {
+            name: "totalCount",
+            type: GraphQLInt,
+            resolve(source, args, context, info) {
+              return assertNonNull(
+                defaultFieldResolver(source, args, context, info),
+              );
+            },
+          },
+        };
+      },
+    });
+  const LocaleType: GraphQLScalarType = new GraphQLScalarType({
+    description:
+      "A language tag in the format of a BCP 47 (RFC 5646) standard string.",
+    name: "Locale",
+  });
+  const DynamicStringType: GraphQLObjectType = new GraphQLObjectType({
+    name: "DynamicString",
+    description:
+      "Plain text content that has been (potentially) translated into different\nlanguages as specified by the user's configuration.",
+    fields() {
+      return {
+        locale: {
+          name: "locale",
+          type: LocaleType,
+          resolve(source, args, context, info) {
+            return assertNonNull(
+              defaultFieldResolver(source, args, context, info),
+            );
+          },
+        },
+        value: {
+          name: "value",
+          type: GraphQLString,
+          resolve(source, args, context, info) {
+            return assertNonNull(
+              defaultFieldResolver(source, args, context, info),
+            );
+          },
+        },
+      };
+    },
+  });
+  const DescriptionType: GraphQLObjectType = new GraphQLObjectType({
+    name: "Description",
+    fields() {
+      return {
+        description: {
+          deprecationReason: "Use Description.locale and/or Description.value.",
+          name: "description",
+          type: DynamicStringType,
+          resolve(source, _args, context) {
+            return assertNonNull(source.description(context));
+          },
+        },
+        id: {
+          description: "A globally unique opaque identifier for a node.",
+          name: "id",
+          type: new GraphQLNonNull(GraphQLID),
+          resolve(source) {
+            return descriptionIdResolver(source);
+          },
+        },
+        locale: {
+          name: "locale",
+          type: GraphQLString,
+          resolve(source, _args, context) {
+            return assertNonNull(source.locale(context));
+          },
+        },
+        value: {
+          name: "value",
+          type: GraphQLString,
+          resolve(source, _args, context) {
+            return assertNonNull(source.value(context));
+          },
+        },
+      };
+    },
+    interfaces() {
+      return [ComponentType, NodeType];
+    },
+  });
+  const DisplayNameType: GraphQLObjectType = new GraphQLObjectType({
+    name: "DisplayName",
+    fields() {
+      return {
+        id: {
+          description: "A globally unique opaque identifier for a node.",
+          name: "id",
+          type: new GraphQLNonNull(GraphQLID),
+          resolve(source) {
+            return displayNameIdResolver(source);
+          },
+        },
+        locale: {
+          name: "locale",
+          type: GraphQLString,
+          resolve(source, _args, context) {
+            return assertNonNull(source.locale(context));
+          },
+        },
+        name: {
+          deprecationReason:
+            "Use the DisplayName.value and/or DisplayName.locale instead.",
+          name: "name",
+          type: DynamicStringType,
+          resolve(source, _args, context) {
+            return assertNonNull(source.name(context));
+          },
+        },
+        value: {
+          name: "value",
+          type: GraphQLString,
+          resolve(source, _args, context) {
+            return assertNonNull(source.value(context));
+          },
+        },
+      };
+    },
+    interfaces() {
+      return [ComponentType, NodeType];
+    },
   });
   const TimestampOverrideType: GraphQLObjectType = new GraphQLObjectType({
     name: "TimestampOverride",
@@ -487,61 +643,8 @@ export function getSchema(): GraphQLSchema {
       };
     },
   });
-  const IdentityType: GraphQLInterfaceType = new GraphQLInterfaceType({
-    name: "Identity",
-    fields() {
-      return {
-        id: {
-          name: "id",
-          type: new GraphQLNonNull(GraphQLID),
-        },
-      };
-    },
-    interfaces() {
-      return [ComponentType];
-    },
-  });
-  const URLType: GraphQLScalarType = new GraphQLScalarType({
-    name: "URL",
-  });
-  const AttachmentType: GraphQLObjectType = new GraphQLObjectType({
-    name: "Attachment",
-    fields() {
-      return {
-        attachedBy: {
-          name: "attachedBy",
-          type: IdentityType,
-          resolve(source, _args, context) {
-            return attachmentAttachedByResolver(source, context);
-          },
-        },
-        attachment: {
-          description:
-            "If you are using [Relay](https://relay.dev), make sure you annotate this\nfield with `@catch(to: RESULT)` to avoid intermittent S3 errors from\ncrashing the entire fragment.",
-          name: "attachment",
-          type: URLType,
-          resolve(source, args, context, info) {
-            return assertNonNull(
-              defaultFieldResolver(source, args, context, info),
-            );
-          },
-        },
-        id: {
-          description: "A globally unique opaque identifier for a node.",
-          name: "id",
-          type: new GraphQLNonNull(GraphQLID),
-          resolve(source) {
-            return attachmentIdResolver(source);
-          },
-        },
-      };
-    },
-    interfaces() {
-      return [ComponentType, NodeType];
-    },
-  });
-  const AttachmentEdgeType: GraphQLObjectType = new GraphQLObjectType({
-    name: "AttachmentEdge",
+  const TaskEdgeType: GraphQLObjectType = new GraphQLObjectType({
+    name: "TaskEdge",
     fields() {
       return {
         cursor: {
@@ -555,41 +658,7 @@ export function getSchema(): GraphQLSchema {
         },
         node: {
           name: "node",
-          type: AttachmentType,
-          resolve(source, args, context, info) {
-            return assertNonNull(
-              defaultFieldResolver(source, args, context, info),
-            );
-          },
-        },
-      };
-    },
-  });
-  const AttachmentConnectionType: GraphQLObjectType = new GraphQLObjectType({
-    name: "AttachmentConnection",
-    fields() {
-      return {
-        edges: {
-          name: "edges",
-          type: new GraphQLList(new GraphQLNonNull(AttachmentEdgeType)),
-          resolve(source, args, context, info) {
-            return assertNonNull(
-              defaultFieldResolver(source, args, context, info),
-            );
-          },
-        },
-        pageInfo: {
-          name: "pageInfo",
-          type: PageInfoType,
-          resolve(source, args, context, info) {
-            return assertNonNull(
-              defaultFieldResolver(source, args, context, info),
-            );
-          },
-        },
-        totalCount: {
-          name: "totalCount",
-          type: GraphQLInt,
+          type: TaskType,
           resolve(source, args, context, info) {
             return assertNonNull(
               defaultFieldResolver(source, args, context, info),
@@ -653,351 +722,6 @@ export function getSchema(): GraphQLSchema {
             'The computed aggregate value.\n\nCurrently, this will always be a string value representing a duration in\nseconds, e.g. "360" -> 360 seconds. `null` will be returned when no such\naggregate can be computed, e.g. "time in planned downtime" when no "planned\ndowntime" events exist. Note also that `null` will be returned if a\nduration cannot be computed, e.g. because there is no end date.',
           name: "value",
           type: GraphQLString,
-        },
-      };
-    },
-  });
-  const LocaleType: GraphQLScalarType = new GraphQLScalarType({
-    description:
-      "A language tag in the format of a BCP 47 (RFC 5646) standard string.",
-    name: "Locale",
-  });
-  const DynamicStringType: GraphQLObjectType = new GraphQLObjectType({
-    name: "DynamicString",
-    description:
-      "Plain text content that has been (potentially) translated into different\nlanguages as specified by the user's configuration.",
-    fields() {
-      return {
-        locale: {
-          name: "locale",
-          type: LocaleType,
-          resolve(source, args, context, info) {
-            return assertNonNull(
-              defaultFieldResolver(source, args, context, info),
-            );
-          },
-        },
-        value: {
-          name: "value",
-          type: GraphQLString,
-          resolve(source, args, context, info) {
-            return assertNonNull(
-              defaultFieldResolver(source, args, context, info),
-            );
-          },
-        },
-      };
-    },
-  });
-  const DescriptionType: GraphQLObjectType = new GraphQLObjectType({
-    name: "Description",
-    fields() {
-      return {
-        description: {
-          deprecationReason: "Use Description.locale and/or Description.value.",
-          name: "description",
-          type: DynamicStringType,
-          resolve(source, _args, context) {
-            return assertNonNull(source.description(context));
-          },
-        },
-        id: {
-          description: "A globally unique opaque identifier for a node.",
-          name: "id",
-          type: new GraphQLNonNull(GraphQLID),
-          resolve(source) {
-            return descriptionIdResolver(source);
-          },
-        },
-        locale: {
-          name: "locale",
-          type: GraphQLString,
-          resolve(source, _args, context) {
-            return assertNonNull(source.locale(context));
-          },
-        },
-        value: {
-          name: "value",
-          type: GraphQLString,
-          resolve(source, _args, context) {
-            return assertNonNull(source.value(context));
-          },
-        },
-      };
-    },
-    interfaces() {
-      return [ComponentType, NodeType];
-    },
-  });
-  const DisplayNameType: GraphQLObjectType = new GraphQLObjectType({
-    name: "DisplayName",
-    fields() {
-      return {
-        id: {
-          description: "A globally unique opaque identifier for a node.",
-          name: "id",
-          type: new GraphQLNonNull(GraphQLID),
-          resolve(source) {
-            return displayNameIdResolver(source);
-          },
-        },
-        locale: {
-          name: "locale",
-          type: GraphQLString,
-          resolve(source, _args, context) {
-            return assertNonNull(source.locale(context));
-          },
-        },
-        name: {
-          deprecationReason:
-            "Use the DisplayName.value and/or DisplayName.locale instead.",
-          name: "name",
-          type: DynamicStringType,
-          resolve(source, _args, context) {
-            return assertNonNull(source.name(context));
-          },
-        },
-        value: {
-          name: "value",
-          type: GraphQLString,
-          resolve(source, _args, context) {
-            return assertNonNull(source.value(context));
-          },
-        },
-      };
-    },
-    interfaces() {
-      return [ComponentType, NodeType];
-    },
-  });
-  const BooleanValueType: GraphQLObjectType = new GraphQLObjectType({
-    name: "BooleanValue",
-    fields() {
-      return {
-        boolean: {
-          name: "boolean",
-          type: GraphQLBoolean,
-        },
-      };
-    },
-  });
-  const EntityValueType: GraphQLObjectType = new GraphQLObjectType({
-    name: "EntityValue",
-    fields() {
-      return {
-        entity: {
-          name: "entity",
-          type: ComponentType,
-        },
-      };
-    },
-  });
-  const NumberValueType: GraphQLObjectType = new GraphQLObjectType({
-    name: "NumberValue",
-    fields() {
-      return {
-        number: {
-          name: "number",
-          type: GraphQLInt,
-        },
-      };
-    },
-  });
-  const StringValueType: GraphQLObjectType = new GraphQLObjectType({
-    name: "StringValue",
-    fields() {
-      return {
-        string: {
-          name: "string",
-          type: GraphQLString,
-        },
-      };
-    },
-  });
-  const TimestampValueType: GraphQLObjectType = new GraphQLObjectType({
-    name: "TimestampValue",
-    fields() {
-      return {
-        timestamp: {
-          name: "timestamp",
-          type: TimestampType,
-        },
-      };
-    },
-  });
-  const ValueType: GraphQLUnionType = new GraphQLUnionType({
-    name: "Value",
-    types() {
-      return [
-        BooleanValueType,
-        EntityValueType,
-        NumberValueType,
-        StringValueType,
-        TimestampValueType,
-      ];
-    },
-  });
-  const ValueTypeType: GraphQLEnumType = new GraphQLEnumType({
-    name: "ValueType",
-    values: {
-      boolean: {
-        value: "boolean",
-      },
-      entity: {
-        value: "entity",
-      },
-      number: {
-        value: "number",
-      },
-      string: {
-        value: "string",
-      },
-      timestamp: {
-        value: "timestamp",
-      },
-      unknown: {
-        value: "unknown",
-      },
-    },
-  });
-  const FieldType: GraphQLObjectType = new GraphQLObjectType({
-    name: "Field",
-    fields() {
-      return {
-        attachments: {
-          description: "Field attachments.",
-          name: "attachments",
-          type: AttachmentConnectionType,
-          args: {
-            after: {
-              name: "after",
-              type: GraphQLString,
-            },
-            before: {
-              name: "before",
-              type: GraphQLString,
-            },
-            first: {
-              name: "first",
-              type: GraphQLInt,
-            },
-            last: {
-              name: "last",
-              type: GraphQLInt,
-            },
-          },
-          resolve(source, args, context) {
-            return assertNonNull(
-              fieldAttachmentsResolver(source, context, args),
-            );
-          },
-        },
-        description: {
-          description: "Description of a Field.",
-          name: "description",
-          type: DescriptionType,
-          resolve(source, _args, context) {
-            return fieldDescriptionResolver(source, context);
-          },
-        },
-        id: {
-          description: "Unique identifier for this Field.",
-          name: "id",
-          type: GraphQLID,
-          resolve(source, args, context, info) {
-            return assertNonNull(
-              defaultFieldResolver(source, args, context, info),
-            );
-          },
-        },
-        name: {
-          description: "Display name for a Field.",
-          name: "name",
-          type: DisplayNameType,
-          resolve(source, _args, context) {
-            return assertNonNull(fieldNameResolver(source, context));
-          },
-        },
-        value: {
-          description:
-            "The value for this Field, if any. This field will always be present (when\nrequested) for the given Field so as to convey the underlying data type of\nthe (raw data) value. The underlying (raw data) value can be `null`.",
-          name: "value",
-          type: ValueType,
-          resolve(source, args, context, info) {
-            return assertNonNull(
-              defaultFieldResolver(source, args, context, info),
-            );
-          },
-        },
-        valueType: {
-          description:
-            "The type of data underlying `value`. This is provided as a convenience when\ninteracting with field-level edits through other apis.",
-          name: "valueType",
-          type: ValueTypeType,
-          resolve(source, args, context, info) {
-            return assertNonNull(
-              defaultFieldResolver(source, args, context, info),
-            );
-          },
-        },
-      };
-    },
-  });
-  const FieldEdgeType: GraphQLObjectType = new GraphQLObjectType({
-    name: "FieldEdge",
-    fields() {
-      return {
-        cursor: {
-          name: "cursor",
-          type: GraphQLString,
-          resolve(source, args, context, info) {
-            return assertNonNull(
-              defaultFieldResolver(source, args, context, info),
-            );
-          },
-        },
-        node: {
-          name: "node",
-          type: FieldType,
-          resolve(source, args, context, info) {
-            return assertNonNull(
-              defaultFieldResolver(source, args, context, info),
-            );
-          },
-        },
-      };
-    },
-  });
-  const FieldConnectionType: GraphQLObjectType = new GraphQLObjectType({
-    name: "FieldConnection",
-    fields() {
-      return {
-        edges: {
-          name: "edges",
-          type: new GraphQLList(new GraphQLNonNull(FieldEdgeType)),
-          resolve(source, args, context, info) {
-            return assertNonNull(
-              defaultFieldResolver(source, args, context, info),
-            );
-          },
-        },
-        pageInfo: {
-          name: "pageInfo",
-          type: PageInfoType,
-          resolve(source, args, context, info) {
-            return assertNonNull(
-              defaultFieldResolver(source, args, context, info),
-            );
-          },
-        },
-        totalCount: {
-          name: "totalCount",
-          type: GraphQLInt,
-          resolve(source, args, context, info) {
-            return assertNonNull(
-              defaultFieldResolver(source, args, context, info),
-            );
-          },
         },
       };
     },
@@ -1132,6 +856,97 @@ export function getSchema(): GraphQLSchema {
       return [ClosedType, InProgressType, OpenType];
     },
   });
+  const TrackableType: GraphQLInterfaceType = new GraphQLInterfaceType({
+    description:
+      'Identifies an Entity as being "trackable".\nWhat exactly this means depends on the type underlying said entity and is\nentirely user defined.',
+    name: "Trackable",
+    fields() {
+      return {
+        id: {
+          name: "id",
+          type: new GraphQLNonNull(GraphQLID),
+        },
+        tracking: {
+          description:
+            'Entrypoint into the "tracking system(s)" for a given Entity. Note that while\nmany types admit to being trackable, this does not mean that all in fact are\nin practice. In order for an Entity to be trackable, it must be explicitly\nconfigured as such.',
+          name: "tracking",
+          type: TrackableConnectionType,
+          args: {
+            after: {
+              name: "after",
+              type: GraphQLID,
+            },
+            first: {
+              name: "first",
+              type: GraphQLInt,
+            },
+          },
+        },
+      };
+    },
+    interfaces() {
+      return [ComponentType];
+    },
+  });
+  const TrackableEdgeType: GraphQLObjectType = new GraphQLObjectType({
+    name: "TrackableEdge",
+    fields() {
+      return {
+        cursor: {
+          name: "cursor",
+          type: GraphQLString,
+          resolve(source, args, context, info) {
+            return assertNonNull(
+              defaultFieldResolver(source, args, context, info),
+            );
+          },
+        },
+        node: {
+          name: "node",
+          type: TrackableType,
+          resolve(source, args, context, info) {
+            return assertNonNull(
+              defaultFieldResolver(source, args, context, info),
+            );
+          },
+        },
+      };
+    },
+  });
+  const TrackableConnectionType: GraphQLObjectType = new GraphQLObjectType({
+    name: "TrackableConnection",
+    fields() {
+      return {
+        edges: {
+          name: "edges",
+          type: new GraphQLList(new GraphQLNonNull(TrackableEdgeType)),
+          resolve(source, args, context, info) {
+            return assertNonNull(
+              defaultFieldResolver(source, args, context, info),
+            );
+          },
+        },
+        pageInfo: {
+          name: "pageInfo",
+          type: PageInfoType,
+          resolve(source, args, context, info) {
+            return assertNonNull(
+              defaultFieldResolver(source, args, context, info),
+            );
+          },
+        },
+        totalCount: {
+          name: "totalCount",
+          type: GraphQLInt,
+          resolve(source, args, context, info) {
+            return assertNonNull(
+              defaultFieldResolver(source, args, context, info),
+            );
+          },
+        },
+      };
+    },
+  });
   const TaskType: GraphQLObjectType = new GraphQLObjectType({
     name: "Task",
     description:
@@ -1228,8 +1043,18 @@ export function getSchema(): GraphQLSchema {
             return assertNonNull(source.displayName(context));
           },
         },
+        field: {
+          name: "field",
+          type: FieldType,
+          args: {
+            byName: {
+              name: "byName",
+              type: GraphQLString,
+            },
+          },
+        },
         fields: {
-          description: "TODO: description.",
+          description: "The set of Fields for the given Task.",
           name: "fields",
           type: FieldConnectionType,
           resolve(source, _args, context) {
@@ -1315,8 +1140,130 @@ export function getSchema(): GraphQLSchema {
       return [AssignableType, ComponentType, NodeType, TrackableType];
     },
   });
-  const TaskEdgeType: GraphQLObjectType = new GraphQLObjectType({
-    name: "TaskEdge",
+  const ValueTypeType: GraphQLEnumType = new GraphQLEnumType({
+    name: "ValueType",
+    values: {
+      boolean: {
+        value: "boolean",
+      },
+      entity: {
+        value: "entity",
+      },
+      number: {
+        value: "number",
+      },
+      string: {
+        value: "string",
+      },
+      timestamp: {
+        value: "timestamp",
+      },
+      unknown: {
+        value: "unknown",
+      },
+    },
+  });
+  const FieldType: GraphQLObjectType = new GraphQLObjectType({
+    name: "Field",
+    fields() {
+      return {
+        attachments: {
+          description: "Field attachments.",
+          name: "attachments",
+          type: AttachmentConnectionType,
+          args: {
+            after: {
+              name: "after",
+              type: GraphQLString,
+            },
+            before: {
+              name: "before",
+              type: GraphQLString,
+            },
+            first: {
+              name: "first",
+              type: GraphQLInt,
+            },
+            last: {
+              name: "last",
+              type: GraphQLInt,
+            },
+          },
+          resolve(source, args, context) {
+            return assertNonNull(
+              fieldAttachmentsResolver(source, context, args),
+            );
+          },
+        },
+        completions: {
+          description:
+            'Intended to provide "auto-completion" in a frontend setting, this API returns\n*distinct known values* for a given Field. For Fields without constraints\n(which is most of them), this will return a "frecency" list of previously\nused values for the given Field. When constraints are involved, the\ncompletion list represents the *allowed* set of values for the given Field.\n\nNote that "frecency" is not currently implemented. For such Fields (i.e. those\nwithout constraints) you will simply get back an empty completion list.\n\nNote also that currently there is no enforcement of the latter, constraint-based\nsemantic in the backend! The client *must* validate user input using the\ncompletion list *before* issuing, for example, an `applyFieldEdits` mutation.\nOtherwise the backend will gladly accept arbitrary values (assuming they are,\nof course, of the correct type).\n\nNote also that pagination is not currently implemented.',
+          name: "completions",
+          type: ValueCompletionConnectionType,
+          resolve(source, _args, context) {
+            return assertNonNull(fieldCompletionsResolver(source, context));
+          },
+        },
+        description: {
+          description: "Description of a Field.",
+          name: "description",
+          type: DescriptionType,
+          resolve(source, _args, context) {
+            return fieldDescriptionResolver(source, context);
+          },
+        },
+        id: {
+          description: "Unique identifier for this Field.",
+          name: "id",
+          type: GraphQLID,
+          resolve(source, args, context, info) {
+            return assertNonNull(
+              defaultFieldResolver(source, args, context, info),
+            );
+          },
+        },
+        name: {
+          description: "Display name for a Field.",
+          name: "name",
+          type: DisplayNameType,
+          resolve(source, _args, context) {
+            return assertNonNull(fieldNameResolver(source, context));
+          },
+        },
+        parent: {
+          name: "parent",
+          type: TaskType,
+          resolve(source) {
+            return assertNonNull(fieldParentResolver(source));
+          },
+        },
+        value: {
+          description:
+            "The value for this Field, if any. This field will always be present (when\nrequested) for the given Field so as to convey the underlying data type of\nthe (raw data) value. The underlying (raw data) value can be `null`.",
+          name: "value",
+          type: ValueType,
+          resolve(source, args, context, info) {
+            return assertNonNull(
+              defaultFieldResolver(source, args, context, info),
+            );
+          },
+        },
+        valueType: {
+          description:
+            "The type of data underlying `value`. This is provided as a convenience when\ninteracting with field-level edits through other apis.",
+          name: "valueType",
+          type: ValueTypeType,
+          resolve(source, args, context, info) {
+            return assertNonNull(
+              defaultFieldResolver(source, args, context, info),
+            );
+          },
+        },
+      };
+    },
+  });
+  const FieldEdgeType: GraphQLObjectType = new GraphQLObjectType({
+    name: "FieldEdge",
     fields() {
       return {
         cursor: {
@@ -1330,12 +1277,299 @@ export function getSchema(): GraphQLSchema {
         },
         node: {
           name: "node",
-          type: TaskType,
+          type: FieldType,
           resolve(source, args, context, info) {
             return assertNonNull(
               defaultFieldResolver(source, args, context, info),
             );
           },
+        },
+      };
+    },
+  });
+  const FieldConnectionType: GraphQLObjectType = new GraphQLObjectType({
+    name: "FieldConnection",
+    fields() {
+      return {
+        edges: {
+          name: "edges",
+          type: new GraphQLList(new GraphQLNonNull(FieldEdgeType)),
+          resolve(source, args, context, info) {
+            return assertNonNull(
+              defaultFieldResolver(source, args, context, info),
+            );
+          },
+        },
+        pageInfo: {
+          name: "pageInfo",
+          type: PageInfoType,
+          resolve(source, args, context, info) {
+            return assertNonNull(
+              defaultFieldResolver(source, args, context, info),
+            );
+          },
+        },
+        totalCount: {
+          name: "totalCount",
+          type: GraphQLInt,
+          resolve(source, args, context, info) {
+            return assertNonNull(
+              defaultFieldResolver(source, args, context, info),
+            );
+          },
+        },
+      };
+    },
+  });
+  const EntityInstanceType: GraphQLObjectType = new GraphQLObjectType({
+    name: "EntityInstance",
+    description:
+      'Entities represent distinct objects in the system. They can be physical\nobjects, like Locations, Resources and Workers, or logical ones, like\n"Scan Codes".',
+    fields() {
+      return {
+        id: {
+          name: "id",
+          type: GraphQLID,
+          resolve(source, args, context, info) {
+            return assertNonNull(
+              defaultFieldResolver(source, args, context, info),
+            );
+          },
+        },
+        name: {
+          name: "name",
+          type: DisplayNameType,
+          resolve(source, _args, context) {
+            return assertNonNull(entityInstanceNameResolver(source, context));
+          },
+        },
+      };
+    },
+  });
+  const EntityInstanceEdgeType: GraphQLObjectType = new GraphQLObjectType({
+    name: "EntityInstanceEdge",
+    fields() {
+      return {
+        asFieldTemplateValueType: {
+          description:
+            "Lift an EntityInstance to a set of Fields where the given EntityInstance\nidentifies as the Field's ValueType.",
+          name: "asFieldTemplateValueType",
+          type: FieldConnectionType,
+          resolve(source) {
+            return assertNonNull(
+              entityInstanceEdgeAsFieldTemplateValueTypeResolver(source),
+            );
+          },
+        },
+        cursor: {
+          name: "cursor",
+          type: GraphQLString,
+          resolve(source, args, context, info) {
+            return assertNonNull(
+              defaultFieldResolver(source, args, context, info),
+            );
+          },
+        },
+        node: {
+          name: "node",
+          type: EntityInstanceType,
+          resolve(source, args, context, info) {
+            return assertNonNull(
+              defaultFieldResolver(source, args, context, info),
+            );
+          },
+        },
+      };
+    },
+  });
+  const EntityInstanceConnectionType: GraphQLObjectType = new GraphQLObjectType(
+    {
+      name: "EntityInstanceConnection",
+      fields() {
+        return {
+          edges: {
+            name: "edges",
+            type: new GraphQLList(new GraphQLNonNull(EntityInstanceEdgeType)),
+            resolve(source, args, context, info) {
+              return assertNonNull(
+                defaultFieldResolver(source, args, context, info),
+              );
+            },
+          },
+          pageInfo: {
+            name: "pageInfo",
+            type: PageInfoType,
+            resolve(source, args, context, info) {
+              return assertNonNull(
+                defaultFieldResolver(source, args, context, info),
+              );
+            },
+          },
+          totalCount: {
+            name: "totalCount",
+            type: GraphQLInt,
+            resolve(source, args, context, info) {
+              return assertNonNull(
+                defaultFieldResolver(source, args, context, info),
+              );
+            },
+          },
+        };
+      },
+    },
+  );
+  const QueryType: GraphQLObjectType = new GraphQLObjectType({
+    name: "Query",
+    fields() {
+      return {
+        instances: {
+          name: "instances",
+          type: EntityInstanceConnectionType,
+          args: {
+            after: {
+              name: "after",
+              type: GraphQLString,
+            },
+            first: {
+              name: "first",
+              type: GraphQLInt,
+            },
+            owner: {
+              description:
+                "TEMPORARY: this should be the customer/organization uuid.",
+              name: "owner",
+              type: new GraphQLNonNull(GraphQLID),
+            },
+            parent: {
+              description: "Instances with the given parent (instance).",
+              name: "parent",
+              type: new GraphQLList(new GraphQLNonNull(GraphQLID)),
+            },
+          },
+          resolve(_source, args, context) {
+            return assertNonNull(queryInstancesResolver(context, args));
+          },
+        },
+        node: {
+          name: "node",
+          type: new GraphQLNonNull(NodeType),
+          args: {
+            id: {
+              name: "id",
+              type: new GraphQLNonNull(GraphQLID),
+            },
+          },
+          resolve(_source, args, context) {
+            return queryNodeResolver(args, context);
+          },
+        },
+        trackables: {
+          description:
+            "Query for Trackable entities in the given `parent` hierarchy.\n\nNote that this api does not yet support pagination! The `first` argument is\nused purely for testing at the moment.",
+          name: "trackables",
+          type: TrackableConnectionType,
+          args: {
+            first: {
+              description:
+                "Forward pagination limit. Should only be used in conjunction with `after`.",
+              name: "first",
+              type: GraphQLInt,
+            },
+            includeInactive: {
+              description:
+                "By default, this api will only return Trackables that are active. This can\nbe overridden using the `includeInactive` flag.",
+              name: "includeInactive",
+              type: GraphQLBoolean,
+            },
+            parent: {
+              description:
+                "Identifies the root of the hierarchy in which to search for Trackable\nentities.\n\nValid parent types are currently:\n- Customer\n\nAll other parent types will be gracefully ignored.",
+              name: "parent",
+              type: new GraphQLNonNull(GraphQLID),
+            },
+            withImplementation: {
+              description:
+                "Allows filtering the returned set of Trackables by the *implementing* type.\n\nCurrently this is only 'Location' (the default) or 'Task'. Note that\nspecifying the latter will return a connection of trackable Tasks that\nrepresent the *chain roots* (i.e. originators). This is for you, Will\nTwait, so you can get started on the history screen. Note also that it will\nonly give you *closed* chains, i.e. `workinstancecompleteddate is not null`.",
+              name: "withImplementation",
+              type: GraphQLString,
+            },
+          },
+          resolve(source, args, context) {
+            return assertNonNull(
+              queryTrackablesResolver(
+                source,
+                context,
+                args.first,
+                args.parent,
+                args.includeInactive,
+                args.withImplementation,
+              ),
+            );
+          },
+        },
+      };
+    },
+  });
+  const DiagnosticKindType: GraphQLEnumType = new GraphQLEnumType({
+    name: "DiagnosticKind",
+    values: {
+      candidate_change_discarded: {
+        value: "candidate_change_discarded",
+      },
+      candidate_choice_unavailable: {
+        value: "candidate_choice_unavailable",
+      },
+      expected_instance_got_template: {
+        description:
+          "Indicates that an operation expected an instance type to be provided but\nreceived a template type.",
+        value: "expected_instance_got_template",
+      },
+      expected_template_got_instance: {
+        description:
+          "Indicates that an operation expected a template type to be provided but\nreceived an instance type.",
+        value: "expected_template_got_instance",
+      },
+      feature_not_available: {
+        value: "feature_not_available",
+      },
+      hash_is_required: {
+        description:
+          "Some operations accept an optional hash. This is misleading. You should\n_always_ pass a hash for operations that accept them.",
+        value: "hash_is_required",
+      },
+      hash_mismatch_precludes_operation: {
+        description:
+          "Diagnostics of this kind indicates that the requested operation is no longer\na valid operation due to a state change that has not yet been observed by\nthe client. Typically this is due to data staleness but may also occur for\nthe _loser_ of a race under concurrency.\n\nHashes are opaque. Clients should not attempt to derive any meaning from them.",
+        value: "hash_mismatch_precludes_operation",
+      },
+      invalid_type: {
+        description:
+          "Indicates that an operation received a type that it is not allowed to\noperate on.",
+        value: "invalid_type",
+      },
+      no_associated_fsm: {
+        description:
+          "When you operate on a StateMachine<T>, there must obviously be a state\nmachine to operate *on*. This diagnostic is returned when no such state\nmachine exists.",
+        value: "no_associated_fsm",
+      },
+    },
+  });
+  const DiagnosticType: GraphQLObjectType = new GraphQLObjectType({
+    name: "Diagnostic",
+    fields() {
+      return {
+        code: {
+          name: "code",
+          type: DiagnosticKindType,
+          resolve(source, args, context, info) {
+            return assertNonNull(
+              defaultFieldResolver(source, args, context, info),
+            );
+          },
+        },
+        message: {
+          name: "message",
+          type: GraphQLString,
         },
       };
     },
@@ -1391,7 +1625,7 @@ export function getSchema(): GraphQLSchema {
           type: GraphQLString,
         },
         timestamp: {
-          description: "Date in either ISO or epoch millisecond format.",
+          description: "ISO 8601 format.",
           name: "timestamp",
           type: GraphQLString,
         },
@@ -1628,431 +1862,6 @@ export function getSchema(): GraphQLSchema {
         };
       },
     });
-  const TaskOperationErrType: GraphQLObjectType = new GraphQLObjectType({
-    name: "TaskOperationErr",
-    fields() {
-      return {
-        errors: {
-          description: "Fatal errors that caused the operation to fail.",
-          name: "errors",
-          type: new GraphQLList(new GraphQLNonNull(DiagnosticType)),
-          resolve(source, args, context, info) {
-            return assertNonNull(
-              defaultFieldResolver(source, args, context, info),
-            );
-          },
-        },
-      };
-    },
-  });
-  const TaskOperationOkType: GraphQLObjectType = new GraphQLObjectType({
-    name: "TaskOperationOk",
-    fields() {
-      return {
-        count: {
-          description:
-            "The total count of operations applied as part of this operation.",
-          name: "count",
-          type: GraphQLInt,
-          resolve(source, args, context, info) {
-            return assertNonNull(
-              defaultFieldResolver(source, args, context, info),
-            );
-          },
-        },
-        created: {
-          description: "Nodes that were created as a result of this operation.",
-          name: "created",
-          type: new GraphQLList(new GraphQLNonNull(NodeType)),
-          resolve(source, args, context, info) {
-            return assertNonNull(
-              defaultFieldResolver(source, args, context, info),
-            );
-          },
-        },
-        deleted: {
-          description: "Nodes that were deleted as a result of this operation.",
-          name: "deleted",
-          type: new GraphQLList(new GraphQLNonNull(GraphQLID)),
-          resolve(source, args, context, info) {
-            return assertNonNull(
-              defaultFieldResolver(source, args, context, info),
-            );
-          },
-        },
-        updated: {
-          description: "Nodes that were updated as a result of this operation.",
-          name: "updated",
-          type: new GraphQLList(new GraphQLNonNull(NodeType)),
-          resolve(source, args, context, info) {
-            return assertNonNull(
-              defaultFieldResolver(source, args, context, info),
-            );
-          },
-        },
-      };
-    },
-  });
-  const TaskOperationResultType: GraphQLUnionType = new GraphQLUnionType({
-    name: "TaskOperationResult",
-    types() {
-      return [TaskOperationErrType, TaskOperationOkType];
-    },
-  });
-  const AddFieldOperationType: GraphQLInputObjectType =
-    new GraphQLInputObjectType({
-      name: "AddFieldOperation",
-      fields() {
-        return {
-          field: {
-            name: "field",
-            type: GraphQLID,
-          },
-          parent: {
-            name: "parent",
-            type: new GraphQLNonNull(GraphQLID),
-          },
-          value: {
-            name: "value",
-            type: ValueInputType,
-          },
-          valueType: {
-            name: "valueType",
-            type: new GraphQLNonNull(ValueTypeType),
-          },
-        };
-      },
-    });
-  const ActivateNodeOperationType: GraphQLInputObjectType =
-    new GraphQLInputObjectType({
-      name: "ActivateNodeOperation",
-      fields() {
-        return {
-          active: {
-            name: "active",
-            type: new GraphQLNonNull(GraphQLBoolean),
-          },
-          node: {
-            name: "node",
-            type: new GraphQLNonNull(GraphQLID),
-          },
-        };
-      },
-    });
-  const DeleteNodeOperationType: GraphQLInputObjectType =
-    new GraphQLInputObjectType({
-      name: "DeleteNodeOperation",
-      fields() {
-        return {
-          node: {
-            name: "node",
-            type: new GraphQLNonNull(GraphQLID),
-          },
-        };
-      },
-    });
-  const PublishNodeOperationType: GraphQLInputObjectType =
-    new GraphQLInputObjectType({
-      name: "PublishNodeOperation",
-      fields() {
-        return {
-          node: {
-            name: "node",
-            type: new GraphQLNonNull(GraphQLID),
-          },
-        };
-      },
-    });
-  const RenameNodeOperationType: GraphQLInputObjectType =
-    new GraphQLInputObjectType({
-      name: "RenameNodeOperation",
-      fields() {
-        return {
-          name: {
-            name: "name",
-            type: new GraphQLNonNull(GraphQLString),
-          },
-          node: {
-            name: "node",
-            type: new GraphQLNonNull(GraphQLID),
-          },
-        };
-      },
-    });
-  const NodeOperationsType: GraphQLInputObjectType = new GraphQLInputObjectType(
-    {
-      name: "NodeOperations",
-      fields() {
-        return {
-          activate: {
-            name: "activate",
-            type: ActivateNodeOperationType,
-          },
-          delete: {
-            name: "delete",
-            type: DeleteNodeOperationType,
-          },
-          publish: {
-            name: "publish",
-            type: PublishNodeOperationType,
-          },
-          rename: {
-            name: "rename",
-            type: RenameNodeOperationType,
-          },
-        };
-      },
-      isOneOf: true,
-    },
-  );
-  const SetFieldOperationType: GraphQLInputObjectType =
-    new GraphQLInputObjectType({
-      name: "SetFieldOperation",
-      fields() {
-        return {
-          field: {
-            name: "field",
-            type: GraphQLID,
-          },
-          parent: {
-            name: "parent",
-            type: GraphQLID,
-          },
-          value: {
-            name: "value",
-            type: ValueInputType,
-          },
-          valueType: {
-            name: "valueType",
-            type: new GraphQLNonNull(ValueTypeType),
-          },
-        };
-      },
-    });
-  const FieldOperationsType: GraphQLInputObjectType =
-    new GraphQLInputObjectType({
-      name: "FieldOperations",
-      fields() {
-        return {
-          add: {
-            name: "add",
-            type: AddFieldOperationType,
-          },
-          field: {
-            name: "field",
-            type: NodeOperationsType,
-          },
-          set: {
-            name: "set",
-            type: SetFieldOperationType,
-          },
-        };
-      },
-      isOneOf: true,
-    });
-  const AdvanceTaskOperationType: GraphQLInputObjectType =
-    new GraphQLInputObjectType({
-      name: "AdvanceTaskOperation",
-      fields() {
-        return {
-          hash: {
-            name: "hash",
-            type: new GraphQLNonNull(GraphQLString),
-          },
-          task: {
-            name: "task",
-            type: new GraphQLNonNull(GraphQLID),
-          },
-        };
-      },
-    });
-  const AssignTaskOperationType: GraphQLInputObjectType =
-    new GraphQLInputObjectType({
-      name: "AssignTaskOperation",
-      fields() {
-        return {
-          assignTo: {
-            name: "assignTo",
-            type: new GraphQLList(new GraphQLNonNull(GraphQLID)),
-          },
-          task: {
-            name: "task",
-            type: new GraphQLNonNull(GraphQLID),
-          },
-          unassignFrom: {
-            name: "unassignFrom",
-            type: new GraphQLList(new GraphQLNonNull(GraphQLID)),
-          },
-        };
-      },
-    });
-  const ClosedInputType: GraphQLInputObjectType = new GraphQLInputObjectType({
-    name: "ClosedInput",
-    fields() {
-      return {
-        closedAt: {
-          name: "closedAt",
-          type: TimestampType,
-        },
-        closedBecause: {
-          name: "closedBecause",
-          type: GraphQLString,
-        },
-        closedBy: {
-          name: "closedBy",
-          type: GraphQLID,
-        },
-        inProgressAt: {
-          name: "inProgressAt",
-          type: TimestampType,
-        },
-        inProgressBy: {
-          name: "inProgressBy",
-          type: GraphQLID,
-        },
-        openedAt: {
-          name: "openedAt",
-          type: TimestampType,
-        },
-        openedBy: {
-          name: "openedBy",
-          type: GraphQLID,
-        },
-      };
-    },
-  });
-  const InProgressInputType: GraphQLInputObjectType =
-    new GraphQLInputObjectType({
-      name: "InProgressInput",
-      fields() {
-        return {
-          inProgressAt: {
-            name: "inProgressAt",
-            type: TimestampType,
-          },
-          inProgressBy: {
-            name: "inProgressBy",
-            type: GraphQLID,
-          },
-          openedAt: {
-            name: "openedAt",
-            type: TimestampType,
-          },
-          openedBy: {
-            name: "openedBy",
-            type: GraphQLID,
-          },
-        };
-      },
-    });
-  const OpenInputType: GraphQLInputObjectType = new GraphQLInputObjectType({
-    name: "OpenInput",
-    fields() {
-      return {
-        openedAt: {
-          name: "openedAt",
-          type: TimestampType,
-        },
-        openedBy: {
-          name: "openedBy",
-          type: GraphQLID,
-        },
-      };
-    },
-  });
-  const TaskStateInputType: GraphQLInputObjectType = new GraphQLInputObjectType(
-    {
-      name: "TaskStateInput",
-      fields() {
-        return {
-          closed: {
-            name: "closed",
-            type: ClosedInputType,
-          },
-          inProgress: {
-            name: "inProgress",
-            type: InProgressInputType,
-          },
-          open: {
-            name: "open",
-            type: OpenInputType,
-          },
-        };
-      },
-      isOneOf: true,
-    },
-  );
-  const InstantiateTaskOperationType: GraphQLInputObjectType =
-    new GraphQLInputObjectType({
-      name: "InstantiateTaskOperation",
-      fields() {
-        return {
-          assignees: {
-            description:
-              "Immediately assign the newly instantiated Task to the given identities.",
-            name: "assignees",
-            type: new GraphQLList(new GraphQLNonNull(GraphQLID)),
-          },
-          fields: {
-            description:
-              "Apply the given field overrides to the newly instantiated Task.",
-            name: "fields",
-            type: new GraphQLList(new GraphQLNonNull(FieldInputType)),
-          },
-          state: {
-            description: "Instantiate the Task into the given TaskState.",
-            name: "state",
-            type: TaskStateInputType,
-          },
-          task: {
-            name: "task",
-            type: new GraphQLNonNull(GraphQLID),
-          },
-        };
-      },
-    });
-  const TaskOperationsType: GraphQLInputObjectType = new GraphQLInputObjectType(
-    {
-      name: "TaskOperations",
-      fields() {
-        return {
-          advance: {
-            name: "advance",
-            type: AdvanceTaskOperationType,
-          },
-          assign: {
-            name: "assign",
-            type: AssignTaskOperationType,
-          },
-          instantiate: {
-            name: "instantiate",
-            type: InstantiateTaskOperationType,
-          },
-        };
-      },
-      isOneOf: true,
-    },
-  );
-  const TaskOperationType: GraphQLInputObjectType = new GraphQLInputObjectType({
-    name: "TaskOperation",
-    fields() {
-      return {
-        field: {
-          name: "field",
-          type: FieldOperationsType,
-        },
-        node: {
-          name: "node",
-          type: NodeOperationsType,
-        },
-        task: {
-          name: "task",
-          type: TaskOperationsType,
-        },
-      };
-    },
-    isOneOf: true,
-  });
   const GeofenceInputType: GraphQLInputObjectType = new GraphQLInputObjectType({
     name: "GeofenceInput",
     fields() {
@@ -2203,6 +2012,39 @@ export function getSchema(): GraphQLSchema {
             );
           },
         },
+        createCustagAsFieldTemplateValueTypeConstraint: {
+          name: "createCustagAsFieldTemplateValueTypeConstraint",
+          type: EntityInstanceEdgeType,
+          args: {
+            field: {
+              name: "field",
+              type: new GraphQLNonNull(GraphQLID),
+            },
+            name: {
+              name: "name",
+              type: new GraphQLNonNull(GraphQLString),
+            },
+            order: {
+              name: "order",
+              type: GraphQLInt,
+            },
+            parent: {
+              name: "parent",
+              type: new GraphQLNonNull(GraphQLID),
+            },
+          },
+          resolve(_source, args, context) {
+            return assertNonNull(
+              mutationCreateCustagAsFieldTemplateValueTypeConstraintResolver(
+                context,
+                args.field,
+                args.name,
+                args.parent,
+                args.order,
+              ),
+            );
+          },
+        },
         createLocation: {
           name: "createLocation",
           type: LocationType,
@@ -2219,7 +2061,9 @@ export function getSchema(): GraphQLSchema {
           },
         },
         createTemplateConstraint: {
-          description: "Create a new template constraint.",
+          description:
+            "Template constraints allow you to limit the set of values that are valid for\na given template and, optionally, field. Practically, this allows you to\ndefine *enumerations*, e.g. a \"string enum\" with members 'foo', 'bar' and 'baz'.\n\nNote that currently constraints are *not* validated in the backend.\nValidation *should* happen on the client, prior to invoking the API.\nOtherwise, the backend willl gladly accept any arbitrary value (assuming, of\ncourse, that it is of the correct type).",
+          deprecationReason: "No longer supported",
           name: "createTemplateConstraint",
           type: CreateTemplateConstraintResultType,
           args: {
@@ -2263,21 +2107,6 @@ export function getSchema(): GraphQLSchema {
             return assertNonNull(mutationDeleteNodeResolver(args.node));
           },
         },
-        operateOnTask: {
-          name: "operateOnTask",
-          type: TaskOperationResultType,
-          args: {
-            ops: {
-              name: "ops",
-              type: new GraphQLNonNull(
-                new GraphQLList(new GraphQLNonNull(TaskOperationType)),
-              ),
-            },
-          },
-          resolve(_source, args) {
-            return assertNonNull(mutationOperateOnTaskResolver(args.ops));
-          },
-        },
         updateLocation: {
           name: "updateLocation",
           type: LocationType,
@@ -2308,6 +2137,41 @@ export function getSchema(): GraphQLSchema {
         };
       },
     });
+  const ClosedInputType: GraphQLInputObjectType = new GraphQLInputObjectType({
+    name: "ClosedInput",
+    fields() {
+      return {
+        closedAt: {
+          name: "closedAt",
+          type: TimestampType,
+        },
+        closedBecause: {
+          name: "closedBecause",
+          type: GraphQLString,
+        },
+        closedBy: {
+          name: "closedBy",
+          type: GraphQLID,
+        },
+        inProgressAt: {
+          name: "inProgressAt",
+          type: TimestampType,
+        },
+        inProgressBy: {
+          name: "inProgressBy",
+          type: GraphQLID,
+        },
+        openedAt: {
+          name: "openedAt",
+          type: TimestampType,
+        },
+        openedBy: {
+          name: "openedBy",
+          type: GraphQLID,
+        },
+      };
+    },
+  });
   const DynamicStringInputType: GraphQLInputObjectType =
     new GraphQLInputObjectType({
       name: "DynamicStringInput",
@@ -2340,6 +2204,67 @@ export function getSchema(): GraphQLSchema {
         };
       },
     });
+  const InProgressInputType: GraphQLInputObjectType =
+    new GraphQLInputObjectType({
+      name: "InProgressInput",
+      fields() {
+        return {
+          inProgressAt: {
+            name: "inProgressAt",
+            type: TimestampType,
+          },
+          inProgressBy: {
+            name: "inProgressBy",
+            type: GraphQLID,
+          },
+          openedAt: {
+            name: "openedAt",
+            type: TimestampType,
+          },
+          openedBy: {
+            name: "openedBy",
+            type: GraphQLID,
+          },
+        };
+      },
+    });
+  const OpenInputType: GraphQLInputObjectType = new GraphQLInputObjectType({
+    name: "OpenInput",
+    fields() {
+      return {
+        openedAt: {
+          name: "openedAt",
+          type: TimestampType,
+        },
+        openedBy: {
+          name: "openedBy",
+          type: GraphQLID,
+        },
+      };
+    },
+  });
+  const TaskStateInputType: GraphQLInputObjectType = new GraphQLInputObjectType(
+    {
+      name: "TaskStateInput",
+      fields() {
+        return {
+          closed: {
+            name: "closed",
+            type: ClosedInputType,
+          },
+          inProgress: {
+            name: "inProgress",
+            type: InProgressInputType,
+          },
+          open: {
+            name: "open",
+            type: OpenInputType,
+          },
+        };
+      },
+      isOneOf: true,
+    },
+  );
   return new GraphQLSchema({
     query: QueryType,
     mutation: MutationType,
@@ -2350,7 +2275,6 @@ export function getSchema(): GraphQLSchema {
       DiagnosticKindType,
       TaskStateNameType,
       ValueTypeType,
-      TaskOperationResultType,
       TaskStateType,
       ValueType,
       AssignableType,
@@ -2358,31 +2282,18 @@ export function getSchema(): GraphQLSchema {
       IdentityType,
       NodeType,
       TrackableType,
-      ActivateNodeOperationType,
-      AddFieldOperationType,
       AdvanceFsmOptionsType,
-      AdvanceTaskOperationType,
       AdvanceTaskOptionsType,
-      AssignTaskOperationType,
       AssignmentInputType,
       ClosedInputType,
       CreateLocationInputType,
-      DeleteNodeOperationType,
       DescriptionInputType,
       DynamicStringInputType,
       FieldInputType,
-      FieldOperationsType,
       GeofenceInputType,
       InProgressInputType,
       InstantiateOptionsType,
-      InstantiateTaskOperationType,
-      NodeOperationsType,
       OpenInputType,
-      PublishNodeOperationType,
-      RenameNodeOperationType,
-      SetFieldOperationType,
-      TaskOperationType,
-      TaskOperationsType,
       TaskStateInputType,
       TemplateConstraintOptionsType,
       UpdateLocationInputType,
@@ -2403,6 +2314,9 @@ export function getSchema(): GraphQLSchema {
       DiagnosticType,
       DisplayNameType,
       DynamicStringType,
+      EntityInstanceType,
+      EntityInstanceConnectionType,
+      EntityInstanceEdgeType,
       EntityValueType,
       FieldType,
       FieldConnectionType,
@@ -2418,8 +2332,6 @@ export function getSchema(): GraphQLSchema {
       TaskType,
       TaskConnectionType,
       TaskEdgeType,
-      TaskOperationErrType,
-      TaskOperationOkType,
       TaskStateMachineType,
       TemplateConstraintType,
       TimestampOverridableType,
@@ -2427,6 +2339,9 @@ export function getSchema(): GraphQLSchema {
       TimestampValueType,
       TrackableConnectionType,
       TrackableEdgeType,
+      ValueCompletionType,
+      ValueCompletionConnectionType,
+      ValueCompletionEdgeType,
     ],
   });
 }

@@ -9,28 +9,8 @@ if has nix; then
 fi
 
 # You can use `docker-compose` to get up and running with a graphql AND a
-# postgrest service.
+# postgrest service. This is not necessary if you are using the Nix devshell.
 export COMPOSE_FILE=./config/compose.yaml
-
-# Only required if you are *not* using [nix](./flake.nix).
-# @see https://www.postgresql.org/docs/current/libpq-envars.html
-export PGDATABASE=postgres # or 'tendrel'
-export PGHOST=localhost
-export PGPORT=5432
-# These are usually the default for localhost:
-export PGUSERNAME=$USER
-export PGPASSWORD=$USER
-
-# PostgREST configuration variables.
-# @see https://docs.postgrest.org/en/v12/references/configuration.html
-export PGRST_OPENAPI_SERVER_PROXY_URI=http://localhost:3000
-export PGRST_JWT_SECRET=$JWT_SECRET # see .env.local.template
-export PGRST_JWT_SECRET_IS_BASE64=true
-
-# Only required if you plan to manually deploy schema changes to test and/or
-# beta.
-# export SQITCH_TARGET_TEST="db:pg://$TEST_PGUSER:$TEST_PGPASS@$TEST_PGHOST:5432/tendrel"
-# export SQITCH_TARGET_BETA="db:pg://$BETA_PGUSER:$BETA_PGPASS@$BETA_PGHOST:5432/tendrel"
 
 # Only required if you plan to manually deploy infrastructure.
 # You should get these values from the AWS console.

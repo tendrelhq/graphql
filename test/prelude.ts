@@ -1,4 +1,4 @@
-import { setCurrentIdentity } from "@/auth";
+import { getAccessToken, setCurrentIdentity } from "@/auth";
 import { orm, sql } from "@/datasources/postgres";
 import { Limits } from "@/limits";
 import type { Context, InputMaybe } from "@/schema";
@@ -7,6 +7,7 @@ import type { Field } from "@/schema/system/component";
 import type { Task } from "@/schema/system/component/task";
 import { assert, assertNonNull, assertUnderlyingType, map } from "@/util";
 import type { TypedDocumentNode as DocumentNode } from "@graphql-typed-document-node/core";
+import { PostgrestClient } from "@supabase/postgrest-js";
 import {
   type ExecutionResult,
   type GraphQLSchema,
@@ -81,10 +82,18 @@ export function findAndEncode(
   op: string,
   type: string,
   logs: { op: string; id: string }[],
+  opts?: { skip?: number },
 ) {
+  let count = 0;
+  const skip = opts?.skip ?? 0;
   return assertNonNull(
     map(
-      logs.find(l => l.op.trim() === `+${op}`),
+      logs.find(l => {
+        if (l.op.trim() === `+${op}`) {
+          return count++ === skip;
+        }
+        return false;
+      }),
       ({ id }) => encodeGlobalId({ type, id }),
     ),
     `setup failed to find ${op} (${type})`,
@@ -93,11 +102,14 @@ export function findAndEncode(
 
 export async function assertTaskIsNamed(
   t: Task,
-  displayName: string,
+  expectedDisplayName: string,
   ctx: Context,
 ) {
-  const n = await t.name(ctx);
-  return assert(displayName === (await n.value(ctx)));
+  const actualDisplayName = await t.name(ctx).then(n => n.value(ctx));
+  return assert(
+    expectedDisplayName === actualDisplayName,
+    `Expected Task named '${expectedDisplayName}' but got '${actualDisplayName}'`,
+  );
 }
 
 export function assertNoDiagnostics<
@@ -156,7 +168,10 @@ export async function setup(ctx: Context) {
 }
 
 export async function cleanup(id: string) {
-  if (process.env.CI || process.env.SKIP_CLEANUP) return;
+  if (process.env.CI || process.env.SKIP_CLEANUP) {
+    console.warn("Skipping cleanup for", id);
+    return;
+  }
   process.stdout.write("Cleaning up...");
 
   const decoded = decodeGlobalId(id);
@@ -176,3 +191,22 @@ export async function cleanup(id: string) {
   `;
   process.stdout.write(row.ok);
 }
+
+export const pg = new PostgrestClient("http://localhost/api/v1", {
+  async fetch(...args) {
+    const ctx = await createTestContext();
+    const token = await getAccessToken(ctx.auth.userId)
+      .then(r => r.json())
+      .then(r => r.access_token);
+    if (typeof args[1] === "object") {
+      args[1] = {
+        ...args[1],
+        headers: {
+          ...args[1].headers,
+          Authorization: `Bearer ${token}`,
+        },
+      };
+    }
+    return fetch(...args);
+  },
+});

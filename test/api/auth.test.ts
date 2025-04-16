@@ -32,7 +32,7 @@ describe("/api/token", () => {
       active: true,
       exp: expect.any(Number),
       iat: expect.any(Number),
-      iss: "urn:tendrel:dev",
+      iss: "urn:tendrel:test",
       nbf: expect.any(Number),
       owner: null,
       role: "authenticated",

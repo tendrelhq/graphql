@@ -1,20 +1,19 @@
 # @tendrelhq/graphql
 
-Development requires bun. Running locally requires docker (and optionally [just]).
+Development requires bun. For best results, run locally with docker.
 
 1. `cp .envrc.template .envrc` and fill in the blanks.
 2. `cp .env.local.template .env.local` and fill in the blanks.
 3. for development, run `bun install`
-4. to run locally, run `just start`[^1]
+4. to run locally, run `just start`[^1] (`docker compose up`)
 
 If you have [nix] installed (which I highly recommend you do) you can use the
 dev environment via `devenv up`. This will start:
 
-1. the graphql server at `localhost:4000`
-2. postgresql at `localhost:5432`
-3. a [ruru] graphiql instance at `localhost:1337`
+1. postgresql at [localhost:5432]
+2. pgadmin at [localhost:5050]
 
-The first time you do this will require `syncdb`ing; I will fix this soon.
+The first time you do this will require `syncdb`ing; I will fix this eventually.
 
 Lastly, there are a bunch of sql scripts in [./sql](./sql). I plan on manually keeping
 these things up to date in the production database. In development I've been
@@ -66,9 +65,6 @@ copilot/environments/test/manifest.yml 2ms (unchanged)
 copilot/graphql/manifest.yml 6ms (unchanged)
 copilot/pipelines/graphql-workloads/buildspec.yml 4ms (unchanged)
 copilot/pipelines/graphql-workloads/manifest.yml 1ms (unchanged)
-
-$ sqlfmt **/*.sql
-28 files left unchanged.
 ```
 
 [^1]:

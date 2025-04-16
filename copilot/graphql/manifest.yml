@@ -38,7 +38,6 @@ memory: 2048
 
 secrets:
   CLERK_SECRET_KEY: /copilot/${COPILOT_APPLICATION_NAME}/${COPILOT_ENVIRONMENT_NAME}/secrets/clerk-secret-key
-  JWT_SECRET: /copilot/${COPILOT_APPLICATION_NAME}/${COPILOT_ENVIRONMENT_NAME}/secrets/jwt-secret
   PGUSER:
     secretsmanager: "/database/service/graphql:username::"
   PGPASSWORD:
@@ -51,10 +50,8 @@ secrets:
     secretsmanager: "/database/service/graphql:dbname::"
 
 variables:
-  BASE_URL: https://${COPILOT_ENVIRONMENT_NAME}.${COPILOT_APPLICATION_NAME}.tendrel.io
   CLERK_PUBLISHABLE_KEY: pk_live_Y2xlcmsudGVuZHJlbC5pbyQ
   NODE_ENV: production
-  PGRST_BASE_URL: https://${COPILOT_ENVIRONMENT_NAME}.${COPILOT_APPLICATION_NAME}.tendrel.io/api/v1
   STAGE: ${COPILOT_ENVIRONMENT_NAME}
 
 # You can override any of the values defined above by environment.
@@ -105,3 +102,5 @@ sidecars:
       PGDATABASE:
         secretsmanager: "/database/service/graphql:dbname::"
       PGRST_JWT_SECRET: /copilot/${COPILOT_APPLICATION_NAME}/${COPILOT_ENVIRONMENT_NAME}/secrets/jwt-secret
+    variables:
+      PGRST_OPENAPI_SERVER_PROXY_URI: https://${COPILOT_ENVIRONMENT_NAME}.${COPILOT_APPLICATION_NAME}.tendrel.io/api/v1

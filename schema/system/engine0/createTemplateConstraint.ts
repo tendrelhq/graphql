@@ -55,8 +55,16 @@ type Options = {
 };
 
 /**
- * Create a new template constraint.
+ * Template constraints allow you to limit the set of values that are valid for
+ * a given template and, optionally, field. Practically, this allows you to
+ * define *enumerations*, e.g. a "string enum" with members 'foo', 'bar' and 'baz'.
  *
+ * Note that currently constraints are *not* validated in the backend.
+ * Validation *should* happen on the client, prior to invoking the API.
+ * Otherwise, the backend willl gladly accept any arbitrary value (assuming, of
+ * course, that it is of the correct type).
+ *
+ * @deprecated
  * @gqlField
  * @see {@link TemplateConstraint}
  */
