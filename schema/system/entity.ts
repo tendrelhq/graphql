@@ -1,13 +1,21 @@
 import { constructHeadersFromArgs, extractPageInfo } from "@/api";
 import { getAccessToken } from "@/auth";
 import { sql } from "@/datasources/postgres";
-import { assert } from "@/util";
+import { assert, assertUnderlyingType } from "@/util";
 import { GraphQLError } from "graphql";
 import type { ID, Int } from "grats";
 import { decodeGlobalId, encodeGlobalId } from ".";
 import type { Context } from "../types";
-import { type Field, field$fragment } from "./component";
+import {
+  type Field,
+  type FieldDefinitionInput,
+  type FieldInput,
+  type ValueInput,
+  type ValueType,
+  field$fragment,
+} from "./component";
 import type { DisplayName } from "./component/name";
+import { Task } from "./component/task";
 import type { Connection, Edge } from "./pagination";
 
 /**
@@ -163,6 +171,15 @@ export async function asFieldTemplateValueType(
   };
 }
 
+/**
+ * @gqlField asTask
+ */
+export async function castEntityInstanceToTask(
+  i: EntityInstance,
+): Promise<Task> {
+  return new Task(i);
+}
+
 /** @gqlMutationField */
 export async function createCustagAsFieldTemplateValueTypeConstraint(
   ctx: Context,
@@ -253,6 +270,92 @@ export async function createCustagAsFieldTemplateValueTypeConstraint(
       _id: entity_id,
       _type: "entity_instance",
       id: encodeGlobalId({ type: "entity_instance", id: entity_id }),
+    },
+  };
+}
+
+/** @gqlType */
+export interface EntityTemplate {
+  readonly _type: string;
+  readonly _id: string;
+
+  /** @gqlField */
+  id: ID;
+}
+
+/** @gqlQueryField */
+export async function templates(
+  owner: ID,
+  type?: string[] | null,
+): Promise<Connection<EntityTemplate>> {
+  return Promise.reject();
+}
+
+/** @gqlField asTask */
+export function castEntityTemplateToTask(t: EntityTemplate): Task {
+  return new Task(t);
+}
+
+/** @gqlField */
+export function child(
+  t: EntityTemplate,
+  type: string,
+  owner?: ID | null,
+): Promise<EntityTemplate> {
+  return Promise.reject();
+}
+
+/** @gqlField */
+export function children(
+  t: EntityTemplate,
+): Promise<Connection<EntityTemplate>> {
+  return Promise.reject();
+}
+
+/** @gqlType */
+export type CreateTemplatePayload = {
+  /** @gqlField */
+  edge: Edge<EntityTemplate>;
+};
+
+/** @gqlMutationField */
+export async function createTemplate(
+  args: {
+    owner: ID;
+    name?: string | null;
+    fields?: FieldDefinitionInput[] | null;
+  },
+  ctx: Context,
+): Promise<CreateTemplatePayload> {
+  return Promise.reject();
+}
+
+/** @gqlType */
+export type CreateInstancePayload = {
+  /** @gqlField */
+  edge: Edge<EntityInstance>;
+};
+
+/** @gqlMutationField */
+export async function createInstance(
+  args: {
+    location: ID;
+    template: ID;
+    fields?: FieldInput[] | null;
+    name?: string | null;
+  },
+  ctx: Context,
+): Promise<CreateInstancePayload> {
+  const t = new Task({ id: args.template });
+  const i = await t.instantiate(args, ctx);
+  return {
+    edge: {
+      cursor: i.id,
+      node: {
+        _type: i._type,
+        _id: i._id,
+        id: i.id,
+      },
     },
   };
 }

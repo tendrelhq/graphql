@@ -15,7 +15,8 @@ import {
   getFieldByName,
   setup,
 } from "@/test/prelude";
-import { assert, map, nullish } from "@/util";
+import { assert, map } from "@/util";
+import { mostRecentlyInProgress, newlyInstantiatedChainFrom } from "./prelude";
 import {
   TestRuntimeApplyFieldEditsMutationDocument,
   TestRuntimeDetailDocument,
@@ -722,43 +723,3 @@ ${rows.map(r => ` - ${r.id}`).join("\n")}
     await cleanup(CUSTOMER);
   });
 });
-
-/**
- * HACK! Grabs the "most recently in progress" workinstance for this test suite.
- * Temporary utility function while we are in the implementation phase of Runtime.
- */
-async function mostRecentlyInProgress(t: Task): Promise<Task> {
-  assert(t._type === "workinstance");
-  const [row] = await sql`
-    select id
-    from public.workinstance
-    where
-        workinstanceoriginatorworkinstanceid in (
-            select og.workinstanceid
-            from public.workinstance as og
-            where og.id = ${t._id}
-        )
-        and workinstancestatusid = 707
-    order by workinstanceid desc
-    limit 1;
-  `;
-  assert(!nullish(row), "no in progress instance");
-  return Task.fromTypeId("workinstance", row.id);
-}
-
-async function newlyInstantiatedChainFrom(t: Task): Promise<Task | null> {
-  assert(t._type === "workinstance");
-  const [row] = await sql`
-    select id
-    from public.workinstance
-    where
-        workinstancepreviousid = (
-            select workinstanceid
-            from public.workinstance
-            where id = ${t._id}
-        )
-        and workinstancestatusid = 706
-  `;
-  if (!row) return null;
-  return Task.fromTypeId("workinstance", row.id);
-}

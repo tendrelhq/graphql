@@ -1,11 +1,21 @@
 import { getAccessToken, setCurrentIdentity } from "@/auth";
-import { orm, sql } from "@/datasources/postgres";
+import { type TxSql, orm, sql } from "@/datasources/postgres";
 import { Limits } from "@/limits";
 import type { Context, InputMaybe } from "@/schema";
+import {
+  Location,
+  type ConstructorArgs as LocationConstructorArgs,
+} from "@/schema/platform/archetype/location";
 import { decodeGlobalId, encodeGlobalId } from "@/schema/system";
 import type { Field } from "@/schema/system/component";
 import type { Task } from "@/schema/system/component/task";
-import { assert, assertNonNull, assertUnderlyingType, map } from "@/util";
+import {
+  assert,
+  assertNonNull,
+  assertUnderlyingType,
+  map,
+  normalizeBase64,
+} from "@/util";
 import type { TypedDocumentNode as DocumentNode } from "@graphql-typed-document-node/core";
 import { PostgrestClient } from "@supabase/postgrest-js";
 import {
@@ -14,6 +24,7 @@ import {
   graphql,
   print,
 } from "graphql";
+import type { ID } from "grats";
 
 // biome-ignore lint/suspicious/noExplicitAny:
 export async function execute<R, V extends Record<string, any>>(
@@ -209,4 +220,85 @@ export async function cleanup(id: string) {
     select runtime.destroy_demo(${decoded.id}) as ok;
   `;
   process.stdout.write(row.ok);
+}
+
+export async function createEmptyCustomer(
+  args: {
+    name: string;
+  },
+  ctx: Context,
+  sql: TxSql,
+): Promise<Customer> {
+  // FIXME: Use Keller's API.
+  // Also, don't be fooled. This does NOT create a "runtime" customer. The
+  // function just happens to be in the `runtime` schema :/
+  // TODO: What is wrong with engine1.base64_encode??
+  const [row] = await sql<[{ id: string }]>`
+    select encode(('organization:' || t.id)::bytea, 'base64') as id
+    from runtime.create_customer(
+      customer_name := ${args.name},
+      language_type := ${ctx.req.i18n.language},
+      modified_by := 895
+    ) as t;
+  `;
+  return new Customer(row);
+}
+
+// TODO: Convert to grats.
+export class Customer {
+  readonly _id: string;
+  readonly id: ID;
+
+  constructor(args: { id: ID }) {
+    const { type, id } = decodeGlobalId(args.id);
+    assertUnderlyingType("organization", type);
+    this._id = id;
+    this.id = normalizeBase64(args.id);
+  }
+
+  async addLocation(
+    args: {
+      name: string;
+      type: string;
+      timezone?: string;
+    },
+    ctx: Context,
+    sql: TxSql,
+  ): Promise<Location> {
+    // TODO: Replace this with a Keller API.
+    const [row] = await sql<[LocationConstructorArgs]>`
+      select encode(('location:' || id)::bytea, 'base64') as id
+      from legacy0.create_location(
+        customer_id := ${this._id},
+        language_type := ${ctx.req.i18n.language},
+        location_name := ${args.name},
+        location_parent_id := null,
+        location_timezone := ${args.timezone ?? "utc"},
+        location_typename := ${args.type},
+        modified_by := 895
+      );
+    `;
+    return new Location(row);
+  }
+
+  async addWorker(
+    args: {
+      identityId: string;
+    },
+    ctx: Context,
+    sql: TxSql,
+  ): Promise<void> {
+    await sql`
+      select count(*)
+      from
+        public.worker as w,
+        legacy0.create_worker(
+          customer_id := ${this._id},
+          user_id := w.workeruuid,
+          user_role := 'Admin',
+          modified_by := 895
+        )
+      where w.workeridentityid = ${args.identityId};
+    `;
+  }
 }

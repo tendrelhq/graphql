@@ -602,6 +602,10 @@ type Counter {
   count: Int
 }
 
+type CreateInstancePayload {
+  edge: EntityInstanceEdge @semanticNonNull
+}
+
 input CreateInvitationInput {
   emailAddress: String!
   orgId: ID!
@@ -633,6 +637,10 @@ type CreateTemplateConstraintResult {
   constraint: TemplateConstraint
   diagnostics: [Diagnostic!] @semanticNonNull
   instantiations: [TaskEdge!] @semanticNonNull
+}
+
+type CreateTemplatePayload {
+  edge: EntityTemplateEdge @semanticNonNull
 }
 
 input CreateUserInput {
@@ -824,6 +832,7 @@ objects, like Locations, Resources and Workers, or logical ones, like
 "Scan Codes".
 """
 type EntityInstance {
+  asTask: Task @semanticNonNull
   id: ID @semanticNonNull
   name: DisplayName @semanticNonNull
 }
@@ -842,6 +851,24 @@ type EntityInstanceEdge {
   asFieldTemplateValueType: FieldConnection @semanticNonNull
   cursor: String @semanticNonNull
   node: EntityInstance @semanticNonNull
+}
+
+type EntityTemplate {
+  asTask: Task @semanticNonNull
+  child(owner: ID, type: String!): EntityTemplate @semanticNonNull
+  children: EntityTemplateConnection @semanticNonNull
+  id: ID @semanticNonNull
+}
+
+type EntityTemplateConnection {
+  edges: [EntityTemplateEdge!] @semanticNonNull
+  pageInfo: PageInfo @semanticNonNull
+  totalCount: Int @semanticNonNull
+}
+
+type EntityTemplateEdge {
+  cursor: String @semanticNonNull
+  node: EntityTemplate @semanticNonNull
 }
 
 type EntityValue {
@@ -907,6 +934,18 @@ type FieldConnection {
   edges: [FieldEdge!] @semanticNonNull
   pageInfo: PageInfo @semanticNonNull
   totalCount: Int @semanticNonNull
+}
+
+input FieldDefinitionInput {
+  description: String
+  isDraft: Boolean
+  isPrimary: Boolean
+  name: String!
+  order: Int
+  referenceType: String
+  type: ValueType!
+  value: ValueInput
+  widget: String
 }
 
 type FieldEdge {
@@ -1140,8 +1179,19 @@ type Mutation {
     order: Int
     parent: ID!
   ): EntityInstanceEdge @semanticNonNull
+  createInstance(
+    fields: [FieldInput!]
+    location: ID!
+    name: String
+    template: ID!
+  ): CreateInstancePayload @semanticNonNull
   createInvitation(input: CreateInvitationInput!): Worker!
   createLocation(input: CreateLocationInput!): Location @semanticNonNull
+  createTemplate(
+    fields: [FieldDefinitionInput!]
+    name: String
+    owner: ID!
+  ): CreateTemplatePayload @semanticNonNull
   """
   Template constraints allow you to limit the set of values that are valid for
   a given template and, optionally, field. Practically, this allows you to
@@ -1363,6 +1413,8 @@ type Query {
   languages: [Language!]!
   node(id: ID!): Node!
   roles: [Tag!]!
+  templates(owner: ID!, type: [String!]): EntityTemplateConnection
+    @semanticNonNull
   """
   Query for Trackable entities in the given `parent` hierarchy.
 
@@ -1755,13 +1807,26 @@ directly with the underlying state machine.
 type TaskStateMachine {
   active: Task
   hash: String @semanticNonNull
-  transitions: TaskConnection
+  transitions: TaskTransitions
 }
 
 enum TaskStateName {
   Closed
   InProgress
   Open
+}
+
+type TaskTransition {
+  cursor: String @semanticNonNull
+  id: ID @semanticNonNull
+  node: Task @semanticNonNull
+  target: Location
+}
+
+type TaskTransitions {
+  edges: [TaskTransition!] @semanticNonNull
+  pageInfo: PageInfo @semanticNonNull
+  totalCount: Int @semanticNonNull
 }
 
 """

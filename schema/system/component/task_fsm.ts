@@ -1,18 +1,20 @@
 import { setCurrentIdentity } from "@/auth";
 import { type Sql, type TxSql, sql } from "@/datasources/postgres";
+import { Location } from "@/schema/platform/archetype/location";
 import { type Diagnostic, DiagnosticKind } from "@/schema/result";
 import type { Mutation } from "@/schema/root";
 import type { Context } from "@/schema/types";
-import { assert, assertNonNull, compareBase64 } from "@/util";
+import { assert, assertNonNull, compareBase64, map } from "@/util";
 import type { ID } from "grats";
 import type { Fragment } from "postgres";
-import { match } from "ts-pattern";
+import { P, match } from "ts-pattern";
 import { decodeGlobalId } from "..";
 import type { StateMachine } from "../fsm";
 import type { Edge } from "../pagination";
 import {
   type AdvanceTaskOptions,
   Task,
+  type ConstructorArgs as TaskConstructorArgs,
   advanceTask,
   applyAssignments_,
   applyFieldEdits_,
@@ -44,34 +46,42 @@ export function fsm$fragment(t: Task): Fragment {
         ),
 
         plan as (
-            select pb.*
+            select
+              pb.*,
+              wt.worktemplateorder as _node_order,
+              l.locationcornerstoneorder as _target_order
             from
                 active,
-                engine0.build_instantiation_plan(active.id) as pb,
+                engine0.build_instantiation_plan_v2(active.id) as pb,
                 engine0.evaluate_instantiation_plan(
-                    target := pb.target,
+                    target := pb.node,
                     target_type := pb.target_type,
                     conditions := pb.ops
                 ) as pc
-            where pb.i_mode = 'lazy' and pc.result = true
+            left join lateral (select * from public.worktemplate where id = pb.node) wt on true
+            left join lateral (select * from public.location where locationuuid = pb.target) l on true
+            where pb.target_type = 'On Demand' and pc.result = true
         )
 
     select
-        encode(('workinstance:' || active.id)::bytea, 'base64') as active,
-        array_remove(
-            array_agg(encode(('worktemplate:' || wt.id)::bytea, 'base64') order by wt.worktemplateorder, wt.worktemplateid),
-            null
-        ) as transitions
+      encode(('workinstance:' || active.id)::bytea, 'base64') as active,
+      jsonb_agg(
+        jsonb_build_object(
+          'id', encode(('worktemplatenexttemplate:' || plan.id)::bytea, 'base64'),
+          'node', encode(('worktemplate:' || plan.node)::bytea, 'base64'),
+          'target', encode(('location:' || plan.target)::bytea, 'base64')
+        )
+        order by plan._node_order, plan._target_order
+      ) filter (where plan.id is not null) as transitions
     from active
     left join plan on true
-    left join public.worktemplate as wt on plan.target = wt.id
     group by active.id
   `;
 }
 
 export type FSM = {
   active: ID;
-  transitions?: ID[] | null;
+  transitions?: { id: ID; node: ID; target?: ID | null }[] | null;
 };
 
 /**
@@ -107,9 +117,11 @@ export async function fsm_(
     active: new Task({ id: fsm.active }),
     transitions: {
       edges:
-        fsm.transitions?.map(transition => ({
-          cursor: transition,
-          node: new Task({ id: transition }),
+        fsm.transitions?.map(t => ({
+          id: t.id,
+          cursor: t.node,
+          node: new Task({ id: t.node }),
+          target: map(t.target, id => new Location({ id })),
         })) ?? [],
       pageInfo: {
         hasNextPage: false,
@@ -194,7 +206,26 @@ export async function advance(
       } satisfies AdvanceTaskStateMachineResult;
     }
 
-    const choice = new Task(opts.task);
+    const { choice, target } = await match(decodeGlobalId(opts.task.id))
+      .with({ type: "worktemplatenexttemplate", id: P.select() }, async id => {
+        // When the choice is a next-template rule, we must resolve the rule to
+        // ascertain the next template.
+        const [row] = await sql<[{ task: ID; location?: ID | null }]>`
+          select
+            encode(('worktemplate:' || wt.id)::bytea, 'base64') as task,
+            encode(('location:' || worktemplatenexttemplatenextlocationid)::bytea, 'base64') as location
+          from public.worktemplatenexttemplate
+          inner join public.worktemplate as wt
+            on worktemplatenexttemplatenexttemplateid = wt.worktemplateid
+          where worktemplatenexttemplateuuid = ${id}
+        `;
+        assert(!!row, "no such choice");
+        return {
+          choice: new Task({ id: row.task }),
+          target: row.location ? new Location({ id: row.location }) : null,
+        };
+      })
+      .otherwise(() => ({ choice: new Task(opts.task), target: null }));
     console.debug(`choice: ${choice.id}`);
 
     if (is_valid_advancement(fsm, choice) === false) {
@@ -226,26 +257,33 @@ export async function advance(
 
     // Otherwise, the "choice" identifies a transition in the fsm.
     console.debug("advance: operating on the fsm");
-    return await advanceFsm(sql, root, fsm, choice, opts, ctx);
+    return await advanceFsm(
+      { choice, fsm, location: target?._id, opts, root },
+      ctx,
+      sql,
+    );
   });
 }
 
-export async function advanceFsm(
-  sql: TxSql,
-  root: Task,
-  fsm: FSM,
-  choice: Task,
-  opts: Omit<AdvanceFsmOptions, "fsm">,
+async function advanceFsm(
+  args: {
+    choice: Task;
+    fsm: FSM;
+    location?: string | null;
+    opts: Omit<AdvanceFsmOptions, "fsm">;
+    root: Task;
+  },
   ctx: Context,
+  sql: TxSql,
 ): Promise<AdvanceTaskStateMachineResult> {
-  assert(!!fsm.active, "fsm is not active");
-  return await match(choice._type)
+  assert(!!args.fsm.active, "fsm is not active");
+  return await match(args.choice._type)
     .with("workinstance", () => {
       // This path is not currently possible: transitions are guaranteed to be
       // underlied by worktemplates.
       assert(false, "advance_fsm: choice underlied by workinstance");
       return {
-        root,
+        root: args.root,
         diagnostics: [
           {
             __typename: "Diagnostic" as const,
@@ -263,19 +301,19 @@ export async function advanceFsm(
                 auth.current_identity(w.workinstancecustomerid, ${ctx.auth.userId}) as modified_by,
                 (select l.id from legacy0.primary_location_for_instance(w.id) as l) as location_id
             from public.workinstance as w
-            where w.id = ${decodeGlobalId(fsm.active).id}
+            where w.id = ${decodeGlobalId(args.fsm.active).id}
         )
 
         select encode(('workinstance:' || t.instance)::bytea, 'base64') as instance
         from
             options,
             engine0.instantiate(
-                template_id := ${choice._id},
-                location_id := options.location_id,
+                template_id := ${args.choice._id},
+                location_id := coalesce(${args.location ?? null}, options.location_id),
                 target_state := 'In Progress',
                 target_type := 'Task',
                 modified_by := options.modified_by,
-                chain_root_id := ${root._id},
+                chain_root_id := ${args.root._id},
                 chain_prev_id := options.previous_id
             ) as t
         group by t.instance;
@@ -294,7 +332,7 @@ export async function advanceFsm(
         await sql`
           update public.workinstance
           set workinstancestartdate = now()
-          where id = ${t._id}
+          where id = ${t._id} and workinstancestartdate is null
         `;
 
         // Auto-assign.
@@ -306,26 +344,26 @@ export async function advanceFsm(
           );
         }
 
-        if (opts.task.overrides?.length) {
+        if (args.opts.task.overrides?.length) {
           const result = await applyFieldEdits_(
             sql,
             ctx,
             t,
-            opts.task.overrides,
+            args.opts.task.overrides,
           );
           console.debug(`advance: applied ${result.count} field-level edits`);
         }
       }
 
       return {
-        root,
+        root: args.root,
         instantiations: [],
       } satisfies AdvanceTaskStateMachineResult;
     })
     .otherwise(() => {
-      assert(false, `unknown underlying type ${choice._type}`);
+      assert(false, `unknown underlying type ${args.choice._type}`);
       return {
-        root,
+        root: args.root,
         diagnostics: [
           {
             __typename: "Diagnostic" as const,
@@ -345,7 +383,7 @@ export async function advanceFsm(
  * Note that this is a potential source of conflict in the face of concurrency
  * and/or stale (client) data. We are not going to handle this right now.
  */
-export function is_valid_advancement(fsm: FSM, t: Task) {
+function is_valid_advancement(fsm: FSM, t: Task) {
   if (compareBase64(fsm.active, t.id)) return true;
-  return fsm.transitions?.some(id => compareBase64(id, t.id)) === true;
+  return fsm.transitions?.some(id => compareBase64(id.node, t.id)) === true;
 }

@@ -225,11 +225,11 @@ describe("runtime + reason codes", () => {
       // Patch our templates to have 'Reason Code' fields:
       await DOWN_TIME.addField(ctx, {
         name: "Reason Code",
-        type: "String",
+        type: "string",
       });
       await IDLE_TIME.addField(ctx, {
         name: "Reason Code",
-        type: "String",
+        type: "string",
       });
     });
   });

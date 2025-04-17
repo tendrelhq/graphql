@@ -99,11 +99,11 @@
         biome = {
           enable = true;
           package = config.packages.biome;
-          includes = ["*.graphql" "*.json" "*.md" "*.ts"];
+          includes = ["*.graphql" "*.json" "*.ts"];
         };
         prettier = {
           enable = true;
-          includes = ["*.yaml" "*.yml"];
+          includes = ["*.md" "*.yaml" "*.yml"];
         };
         ruff-format.enable = true;
         shfmt.enable = true;

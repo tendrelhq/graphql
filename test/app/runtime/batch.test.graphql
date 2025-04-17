@@ -1,0 +1,85 @@
+query TestBatchEntrypoint($customerId: ID!) {
+  trackables(parent: $customerId, withImplementation: "Batch") {
+    edges {
+      node {
+        ... on Task {
+          name {
+            value # Batch id/name/number (user defined)
+          }
+          fields {
+            edges {
+              node {
+                name {
+                  value
+                }
+              }
+            }
+          }
+          fsm {
+            active {
+              parent {
+                ... on Location {
+                  name {
+                    value
+                  }
+                }
+              }
+            }
+            transitions {
+              edges {
+                # id # This is what you should pass to `advance()`
+                node {
+                  # The (next) work template, same as before.
+                  name {
+                    value
+                  }
+                }
+                target {
+                  # The target Location, if any
+                  name {
+                    value
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+mutation CreateBatchMutation(
+  $batchTemplateId: ID!
+  $batchId: String!
+  $fields: [FieldInput!]!
+  $location: ID!
+) {
+  createInstance(
+    template: $batchTemplateId
+    location: $location
+    name: $batchId
+    fields: $fields
+  ) {
+    edge {
+      # @appendEdge(...)
+      node {
+        asTask {
+          name {
+            value
+          }
+          parent {
+            ... on Location {
+              name {
+                value
+              }
+            }
+          }
+          state {
+            __typename
+          }
+        }
+      }
+    }
+  }
+}

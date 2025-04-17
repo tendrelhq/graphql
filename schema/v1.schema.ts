@@ -43,10 +43,17 @@ import {
 } from "./system/component/task_fsm";
 import { createTemplateConstraint as mutationCreateTemplateConstraintResolver } from "./system/engine0/createTemplateConstraint";
 import {
+  castEntityInstanceToTask as entityInstanceAsTaskResolver,
   asFieldTemplateValueType as entityInstanceEdgeAsFieldTemplateValueTypeResolver,
   entityInstanceName as entityInstanceNameResolver,
+  castEntityTemplateToTask as entityTemplateAsTaskResolver,
+  child as entityTemplateChildResolver,
+  children as entityTemplateChildrenResolver,
   createCustagAsFieldTemplateValueTypeConstraint as mutationCreateCustagAsFieldTemplateValueTypeConstraintResolver,
+  createInstance as mutationCreateInstanceResolver,
+  createTemplate as mutationCreateTemplateResolver,
   instances as queryInstancesResolver,
+  templates as queryTemplatesResolver,
 } from "./system/entity";
 import {
   id as assignmentIdResolver,
@@ -726,6 +733,236 @@ export function getSchema(): GraphQLSchema {
       };
     },
   });
+  const TrackableType: GraphQLInterfaceType = new GraphQLInterfaceType({
+    description:
+      'Identifies an Entity as being "trackable".\nWhat exactly this means depends on the type underlying said entity and is\nentirely user defined.',
+    name: "Trackable",
+    fields() {
+      return {
+        id: {
+          name: "id",
+          type: new GraphQLNonNull(GraphQLID),
+        },
+        tracking: {
+          description:
+            'Entrypoint into the "tracking system(s)" for a given Entity. Note that while\nmany types admit to being trackable, this does not mean that all in fact are\nin practice. In order for an Entity to be trackable, it must be explicitly\nconfigured as such.',
+          name: "tracking",
+          type: TrackableConnectionType,
+          args: {
+            after: {
+              name: "after",
+              type: GraphQLID,
+            },
+            first: {
+              name: "first",
+              type: GraphQLInt,
+            },
+          },
+        },
+      };
+    },
+    interfaces() {
+      return [ComponentType];
+    },
+  });
+  const TrackableEdgeType: GraphQLObjectType = new GraphQLObjectType({
+    name: "TrackableEdge",
+    fields() {
+      return {
+        cursor: {
+          name: "cursor",
+          type: GraphQLString,
+          resolve(source, args, context, info) {
+            return assertNonNull(
+              defaultFieldResolver(source, args, context, info),
+            );
+          },
+        },
+        node: {
+          name: "node",
+          type: TrackableType,
+          resolve(source, args, context, info) {
+            return assertNonNull(
+              defaultFieldResolver(source, args, context, info),
+            );
+          },
+        },
+      };
+    },
+  });
+  const TrackableConnectionType: GraphQLObjectType = new GraphQLObjectType({
+    name: "TrackableConnection",
+    fields() {
+      return {
+        edges: {
+          name: "edges",
+          type: new GraphQLList(new GraphQLNonNull(TrackableEdgeType)),
+          resolve(source, args, context, info) {
+            return assertNonNull(
+              defaultFieldResolver(source, args, context, info),
+            );
+          },
+        },
+        pageInfo: {
+          name: "pageInfo",
+          type: PageInfoType,
+          resolve(source, args, context, info) {
+            return assertNonNull(
+              defaultFieldResolver(source, args, context, info),
+            );
+          },
+        },
+        totalCount: {
+          name: "totalCount",
+          type: GraphQLInt,
+          resolve(source, args, context, info) {
+            return assertNonNull(
+              defaultFieldResolver(source, args, context, info),
+            );
+          },
+        },
+      };
+    },
+  });
+  const TaskStateNameType: GraphQLEnumType = new GraphQLEnumType({
+    name: "TaskStateName",
+    values: {
+      Closed: {
+        value: "Closed",
+      },
+      InProgress: {
+        value: "InProgress",
+      },
+      Open: {
+        value: "Open",
+      },
+    },
+  });
+  const LocationType: GraphQLObjectType = new GraphQLObjectType({
+    name: "Location",
+    fields() {
+      return {
+        id: {
+          description: "A globally unique opaque identifier for a node.",
+          name: "id",
+          type: new GraphQLNonNull(GraphQLID),
+          resolve(source) {
+            return locationIdResolver(source);
+          },
+        },
+        timeZone: {
+          description: "IANA time zone identifier for this Location.",
+          name: "timeZone",
+          type: GraphQLString,
+          resolve(source, args, context, info) {
+            return assertNonNull(
+              defaultFieldResolver(source, args, context, info),
+            );
+          },
+        },
+        tracking: {
+          description:
+            'Entrypoint into the "tracking system(s)" for the given Location.',
+          name: "tracking",
+          type: TrackableConnectionType,
+          args: {
+            after: {
+              name: "after",
+              type: GraphQLID,
+            },
+            first: {
+              name: "first",
+              type: GraphQLInt,
+            },
+            withStatus: {
+              name: "withStatus",
+              type: new GraphQLList(new GraphQLNonNull(TaskStateNameType)),
+            },
+          },
+          resolve(source, args) {
+            return assertNonNull(
+              source.tracking(args.first, args.after, args.withStatus),
+            );
+          },
+        },
+      };
+    },
+    interfaces() {
+      return [ComponentType, NodeType, TrackableType];
+    },
+  });
+  const TaskTransitionType: GraphQLObjectType = new GraphQLObjectType({
+    name: "TaskTransition",
+    fields() {
+      return {
+        cursor: {
+          name: "cursor",
+          type: GraphQLString,
+          resolve(source, args, context, info) {
+            return assertNonNull(
+              defaultFieldResolver(source, args, context, info),
+            );
+          },
+        },
+        id: {
+          name: "id",
+          type: GraphQLID,
+          resolve(source, args, context, info) {
+            return assertNonNull(
+              defaultFieldResolver(source, args, context, info),
+            );
+          },
+        },
+        node: {
+          name: "node",
+          type: TaskType,
+          resolve(source, args, context, info) {
+            return assertNonNull(
+              defaultFieldResolver(source, args, context, info),
+            );
+          },
+        },
+        target: {
+          name: "target",
+          type: LocationType,
+        },
+      };
+    },
+  });
+  const TaskTransitionsType: GraphQLObjectType = new GraphQLObjectType({
+    name: "TaskTransitions",
+    fields() {
+      return {
+        edges: {
+          name: "edges",
+          type: new GraphQLList(new GraphQLNonNull(TaskTransitionType)),
+          resolve(source, args, context, info) {
+            return assertNonNull(
+              defaultFieldResolver(source, args, context, info),
+            );
+          },
+        },
+        pageInfo: {
+          name: "pageInfo",
+          type: PageInfoType,
+          resolve(source, args, context, info) {
+            return assertNonNull(
+              defaultFieldResolver(source, args, context, info),
+            );
+          },
+        },
+        totalCount: {
+          name: "totalCount",
+          type: GraphQLInt,
+          resolve(source, args, context, info) {
+            return assertNonNull(
+              defaultFieldResolver(source, args, context, info),
+            );
+          },
+        },
+      };
+    },
+  });
   const TaskStateMachineType: GraphQLObjectType = new GraphQLObjectType({
     name: "TaskStateMachine",
     description:
@@ -747,7 +984,7 @@ export function getSchema(): GraphQLSchema {
         },
         transitions: {
           name: "transitions",
-          type: TaskConnectionType,
+          type: TaskTransitionsType,
         },
       };
     },
@@ -854,97 +1091,6 @@ export function getSchema(): GraphQLSchema {
     name: "TaskState",
     types() {
       return [ClosedType, InProgressType, OpenType];
-    },
-  });
-  const TrackableType: GraphQLInterfaceType = new GraphQLInterfaceType({
-    description:
-      'Identifies an Entity as being "trackable".\nWhat exactly this means depends on the type underlying said entity and is\nentirely user defined.',
-    name: "Trackable",
-    fields() {
-      return {
-        id: {
-          name: "id",
-          type: new GraphQLNonNull(GraphQLID),
-        },
-        tracking: {
-          description:
-            'Entrypoint into the "tracking system(s)" for a given Entity. Note that while\nmany types admit to being trackable, this does not mean that all in fact are\nin practice. In order for an Entity to be trackable, it must be explicitly\nconfigured as such.',
-          name: "tracking",
-          type: TrackableConnectionType,
-          args: {
-            after: {
-              name: "after",
-              type: GraphQLID,
-            },
-            first: {
-              name: "first",
-              type: GraphQLInt,
-            },
-          },
-        },
-      };
-    },
-    interfaces() {
-      return [ComponentType];
-    },
-  });
-  const TrackableEdgeType: GraphQLObjectType = new GraphQLObjectType({
-    name: "TrackableEdge",
-    fields() {
-      return {
-        cursor: {
-          name: "cursor",
-          type: GraphQLString,
-          resolve(source, args, context, info) {
-            return assertNonNull(
-              defaultFieldResolver(source, args, context, info),
-            );
-          },
-        },
-        node: {
-          name: "node",
-          type: TrackableType,
-          resolve(source, args, context, info) {
-            return assertNonNull(
-              defaultFieldResolver(source, args, context, info),
-            );
-          },
-        },
-      };
-    },
-  });
-  const TrackableConnectionType: GraphQLObjectType = new GraphQLObjectType({
-    name: "TrackableConnection",
-    fields() {
-      return {
-        edges: {
-          name: "edges",
-          type: new GraphQLList(new GraphQLNonNull(TrackableEdgeType)),
-          resolve(source, args, context, info) {
-            return assertNonNull(
-              defaultFieldResolver(source, args, context, info),
-            );
-          },
-        },
-        pageInfo: {
-          name: "pageInfo",
-          type: PageInfoType,
-          resolve(source, args, context, info) {
-            return assertNonNull(
-              defaultFieldResolver(source, args, context, info),
-            );
-          },
-        },
-        totalCount: {
-          name: "totalCount",
-          type: GraphQLInt,
-          resolve(source, args, context, info) {
-            return assertNonNull(
-              defaultFieldResolver(source, args, context, info),
-            );
-          },
-        },
-      };
     },
   });
   const TaskType: GraphQLObjectType = new GraphQLObjectType({
@@ -1327,6 +1473,13 @@ export function getSchema(): GraphQLSchema {
       'Entities represent distinct objects in the system. They can be physical\nobjects, like Locations, Resources and Workers, or logical ones, like\n"Scan Codes".',
     fields() {
       return {
+        asTask: {
+          name: "asTask",
+          type: TaskType,
+          resolve(source) {
+            return assertNonNull(entityInstanceAsTaskResolver(source));
+          },
+        },
         id: {
           name: "id",
           type: GraphQLID,
@@ -1418,6 +1571,116 @@ export function getSchema(): GraphQLSchema {
       },
     },
   );
+  const EntityTemplateType: GraphQLObjectType = new GraphQLObjectType({
+    name: "EntityTemplate",
+    fields() {
+      return {
+        asTask: {
+          name: "asTask",
+          type: TaskType,
+          resolve(source) {
+            return assertNonNull(entityTemplateAsTaskResolver(source));
+          },
+        },
+        child: {
+          name: "child",
+          type: EntityTemplateType,
+          args: {
+            owner: {
+              name: "owner",
+              type: GraphQLID,
+            },
+            type: {
+              name: "type",
+              type: new GraphQLNonNull(GraphQLString),
+            },
+          },
+          resolve(source, args) {
+            return assertNonNull(
+              entityTemplateChildResolver(source, args.type, args.owner),
+            );
+          },
+        },
+        children: {
+          name: "children",
+          type: EntityTemplateConnectionType,
+          resolve(source) {
+            return assertNonNull(entityTemplateChildrenResolver(source));
+          },
+        },
+        id: {
+          name: "id",
+          type: GraphQLID,
+          resolve(source, args, context, info) {
+            return assertNonNull(
+              defaultFieldResolver(source, args, context, info),
+            );
+          },
+        },
+      };
+    },
+  });
+  const EntityTemplateEdgeType: GraphQLObjectType = new GraphQLObjectType({
+    name: "EntityTemplateEdge",
+    fields() {
+      return {
+        cursor: {
+          name: "cursor",
+          type: GraphQLString,
+          resolve(source, args, context, info) {
+            return assertNonNull(
+              defaultFieldResolver(source, args, context, info),
+            );
+          },
+        },
+        node: {
+          name: "node",
+          type: EntityTemplateType,
+          resolve(source, args, context, info) {
+            return assertNonNull(
+              defaultFieldResolver(source, args, context, info),
+            );
+          },
+        },
+      };
+    },
+  });
+  const EntityTemplateConnectionType: GraphQLObjectType = new GraphQLObjectType(
+    {
+      name: "EntityTemplateConnection",
+      fields() {
+        return {
+          edges: {
+            name: "edges",
+            type: new GraphQLList(new GraphQLNonNull(EntityTemplateEdgeType)),
+            resolve(source, args, context, info) {
+              return assertNonNull(
+                defaultFieldResolver(source, args, context, info),
+              );
+            },
+          },
+          pageInfo: {
+            name: "pageInfo",
+            type: PageInfoType,
+            resolve(source, args, context, info) {
+              return assertNonNull(
+                defaultFieldResolver(source, args, context, info),
+              );
+            },
+          },
+          totalCount: {
+            name: "totalCount",
+            type: GraphQLInt,
+            resolve(source, args, context, info) {
+              return assertNonNull(
+                defaultFieldResolver(source, args, context, info),
+              );
+            },
+          },
+        };
+      },
+    },
+  );
   const QueryType: GraphQLObjectType = new GraphQLObjectType({
     name: "Query",
     fields() {
@@ -1463,6 +1726,23 @@ export function getSchema(): GraphQLSchema {
             return queryNodeResolver(args, context);
           },
         },
+        templates: {
+          name: "templates",
+          type: EntityTemplateConnectionType,
+          args: {
+            owner: {
+              name: "owner",
+              type: new GraphQLNonNull(GraphQLID),
+            },
+            type: {
+              name: "type",
+              type: new GraphQLList(new GraphQLNonNull(GraphQLString)),
+            },
+          },
+          resolve(_source, args) {
+            return assertNonNull(queryTemplatesResolver(args.owner, args.type));
+          },
+        },
         trackables: {
           description:
             "Query for Trackable entities in the given `parent` hierarchy.\n\nNote that this api does not yet support pagination! The `first` argument is\nused purely for testing at the moment.",
@@ -1494,17 +1774,8 @@ export function getSchema(): GraphQLSchema {
               type: GraphQLString,
             },
           },
-          resolve(source, args, context) {
-            return assertNonNull(
-              queryTrackablesResolver(
-                source,
-                context,
-                args.first,
-                args.parent,
-                args.includeInactive,
-                args.withImplementation,
-              ),
-            );
+          resolve(_source, args, context) {
+            return assertNonNull(queryTrackablesResolver(args, context));
           },
         },
       };
@@ -1692,71 +1963,20 @@ export function getSchema(): GraphQLSchema {
         };
       },
     });
-  const TaskStateNameType: GraphQLEnumType = new GraphQLEnumType({
-    name: "TaskStateName",
-    values: {
-      Closed: {
-        value: "Closed",
-      },
-      InProgress: {
-        value: "InProgress",
-      },
-      Open: {
-        value: "Open",
-      },
-    },
-  });
-  const LocationType: GraphQLObjectType = new GraphQLObjectType({
-    name: "Location",
+  const CreateInstancePayloadType: GraphQLObjectType = new GraphQLObjectType({
+    name: "CreateInstancePayload",
     fields() {
       return {
-        id: {
-          description: "A globally unique opaque identifier for a node.",
-          name: "id",
-          type: new GraphQLNonNull(GraphQLID),
-          resolve(source) {
-            return locationIdResolver(source);
-          },
-        },
-        timeZone: {
-          description: "IANA time zone identifier for this Location.",
-          name: "timeZone",
-          type: GraphQLString,
+        edge: {
+          name: "edge",
+          type: EntityInstanceEdgeType,
           resolve(source, args, context, info) {
             return assertNonNull(
               defaultFieldResolver(source, args, context, info),
             );
           },
         },
-        tracking: {
-          description:
-            'Entrypoint into the "tracking system(s)" for the given Location.',
-          name: "tracking",
-          type: TrackableConnectionType,
-          args: {
-            after: {
-              name: "after",
-              type: GraphQLID,
-            },
-            first: {
-              name: "first",
-              type: GraphQLInt,
-            },
-            withStatus: {
-              name: "withStatus",
-              type: new GraphQLList(new GraphQLNonNull(TaskStateNameType)),
-            },
-          },
-          resolve(source, args) {
-            return assertNonNull(
-              source.tracking(args.first, args.after, args.withStatus),
-            );
-          },
-        },
       };
-    },
-    interfaces() {
-      return [ComponentType, NodeType, TrackableType];
     },
   });
   const CreateLocationInputType: GraphQLInputObjectType =
@@ -1784,6 +2004,66 @@ export function getSchema(): GraphQLSchema {
             description:
               "If not specified, the time zone will be derived from the parent (when the\nparent is a Location). This is most notably *not* the case when the parent is\na Customer.",
             name: "timeZone",
+            type: GraphQLString,
+          },
+        };
+      },
+    });
+  const CreateTemplatePayloadType: GraphQLObjectType = new GraphQLObjectType({
+    name: "CreateTemplatePayload",
+    fields() {
+      return {
+        edge: {
+          name: "edge",
+          type: EntityTemplateEdgeType,
+          resolve(source, args, context, info) {
+            return assertNonNull(
+              defaultFieldResolver(source, args, context, info),
+            );
+          },
+        },
+      };
+    },
+  });
+  const FieldDefinitionInputType: GraphQLInputObjectType =
+    new GraphQLInputObjectType({
+      name: "FieldDefinitionInput",
+      fields() {
+        return {
+          description: {
+            name: "description",
+            type: GraphQLString,
+          },
+          isDraft: {
+            name: "isDraft",
+            type: GraphQLBoolean,
+          },
+          isPrimary: {
+            name: "isPrimary",
+            type: GraphQLBoolean,
+          },
+          name: {
+            name: "name",
+            type: new GraphQLNonNull(GraphQLString),
+          },
+          order: {
+            name: "order",
+            type: GraphQLInt,
+          },
+          referenceType: {
+            name: "referenceType",
+            type: GraphQLString,
+          },
+          type: {
+            name: "type",
+            type: new GraphQLNonNull(ValueTypeType),
+          },
+          value: {
+            name: "value",
+            type: ValueInputType,
+          },
+          widget: {
+            name: "widget",
             type: GraphQLString,
           },
         };
@@ -2045,6 +2325,31 @@ export function getSchema(): GraphQLSchema {
             );
           },
         },
+        createInstance: {
+          name: "createInstance",
+          type: CreateInstancePayloadType,
+          args: {
+            fields: {
+              name: "fields",
+              type: new GraphQLList(new GraphQLNonNull(FieldInputType)),
+            },
+            location: {
+              name: "location",
+              type: new GraphQLNonNull(GraphQLID),
+            },
+            name: {
+              name: "name",
+              type: GraphQLString,
+            },
+            template: {
+              name: "template",
+              type: new GraphQLNonNull(GraphQLID),
+            },
+          },
+          resolve(_source, args, context) {
+            return assertNonNull(mutationCreateInstanceResolver(args, context));
+          },
+        },
         createLocation: {
           name: "createLocation",
           type: LocationType,
@@ -2058,6 +2363,29 @@ export function getSchema(): GraphQLSchema {
             return assertNonNull(
               mutationCreateLocationResolver(source, context, args.input),
             );
+          },
+        },
+        createTemplate: {
+          name: "createTemplate",
+          type: CreateTemplatePayloadType,
+          args: {
+            fields: {
+              name: "fields",
+              type: new GraphQLList(
+                new GraphQLNonNull(FieldDefinitionInputType),
+              ),
+            },
+            name: {
+              name: "name",
+              type: GraphQLString,
+            },
+            owner: {
+              name: "owner",
+              type: new GraphQLNonNull(GraphQLID),
+            },
+          },
+          resolve(_source, args, context) {
+            return assertNonNull(mutationCreateTemplateResolver(args, context));
           },
         },
         createTemplateConstraint: {
@@ -2291,6 +2619,7 @@ export function getSchema(): GraphQLSchema {
       CreateLocationInputType,
       DescriptionInputType,
       DynamicStringInputType,
+      FieldDefinitionInputType,
       FieldInputType,
       GeofenceInputType,
       InProgressInputType,
@@ -2311,7 +2640,9 @@ export function getSchema(): GraphQLSchema {
       AttachmentEdgeType,
       BooleanValueType,
       ClosedType,
+      CreateInstancePayloadType,
       CreateTemplateConstraintResultType,
+      CreateTemplatePayloadType,
       DescriptionType,
       DiagnosticType,
       DisplayNameType,
@@ -2319,6 +2650,9 @@ export function getSchema(): GraphQLSchema {
       EntityInstanceType,
       EntityInstanceConnectionType,
       EntityInstanceEdgeType,
+      EntityTemplateType,
+      EntityTemplateConnectionType,
+      EntityTemplateEdgeType,
       EntityValueType,
       FieldType,
       FieldConnectionType,
@@ -2335,6 +2669,8 @@ export function getSchema(): GraphQLSchema {
       TaskConnectionType,
       TaskEdgeType,
       TaskStateMachineType,
+      TaskTransitionType,
+      TaskTransitionsType,
       TemplateConstraintType,
       TimestampOverridableType,
       TimestampOverrideType,

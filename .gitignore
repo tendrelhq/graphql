@@ -2,7 +2,7 @@
 !.envrc.template
 *.dump
 *.generated.ts
-.*
+/.*
 data/
 node_modules/
 postgrestools.jsonc

@@ -3,6 +3,7 @@ query TestRuntimeEntrypoint(
   $root: ID!
   $impl: String
   $includeInactive: Boolean
+  $includeTransitionIds: Boolean! = false
 ) {
   trackables(
     first: $count
@@ -48,11 +49,14 @@ query TestRuntimeEntrypoint(
   }
 }
 
-query TestRuntimeDetail($node: ID!) {
+query TestRuntimeDetail(
+  $node: ID!
+  $overTypes: [String!] = ["Runtime", "Idle Time", "Downtime"]
+) {
   node(id: $node) {
     ... on Task {
       # "matrix" component
-      chainAgg(overType: ["Runtime", "Idle Time", "Downtime"]) {
+      chainAgg(overType: $overTypes) {
         group
         value
       }
@@ -99,6 +103,7 @@ query TestRuntimeDetail($node: ID!) {
 mutation TestRuntimeTransitionMutation(
   $opts: AdvanceFsmOptions!
   $includeChain: Boolean!
+  $includeTransitionIds: Boolean! = false
 ) {
   advance(opts: $opts) {
     diagnostics {
@@ -249,6 +254,7 @@ fragment TaskFSM_fragment on TaskStateMachine {
   }
   transitions {
     edges {
+      id @include(if: $includeTransitionIds)
       node {
         name {
           value
@@ -264,6 +270,11 @@ fragment TaskFSM_fragment on TaskStateMachine {
               }
             }
           }
+        }
+      }
+      target {
+        name {
+          value
         }
       }
     }

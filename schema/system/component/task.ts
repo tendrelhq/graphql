@@ -227,7 +227,7 @@ export class Task implements Assignable, Component, Refetchable, Trackable {
     // This is still ugly...
     // but honestly it's gotten way better since the Checklist days lmao.
     return match(input.type)
-      .with("Boolean", () => ({
+      .with("boolean", () => ({
         id: field,
         value: {
           __typename: "BooleanValue" as const,
@@ -237,7 +237,7 @@ export class Task implements Assignable, Component, Refetchable, Trackable {
         },
         valueType: "boolean" as const,
       }))
-      .with("Entity", () => ({
+      .with("entity", () => ({
         id: field,
         value: {
           __typename: "EntityValue" as const,
@@ -245,7 +245,7 @@ export class Task implements Assignable, Component, Refetchable, Trackable {
         },
         valueType: "entity" as const,
       }))
-      .with("Number", () => ({
+      .with("number", () => ({
         id: field,
         value: {
           __typename: "NumberValue" as const,
@@ -255,7 +255,7 @@ export class Task implements Assignable, Component, Refetchable, Trackable {
         },
         valueType: "number" as const,
       }))
-      .with("String", () => ({
+      .with("string", () => ({
         id: field,
         value: {
           __typename: "StringValue" as const,
@@ -265,7 +265,7 @@ export class Task implements Assignable, Component, Refetchable, Trackable {
         },
         valueType: "string" as const,
       }))
-      .with("Timestamp", () => ({
+      .with("timestamp", () => ({
         id: field,
         value: {
           __typename: "TimestampValue" as const,
@@ -287,6 +287,75 @@ export class Task implements Assignable, Component, Refetchable, Trackable {
       });
   }
 
+  async createTransition(
+    args: {
+      atLocation?: ID | null;
+      whenStatusChangesTo: TaskStateName;
+      instantiate: {
+        template: ID;
+        atLocation?: ID | null;
+        withType?: "On Demand" | "Task" | "Audit" | "Remediation";
+      };
+    },
+    ctx: Context,
+    sql: TxSql,
+  ): Promise<void> {
+    const { type: nextTemplateType, id: nextTemplate } = decodeGlobalId(
+      args.instantiate.template,
+    );
+    assertUnderlyingType("worktemplate", nextTemplateType);
+
+    const stateCondition = match(args.whenStatusChangesTo)
+      .with("Open", () => "Open")
+      .with("InProgress", () => "In Progress")
+      .with("Closed", () => "Complete")
+      .exhaustive();
+
+    const prevLocation = map(args.atLocation, l => {
+      const { type, id } = decodeGlobalId(l);
+      assertUnderlyingType("location", type);
+      return id;
+    });
+    const nextLocation = map(args.instantiate.atLocation, l => {
+      const { type, id } = decodeGlobalId(l);
+      assertUnderlyingType("location", type);
+      return id;
+    });
+
+    const r = await sql`
+      select 1
+      from legacy0.create_instantiation_rule_v2(
+        prev_template_id := ${this._id},
+        next_template_id := ${nextTemplate},
+        state_condition := ${stateCondition},
+        type_tag := ${args.instantiate.withType ?? "Task"},
+        prev_location_id := ${prevLocation ?? null},
+        next_location_id := ${nextLocation ?? null},
+        modified_by := 895
+      );
+    `;
+    assert(r.count === 1);
+  }
+
+  async ensureInstantiableAt(
+    args: { locations: ID[] },
+    ctx: Context,
+    sql: TxSql,
+  ): Promise<void> {
+    const rows = await sql`
+      select 1
+      from
+        public.location as l,
+        legacy0.create_template_constraint_on_location(
+          template_id := ${this._id},
+          location_id := l.locationuuid,
+          modified_by := auth.current_identity(l.locationcustomerid, ${ctx.auth.userId})
+        )
+      where l.locationuuid in ${sql(args.locations.map(l => decodeGlobalId(l).id))}
+    `;
+    assert(rows.count === args.locations.length);
+  }
+
   /**
    * The hash signature of the given Task. This is only useful when interacting
    * with APIs that require a hash as a concurrency control mechanism.
@@ -298,6 +367,43 @@ export class Task implements Assignable, Component, Refetchable, Trackable {
     if (this._type !== "workinstance") return "";
     const { hash } = await computeTaskHash(sql, this);
     return hash;
+  }
+
+  async instantiate(
+    args: {
+      chainPrev?: ID | null;
+      chainRoot?: ID | null;
+      name?: string | null;
+      fields?: FieldInput[] | null;
+      location: ID;
+      state?: TaskStateInput | null;
+    },
+    ctx: Context,
+  ): Promise<Task> {
+    assertUnderlyingType("worktemplate", this._type);
+    const chainPrev = map(args.chainPrev, id => new Task({ id }));
+    const chainRoot = map(args.chainRoot, id => new Task({ id }));
+    const location = new Location({ id: args.location });
+    const targetState = "Open";
+    const targetType = "Task";
+    return await sql.begin(async sql => {
+      await setCurrentIdentity(sql, ctx);
+      // TODO: Set modified_by correctly.
+      const [row] = await sql<[ConstructorArgs]>`
+        select encode(('workinstance:' || t.instance)::bytea, 'base64') as id
+        from engine0.instantiate(
+            template_id := ${this._id},
+            location_id := ${location._id},
+            target_state := ${targetState},
+            target_type := ${targetType},
+            modified_by := 895,
+            chain_root_id := ${chainRoot?._id ?? null},
+            chain_prev_id := ${chainPrev?._id ?? null}
+        ) as t
+        group by t.instance
+      `;
+      return new Task(row);
+    });
   }
 
   /**

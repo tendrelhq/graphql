@@ -1,6 +1,9 @@
-import { sql } from "@/datasources/postgres";
+import { type TxSql, sql } from "@/datasources/postgres";
 import { decodeGlobalId } from "@/schema/system";
-import type { Component } from "@/schema/system/component";
+import type {
+  Component,
+  FieldDefinitionInput,
+} from "@/schema/system/component";
 import {
   Task,
   type ConstructorArgs as TaskConstructorArgs,
@@ -8,6 +11,7 @@ import {
 } from "@/schema/system/component/task";
 import type { Refetchable } from "@/schema/system/node";
 import type { Connection } from "@/schema/system/pagination";
+import type { Context } from "@/schema/types";
 import { assert, assertUnderlyingType, normalizeBase64 } from "@/util";
 import type { ID, Int } from "grats";
 import { match } from "ts-pattern";
@@ -145,5 +149,141 @@ export class Location implements Component, Refetchable, Trackable {
       },
       totalCount: nodes.length,
     };
+  }
+
+  async createTemplate(
+    args: {
+      name: string;
+      order?: number | null;
+      fields: FieldDefinitionInput[];
+      types: string[];
+    },
+    ctx: Context,
+    sql: TxSql,
+  ): Promise<Task> {
+    const [row] = await sql<[{ customer_id: ID; id: ID; me: bigint }]>`
+      with cte as (
+        select
+          customeruuid as customer_id,
+          locationuuid as task_parent_id,
+          auth.current_identity(customerid, ${ctx.auth.userId}) as me
+        from public.location
+        inner join public.customer on locationcustomerid = customerid
+        where locationuuid = ${this._id}
+      )
+      select
+        cte.customer_id,
+        cte.me,
+        encode(('worktemplate:' || t.id)::bytea, 'base64') as id
+      from cte, legacy0.create_task_t(
+        customer_id := cte.customer_id,
+        language_type := ${ctx.req.i18n.language},
+        task_name := ${args.name},
+        task_parent_id := cte.task_parent_id,
+        task_order := ${args.order ?? 0},
+        modified_by := cte.me
+      ) as t;
+    `;
+
+    const t = new Task(row);
+    {
+      const r = await sql`
+        select 1
+        from
+          public.systag as s,
+          legacy0.create_template_type(
+            template_id := ${t._id},
+            systag_id := s.systaguuid,
+            modified_by := ${row.me}
+          )
+        where s.systagparentid = 882 and s.systagtype in ${sql(args.types)}
+      `;
+      assert(r.count === args.types.length);
+    }
+
+    for (const field of args.fields) {
+      const fieldType = match(field.type)
+        .with("boolean", () => "Boolean")
+        .with("entity", () => "Entity")
+        .with("number", () => "Number")
+        .with("string", () => "String")
+        .with("timestamp", () => "Date")
+        .otherwise(s => {
+          // N.B. so the compiler will warn us if we add anything.
+          const _: "unknown" = s;
+          return null;
+        });
+      const r = await sql`
+        select 1
+        from legacy0.create_field_t(
+          customer_id := ${row.customer_id},
+          language_type := ${ctx.req.i18n.language},
+          template_id := ${t._id},
+          field_description := ${field.description ?? null},
+          field_is_draft := ${field.isDraft ?? false},
+          field_is_primary := ${field.isPrimary ?? false},
+          field_is_required := false,
+          field_name := ${field.name},
+          field_order := ${field.order ?? 0},
+          field_reference_type := null,
+          field_type := ${fieldType},
+          field_value := null,
+          field_widget := ${field.widget ?? null},
+          modified_by := ${row.me}
+        );
+      `;
+      assert(r.count === 1);
+    }
+
+    return t;
+  }
+
+  async insertChild(
+    args: {
+      name: string;
+      /**
+       * Default display order.
+       */
+      order?: number;
+      type: string;
+      timezone?: string;
+    },
+    ctx: Context,
+    sql: TxSql,
+  ): Promise<Location> {
+    const [row] = await sql<[ConstructorArgs]>`
+      with cte as (
+        select
+          customeruuid as customer_id,
+          locationuuid as id,
+          locationtimezone as timezone,
+          auth.current_identity(customerid, ${ctx.auth.userId}) as modified_by
+        from public.location
+        inner join public.customer on locationcustomerid = customerid
+        where locationuuid = ${this._id}
+      )
+      select encode(('location:' || t.id)::bytea, 'base64') as id
+      from cte, legacy0.create_location(
+          customer_id := cte.customer_id,
+          language_type := ${ctx.req.i18n.language},
+          location_name := ${args.name},
+          location_parent_id := cte.id,
+          location_timezone := coalesce(${args.timezone ?? null}, cte.timezone),
+          location_typename := ${args.type},
+          modified_by := cte.modified_by
+      ) as t;
+    `;
+
+    const l = new Location(row);
+    if (args.order) {
+      // HACK: use Keller's new API.
+      await sql`
+        update public.location
+        set locationcornerstoneorder = ${args.order}
+        where locationuuid = ${l._id}
+      `;
+    }
+
+    return l;
   }
 }

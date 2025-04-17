@@ -355,13 +355,14 @@ export async function parent(field: Field): Promise<Task> {
   return new Task(row);
 }
 
+/** @gqlInput */
 export type FieldDefinitionInput = {
   name: string;
-  type: string;
+  type: ValueType;
   description?: string | null;
   isDraft?: boolean | null;
   isPrimary?: boolean | null;
-  order?: number | null;
+  order?: Int | null;
   referenceType?: string | null;
   value?: ValueInput | null;
   widget?: string | null;
