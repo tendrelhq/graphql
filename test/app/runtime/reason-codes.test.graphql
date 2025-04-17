@@ -79,3 +79,20 @@ query GetReasonCodeCompletions($task: ID!) {
     }
   }
 }
+
+query ListReasonCodes2($owner: ID!, $parent: [ID!]!) {
+  instances(owner: $owner, parent: $parent) {
+    edges {
+      node {
+        id
+        name {
+          value
+        }
+      }
+    }
+  }
+}
+
+mutation DeleteReasonCode($node: ID!) {
+  deleteNode(node: $node)
+}

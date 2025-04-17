@@ -1,7 +1,9 @@
+import { setCurrentIdentity } from "@/auth";
 import { sql } from "@/datasources/postgres";
 import { assertUnderlyingType } from "@/util";
 import { GraphQLError } from "graphql";
 import type { ID } from "grats";
+import { match } from "ts-pattern";
 import { decodeGlobalId, encodeGlobalId } from ".";
 import { Location } from "../platform/archetype/location";
 import {
@@ -54,20 +56,45 @@ export function id(node: Refetchable): ID {
  *
  * @gqlMutationField
  */
-export async function deleteNode(node: ID): Promise<ID[]> {
-  const { type, id } = decodeGlobalId(node);
-  // Nodes map to tables. These are the ones we have standardized on in the
-  // legacy model.
-  assertUnderlyingType(
-    ["workresult", "workresultinstance", "workinstance", "worktemplate"],
-    type,
+export async function deleteNode(node: ID, ctx: Context): Promise<ID[]> {
+  const { id, ...g } = decodeGlobalId(node);
+  // Nodes map to tables.
+  const type = assertUnderlyingType(
+    [
+      // These are the ones we have standardized on in the legacy model:
+      "workresult",
+      "workresultinstance",
+      "workinstance",
+      "worktemplate",
+      // These are new under the entity model:
+      "entity_instance",
+    ],
+    g.type,
   );
-  const rows = await sql`
-    select exe.*
-    from engine1.delete_node(${type}, ${id}) as ops,
-         engine1.execute(ops.*) as exe
-    ;
-  `;
+
+  const rows = await match(type)
+    .with("entity_instance", async () => {
+      const [{ owner }] = await sql`
+        select entityinstanceownerentityuuid as owner
+        from entity.entityinstance
+        where entityinstanceuuid = ${id};
+      `;
+      const res = await ctx.pgrst.rpc("delete_entity_instance", { owner, id });
+      if (res.error) {
+        throw new GraphQLError("Failed to delete Node", {
+          originalError: res.error,
+        });
+      }
+      return res.data;
+    })
+    .otherwise(
+      () => sql`
+        select exe.*
+        from engine1.delete_node(${type}, ${id}) as ops,
+             engine1.execute(ops.*) as exe
+        ;
+      `,
+    );
 
   console.debug(`engine1.execution.result:\n${JSON.stringify(rows, null, 2)}`);
 

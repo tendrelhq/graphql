@@ -1,6 +1,5 @@
 import { sql } from "@/datasources/postgres";
-import { assert, assertNonNull, buildPaginationArgs, mapOrElse } from "@/util";
-import { GraphQLError } from "graphql";
+import { assertNonNull, buildPaginationArgs, mapOrElse } from "@/util";
 import type { ID, Int } from "grats";
 import type { Fragment } from "postgres";
 import { match } from "ts-pattern";
@@ -123,7 +122,6 @@ export type ValueCompletion = {
  */
 export async function completions(
   f: Field,
-  ctx: Context,
 ): Promise<Connection<ValueCompletion>> {
   const { type, id, suffix } = decodeGlobalId(f.id);
   // FIXME: we aren't using worktemplateconstraintconstrainedtypeid here.

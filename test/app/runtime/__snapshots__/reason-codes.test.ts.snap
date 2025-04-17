@@ -101,8 +101,40 @@ exports[`runtime + reason codes create some reason codes (for Downtime) 1`] = `
           },
         },
       },
+      {
+        "__typename": "EntityInstanceEdge",
+        "asFieldTemplateValueType": {
+          "__typename": "FieldConnection",
+          "edges": [
+            {
+              "__typename": "FieldEdge",
+              "node": {
+                "__typename": "Field",
+                "name": {
+                  "__typename": "DisplayName",
+                  "value": "Reason Code",
+                },
+                "parent": {
+                  "__typename": "Task",
+                  "name": {
+                    "__typename": "DisplayName",
+                    "value": "Downtime",
+                  },
+                },
+              },
+            },
+          ],
+        },
+        "node": {
+          "__typename": "EntityInstance",
+          "name": {
+            "__typename": "DisplayName",
+            "value": "Masheen Dawn",
+          },
+        },
+      },
     ],
-    "totalCount": 3,
+    "totalCount": 4,
   },
 }
 `;

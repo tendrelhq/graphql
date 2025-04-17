@@ -12,6 +12,7 @@ import { map } from "@/util";
 import { ApolloServer } from "@apollo/server";
 import { expressMiddleware } from "@apollo/server/express4";
 import { ApolloServerPluginDrainHttpServer } from "@apollo/server/plugin/drainHttpServer";
+import { PostgrestClient } from "@supabase/postgrest-js";
 import cors from "cors";
 import express from "express";
 import { GraphQLError } from "graphql";
@@ -110,6 +111,25 @@ app.use(
       return {
         auth: req.auth,
         limits: new Limits(),
+        // PostgREST runs alongside graphql, i.e. in the same ECS cluster. We
+        // can hit it over localhost to avoid nginx. This also works in the
+        // default developer setup since *everything* is localhost.
+        pgrst: new PostgrestClient("http://localhost:4001", {
+          async fetch(...args) {
+            const token = await auth
+              .getAccessToken(req.auth.userId)
+              .then(r => r.json())
+              .then(r => r.access_token);
+            const init = {
+              ...(args[1] ?? {}),
+              headers: {
+                ...(args[1]?.headers ?? {}),
+                Authorization: `Bearer ${token}`,
+              },
+            };
+            return fetch(args[0], init);
+          },
+        }),
         orm: orm(req),
         req,
       } satisfies Context;

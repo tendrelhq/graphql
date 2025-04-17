@@ -68,6 +68,7 @@ export async function instances(
     select: "id",
     owner: `eq.${owner}`,
     order: "_order.asc",
+    _deleted: "eq.false",
   });
   if (args.parent?.length) {
     // FIXME: This is a weird one in Keller's entity model. Every entityinstance

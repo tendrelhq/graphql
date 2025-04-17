@@ -1200,8 +1200,8 @@ export function getSchema(): GraphQLSchema {
             'Intended to provide "auto-completion" in a frontend setting, this API returns\n*distinct known values* for a given Field. For Fields without constraints\n(which is most of them), this will return a "frecency" list of previously\nused values for the given Field. When constraints are involved, the\ncompletion list represents the *allowed* set of values for the given Field.\n\nNote that "frecency" is not currently implemented. For such Fields (i.e. those\nwithout constraints) you will simply get back an empty completion list.\n\nNote also that currently there is no enforcement of the latter, constraint-based\nsemantic in the backend! The client *must* validate user input using the\ncompletion list *before* issuing, for example, an `applyFieldEdits` mutation.\nOtherwise the backend will gladly accept arbitrary values (assuming they are,\nof course, of the correct type).\n\nNote also that pagination is not currently implemented.',
           name: "completions",
           type: ValueCompletionConnectionType,
-          resolve(source, _args, context) {
-            return assertNonNull(fieldCompletionsResolver(source, context));
+          resolve(source) {
+            return assertNonNull(fieldCompletionsResolver(source));
           },
         },
         description: {
@@ -2103,8 +2103,10 @@ export function getSchema(): GraphQLSchema {
               type: new GraphQLNonNull(GraphQLID),
             },
           },
-          resolve(_source, args) {
-            return assertNonNull(mutationDeleteNodeResolver(args.node));
+          resolve(_source, args, context) {
+            return assertNonNull(
+              mutationDeleteNodeResolver(args.node, context),
+            );
           },
         },
         updateLocation: {

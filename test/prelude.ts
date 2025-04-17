@@ -38,10 +38,29 @@ const DEFAULT_REQUEST = {
 };
 
 export async function createTestContext(): Promise<Context> {
+  const userId = assertNonNull(
+    process.env.X_TENDREL_USER,
+    "X_TENDREL_USER must be set when running tests",
+  );
   return {
     // biome-ignore lint/suspicious/noExplicitAny: i know i know...
-    auth: { userId: process.env.X_TENDREL_USER } as any,
+    auth: { userId } as any,
     limits: new Limits(),
+    pgrst: new PostgrestClient("http://localhost:4001", {
+      async fetch(...args) {
+        const token = await getAccessToken(userId)
+          .then(r => r.json())
+          .then(r => r.access_token);
+        const init = {
+          ...(args[1] ?? {}),
+          headers: {
+            ...(args[1]?.headers ?? {}),
+            Authorization: `Bearer ${token}`,
+          },
+        };
+        return fetch(args[0], init);
+      },
+    }),
     // biome-ignore lint/suspicious/noExplicitAny: ...room for improvement...
     orm: orm(DEFAULT_REQUEST as any),
     // biome-ignore lint/suspicious/noExplicitAny: ...but whatever.
@@ -191,22 +210,3 @@ export async function cleanup(id: string) {
   `;
   process.stdout.write(row.ok);
 }
-
-export const pg = new PostgrestClient("http://localhost/api/v1", {
-  async fetch(...args) {
-    const ctx = await createTestContext();
-    const token = await getAccessToken(ctx.auth.userId)
-      .then(r => r.json())
-      .then(r => r.access_token);
-    if (typeof args[1] === "object") {
-      args[1] = {
-        ...args[1],
-        headers: {
-          ...args[1].headers,
-          Authorization: `Bearer ${token}`,
-        },
-      };
-    }
-    return fetch(...args);
-  },
-});
