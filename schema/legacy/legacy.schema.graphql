@@ -82,6 +82,8 @@ type Organization implements Node {
   activatedAt: String
   deactivatedAt: String
   billingId: String
+  billingType: String
+  isPaying: Boolean!
   languages(
     first: Int
     last: Int
