@@ -3,23 +3,20 @@
 ## Create a demo customer
 
 ```sql
-begin
-;
+begin;
 
 select *
-from
-    runtime.create_demo(
-        customer_name := 'Frozen Tendy Factory',
-        admins := array[
-            'worker_d3ebf472-606c-4d26-9a19-d99f187e9c92',
-            'worker_a5d1d16f-4264-45e7-97c6-1ef534b8875f'
-        ],
-        modified_by := 895
-    )
-;
+from runtime.create_demo(
+  customer_name := 'Frozen Tendy Factory',
+  admins := (
+    select array_agg(workeruuid)
+    from public.worker
+    where workeridentityid = :YOUR_USER_ID
+  ),
+  modified_by := 895
+);
 
-commit
-;
+commit;
 ```
 
 ## Reason codes, e.g. for Downtime and Idle Time
@@ -77,3 +74,140 @@ The resulting edges will be in custagorder (which you control).
   )}
 </select>
 ```
+
+## Batch
+
+Database changes:
+
+```sql
+-- Allows for cross-location instantiation.
+alter table public.worktemplatenexttemplate
+add column worktemplatenexttemplatenextlocationid text
+    references public.location (locationuuid),
+add column worktemplatenexttemplateuuid text
+    not null unique default gen_random_uuid()
+;
+```
+
+Frontend:
+
+```graphql
+query BatchesViewConsoleQuery {
+  trackables(withImplementation: "Batch") { # => maps to worktemplatetype!
+    edges {
+      node {
+        # This is the Batch (workinstance).
+        ... on Task {
+          name {
+            value # User supplied "batch id/number/name/whatever"
+          }
+          fields {
+            # Customer, Product Name, SKU, etc
+          }
+          parent {
+            # Note that this is useless for how Batch will be configured.
+            # It will always be the "site" due to historical constraints.
+            # The frontend will need to accomodate this else it will show the
+            # site name rather than the "active location". It should instead
+            # grab the location from the active task. Assuming that is the
+            # desired UX. Kinda depends how you intend for the app to be used
+            # in "batch tracking" mode. See further down "UX design decisions".
+          }
+          fsm {
+            # We are back to normal Runtime now; this is the canonical
+            # StateMachine<Task> interface.
+            active {
+              parent {
+                # The "active location". What is shown at the top of the
+                # in-progress screen, currently that is.
+              }
+            }
+            transitions {
+              edges {
+                # In the new model, these are actually worktemplatenexttemplates.
+                id # worktemplatenexttemplateuuid
+                conditions {
+                  # These would be viaworkresultid, viastatuschangeid, etc
+                  # I will plumb these through primarily for debugging and testing.
+                }
+                node {
+                  # This is the normal Task (worktemplate).
+                }
+                target {
+                  # This is the target location, if any.
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
+```
+
+NOTE: The frontend will need to start passing the `transitions.edges.id` to
+`advance`, rather than the `transitions.edges.node.id` as is currently the case.
+This really only matters in the event of _cross location instantiation_, and
+only if you _want_ this instantiation to be user-driven vis-a-vis downtime and
+idle time. You can of course configure instantiation to happen automatically
+(i.e. eager) in which case the user would do nothing.
+
+### UX design decisions:
+
+- Will the app be used in a "location first" workflow? Or will it be used in a
+  "batch first" workflow?
+
+This affects where you get the `parent` from in the above query. If the intent
+is a location-first workflow then you should always grab the active's parent,
+and fall back to the fsm's parent if there is no active. The mocks seem to
+suggest this sort of workflow since batch selection happens _after_ line
+selection.
+
+If however you'd like a batch-first workflow, then you should get the `parent`
+from the root node (which is the batch); the effect being that the title of the
+in-progress screen will show the batch id.
+
+Perhaps a nice dynamic solution to accomodate both workflows is merge both of
+the parents into the header, but only if they are different, to the effect of:
+
+```
+----------------------------------------------------------------------
+| <                    12345 @ Cartoning Line                   (MH) |
+|                          o Not Started                             |
+----------------------------------------------------------------------
+```
+
+or, e.g. in the case of non-batch-mode:
+
+```
+----------------------------------------------------------------------
+| <                       Cartoning Line                        (MH) |
+|                          o Not Started                             |
+----------------------------------------------------------------------
+```
+
+```typescript
+const header =
+  !active || active.parent.id === node.parent.id
+    ? `${node.parent.name.value}` // e.g. just Cartoning Line
+    : `${node.parent.name.value} @ ${active.parent.name.value}`;
+```
+
+- Localization of batch ids?
+
+Not sure what the batch numbers are aside from being customer defined, but you
+potentially may want them to remain untranslated. This would happen in the
+database as part of customer create, i.e. setting the translation status of the
+worktemplate's name to 'NEVER_TRANSLATE' or whatever.
+
+- User-driven cross-location instantiation?
+
+You could have a UX wherein the user is presented with all of the cross-location
+instantiation options, and they select the right one to do. Perhaps there are
+batch workflows where "branching" can occur? Idk, but just know that this can be
+done. You could even mix and match. Maybe eager instantiation happens from A to C
+and then there is an option to advance into D, E, or F, and then eagerly through
+H, which is the final step. Note also that this has nothing to do with Batch,
+but rather is a side effect of implementing Batch (i.e. cross location
+instantiation).
