@@ -53,21 +53,18 @@ begin
       and location.locationuuid = location_id
       and (task_state_t.systagparentid, task_state_t.systagtype) = (705, target_state)
       and (task_type_t.systagparentid, task_type_t.systagtype) = (691, target_type)
-  returning id into ins_instance
-  ;
+  returning id into ins_instance;
   --
   if not found then
     raise exception 'failed to create instance';
   end if;
   --
-  return query select ins_instance as instance, null, null
-  ;
+  return query select ins_instance as instance, null, null;
 
   -- invariant: originator must not be null :sigh:
   update public.workinstance
   set workinstanceoriginatorworkinstanceid = workinstanceid
-  where id = ins_instance and workinstanceoriginatorworkinstanceid is null
-  ;
+  where id = ins_instance and workinstanceoriginatorworkinstanceid is null;
 
   -- default instantiate fields
   insert into public.workresultinstance (
@@ -97,8 +94,7 @@ begin
       and f.workresultdeleted = false
       and f.workresultdraft = false
       and (f.workresultenddate is null or f.workresultenddate > now())
-  on conflict do nothing
-  ;
+  on conflict do nothing;
 
   -- Ensure the location primary field is set.
   with upd_value as (
@@ -152,7 +148,6 @@ begin
 end $function$;
 
 COMMENT ON FUNCTION engine0.instantiate(text,text,text,text,bigint,text,text) IS '
-
 # engine0.instantiate
 
 Instantiate a worktemplate at the given location and in the specified target state.
@@ -174,9 +169,7 @@ from engine0.instantiate(
     modified_by := $7      -- workerinstance.id (bigint)
 );
 ```
-
 ';
 
 REVOKE ALL ON FUNCTION engine0.instantiate(text,text,text,text,bigint,text,text) FROM PUBLIC;
-GRANT EXECUTE ON FUNCTION engine0.instantiate(text,text,text,text,bigint,text,text) TO PUBLIC;
-GRANT EXECUTE ON FUNCTION engine0.instantiate(text,text,text,text,bigint,text,text) TO tendreladmin WITH GRANT OPTION;
+GRANT EXECUTE ON FUNCTION engine0.instantiate(text,text,text,text,bigint,text,text) TO graphql;

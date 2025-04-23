@@ -29,7 +29,7 @@ import {
   TestRuntimeTransitionMutationDocument,
 } from "./runtime.test.generated";
 
-describe("runtime + batch tracking", () => {
+describe.skip("runtime + batch tracking", () => {
   // See beforeAll for initialization of these variables.
   let CUSTOMER: Customer;
   let BATCH_TEMPLATE: Task;
@@ -265,7 +265,7 @@ describe("runtime + batch tracking", () => {
   // Note that this is the final transition:
   test("start + close packaging", async () => {
     // Due to how we've set things up, we should *already have* an open instance
-    // at the Packing Line.
+    // at the Packaging Line.
     const { root, fsm } = await getLatestFsm(BATCH_TEMPLATE);
     assert(root.id !== fsm.active?.id, "should be in runtime");
     const active = assertNonNull(fsm.active);

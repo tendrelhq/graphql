@@ -792,6 +792,11 @@ exports[`runtime demo start run 1`] = `
                   "value": "Downtime",
                 },
               },
+              "target": {
+                "name": {
+                  "value": "Mixing Line",
+                },
+              },
             },
             {
               "node": {
@@ -831,6 +836,11 @@ exports[`runtime demo start run 1`] = `
                 },
                 "name": {
                   "value": "Idle Time",
+                },
+              },
+              "target": {
+                "name": {
+                  "value": "Mixing Line",
                 },
               },
             },
@@ -998,6 +1008,11 @@ exports[`runtime demo stale: start run (should fail) 1`] = `
                   "value": "Downtime",
                 },
               },
+              "target": {
+                "name": {
+                  "value": "Mixing Line",
+                },
+              },
             },
             {
               "node": {
@@ -1037,6 +1052,11 @@ exports[`runtime demo stale: start run (should fail) 1`] = `
                 },
                 "name": {
                   "value": "Idle Time",
+                },
+              },
+              "target": {
+                "name": {
+                  "value": "Mixing Line",
                 },
               },
             },
@@ -1384,6 +1404,11 @@ exports[`runtime demo end idle time 1`] = `
                   "value": "Downtime",
                 },
               },
+              "target": {
+                "name": {
+                  "value": "Mixing Line",
+                },
+              },
             },
             {
               "node": {
@@ -1423,6 +1448,11 @@ exports[`runtime demo end idle time 1`] = `
                 },
                 "name": {
                   "value": "Idle Time",
+                },
+              },
+              "target": {
+                "name": {
+                  "value": "Mixing Line",
                 },
               },
             },
@@ -1590,6 +1620,11 @@ exports[`runtime demo end idle time 2`] = `
                   "value": "Downtime",
                 },
               },
+              "target": {
+                "name": {
+                  "value": "Mixing Line",
+                },
+              },
             },
             {
               "node": {
@@ -1629,6 +1664,11 @@ exports[`runtime demo end idle time 2`] = `
                 },
                 "name": {
                   "value": "Idle Time",
+                },
+              },
+              "target": {
+                "name": {
+                  "value": "Mixing Line",
                 },
               },
             },
@@ -1881,6 +1921,11 @@ exports[`runtime demo end downtime 1`] = `
                   "value": "Downtime",
                 },
               },
+              "target": {
+                "name": {
+                  "value": "Mixing Line",
+                },
+              },
             },
             {
               "node": {
@@ -1920,6 +1965,11 @@ exports[`runtime demo end downtime 1`] = `
                 },
                 "name": {
                   "value": "Idle Time",
+                },
+              },
+              "target": {
+                "name": {
+                  "value": "Mixing Line",
                 },
               },
             },

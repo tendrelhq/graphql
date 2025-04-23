@@ -18,5 +18,4 @@ $function$;
 
 
 REVOKE ALL ON FUNCTION api.token_introspect(text) FROM PUBLIC;
-GRANT EXECUTE ON FUNCTION api.token_introspect(text) TO tendreladmin WITH GRANT OPTION;
 GRANT EXECUTE ON FUNCTION api.token_introspect(text) TO authenticated;

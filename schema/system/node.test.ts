@@ -17,7 +17,7 @@ describe("node", () => {
   let TEMPLATE: Task;
 
   test("delete", async () => {
-    const result = await deleteNode(TEMPLATE.id);
+    const result = await deleteNode(TEMPLATE.id, ctx);
     expect([TEMPLATE.id]).toEqual(result);
   });
 

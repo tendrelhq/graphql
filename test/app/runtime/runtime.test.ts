@@ -52,7 +52,6 @@ describe("runtime demo", () => {
       schema,
       TestRuntimeTransitionMutationDocument,
       {
-        includeChain: false,
         opts: {
           fsm: {
             id: FSM_I.id,
@@ -93,7 +92,6 @@ describe("runtime demo", () => {
       schema,
       TestRuntimeTransitionMutationDocument,
       {
-        includeChain: false,
         opts: {
           fsm: {
             id: FSM_I.id,
@@ -121,7 +119,6 @@ describe("runtime demo", () => {
       schema,
       TestRuntimeTransitionMutationDocument,
       {
-        includeChain: false,
         opts: {
           fsm: {
             id: FSM_I.id,
@@ -143,7 +140,6 @@ describe("runtime demo", () => {
       schema,
       TestRuntimeTransitionMutationDocument,
       {
-        includeChain: false,
         opts: {
           fsm: {
             id: FSM_I.id,
@@ -169,7 +165,6 @@ describe("runtime demo", () => {
       schema,
       TestRuntimeTransitionMutationDocument,
       {
-        includeChain: false,
         opts: {
           fsm: {
             id: FSM_I.id,
@@ -196,7 +191,6 @@ describe("runtime demo", () => {
 
     // While we're here, let's test stale completion as well!
     const stale = await execute(schema, TestRuntimeTransitionMutationDocument, {
-      includeChain: false,
       opts: {
         fsm: {
           id: FSM_I.id,
@@ -277,7 +271,6 @@ describe("runtime demo", () => {
       schema,
       TestRuntimeTransitionMutationDocument,
       {
-        includeChain: false,
         opts: {
           fsm: {
             id: t.id,
@@ -302,7 +295,6 @@ describe("runtime demo", () => {
       schema,
       TestRuntimeTransitionMutationDocument,
       {
-        includeChain: false,
         opts: {
           fsm: {
             id: FSM_I.id,
@@ -324,7 +316,6 @@ describe("runtime demo", () => {
     expect(t.id).toBe(FSM_I.id);
 
     const start = await execute(schema, TestRuntimeTransitionMutationDocument, {
-      includeChain: false,
       opts: {
         fsm: {
           id: t.id,
@@ -342,7 +333,6 @@ describe("runtime demo", () => {
     await assertTaskIsNamed(t0, "Idle Time", ctx);
 
     const end = await execute(schema, TestRuntimeTransitionMutationDocument, {
-      includeChain: false,
       opts: {
         fsm: {
           id: FSM_I.id,
@@ -573,7 +563,6 @@ describe("runtime demo", () => {
       schema,
       TestRuntimeTransitionMutationDocument,
       {
-        includeChain: false,
         opts: {
           fsm: {
             id: encodeGlobalId({

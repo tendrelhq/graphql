@@ -102,7 +102,7 @@ query TestRuntimeDetail(
 
 mutation TestRuntimeTransitionMutation(
   $opts: AdvanceFsmOptions!
-  $includeChain: Boolean!
+  $includeChain: Boolean! = false
   $includeTransitionIds: Boolean! = false
 ) {
   advance(opts: $opts) {

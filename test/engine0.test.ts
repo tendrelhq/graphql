@@ -22,9 +22,9 @@ describe("engine0", () => {
 
   test("build", async () => {
     const result = await sql`
-      select target, target_type, row_to_json(t.*) as condition, *
+      select node, target, target_type, row_to_json(t.*) as condition
       from
-          engine0.build_instantiation_plan(task_id := ${INSTANCE._id}) as p,
+          engine0.build_instantiation_plan_v2(${INSTANCE._id}) as p,
           unnest(p.ops) as t
     `;
     // IMPORTANT! This is the build phase and so what we get back is the
@@ -35,14 +35,14 @@ describe("engine0", () => {
 
   test("build + check", async () => {
     const r0 = await sql`
-      select pc.*
+      select p1.*
       from
-          engine0.build_instantiation_plan(${INSTANCE._id}) as pb,
+          engine0.build_instantiation_plan_v2(${INSTANCE._id}) as p0,
           engine0.evaluate_instantiation_plan(
-              target := pb.target,
-              target_type := pb.target_type,
-              conditions := pb.ops
-          ) as pc
+              target := p0.node,
+              target_type := p0.target_type,
+              conditions := p0.ops
+          ) as p1
     `;
     // The instance in question is currently Open. The default rules created as
     // part of the MFT demo consist of only InProgress state conditions.
@@ -56,15 +56,14 @@ describe("engine0", () => {
     `;
     //
     const r1 = await sql`
-      select pc.*
+      select p1.*
       from
-          engine0.build_instantiation_plan(${INSTANCE._id}) as pb,
+          engine0.build_instantiation_plan_v2(${INSTANCE._id}) as p0,
           engine0.evaluate_instantiation_plan(
-              target := pb.target,
-              target_type := pb.target_type,
-              conditions := pb.ops
-          ) as pc
-      order by pc.system
+              target := p0.node,
+              target_type := p0.target_type,
+              conditions := p0.ops
+          ) as p1
     `;
     // Now that the instance is InProgress, we expect our plan to include the
     // two default rules included in the MFT demo (Idle, Downtime) as well as

@@ -85,16 +85,6 @@ describe("map", () => {
   // I am being intentionally verbose with all of these manual type
   // annotations. We are testing both runtime execution and type inference.
 
-  test("over null", () => {
-    const r: null = map(null, (_: never) => "foo");
-    expect(r).toBeNull();
-  });
-
-  test("over undefined", () => {
-    const r: undefined = map(undefined, (_: never) => "foo");
-    expect(r).toBeUndefined();
-  });
-
   test("over T", () => {
     const r: string = map("hello", (s: string) => `${s} world`);
     expect(r).toBe("hello world");

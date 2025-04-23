@@ -1,4 +1,4 @@
--- Verify graphql:cross-location-instantiation on pg
+-- Verify graphql:batch-support on pg
 
 BEGIN;
 

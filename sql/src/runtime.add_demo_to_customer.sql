@@ -137,7 +137,7 @@ begin
         prev_template_id := ins_template,
         next_template_id := ins_template,
         state_condition := 'In Progress',
-        type_tag := 'On Demand',
+        type_tag := 'Task',
         modified_by := modified_by
     ) as t;
   --
@@ -165,7 +165,7 @@ begin
                   template_id := ins_template,
                   location_id := loop0_x,
                   target_state := 'Open',
-                  target_type := 'On Demand',
+                  target_type := 'Task',
                   modified_by := modified_by
               )
           )
@@ -235,7 +235,7 @@ begin
                     field_reference_type := null,
                     field_type := field.f_type,
                     field_value := null,
-                    field_widget :=  null,
+                    field_widget := null,
                     modified_by := modified_by
                 ) as t
         ),
@@ -384,5 +384,4 @@ end $function$;
 
 
 REVOKE ALL ON FUNCTION runtime.add_demo_to_customer(text,text,bigint,text) FROM PUBLIC;
-GRANT EXECUTE ON FUNCTION runtime.add_demo_to_customer(text,text,bigint,text) TO PUBLIC;
-GRANT EXECUTE ON FUNCTION runtime.add_demo_to_customer(text,text,bigint,text) TO tendreladmin WITH GRANT OPTION;
+GRANT EXECUTE ON FUNCTION runtime.add_demo_to_customer(text,text,bigint,text) TO graphql;
