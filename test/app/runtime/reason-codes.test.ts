@@ -12,19 +12,19 @@ import {
   setup,
 } from "@/test/prelude";
 import { assertNonNull, map } from "@/util";
+import type { Maybe } from "graphql/jsutils/Maybe";
 import {
   CreateReasonCodeDocument,
   DeleteReasonCodeDocument,
   GetReasonCodeCompletionsDocument,
   ListReasonCodes2Document,
   ListReasonCodesDocument,
+  ListTemplatesDocument,
 } from "./reason-codes.test.generated";
 
 describe("runtime + reason codes", () => {
   // See beforeAll for initialization of these variables.
   let CUSTOMER: string;
-  let DOWN_TIME: Task;
-  let IDLE_TIME: Task;
 
   test("demo has no reason codes set up at first", async () => {
     const result = await execute(schema, ListReasonCodesDocument, {
@@ -38,8 +38,43 @@ describe("runtime + reason codes", () => {
     expect(result.data?.instances?.totalCount).toBe(0);
   });
 
+  let DOWN_TIME: Maybe<Task>;
+  let IDLE_TIME: Maybe<Task>;
+  test("grab the Downtime and Idle Time templates", async () => {
+    const result = await execute(schema, ListTemplatesDocument, {
+      owner: CUSTOMER,
+      types: ["Downtime", "Idle Time"],
+    });
+    expect(result.errors).toBeFalsy();
+
+    DOWN_TIME = map(
+      result.data?.templates?.edges
+        ?.flatMap(e => {
+          if (e.node?.asTask?.name?.value === "Downtime")
+            return e.node.asTask.id;
+          return [];
+        })
+        .at(0),
+      id => new Task({ id }),
+    );
+    expect(DOWN_TIME).toBeTruthy();
+
+    IDLE_TIME = map(
+      result.data?.templates?.edges
+        ?.flatMap(e => {
+          if (e.node?.asTask?.name?.value === "Idle Time")
+            return e.node.asTask.id;
+          return [];
+        })
+        .at(0),
+      id => new Task({ id }),
+    );
+  });
+
   test("create some reason codes (for Downtime)", async () => {
-    const f = await getFieldByName(DOWN_TIME, "Reason Code");
+    const t = assertNonNull(DOWN_TIME);
+    // Note that in a real application you would grab this from Task.fields:
+    const f = await getFieldByName(t, "Reason Code");
 
     let order = 0;
     for (const code of [
@@ -143,7 +178,8 @@ describe("runtime + reason codes", () => {
   });
 
   test("create some reason codes (for Idle Time)", async () => {
-    const f = await getFieldByName(IDLE_TIME, "Reason Code");
+    const t = assertNonNull(IDLE_TIME);
+    const f = await getFieldByName(t, "Reason Code");
 
     let order = 0;
     for (const code of ["Lunch Break", "Nothin to do!"]) {
@@ -186,16 +222,16 @@ describe("runtime + reason codes", () => {
   });
 
   // FIXME: Deleting an entity instance does not propagate to the custag.
-  test.todo("in the app, get completions", async () => {
+  test("in the app, get completions", async () => {
     // For both Downtime and Idle Time.
     const r0 = await execute(schema, GetReasonCodeCompletionsDocument, {
-      task: DOWN_TIME.id,
+      task: assertNonNull(DOWN_TIME).id,
     });
     expect(r0.errors).toBeFalsy();
     expect(r0.data).toMatchSnapshot();
 
     const r1 = await execute(schema, GetReasonCodeCompletionsDocument, {
-      task: IDLE_TIME.id,
+      task: assertNonNull(IDLE_TIME).id,
     });
     expect(r1.errors).toBeFalsy();
     expect(r1.data).toMatchSnapshot();
@@ -207,27 +243,27 @@ describe("runtime + reason codes", () => {
     // 1. Create the demo customer
     const logs = await setup(ctx);
     CUSTOMER = findAndEncode("customer", "organization", logs);
-    DOWN_TIME = map(
+    const downTemplate = map(
       findAndEncode("next", "worktemplate", logs, { skip: 1 }),
       id => new Task({ id }),
     );
-    assertTaskIsNamed(DOWN_TIME, "Downtime", ctx);
-    IDLE_TIME = map(
+    assertTaskIsNamed(downTemplate, "Downtime", ctx);
+    const idleTemplate = map(
       findAndEncode("next", "worktemplate", logs),
       id => new Task({ id }),
     );
-    assertTaskIsNamed(IDLE_TIME, "Idle Time", ctx);
+    assertTaskIsNamed(idleTemplate, "Idle Time", ctx);
 
     await sql.begin(async sql => {
       await setCurrentIdentity(sql, ctx);
       // FIXME: use Keller's API for customer create through the entity model.
       await sql`call entity.import_entity(null)`;
       // Patch our templates to have 'Reason Code' fields:
-      await DOWN_TIME.addField(ctx, {
+      await downTemplate.addField(ctx, {
         name: "Reason Code",
         type: "string",
       });
-      await IDLE_TIME.addField(ctx, {
+      await idleTemplate.addField(ctx, {
         name: "Reason Code",
         type: "string",
       });

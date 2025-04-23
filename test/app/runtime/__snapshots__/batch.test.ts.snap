@@ -660,7 +660,7 @@ exports[`runtime + batch tracking start + close packaging 2`] = `
                   },
                   "value": {
                     "__typename": "StringValue",
-                    "string": null,
+                    "string": "Ross's Salsa",
                   },
                   "valueType": "string",
                 },
@@ -673,7 +673,7 @@ exports[`runtime + batch tracking start + close packaging 2`] = `
                   },
                   "value": {
                     "__typename": "StringValue",
-                    "string": null,
+                    "string": "Mild Green Salsa",
                   },
                   "valueType": "string",
                 },
@@ -686,7 +686,7 @@ exports[`runtime + batch tracking start + close packaging 2`] = `
                   },
                   "value": {
                     "__typename": "StringValue",
-                    "string": null,
+                    "string": "SLS-GRN-ML",
                   },
                   "valueType": "string",
                 },

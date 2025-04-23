@@ -25,6 +25,21 @@ query ListReasonCodes($owner: ID!, $parent: [ID!]!) {
   }
 }
 
+query ListTemplates($owner: ID!, $types: [String!]) {
+  templates(owner: $owner, type: $types) {
+    edges {
+      node {
+        asTask {
+          id
+          name {
+            value
+          }
+        }
+      }
+    }
+  }
+}
+
 mutation CreateReasonCode(
   $field: ID!
   $name: String!

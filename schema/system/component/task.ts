@@ -65,10 +65,10 @@ export class Task implements Assignable, Component, Refetchable, Trackable {
   readonly id: ID;
 
   constructor(args: ConstructorArgs) {
-    this.id = normalizeBase64(args.id);
-    const { type, id } = decodeGlobalId(this.id);
+    const { type, id } = decodeGlobalId(args.id);
     this._type = assertUnderlyingType(["workinstance", "worktemplate"], type);
     this._id = id;
+    this.id = normalizeBase64(args.id);
   }
 
   static fromTypeId(type: string, id: string) {
@@ -193,6 +193,14 @@ export class Task implements Assignable, Component, Refetchable, Trackable {
       )
       .exhaustive();
 
+    const fieldType = match(input.type)
+      .with("boolean", () => "Boolean")
+      .with("entity", () => "Entity")
+      .with("number", () => "Number")
+      .with("string", () => "String")
+      .with("timestamp", () => "Date")
+      .otherwise(() => null);
+
     const result = await sql.begin(async sql => {
       await setCurrentIdentity(sql, ctx);
       return await sql`
@@ -208,7 +216,7 @@ export class Task implements Assignable, Component, Refetchable, Trackable {
             field_id := null,
             field_name := ${input.name},
             field_order := ${input.order ?? 0},
-            field_type := ${input.type}
+            field_type := ${fieldType}
           ) as ops,
           engine1.execute(ops.*) as t
         ;
@@ -402,7 +410,13 @@ export class Task implements Assignable, Component, Refetchable, Trackable {
         ) as t
         group by t.instance
       `;
-      return new Task(row);
+      const t = new Task(row);
+
+      if (args.fields?.length) {
+        await applyFieldEdits_(sql, ctx, t, args.fields);
+      }
+
+      return t;
     });
   }
 

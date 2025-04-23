@@ -398,10 +398,6 @@ type CreateTemplateConstraintResult {
   instantiations: [TaskEdge!] @semanticNonNull
 }
 
-type CreateTemplatePayload {
-  edge: EntityTemplateEdge @semanticNonNull
-}
-
 type Description implements Component & Node {
   description: DynamicString
     @deprecated(reason: "Use Description.locale and/or Description.value.")
@@ -471,8 +467,6 @@ type EntityInstanceEdge {
 
 type EntityTemplate {
   asTask: Task @semanticNonNull
-  child(owner: ID, type: String!): EntityTemplate @semanticNonNull
-  children: EntityTemplateConnection @semanticNonNull
   id: ID @semanticNonNull
 }
 
@@ -601,11 +595,6 @@ type Mutation {
     template: ID!
   ): CreateInstancePayload @semanticNonNull
   createLocation(input: CreateLocationInput!): Location @semanticNonNull
-  createTemplate(
-    fields: [FieldDefinitionInput!]
-    name: String
-    owner: ID!
-  ): CreateTemplatePayload @semanticNonNull
   """
   Template constraints allow you to limit the set of values that are valid for
   a given template and, optionally, field. Practically, this allows you to
@@ -659,8 +648,23 @@ type Query {
     parent: [ID!]
   ): EntityInstanceConnection @semanticNonNull
   node(id: ID!): Node!
-  templates(owner: ID!, type: [String!]): EntityTemplateConnection
-    @semanticNonNull
+  templates(
+    """
+    TEMPORARY: this should be the customer/organization uuid.
+    """
+    owner: ID!
+    """
+    Templates of the given type. This maps (currently) to worktemplatetype.
+    For example, in Runtime the following template types exist:
+    - Run
+    - Downtime
+    - Idle Time
+    Any of these are suitable for this API.
+
+    Also see `Task.chainAgg`, as that API takes a similar parameter `overType`.
+    """
+    type: [String!]
+  ): EntityTemplateConnection @semanticNonNull
   """
   Query for Trackable entities in the given `parent` hierarchy.
 

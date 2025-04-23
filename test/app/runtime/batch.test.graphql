@@ -62,7 +62,6 @@ mutation CreateBatchMutation(
     fields: $fields
   ) {
     edge {
-      # @appendEdge(...)
       node {
         asTask {
           name {

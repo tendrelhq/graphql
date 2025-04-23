@@ -178,6 +178,16 @@ exports[`runtime + reason codes in the app, get completions 1`] = `
               },
             },
           },
+          {
+            "__typename": "ValueCompletionEdge",
+            "node": {
+              "__typename": "ValueCompletion",
+              "value": {
+                "__typename": "StringValue",
+                "string": "Masheen Dawn",
+              },
+            },
+          },
         ],
       },
     },

@@ -47,11 +47,8 @@ import {
   asFieldTemplateValueType as entityInstanceEdgeAsFieldTemplateValueTypeResolver,
   entityInstanceName as entityInstanceNameResolver,
   castEntityTemplateToTask as entityTemplateAsTaskResolver,
-  child as entityTemplateChildResolver,
-  children as entityTemplateChildrenResolver,
   createCustagAsFieldTemplateValueTypeConstraint as mutationCreateCustagAsFieldTemplateValueTypeConstraintResolver,
   createInstance as mutationCreateInstanceResolver,
-  createTemplate as mutationCreateTemplateResolver,
   instances as queryInstancesResolver,
   templates as queryTemplatesResolver,
 } from "./system/entity";
@@ -1582,32 +1579,6 @@ export function getSchema(): GraphQLSchema {
             return assertNonNull(entityTemplateAsTaskResolver(source));
           },
         },
-        child: {
-          name: "child",
-          type: EntityTemplateType,
-          args: {
-            owner: {
-              name: "owner",
-              type: GraphQLID,
-            },
-            type: {
-              name: "type",
-              type: new GraphQLNonNull(GraphQLString),
-            },
-          },
-          resolve(source, args) {
-            return assertNonNull(
-              entityTemplateChildResolver(source, args.type, args.owner),
-            );
-          },
-        },
-        children: {
-          name: "children",
-          type: EntityTemplateConnectionType,
-          resolve(source) {
-            return assertNonNull(entityTemplateChildrenResolver(source));
-          },
-        },
         id: {
           name: "id",
           type: GraphQLID,
@@ -1731,16 +1702,20 @@ export function getSchema(): GraphQLSchema {
           type: EntityTemplateConnectionType,
           args: {
             owner: {
+              description:
+                "TEMPORARY: this should be the customer/organization uuid.",
               name: "owner",
               type: new GraphQLNonNull(GraphQLID),
             },
             type: {
+              description:
+                "Templates of the given type. This maps (currently) to worktemplatetype.\nFor example, in Runtime the following template types exist:\n- Run\n- Downtime\n- Idle Time\nAny of these are suitable for this API.\n\nAlso see `Task.chainAgg`, as that API takes a similar parameter `overType`.",
               name: "type",
               type: new GraphQLList(new GraphQLNonNull(GraphQLString)),
             },
           },
-          resolve(_source, args) {
-            return assertNonNull(queryTemplatesResolver(args.owner, args.type));
+          resolve(_source, args, context) {
+            return assertNonNull(queryTemplatesResolver(args, context));
           },
         },
         trackables: {
@@ -2004,66 +1979,6 @@ export function getSchema(): GraphQLSchema {
             description:
               "If not specified, the time zone will be derived from the parent (when the\nparent is a Location). This is most notably *not* the case when the parent is\na Customer.",
             name: "timeZone",
-            type: GraphQLString,
-          },
-        };
-      },
-    });
-  const CreateTemplatePayloadType: GraphQLObjectType = new GraphQLObjectType({
-    name: "CreateTemplatePayload",
-    fields() {
-      return {
-        edge: {
-          name: "edge",
-          type: EntityTemplateEdgeType,
-          resolve(source, args, context, info) {
-            return assertNonNull(
-              defaultFieldResolver(source, args, context, info),
-            );
-          },
-        },
-      };
-    },
-  });
-  const FieldDefinitionInputType: GraphQLInputObjectType =
-    new GraphQLInputObjectType({
-      name: "FieldDefinitionInput",
-      fields() {
-        return {
-          description: {
-            name: "description",
-            type: GraphQLString,
-          },
-          isDraft: {
-            name: "isDraft",
-            type: GraphQLBoolean,
-          },
-          isPrimary: {
-            name: "isPrimary",
-            type: GraphQLBoolean,
-          },
-          name: {
-            name: "name",
-            type: new GraphQLNonNull(GraphQLString),
-          },
-          order: {
-            name: "order",
-            type: GraphQLInt,
-          },
-          referenceType: {
-            name: "referenceType",
-            type: GraphQLString,
-          },
-          type: {
-            name: "type",
-            type: new GraphQLNonNull(ValueTypeType),
-          },
-          value: {
-            name: "value",
-            type: ValueInputType,
-          },
-          widget: {
-            name: "widget",
             type: GraphQLString,
           },
         };
@@ -2365,29 +2280,6 @@ export function getSchema(): GraphQLSchema {
             );
           },
         },
-        createTemplate: {
-          name: "createTemplate",
-          type: CreateTemplatePayloadType,
-          args: {
-            fields: {
-              name: "fields",
-              type: new GraphQLList(
-                new GraphQLNonNull(FieldDefinitionInputType),
-              ),
-            },
-            name: {
-              name: "name",
-              type: GraphQLString,
-            },
-            owner: {
-              name: "owner",
-              type: new GraphQLNonNull(GraphQLID),
-            },
-          },
-          resolve(_source, args, context) {
-            return assertNonNull(mutationCreateTemplateResolver(args, context));
-          },
-        },
         createTemplateConstraint: {
           description:
             "Template constraints allow you to limit the set of values that are valid for\na given template and, optionally, field. Practically, this allows you to\ndefine *enumerations*, e.g. a \"string enum\" with members 'foo', 'bar' and 'baz'.\n\nNote that currently constraints are *not* validated in the backend.\nValidation *should* happen on the client, prior to invoking the API.\nOtherwise, the backend willl gladly accept any arbitrary value (assuming, of\ncourse, that it is of the correct type).",
@@ -2534,6 +2426,50 @@ export function getSchema(): GraphQLSchema {
         };
       },
     });
+  const FieldDefinitionInputType: GraphQLInputObjectType =
+    new GraphQLInputObjectType({
+      name: "FieldDefinitionInput",
+      fields() {
+        return {
+          description: {
+            name: "description",
+            type: GraphQLString,
+          },
+          isDraft: {
+            name: "isDraft",
+            type: GraphQLBoolean,
+          },
+          isPrimary: {
+            name: "isPrimary",
+            type: GraphQLBoolean,
+          },
+          name: {
+            name: "name",
+            type: new GraphQLNonNull(GraphQLString),
+          },
+          order: {
+            name: "order",
+            type: GraphQLInt,
+          },
+          referenceType: {
+            name: "referenceType",
+            type: GraphQLString,
+          },
+          type: {
+            name: "type",
+            type: new GraphQLNonNull(ValueTypeType),
+          },
+          value: {
+            name: "value",
+            type: ValueInputType,
+          },
+          widget: {
+            name: "widget",
+            type: GraphQLString,
+          },
+        };
+      },
+    });
   const InProgressInputType: GraphQLInputObjectType =
     new GraphQLInputObjectType({
       name: "InProgressInput",
@@ -2642,7 +2578,6 @@ export function getSchema(): GraphQLSchema {
       ClosedType,
       CreateInstancePayloadType,
       CreateTemplateConstraintResultType,
-      CreateTemplatePayloadType,
       DescriptionType,
       DiagnosticType,
       DisplayNameType,

@@ -51,9 +51,12 @@ AS $function$
   select
     'engine1.id'::regproc,
     jsonb_build_object(
-        'ok', true,
+        'ok', count(*) > 0,
         'count', count(*),
-        'created', jsonb_agg(jsonb_build_object('node', cte.id))
+        'created', coalesce(
+          jsonb_agg(jsonb_build_object('node', cte.id)),
+          '[]'::jsonb
+        )
     )
   from cte
 $function$;

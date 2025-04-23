@@ -6,17 +6,19 @@ import { GraphQLError } from "graphql";
 import type { ID, Int } from "grats";
 import { decodeGlobalId, encodeGlobalId } from ".";
 import type { Context } from "../types";
-import {
-  type Field,
-  type FieldDefinitionInput,
-  type FieldInput,
-  type ValueInput,
-  type ValueType,
-  field$fragment,
-} from "./component";
+import { type Field, type FieldInput, field$fragment } from "./component";
 import type { DisplayName } from "./component/name";
 import { Task } from "./component/task";
 import type { Connection, Edge } from "./pagination";
+
+//-----------------------------------------------------------------------------
+//
+// Entity Instances
+//
+// Note that currently entity instances map directly to `entity.entityinstance`s
+// by way of the Entity REST API.
+//
+//-----------------------------------------------------------------------------
 
 /**
  * Entities represent distinct objects in the system. They can be physical
@@ -88,7 +90,7 @@ export async function instances(
     q.append("parent", `in.(${args.parent.join(",")})`);
   }
 
-  const r = await fetch(
+  const res = await fetch(
     `http://localhost:4001/entity_instance?${q.toString()}`,
     {
       method: "GET",
@@ -96,26 +98,27 @@ export async function instances(
     },
   );
 
-  if (!r.ok) {
-    const e = await r.json();
-    console.error(e);
+  if (!res.ok) {
+    // TODO: Better error handling when interacting with the Entity API.
+    const body = await res.json();
+    console.error(body);
     throw new GraphQLError("Internal Server Error");
   }
 
-  const rows: { id: string }[] = await r.json();
+  const rows: { id: string }[] = await res.json();
   return {
-    edges: rows.map(e => ({
+    edges: rows.map(row => ({
       cursor: "", // ignored but technically required by the connection spec
       node: {
-        _id: e.id,
+        _id: row.id,
         _type: "entity_instance",
         id: encodeGlobalId({
-          id: e.id,
+          id: row.id,
           type: "entity_instance",
         }),
       },
     })),
-    ...extractPageInfo(r),
+    ...extractPageInfo(res),
   };
 }
 
@@ -275,62 +278,6 @@ export async function createCustagAsFieldTemplateValueTypeConstraint(
 }
 
 /** @gqlType */
-export interface EntityTemplate {
-  readonly _type: string;
-  readonly _id: string;
-
-  /** @gqlField */
-  id: ID;
-}
-
-/** @gqlQueryField */
-export async function templates(
-  owner: ID,
-  type?: string[] | null,
-): Promise<Connection<EntityTemplate>> {
-  return Promise.reject();
-}
-
-/** @gqlField asTask */
-export function castEntityTemplateToTask(t: EntityTemplate): Task {
-  return new Task(t);
-}
-
-/** @gqlField */
-export function child(
-  t: EntityTemplate,
-  type: string,
-  owner?: ID | null,
-): Promise<EntityTemplate> {
-  return Promise.reject();
-}
-
-/** @gqlField */
-export function children(
-  t: EntityTemplate,
-): Promise<Connection<EntityTemplate>> {
-  return Promise.reject();
-}
-
-/** @gqlType */
-export type CreateTemplatePayload = {
-  /** @gqlField */
-  edge: Edge<EntityTemplate>;
-};
-
-/** @gqlMutationField */
-export async function createTemplate(
-  args: {
-    owner: ID;
-    name?: string | null;
-    fields?: FieldDefinitionInput[] | null;
-  },
-  ctx: Context,
-): Promise<CreateTemplatePayload> {
-  return Promise.reject();
-}
-
-/** @gqlType */
 export type CreateInstancePayload = {
   /** @gqlField */
   edge: Edge<EntityInstance>;
@@ -358,4 +305,118 @@ export async function createInstance(
       },
     },
   };
+}
+
+//-----------------------------------------------------------------------------
+//
+// Entity Templates
+//
+// Note that currently "entity" templates are really just (and only)
+// worktemplates under the hood. This will soon change.
+//
+//-----------------------------------------------------------------------------
+
+export type EntityTemplateConstructorArgs = { id: ID };
+
+/** @gqlType */
+export class EntityTemplate {
+  readonly _type: "template";
+  readonly _id: string;
+  /** @gqlField */
+  readonly id: ID;
+
+  constructor(args: EntityTemplateConstructorArgs) {
+    const { type, id } = decodeGlobalId(args.id);
+    this._type = assertUnderlyingType("template", type);
+    this._id = id;
+    this.id = args.id;
+  }
+
+  static fromTypeId(type: "template", id: string) {
+    return new EntityTemplate({ id: encodeGlobalId({ type, id }) });
+  }
+}
+
+/** @gqlQueryField */
+export async function templates(
+  args: {
+    /** TEMPORARY: this should be the customer/organization uuid. */
+    owner: ID;
+    /**
+     * Templates of the given type. This maps (currently) to worktemplatetype.
+     * For example, in Runtime the following template types exist:
+     * - Run
+     * - Downtime
+     * - Idle Time
+     * Any of these are suitable for this API.
+     *
+     * Also see `Task.chainAgg`, as that API takes a similar parameter `overType`.
+     */
+    type?: string[] | null;
+  },
+  ctx: Context,
+): Promise<Connection<EntityTemplate>> {
+  const owner = decodeGlobalId(args.owner);
+  assertUnderlyingType("organization", owner.type);
+
+  const cte = args.type?.length
+    ? sql`
+        select
+          worktemplate.id,
+          worktemplate.worktemplateorder as _order
+        from public.worktemplate
+        inner join public.customer
+          on worktemplatecustomerid = customerid
+          and customeruuid = ${owner.id}
+        inner join public.worktemplatetype
+          on worktemplateid = worktemplatetypeworktemplateid
+          and worktemplatetypesystagid in (
+            select systagid
+            from public.systag
+            where systagparentid = 882 and systagtype in ${sql(args.type)}
+          )
+      `
+    : sql`
+        select
+          worktemplate.id,
+          worktemplate.worktemplateorder as _order
+        from public.worktemplate
+        inner join public.customer
+          on worktemplatecustomerid = customerid
+          and customeruuid = ${owner.id}
+      `;
+
+  const rows = await sql<EntityTemplateConstructorArgs[]>`
+    with cte as (${cte})
+    select engine1.base64_encode(convert_to('template:' || cte.id, 'utf8')) as id
+    from cte
+    order by cte._order;
+  `;
+
+  return {
+    edges: rows.map(row => ({
+      cursor: row.id,
+      node: new EntityTemplate(row),
+    })),
+    pageInfo: {
+      hasNextPage: false,
+      hasPreviousPage: false,
+    },
+    totalCount: rows.length,
+  };
+}
+
+/** @gqlField asTask */
+export function castEntityTemplateToTask(t: EntityTemplate): Task {
+  if (t._type !== "template") {
+    throw new GraphQLError(
+      `Cannot cast Template (of type: ${t._type}) to Task`,
+      {
+        extensions: {
+          code: "BAD_REQUEST",
+        },
+      },
+    );
+  }
+  return Task.fromTypeId("worktemplate", t._id);
 }
