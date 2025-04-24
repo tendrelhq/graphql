@@ -80,7 +80,12 @@
           runHook postInstall
         '';
 
-        outputHash = "sha256-zjanMovkx8A8M7ds7Fdw2FpJ5M6XZX4pZApSXrCWj7s=";
+        # TODO: Not sure what is causing these to differ.
+        # Regardless, soon to be fixed via: https://github.com/NixOS/nixpkgs/issues/335534
+        outputHash =
+          if pkgs.system == "aarch64-linux"
+          then "sha256-xf3kSwfZv/K91Ao6dZOuJO+UKIB47TE73A11VQijJDQ="
+          else "sha256-zjanMovkx8A8M7ds7Fdw2FpJ5M6XZX4pZApSXrCWj7s=";
         outputHashAlgo = "sha256";
         outputHashMode = "recursive";
       };
