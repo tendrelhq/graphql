@@ -12,23 +12,27 @@ export async function setup() {
       ctx,
       sql,
     );
+    console.error("customer..ok");
     const workerIdentity = assertNonNull(process.env.X_TENDREL_USER);
     const _worker = await customer.addWorker(
       { identityId: workerIdentity },
       ctx,
       sql,
     );
+    console.error("worker..ok");
 
     const factory = await customer.addLocation(
       { name: "Frozen Tendy Factory", type: "Frozen Tendy Factory" },
       ctx,
       sql,
     );
+    console.error("site..ok");
     const mixingLine = await factory.insertChild(
       { name: "Mixing Line", order: 0, type: "Runtime Location" },
       ctx,
       sql,
     );
+    console.error("first child..ok");
     const fillLine = await factory.insertChild(
       { name: "Fill Line", order: 1, type: "Runtime Location" },
       ctx,
@@ -49,6 +53,7 @@ export async function setup() {
       ctx,
       sql,
     );
+    console.error("locations..ok");
 
     const batchTemplate = await factory.createTemplate(
       {
@@ -63,6 +68,7 @@ export async function setup() {
       ctx,
       sql,
     );
+    console.error("first template..ok");
     const runTemplate = await factory.createTemplate(
       {
         name: "Run",
@@ -137,6 +143,7 @@ export async function setup() {
       ctx,
       sql,
     );
+    console.error("templates..ok");
 
     // Constraints.
     await batchTemplate.ensureInstantiableAt(
@@ -164,6 +171,7 @@ export async function setup() {
         sql,
       );
     }
+    console.error("constraints..ok");
 
     // Rules.
     // When the Batch goes in-progress, prompt the user to choose where it

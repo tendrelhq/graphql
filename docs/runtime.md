@@ -78,6 +78,25 @@ The resulting edges will be in custagorder (which you control).
 
 ## Batch
 
+### Setup
+
+Until Batch has been released, you will need to create the necessary template
+type (i.e. systag) manually:
+
+```sql
+begin;
+
+select 1
+from auth.set_actor(:YOUR_IDENTITY_ID, 'en');
+
+select 1
+from ast.create_system_type('Batch', 'Template Type', 895);
+
+commit;
+```
+
+### Design
+
 Database changes:
 
 ```sql

@@ -1,12 +1,13 @@
+import type { ValueInput } from "@/schema/system/component";
 import { Temporal } from "@js-temporal/polyfill";
 import { Box, Text, useFocus } from "ink";
 import { UncontrolledTextInput as TextInput } from "ink-text-input";
+import { useState } from "react";
 import { useFragment } from "react-relay";
 import { P, match } from "ts-pattern";
 import FieldFragmentNode, {
   type Field_fragment$key,
-} from "./__generated__/Field_fragment.graphql";
-import type { ValueInput } from "@/schema/system/component";
+} from "../__generated__/Field_fragment.graphql";
 
 export function Field({ queryRef }: { queryRef: Field_fragment$key }) {
   const data = useFragment(FieldFragmentNode, queryRef);
@@ -57,6 +58,7 @@ export function FieldInput(props: {
 }) {
   const data = useFragment(FieldFragmentNode, props.field);
   const { isFocused } = useFocus({ autoFocus: true });
+  const [submitted, setSubmitted] = useState(false);
   return (
     <Box>
       <Box marginRight={1}>
@@ -71,21 +73,31 @@ export function FieldInput(props: {
       <TextInput
         focus={isFocused}
         onSubmit={value => {
-          props.onSubmit(
-            match(data.valueType)
-              .with("boolean", () => ({
-                boolean: value.toLowerCase().charAt(0) === "y",
-              }))
-              .with("entity", () => ({ id: value }))
-              .with("number", () => ({ number: Number.parseFloat(value) }))
-              .with("string", () => ({ string: value }))
-              .with("timestamp", () => ({
-                timestamp: new Date(value).toISOString(),
-              }))
-              .otherwise(() => null),
-          );
+          if (value.length === 0) {
+            props.onSubmit(null);
+          } else {
+            props.onSubmit(
+              match(data.valueType)
+                .with("boolean", () => ({
+                  boolean: value.toLowerCase().charAt(0) === "y",
+                }))
+                .with("entity", () => ({ id: value }))
+                .with("number", () => ({ number: Number.parseFloat(value) }))
+                .with("string", () => ({ string: value }))
+                .with("timestamp", () => ({
+                  timestamp: new Date(value).toISOString(),
+                }))
+                .otherwise(() => null),
+            );
+          }
+          setSubmitted(true);
         }}
       />
+      {submitted && (
+        <Box marginLeft={1}>
+          <Text color="green">✓</Text>
+        </Box>
+      )}
     </Box>
   );
 }

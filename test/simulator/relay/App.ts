@@ -4,6 +4,12 @@ import { graphql } from "relay-runtime";
 
 graphql`
   query AppQuery($customerId: ID!, $batchTemplateId: ID!) @throwOnFieldError {
+    batches: trackables(parent: $customerId, withImplementation: "Batch") {
+      ...AppSimulation_fragment
+    }
+    batchTemplate: node(id: $batchTemplateId) {
+      ...AppBatchInput_fragment
+    }
     customer: node(id: $customerId) {
       ... on Organization {
         me {
@@ -18,12 +24,6 @@ graphql`
           value
         }
       }
-    }
-    batches: trackables(parent: $customerId, withImplementation: "Batch") {
-      ...AppSimulation_fragment
-    }
-    batchTemplate: node(id: $batchTemplateId) {
-      ...AppBatchInput_fragment
     }
   }
 `;

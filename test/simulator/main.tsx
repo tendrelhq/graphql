@@ -1,7 +1,10 @@
+import type { FieldInput as FieldInputSchema } from "@/schema/system/component";
 import type { ID } from "grats";
 import { Box, Text, render, useFocus, useFocusManager, useInput } from "ink";
+import SelectInput from "ink-select-input";
 import TextInput from "ink-text-input";
 import { Suspense, useRef, useState } from "react";
+import { ErrorBoundary, type FallbackProps } from "react-error-boundary";
 import {
   RelayEnvironmentProvider,
   useFragment,
@@ -17,7 +20,6 @@ import {
   RecordSource,
   Store,
 } from "relay-runtime";
-import { Field, FieldInput } from "./Field";
 import AppBatchInputNode, {
   type AppBatchInput_fragment$key,
 } from "./__generated__/AppBatchInput_fragment.graphql";
@@ -31,8 +33,9 @@ import AppRootNode, { type AppQuery } from "./__generated__/AppQuery.graphql";
 import AppSimulationNode, {
   type AppSimulation_fragment$key,
 } from "./__generated__/AppSimulation_fragment.graphql";
+import { Field, FieldInput } from "./components/Field";
 import { setup } from "./prelude";
-import type { FieldInput as FieldInputSchema } from "@/schema/system/component";
+import { match } from "ts-pattern";
 
 // Runtime simulator v0
 //
@@ -62,7 +65,10 @@ const {
   assemblyLine,
   cartoningLine,
   packagingLine,
-} = await setup();
+} = await setup().catch(e => {
+  console.trace("error during setup", e);
+  throw e;
+});
 
 const fetchFn: FetchFunction = (params, variables) => {
   const res = fetch("http://localhost:4000", {
@@ -131,7 +137,7 @@ const SubmitGeneratedBatch = (props: { onSubmit: () => void }) => {
   return (
     <Box>
       <Text color={isFocused ? "green" : "gray"}>
-        Hit <Text bold>{"<enter>"}</Text> to submit.
+        Press <Text underline>{"enter"}</Text> to submit.
       </Text>
       <TextInput
         focus={isFocused}
@@ -157,9 +163,15 @@ const GenerateBatch = (props: {
   const { focusNext } = useFocusManager();
   const ref = useRef<FieldInputSchema[]>([]);
 
-  useInput(input => {
-    if (editing) return;
-    if (input === "g") {
+  useInput((input, key) => {
+    if (editing) {
+      if (key.escape) {
+        ref.current = [];
+        setEditing(false);
+      }
+      return;
+    }
+    if (input === "G") {
       ref.current = [];
       setEditing(true);
     }
@@ -208,10 +220,10 @@ const GenerateBatch = (props: {
   return (
     <Box flexDirection="column">
       {isInFlight ? (
-        <Text color="yellow">A new Batch is brewing... please hold.</Text>
+        <Text color="yellow">A new Batch is brewing... </Text>
       ) : (
-        <Text color="greenBright">
-          Press <Text bold>g</Text> to generate a new Batch.
+        <Text color="gray">
+          Press <Text underline>G</Text> to generate a new Batch.
         </Text>
       )}
       {errors?.length ? (
@@ -232,15 +244,43 @@ const Simulation = (props: {
   batchTemplate: AppBatchInput_fragment$key;
 }) => {
   const data = useFragment(AppSimulationNode, props.batches);
+  const [mode, setMode] = useState<"g" | "s">("g");
+  console.error("mode", mode);
+
+  useInput((input, key) => {
+    // TODO: better input event handling.
+    if (input === "s") {
+      setMode("s");
+    } else if (!key.upArrow && !key.downArrow) {
+      setMode("g");
+    }
+  });
 
   return (
-    <Box flexDirection="column">
+    <Box flexDirection="column" gap={1}>
       <GenerateBatch connectionId={data.__id} template={props.batchTemplate} />
-      <Box flexDirection="column" gap={1} margin={1}>
-        {data.edges.map(e => (
-          <Batch key={e.node.id} queryRef={e.node} />
-        ))}
-      </Box>
+      {match(mode)
+        .with("g", () => (
+          <Box
+            flexDirection="column"
+            marginLeft={2 /* to align with select-mode */}
+          >
+            {data.edges.map(e => (
+              <Batch key={e.node.id} queryRef={e.node} />
+            ))}
+          </Box>
+        ))
+        .with("s", () => (
+          <SelectInput
+            items={data.edges.map(e => ({
+              key: e.node.id,
+              label: e.node.id, // doesn't matter
+              value: e.node,
+            }))}
+            itemComponent={item => <Batch queryRef={item.value} />}
+          />
+        ))
+        .exhaustive()}
     </Box>
   );
 };
@@ -261,13 +301,20 @@ const Main = () => {
   );
 };
 
+const Fallback = (props: FallbackProps) => {
+  console.error(props.error);
+  return <Text color="red">{props.error?.message ?? "Unknown error"}</Text>;
+};
+
 const App = () => {
   return (
-    <Suspense>
-      <RelayEnvironmentProvider environment={environment}>
-        <Main />
-      </RelayEnvironmentProvider>
-    </Suspense>
+    <ErrorBoundary FallbackComponent={Fallback}>
+      <Suspense>
+        <RelayEnvironmentProvider environment={environment}>
+          <Main />
+        </RelayEnvironmentProvider>
+      </Suspense>
+    </ErrorBoundary>
   );
 };
 
