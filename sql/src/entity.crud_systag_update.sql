@@ -16,11 +16,9 @@ Needs tests
 	
 */
 
-
 if update_languagetypeuuid isNull 
 	then update_languagetypeuuid = 'bcbe750d-1b3b-4e2b-82ec-448bb8b116f9';
 End if;
-
 
  if update_systagdraft = true or ((select entityinstancedraft 
 										from entity.entityinstance
@@ -54,7 +52,20 @@ End if;
 				entityinstancestartdate = case when update_systagstartdate notnull 
 										then update_systagstartdate
 										else entityinstancestartdate end,
-	 			entityinstanceenddate = update_systagenddate,
+				entityinstanceenddate = case 	when update_systagdeleted = true 
+									and entityinstanceenddate isNull
+									and update_systagenddate isNull then now()
+								when update_systagdeleted = true 
+									and entityinstanceenddate isNull
+									and update_systagenddate notNull then update_systagenddate 
+								when update_systagdeleted = true 
+									and entityinstanceenddate notNull
+									and update_systagenddate isNull then entityinstanceenddate
+								when update_systagdeleted = true and entityinstanceenddate notNull
+									and update_systagenddate notNull and update_systagenddate <> entityinstanceenddate
+									then update_systagenddate	
+								else null
+							end,						
 				entityinstancemodifieddate=now(),
 				entityinstancemodifiedbyuuid = update_systagmodifiedbyuuid
 		WHERE entityinstanceuuid = update_systagentityuuid;
@@ -78,7 +89,23 @@ End if;
 				entityinstancestartdate = case when update_systagstartdate notnull 
 										then update_systagstartdate
 										else entityinstancestartdate end,
-	 			entityinstanceenddate = update_systagenddate,
+				entityinstancedeleted = case when update_systagdeleted notnull 
+										then update_systagdeleted
+										else entityinstancedeleted end, 
+				entityinstanceenddate = case 	when update_systagdeleted = true 
+									and entityinstanceenddate isNull
+									and update_systagenddate isNull then now()
+								when update_systagdeleted = true 
+									and entityinstanceenddate isNull
+									and update_systagenddate notNull then update_systagenddate 
+								when update_systagdeleted = true 
+									and entityinstanceenddate notNull
+									and update_systagenddate isNull then entityinstanceenddate
+								when update_systagdeleted = true and entityinstanceenddate notNull
+									and update_systagenddate notNull and update_systagenddate <> entityinstanceenddate
+									then update_systagenddate	
+								else null
+							end,
 				entityinstancemodifieddate=now(),
 				entityinstancemodifiedbyuuid = update_systagmodifiedbyuuid
 		WHERE entityinstanceuuid = update_systagentityuuid;
@@ -93,7 +120,6 @@ select customerid, customeruuid into tempcustomerid,tempcustomeruuid
 
 select systagid,systaguuid into templanguagetypeid,templanguagetypeuuid
 	from entity.crud_systag_read_min(null, null, update_languagetypeuuid, null, false,null,null, null,update_languagetypeuuid);
-
 
 if update_systag notnull and (coalesce(update_systag,'') <> '')
 	then
@@ -117,8 +143,6 @@ if update_systag notnull and (coalesce(update_systag,'') <> '')
 										and  entityfieldinstanceentityfieldentityuuid = '1b29e7b0-0800-4366-b79e-424dd9bafa71');
 end if;
 
-
-
 -- update systag
 
 update public.systag
@@ -141,3 +165,4 @@ $procedure$;
 REVOKE ALL ON PROCEDURE entity.crud_systag_update(uuid,uuid,uuid,uuid,integer,text,uuid,text,uuid,boolean,boolean,timestamp with time zone,timestamp with time zone,text) FROM PUBLIC;
 GRANT EXECUTE ON PROCEDURE entity.crud_systag_update(uuid,uuid,uuid,uuid,integer,text,uuid,text,uuid,boolean,boolean,timestamp with time zone,timestamp with time zone,text) TO PUBLIC;
 GRANT EXECUTE ON PROCEDURE entity.crud_systag_update(uuid,uuid,uuid,uuid,integer,text,uuid,text,uuid,boolean,boolean,timestamp with time zone,timestamp with time zone,text) TO tendreladmin WITH GRANT OPTION;
+GRANT EXECUTE ON PROCEDURE entity.crud_systag_update(uuid,uuid,uuid,uuid,integer,text,uuid,text,uuid,boolean,boolean,timestamp with time zone,timestamp with time zone,text) TO graphql;

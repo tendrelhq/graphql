@@ -182,7 +182,7 @@ BEGIN
                 create_modifiedby,
                 tempcustagsitetypeid,
                 'https://beta.console.tendrel.io/checklist',
-                template_description_id)   -- FIX THIS:  this is the languagemaster.  Should have been the actual workdescription table.  
+                null)   -- FIX THIS:  this is the languagemaster.  Should have been the actual workdescription table.  
         RETURNING worktemplateid,id INTO tempworktemplateid, tempworktemplateuuid;
 	
 --    add work description 
@@ -212,9 +212,9 @@ BEGIN
 			create_modifiedby
 		) RETURNING workdescriptionid INTO template_description_id;
 
-		update worktemplate
-		set worktemplatedescriptionid = template_description_id
-		where worktemplateid = tempworktemplateid;
+--		update worktemplate
+--		set worktemplatedescriptionid = template_description_id
+--		where worktemplateid = tempworktemplateid;
 
         RAISE NOTICE 'inserted part through template';
 
@@ -302,7 +302,7 @@ BEGIN
         RAISE NOTICE 'inserted template';
 		
         -- Add in workresults here
---"Time At Task"
+--Time At Task
 
         INSERT INTO public.workresult(workresultworktemplateid,
                                       workresultcustomerid,
@@ -466,7 +466,7 @@ BEGIN
 
  
 
---" Primary Location"
+-- Primary Location
         INSERT INTO public.languagemaster
         (languagemastercustomerid,
          languagemastercustomersiteid,
@@ -514,7 +514,7 @@ BEGIN
                 create_modifiedby)
         RETURNING workresultid INTO tempworkresultid;
 
---"Primary Worker"
+--Primary Worker
         INSERT INTO public.languagemaster
         (languagemastercustomerid,
          languagemastercustomersiteid,
@@ -717,3 +717,4 @@ $procedure$;
 REVOKE ALL ON PROCEDURE entity.enable_checklist(uuid,text,uuid,text,uuid,text,text,bigint) FROM PUBLIC;
 GRANT EXECUTE ON PROCEDURE entity.enable_checklist(uuid,text,uuid,text,uuid,text,text,bigint) TO PUBLIC;
 GRANT EXECUTE ON PROCEDURE entity.enable_checklist(uuid,text,uuid,text,uuid,text,text,bigint) TO tendreladmin WITH GRANT OPTION;
+GRANT EXECUTE ON PROCEDURE entity.enable_checklist(uuid,text,uuid,text,uuid,text,text,bigint) TO graphql;

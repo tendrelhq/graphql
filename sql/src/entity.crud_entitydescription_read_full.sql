@@ -379,3 +379,4 @@ $function$;
 REVOKE ALL ON FUNCTION entity.crud_entitydescription_read_full(uuid,uuid,uuid,uuid,boolean,boolean,boolean,uuid) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION entity.crud_entitydescription_read_full(uuid,uuid,uuid,uuid,boolean,boolean,boolean,uuid) TO PUBLIC;
 GRANT EXECUTE ON FUNCTION entity.crud_entitydescription_read_full(uuid,uuid,uuid,uuid,boolean,boolean,boolean,uuid) TO tendreladmin WITH GRANT OPTION;
+GRANT EXECUTE ON FUNCTION entity.crud_entitydescription_read_full(uuid,uuid,uuid,uuid,boolean,boolean,boolean,uuid) TO graphql;

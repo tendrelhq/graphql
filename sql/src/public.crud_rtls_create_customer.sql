@@ -31,7 +31,7 @@ Declare
     RTLS_config_uuid          text;
 
 Begin
-
+/*
     RAISE NOTICE 'Start of procedure';
 
 -- Add in worktemplates for the site id and location types
@@ -768,10 +768,7 @@ ELSE
                                             config_value := 'true', modified_by := null,
                                             config_id := RTLS_config_uuid);
 
-
 END IF;
-
-
 
 -- Add in worktemplates for the site id and location types
 -- Check In/Out will be of the Activity WorkType
@@ -837,8 +834,6 @@ ELSE
     set worktemplateworkfrequencyid = tempworkfrequencyid
     where worktemplateid = tempworktemplateid;
 
-
-
 -- add the contraints
 
     INSERT INTO worktemplateconstraint (worktemplateconstraintcustomerid,
@@ -890,7 +885,6 @@ ELSE
             tempcustomerid,
             create_customeruuid);
 
-
     RAISE NOTICE 'inserted template';
 
 -- Add in workresults here
@@ -918,10 +912,6 @@ ELSE
             FALSE,
             create_modifiedby,
 			413);
-
-
-
-
 
 -- Primary Location
 
@@ -974,8 +964,6 @@ ELSE
 			415)
     Returning workresultid into tempworkresultid;
 
-
-
 --"Primary Worker"
     insert into public.languagemaster
     (languagemastercustomerid,
@@ -1026,9 +1014,7 @@ ELSE
 			415)
     returning workresultid into tempworkresultidforworker;
 
-
 -- Add in ondemand instances
-
 
     INSERT INTO public.workinstance(workinstancecustomerid,
                                     workinstanceworktemplateid,
@@ -1086,7 +1072,7 @@ ELSE
 END IF;
 
 commit;
-
+*/
 End;
 
 $procedure$;

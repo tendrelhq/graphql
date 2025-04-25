@@ -81,3 +81,4 @@ $procedure$;
 REVOKE ALL ON PROCEDURE entity.crud_entitydescription_delete(uuid,uuid,bigint) FROM PUBLIC;
 GRANT EXECUTE ON PROCEDURE entity.crud_entitydescription_delete(uuid,uuid,bigint) TO PUBLIC;
 GRANT EXECUTE ON PROCEDURE entity.crud_entitydescription_delete(uuid,uuid,bigint) TO tendreladmin WITH GRANT OPTION;
+GRANT EXECUTE ON PROCEDURE entity.crud_entitydescription_delete(uuid,uuid,bigint) TO graphql;

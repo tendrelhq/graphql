@@ -60,7 +60,6 @@ tempworkerinstanceid = (select workerinstanceid
 							from workerinstance
 							where workerinstanceuuid =  create_workerinstanceuuid);
 
-
 temptz = (select locationtimezone from location where locationid = tempsiteid);
 
 -- Futue proof this checking to see if the wi already exists.

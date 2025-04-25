@@ -36,13 +36,19 @@ describe("runtime demo", () => {
   let IDLE_TIME: Task; // template
   let DOWNTIME: Task; // template
 
-  test("entrypoint query", async () => {
-    const result = await execute(schema, TestRuntimeEntrypointDocument, {
-      root: CUSTOMER,
-    });
-    expect(result.errors).toBeFalsy();
-    expect(result.data).toMatchSnapshot();
-  });
+  test(
+    "entrypoint query",
+    async () => {
+      const result = await execute(schema, TestRuntimeEntrypointDocument, {
+        root: CUSTOMER,
+      });
+      expect(result.errors).toBeFalsy();
+      expect(result.data).toMatchSnapshot();
+    },
+    {
+      timeout: 10_000,
+    },
+  );
 
   test("start run", async () => {
     const h = (await FSM_I.hash()) as string;

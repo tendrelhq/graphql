@@ -1,7 +1,5 @@
 %syntax-version=1.0.0
 %project=graphql
 
-graphql-service-role 2025-04-14T21:15:41Z Will Ruggiano <ruggiano@tendrel.io> # graphql service role
-api-user-roles 2025-04-14T21:29:23Z Will Ruggiano <ruggiano@tendrel.io> # api user roles
-patch-entity-import-customer 2025-04-15T23:00:33Z Will Ruggiano <ruggiano@tendrel.io> # remove 10 min delay
-batch-support 2025-04-21T23:51:37Z Will Ruggiano <ruggiano@tendrel.io> # x-location + new irule
+01-permissions 2025-04-14T21:15:41Z Will Ruggiano <ruggiano@tendrel.io> # graphql + api roles
+02-patch-entity-import-customer 2025-04-15T23:00:33Z Will Ruggiano <ruggiano@tendrel.io> # remove 10 min delay

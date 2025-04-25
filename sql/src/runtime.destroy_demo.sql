@@ -42,3 +42,4 @@ end $function$;
 REVOKE ALL ON FUNCTION runtime.destroy_demo(text) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION runtime.destroy_demo(text) TO PUBLIC;
 GRANT EXECUTE ON FUNCTION runtime.destroy_demo(text) TO tendreladmin WITH GRANT OPTION;
+GRANT EXECUTE ON FUNCTION runtime.destroy_demo(text) TO graphql;

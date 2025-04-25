@@ -47,7 +47,6 @@ from entity.crud_customer_read_full(null,null,'f90d618d-5de7-4126-8c65-0afb700c6
 tendreluuid = 'f90d618d-5de7-4126-8c65-0afb700c6c61';
 englishuuid = 'bcbe750d-1b3b-4e2b-82ec-448bb8b116f9';
 
-
 if read_languagetranslationtypeuuid isNull
 	then templanguagetypeentityuuid = 'bcbe750d-1b3b-4e2b-82ec-448bb8b116f9';
 	else templanguagetypeentityuuid = read_languagetranslationtypeuuid;
@@ -59,9 +58,6 @@ select systagid,systaguuid into templanguagetypeid,templanguagetypeuuid
 if templanguagetypeid isNull
 	then return;
 end if;
-
-
-
 
 if read_customersenddeleted isNull and read_customersenddeleted = false
 	then tempcustomersenddeleted = Array[false];
@@ -109,9 +105,9 @@ if read_allcustomers = true
 		efi.entityfieldinstancevalue::uuid AS customerlanguagetypeuuid,
 		ei.entityinstancedeleted, 
 		ei.entityinstancedraft,
-		case when ei.entityinstanceenddate notnull and ei.entityinstanceenddate::Date < now()::date
-			then false
-			else true
+		case when ei.entityinstancedraft = true then false
+				when ei.entityinstanceenddate notnull and ei.entityinstanceenddate::Date < now()::date then false
+				else true
 		end as entityinstanceactive
 	from entity.entityinstance ei
 		JOIN entity.entityfieldinstance efi 
@@ -175,9 +171,9 @@ return query
 		efi.entityfieldinstancevalue::uuid AS customerlanguagetypeuuid,
 		ei.entityinstancedeleted, 
 		ei.entityinstancedraft,
-		case when ei.entityinstanceenddate notnull and ei.entityinstanceenddate::Date < now()::date
-			then false
-			else true
+		case when ei.entityinstancedraft = true then false
+				when ei.entityinstanceenddate notnull and ei.entityinstanceenddate::Date < now()::date then false
+				else true
 		end as entityinstanceactive
 	from entity.entityinstance ei
 		JOIN entity.entityfieldinstance efi 
@@ -242,9 +238,9 @@ return query
 		efi.entityfieldinstancevalue::uuid AS customerlanguagetypeuuid,
 		ei.entityinstancedeleted, 
 		ei.entityinstancedraft,
-		case when ei.entityinstanceenddate notnull and ei.entityinstanceenddate::Date < now()::date
-			then false
-			else true
+		case when ei.entityinstancedraft = true then false
+				when ei.entityinstanceenddate notnull and ei.entityinstanceenddate::Date < now()::date then false
+				else true
 		end as entityinstanceactive
 	from entity.entityinstance ei
 		JOIN entity.entityfieldinstance efi 
@@ -307,9 +303,9 @@ return query
 		efi.entityfieldinstancevalue::uuid AS customerlanguagetypeuuid,
 		ei.entityinstancedeleted, 
 		ei.entityinstancedraft,
-		case when ei.entityinstanceenddate notnull and ei.entityinstanceenddate::Date < now()::date
-			then false
-			else true
+		case when ei.entityinstancedraft = true then false
+				when ei.entityinstanceenddate notnull and ei.entityinstanceenddate::Date < now()::date then false
+				else true
 		end as entityinstanceactive
 	from entity.entityinstance ei
 		JOIN entity.entityfieldinstance efi 
@@ -348,3 +344,4 @@ $function$;
 REVOKE ALL ON FUNCTION entity.crud_customer_read_full(uuid,uuid,uuid,boolean,boolean,boolean,boolean,uuid) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION entity.crud_customer_read_full(uuid,uuid,uuid,boolean,boolean,boolean,boolean,uuid) TO PUBLIC;
 GRANT EXECUTE ON FUNCTION entity.crud_customer_read_full(uuid,uuid,uuid,boolean,boolean,boolean,boolean,uuid) TO tendreladmin WITH GRANT OPTION;
+GRANT EXECUTE ON FUNCTION entity.crud_customer_read_full(uuid,uuid,uuid,boolean,boolean,boolean,boolean,uuid) TO graphql;

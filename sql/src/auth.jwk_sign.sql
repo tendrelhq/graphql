@@ -10,7 +10,7 @@ AS $function$
     header as (
       select jwt.base64_encode(
         convert_to(
-          '{"alg":"' || jwk.alg || '","kid":"' || jwk.kid || '","typ":"JWT"}',
+          json_build_object('alg',jwk.alg,'kid',jwk.kid,'typ','JWT')::text,
           'utf8'
         )
       ) as data
@@ -27,5 +27,5 @@ $function$;
 
 
 REVOKE ALL ON FUNCTION auth.jwk_sign(auth._jwk,json) FROM PUBLIC;
-GRANT EXECUTE ON FUNCTION auth.jwk_sign(auth._jwk,json) TO PUBLIC;
 GRANT EXECUTE ON FUNCTION auth.jwk_sign(auth._jwk,json) TO tendreladmin WITH GRANT OPTION;
+GRANT EXECUTE ON FUNCTION auth.jwk_sign(auth._jwk,json) TO graphql;

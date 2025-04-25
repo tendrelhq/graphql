@@ -1,13 +1,14 @@
 
 -- Type: FUNCTION ; Name: api.delete_customer_requested_language(uuid,text); Owner: tendreladmin
 
-CREATE OR REPLACE FUNCTION api.delete_customer_requested_language(owner uuid, requestedlanguageuuid text)
+CREATE OR REPLACE FUNCTION api.delete_customer_requested_language(owner uuid, id text)
  RETURNS SETOF api.customer_requested_language
  LANGUAGE plpgsql
  SECURITY DEFINER
 AS $function$
 declare
 	ins_userid bigint;
+	templanguagetypeid bigint;
 begin
   -- TODO: I wonder what we should do here. Do we:
   -- (a) Grant access to the entity schema to authenticated?
@@ -23,16 +24,18 @@ if (select owner in (select * from _api.util_get_onwership()) )
 	then  
 		call entity.crud_customerrequestedlanguage_delete(
 			create_customerownerentityuuid := owner,
-			create_customerrequestedlanguageuuid := requestedlanguageuuid,
+			create_language_id := id,
 			create_modifiedbyid := ins_userid
 	);
+	else
 		return;  -- need an exception here
 end if;
 
   return query
     select *
     from api.customer_requested_language t
-    where t.owner = $1 and t.id = $2
+    where t.owner = $1  and 
+		t.id = $2
   ;
 
   return;

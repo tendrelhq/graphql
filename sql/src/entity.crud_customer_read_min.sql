@@ -80,9 +80,9 @@ if read_allcustomers = true
 		efi.entityfieldinstancevalue::uuid AS customerlanguagetypeentityuuid,
 		entityinstancedeleted, 
 		entityinstancedraft,
-		case when entityinstanceenddate notnull and entityinstanceenddate::Date < now()::date
-			then false
-			else true
+		case when entityinstancedraft = true then false
+				when entityinstanceenddate notnull and entityinstanceenddate::Date < now()::date then false
+				else true
 		end as entityinstanceactive
 	from entity.entityinstance
 		JOIN entity.entityfieldinstance efi 
@@ -126,9 +126,9 @@ then
 		efi.entityfieldinstancevalue::uuid AS customerlanguagetypeentityuuid,
 		entityinstancedeleted, 
 		entityinstancedraft,
-		case when entityinstanceenddate notnull and entityinstanceenddate::Date < now()::date
-			then false
-			else true
+		case when entityinstancedraft = true then false
+				when entityinstanceenddate notnull and entityinstanceenddate::Date < now()::date then false
+				else true
 		end as entityinstanceactive
 	from entity.entityinstance
 		JOIN entity.entityfieldinstance efi 
@@ -173,9 +173,9 @@ then
 		efi.entityfieldinstancevalue::uuid AS customerlanguagetypeentityuuid,
 		entityinstancedeleted, 
 		entityinstancedraft,
-		case when entityinstanceenddate notnull and entityinstanceenddate::Date < now()::date
-			then false
-			else true
+		case when entityinstancedraft = true then false
+				when entityinstanceenddate notnull and entityinstanceenddate::Date < now()::date then false
+				else true
 		end as entityinstanceactive
 	from entity.entityinstance
 		JOIN entity.entityfieldinstance efi 
@@ -218,9 +218,9 @@ return query
 		efi.entityfieldinstancevalue::uuid AS customerlanguagetypeentityuuid,
 		entityinstancedeleted, 
 		entityinstancedraft,
-		case when entityinstanceenddate notnull and entityinstanceenddate::Date < now()::date
-			then false
-			else true
+		case when entityinstancedraft = true then false
+				when entityinstanceenddate notnull and entityinstanceenddate::Date < now()::date then false
+				else true
 		end as entityinstanceactive
 	from entity.entityinstance
 		JOIN entity.entityfieldinstance efi 
@@ -246,3 +246,4 @@ $function$;
 REVOKE ALL ON FUNCTION entity.crud_customer_read_min(uuid,uuid,uuid,boolean,boolean,boolean,boolean,uuid) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION entity.crud_customer_read_min(uuid,uuid,uuid,boolean,boolean,boolean,boolean,uuid) TO PUBLIC;
 GRANT EXECUTE ON FUNCTION entity.crud_customer_read_min(uuid,uuid,uuid,boolean,boolean,boolean,boolean,uuid) TO tendreladmin WITH GRANT OPTION;
+GRANT EXECUTE ON FUNCTION entity.crud_customer_read_min(uuid,uuid,uuid,boolean,boolean,boolean,boolean,uuid) TO graphql;

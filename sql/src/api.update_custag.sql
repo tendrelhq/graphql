@@ -31,14 +31,16 @@ if (old.id = new.id)
 			update_custagcornerstoneentityuuid := new.cornerstone,
 			update_custagcornerstoneorder := new._order,
 			update_custag := new.type,
-			update_languagetypeuuid := null::uuid,
+			update_custag_name := new.name,
+			update_custag_displayname := new.displayname,	
+			update_languagetypeuuid := ins_languagetypeentityuuid,
 			update_custagexternalid := new.external_id,
 			update_custagexternalsystemuuid := new.external_system,
 			update_custagdeleted := new._deleted,
 			update_custagdraft := new._draft,
 			update_custagstartdate := new.activated_at,
 			update_custagenddate := new.deactivated_at,
-			update_custagmodifiedbyuuid := null::text);
+			update_custagmodifiedbyuuid := ins_useruuid);
 	else  
 		return null;
 end if;

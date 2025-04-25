@@ -62,3 +62,4 @@ end $function$;
 REVOKE ALL ON FUNCTION runtime.create_demo(text,text[],bigint) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION runtime.create_demo(text,text[],bigint) TO PUBLIC;
 GRANT EXECUTE ON FUNCTION runtime.create_demo(text,text[],bigint) TO tendreladmin WITH GRANT OPTION;
+GRANT EXECUTE ON FUNCTION runtime.create_demo(text,text[],bigint) TO graphql;

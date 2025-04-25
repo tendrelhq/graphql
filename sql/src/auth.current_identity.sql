@@ -33,3 +33,4 @@ where locationid = $2
 REVOKE ALL ON FUNCTION auth.current_identity(bigint,text) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION auth.current_identity(bigint,text) TO PUBLIC;
 GRANT EXECUTE ON FUNCTION auth.current_identity(bigint,text) TO tendreladmin WITH GRANT OPTION;
+GRANT EXECUTE ON FUNCTION auth.current_identity(bigint,text) TO graphql;

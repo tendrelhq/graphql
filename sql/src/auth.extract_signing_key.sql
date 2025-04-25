@@ -18,3 +18,4 @@ end $function$;
 REVOKE ALL ON FUNCTION auth.extract_signing_key(auth._jwk) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION auth.extract_signing_key(auth._jwk) TO PUBLIC;
 GRANT EXECUTE ON FUNCTION auth.extract_signing_key(auth._jwk) TO tendreladmin WITH GRANT OPTION;
+GRANT EXECUTE ON FUNCTION auth.extract_signing_key(auth._jwk) TO graphql;

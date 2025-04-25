@@ -129,7 +129,6 @@ Begin
 		into tempcustagsitetypeid, tempcustaguuid
 		from entity.crud_custag_read_min(create_customer_uuid, null, temptaguuid, null, false,null,null, null,englishentityuuid);
 
-
 -------------------------------------------------------------------------------	
 
 -- Add in worktemplates for the site id and location types
@@ -250,7 +249,7 @@ ELSE
 
     RAISE NOTICE 'inserted template';
     -- Add in workresults here
---"Time At Task"
+--Time At Task
 
     INSERT INTO public.workresult(workresultworktemplateid,
                                   workresultcustomerid,
@@ -635,7 +634,7 @@ ELSE
             create_modifiedby,
             FALSE);
 
---" Primary Location"
+-- Primary Location
     insert into public.languagemaster
     (languagemastercustomerid,
      languagemastercustomersiteid,
@@ -683,7 +682,7 @@ ELSE
             create_modifiedby)
     Returning workresultid into tempworkresultid;
 
---"Primary Worker"
+--Primary Worker
     insert into public.languagemaster
     (languagemastercustomerid,
      languagemastercustomersiteid,
@@ -797,8 +796,6 @@ ELSE
         workresultmodifieddate = clock_timestamp()
     where workresulttypeid = 868
       and workresultwidgetid is null;
-
-
 
     select uuid
     into RTLS_config_template_uuid
@@ -932,7 +929,7 @@ ELSE
     RAISE NOTICE 'inserted template';
 
 -- Add in workresults here
---"Time At Task"
+--Time At Task
 
     INSERT INTO public.workresult(workresultworktemplateid,
                                   workresultcustomerid,
@@ -1008,7 +1005,7 @@ ELSE
 			415)
     Returning workresultid into tempworkresultid;
 
---"Primary Worker"
+--Primary Worker
     insert into public.languagemaster
     (languagemastercustomerid,
      languagemastercustomersiteid,
@@ -1115,7 +1112,6 @@ ELSE
     RAISE NOTICE 'inserted work instances';
 END IF;
 
-commit;
 
 End;
 
@@ -1125,3 +1121,4 @@ $procedure$;
 REVOKE ALL ON PROCEDURE entity.enable_pinpoint(uuid,text,uuid,text,uuid,text,text,bigint) FROM PUBLIC;
 GRANT EXECUTE ON PROCEDURE entity.enable_pinpoint(uuid,text,uuid,text,uuid,text,text,bigint) TO PUBLIC;
 GRANT EXECUTE ON PROCEDURE entity.enable_pinpoint(uuid,text,uuid,text,uuid,text,text,bigint) TO tendreladmin WITH GRANT OPTION;
+GRANT EXECUTE ON PROCEDURE entity.enable_pinpoint(uuid,text,uuid,text,uuid,text,text,bigint) TO graphql;

@@ -160,3 +160,4 @@ $procedure$;
 REVOKE ALL ON PROCEDURE entity.crud_entitytag_create(uuid,uuid,uuid,uuid,uuid,boolean,boolean,bigint) FROM PUBLIC;
 GRANT EXECUTE ON PROCEDURE entity.crud_entitytag_create(uuid,uuid,uuid,uuid,uuid,boolean,boolean,bigint) TO PUBLIC;
 GRANT EXECUTE ON PROCEDURE entity.crud_entitytag_create(uuid,uuid,uuid,uuid,uuid,boolean,boolean,bigint) TO tendreladmin WITH GRANT OPTION;
+GRANT EXECUTE ON PROCEDURE entity.crud_entitytag_create(uuid,uuid,uuid,uuid,uuid,boolean,boolean,bigint) TO graphql;

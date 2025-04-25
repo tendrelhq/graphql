@@ -129,3 +129,4 @@ $procedure$;
 REVOKE ALL ON PROCEDURE entity.crud_entityinstance_update(uuid,uuid,uuid,text,uuid,uuid,integer,text,text,text,uuid,text,uuid,boolean,boolean,timestamp with time zone,timestamp with time zone,text,uuid) FROM PUBLIC;
 GRANT EXECUTE ON PROCEDURE entity.crud_entityinstance_update(uuid,uuid,uuid,text,uuid,uuid,integer,text,text,text,uuid,text,uuid,boolean,boolean,timestamp with time zone,timestamp with time zone,text,uuid) TO PUBLIC;
 GRANT EXECUTE ON PROCEDURE entity.crud_entityinstance_update(uuid,uuid,uuid,text,uuid,uuid,integer,text,text,text,uuid,text,uuid,boolean,boolean,timestamp with time zone,timestamp with time zone,text,uuid) TO tendreladmin WITH GRANT OPTION;
+GRANT EXECUTE ON PROCEDURE entity.crud_entityinstance_update(uuid,uuid,uuid,text,uuid,uuid,integer,text,text,text,uuid,text,uuid,boolean,boolean,timestamp with time zone,timestamp with time zone,text,uuid) TO graphql;

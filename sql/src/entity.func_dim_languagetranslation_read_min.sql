@@ -92,3 +92,4 @@ $function$;
 REVOKE ALL ON FUNCTION entity.func_dim_languagetranslation_read_min(uuid,uuid) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION entity.func_dim_languagetranslation_read_min(uuid,uuid) TO PUBLIC;
 GRANT EXECUTE ON FUNCTION entity.func_dim_languagetranslation_read_min(uuid,uuid) TO tendreladmin WITH GRANT OPTION;
+GRANT EXECUTE ON FUNCTION entity.func_dim_languagetranslation_read_min(uuid,uuid) TO graphql;

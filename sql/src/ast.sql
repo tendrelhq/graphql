@@ -1,2 +1,3 @@
 CREATE SCHEMA ast;
 
+GRANT USAGE ON SCHEMA ast TO graphql;

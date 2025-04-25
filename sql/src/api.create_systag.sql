@@ -16,29 +16,34 @@ declare
 	ins_languagetypeuuid text;	
 	ins_languagetypeentityuuid uuid;
 	ins_languagetypeid bigint;
+	ins_customerentityuuid uuid;
 begin
 
 select get_workerinstanceid, get_workerinstanceuuid, get_languagetypeid, get_languagetypeuuid, get_languagetypeentityuuid
 into ins_userid, ins_useruuid, ins_languagetypeid,ins_languagetypeuuid, ins_languagetypeentityuuid
 from _api.util_user_details();
 
+select customerentityuuid
+into ins_customerentityuuid
+from entity.crud_customer_read_min(null,null, null, true, null,null,null,null)
+where customerid = (select workerinstancecustomerid from workerinstance where workerinstanceid = ins_userid);
 
-  call entity.crud_systag_create(
-  		create_systagownerentityuuid := new.owner, 
-		create_systagparententityuuid := new.parent, 
-		create_systagcornerstoneentityuuid := new.cornerstone, 
-		create_systagcornerstoneorder := new._order, 
-		create_systag := new.type, 
-		create_languagetypeuuid := ins_languagetypeentityuuid, 
-		create_systagexternalid := new.external_id, 
-		create_systagexternalsystemuuid := new.external_system,
-		create_systagdeleted := new._deleted, 
-		create_systagdraft := new._draft, 
-		create_systagid := ins_bigint, 
-		create_systaguuid := ins_text, 
-		create_systagentityuuid := ins_entity, 
-		create_modifiedbyid :=ins_userid  
-  );
+call entity.crud_systag_create(
+	create_systagownerentityuuid := ins_customerentityuuid, 
+	create_systagparententityuuid := new.parent, 
+	create_systagcornerstoneentityuuid := new.cornerstone, 
+	create_systagcornerstoneorder := new._order, 
+	create_systag := new.type, 
+	create_languagetypeuuid := ins_languagetypeentityuuid, 
+	create_systagexternalid := new.external_id, 
+	create_systagexternalsystemuuid := new.external_system,
+	create_systagdeleted := new._deleted, 
+	create_systagdraft := new._draft, 
+	create_systagid := ins_bigint, 
+	create_systaguuid := ins_text, 
+	create_systagentityuuid := ins_entity, 
+	create_modifiedbyid :=ins_userid  
+	  );
 
   select * into ins_row
   from api.systag

@@ -28,3 +28,4 @@ end $function$;
 REVOKE ALL ON FUNCTION _api.pre_request_hook() FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION _api.pre_request_hook() TO tendreladmin WITH GRANT OPTION;
 GRANT EXECUTE ON FUNCTION _api.pre_request_hook() TO anonymous;
+GRANT EXECUTE ON FUNCTION _api.pre_request_hook() TO authenticated;

@@ -1,15 +1,7 @@
 
 -- Type: FUNCTION ; Name: legacy0.create_instantiation_rule_v2(text,text,text,text,text,text,bigint); Owner: tendreladmin
 
-CREATE OR REPLACE FUNCTION legacy0.create_instantiation_rule_v2(
-  prev_template_id text,
-  next_template_id text,
-  state_condition text,
-  type_tag text,
-  prev_location_id text,
-  next_location_id text,
-  modified_by bigint
-)
+CREATE OR REPLACE FUNCTION legacy0.create_instantiation_rule_v2(prev_template_id text, next_template_id text, state_condition text, type_tag text, prev_location_id text, next_location_id text, modified_by bigint)
  RETURNS TABLE(prev text, next text)
  LANGUAGE plpgsql
 AS $function$
@@ -66,5 +58,7 @@ begin
   return;
 end $function$;
 
-revoke all on function legacy0.create_instantiation_rule_v2 from public;
-grant execute on function legacy0.create_instantiation_rule_v2 to graphql;
+
+REVOKE ALL ON FUNCTION legacy0.create_instantiation_rule_v2(text,text,text,text,text,text,bigint) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION legacy0.create_instantiation_rule_v2(text,text,text,text,text,text,bigint) TO tendrelservice;
+GRANT EXECUTE ON FUNCTION legacy0.create_instantiation_rule_v2(text,text,text,text,text,text,bigint) TO graphql;

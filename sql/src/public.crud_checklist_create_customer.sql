@@ -44,7 +44,7 @@ DECLARE
     checklist_config_uuid          text;
 
 BEGIN
-
+/*
     RAISE NOTICE 'Start of procedure';
 
     IF (SELECT EXISTS(SELECT id
@@ -387,7 +387,6 @@ BEGIN
                 TRUE,
                 FALSE,
                 create_modifiedby);
-
 
 -- Checklist - Text (using our widget.  May remove this later or not use it at all.)
         INSERT INTO public.languagemaster
@@ -824,7 +823,7 @@ BEGIN
                                             config_id := Checklist_config_uuid);
 
     COMMIT;
-
+*/
 END;
 
 $procedure$;

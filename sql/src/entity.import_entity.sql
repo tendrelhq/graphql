@@ -10,7 +10,7 @@ Begin
 
  -- Start the timer on this function
     fact_start = clock_timestamp();
-
+	
   if exists(select 1 from pg_namespace where nspname = 'datawarehouse') then
     if  (select dwrunfactimport from datawarehouse.dw_logginglevels) = false
       Then 
@@ -49,6 +49,7 @@ Begin
 
     call datawarehouse.insert_tendy_tracker(0, 2519, 12496, 980, 844, 20778, 18068, 20779, 20777, fact_start);
   end if;
+
 End;
 
 $procedure$;
@@ -57,3 +58,4 @@ $procedure$;
 REVOKE ALL ON PROCEDURE entity.import_entity(text) FROM PUBLIC;
 GRANT EXECUTE ON PROCEDURE entity.import_entity(text) TO PUBLIC;
 GRANT EXECUTE ON PROCEDURE entity.import_entity(text) TO tendreladmin WITH GRANT OPTION;
+GRANT EXECUTE ON PROCEDURE entity.import_entity(text) TO graphql;

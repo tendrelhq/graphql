@@ -1,2 +1,3 @@
 CREATE SCHEMA debug;
 
+GRANT USAGE ON SCHEMA debug TO graphql;

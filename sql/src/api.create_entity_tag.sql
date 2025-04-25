@@ -37,11 +37,6 @@ begin
 end 
 $function$;
 
-COMMENT ON FUNCTION api.create_entity_tag() IS '
-### post {baseUrl}/template
-
-A bunch of comments explaining post
-	';
 
 REVOKE ALL ON FUNCTION api.create_entity_tag() FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION api.create_entity_tag() TO tendreladmin WITH GRANT OPTION;

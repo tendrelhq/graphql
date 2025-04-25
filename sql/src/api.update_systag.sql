@@ -31,14 +31,14 @@ if (old.id = new.id)
 			update_systagcornerstoneentityuuid := new.cornerstone,
 			update_systagcornerstoneorder := new._order,
 			update_systag := new.type,
-			update_languagetypeuuid := null::uuid,
+			update_languagetypeuuid := ins_languagetypeentityuuid,
 			update_systagexternalid := new.external_id,
 			update_systagexternalsystemuuid := new.external_system,
 			update_systagdeleted := new._deleted,
 			update_systagdraft := new._draft,
 			update_systagstartdate := new.activated_at,
 			update_systagenddate := new.deactivated_at,
-			update_systagmodifiedbyuuid := null::text);
+			update_systagmodifiedbyuuid := ins_useruuid);
 	else  
 		return null;
 end if;

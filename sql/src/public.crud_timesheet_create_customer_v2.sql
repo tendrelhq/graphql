@@ -28,10 +28,8 @@ Declare
     timeclock_config_template_uuid text;
     timeclock_config_uuid          text;
 
-
-
 Begin
-
+/*
     RAISE NOTICE 'Start of procedure';
 
     -- Add in worktemplates for the site id and location types
@@ -1255,7 +1253,7 @@ select custagid, custaguuid
                                             config_id := timeclock_config_uuid);
 
     commit;
-
+*/
 End;
 
 $procedure$;

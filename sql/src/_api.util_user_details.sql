@@ -17,7 +17,10 @@ begin
 select workerinstanceid, workerinstanceuuid
 into tempworkerinstanceid,tempworkerinstanceuuid
 from  workerinstance
-where workerinstanceuuid = ((current_setting('request.jwt.claims'::text, true)::json ->> 'role'::text)::text);
+	inner join worker
+		on workerid = workerinstanceworkerid
+			and workeridentityid = ((current_setting('request.jwt.claims'::text, true)::json ->> 'sub'::text)::text)
+order by workerinstancecustomerid asc limit 1;
 
 select systagid,systaguuid, systagentityuuid
 into templanguagetypeid,templanguagetypeuuid, templanguagetypeentityuuid
@@ -34,3 +37,4 @@ $function$;
 
 REVOKE ALL ON FUNCTION _api.util_user_details() FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION _api.util_user_details() TO tendreladmin WITH GRANT OPTION;
+GRANT EXECUTE ON FUNCTION _api.util_user_details() TO authenticated;

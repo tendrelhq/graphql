@@ -19,5 +19,5 @@ end $function$;
 
 
 REVOKE ALL ON FUNCTION engine0.compute_rrule_next_occurrence(text,numeric,timestamp with time zone) FROM PUBLIC;
-GRANT EXECUTE ON FUNCTION engine0.compute_rrule_next_occurrence(text,numeric,timestamp with time zone) TO PUBLIC;
-GRANT EXECUTE ON FUNCTION engine0.compute_rrule_next_occurrence(text,numeric,timestamp with time zone) TO tendreladmin WITH GRANT OPTION;
+GRANT EXECUTE ON FUNCTION engine0.compute_rrule_next_occurrence(text,numeric,timestamp with time zone) TO tendrelservice;
+GRANT EXECUTE ON FUNCTION engine0.compute_rrule_next_occurrence(text,numeric,timestamp with time zone) TO graphql;

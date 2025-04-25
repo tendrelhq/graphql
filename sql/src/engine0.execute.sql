@@ -1,10 +1,6 @@
 
 -- Type: FUNCTION ; Name: engine0.execute(text,bigint); Owner: tendreladmin
 
--- Note that currently cross-location instantiation is (kinda) broken. It is
--- because of the block of code below that grabs the "chain_root_id". This will
--- be soon fixed for the forthcoming release of Batch.
-
 CREATE OR REPLACE FUNCTION engine0.execute(task_id text, modified_by bigint)
  RETURNS TABLE(instance text)
  LANGUAGE plpgsql
@@ -56,4 +52,5 @@ COMMENT ON FUNCTION engine0.execute(text,bigint) IS '
 ';
 
 REVOKE ALL ON FUNCTION engine0.execute(text,bigint) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION engine0.execute(text,bigint) TO tendrelservice;
 GRANT EXECUTE ON FUNCTION engine0.execute(text,bigint) TO graphql;

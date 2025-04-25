@@ -647,3 +647,4 @@ $procedure$;
 REVOKE ALL ON PROCEDURE entity.crud_entityfield_create(uuid,uuid,uuid,integer,text,uuid,uuid,uuid,text,uuid,text,uuid,text,boolean,boolean,boolean,boolean,boolean,boolean,text,uuid,uuid,boolean,boolean,bigint) FROM PUBLIC;
 GRANT EXECUTE ON PROCEDURE entity.crud_entityfield_create(uuid,uuid,uuid,integer,text,uuid,uuid,uuid,text,uuid,text,uuid,text,boolean,boolean,boolean,boolean,boolean,boolean,text,uuid,uuid,boolean,boolean,bigint) TO PUBLIC;
 GRANT EXECUTE ON PROCEDURE entity.crud_entityfield_create(uuid,uuid,uuid,integer,text,uuid,uuid,uuid,text,uuid,text,uuid,text,boolean,boolean,boolean,boolean,boolean,boolean,text,uuid,uuid,boolean,boolean,bigint) TO tendreladmin WITH GRANT OPTION;
+GRANT EXECUTE ON PROCEDURE entity.crud_entityfield_create(uuid,uuid,uuid,integer,text,uuid,uuid,uuid,text,uuid,text,uuid,text,boolean,boolean,boolean,boolean,boolean,boolean,text,uuid,uuid,boolean,boolean,bigint) TO graphql;

@@ -23,6 +23,18 @@ select get_workerinstanceid, get_workerinstanceuuid, get_languagetypeid, get_lan
 into ins_userid, ins_useruuid, ins_languagetypeid,ins_languagetypeuuid, ins_languagetypeentityuuid
 from _api.util_user_details();
 
+
+select customerentityuuid
+into ins_customerentityuuid
+from entity.crud_customer_read_min(null,null, null, true, null,null,null,null)
+where customerid = (select workerinstancecustomerid from workerinstance where workerinstanceid = ins_userid)   ;
+
+
+
+if new.parent isNull 
+	then new.parent = ins_customerentityuuid;
+end if;
+
 if (select new.parent in (select * from _api.util_get_onwership())) or (new.parent isNull)
 	then
 		call entity.crud_customer_create(

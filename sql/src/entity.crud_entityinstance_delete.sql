@@ -32,8 +32,6 @@ Begin
 			null, -- IN create_languagetypeuuid
 			337)
 
-
-
 	-- no owner isNull
 		call entity.crud_entityinstance_delete(
 			null, -- IN create_entityinstanceownerentityuuid uuid,
@@ -89,6 +87,7 @@ end if;
 update entity.entityinstance
 set entityinstancedeleted = true,
 	entityinstancemodifieddate = now(),
+	entityinstanceenddate = now(),
 	entityinstancemodifiedbyuuid = (select workerinstanceuuid from workerinstance where workerinstanceid = create_modifiedbyid)
 where entityinstanceownerentityuuid = create_entityinstanceownerentityuuid
 	and entityinstanceuuid = create_entityinstanceentityuuid;
@@ -101,3 +100,4 @@ $procedure$;
 REVOKE ALL ON PROCEDURE entity.crud_entityinstance_delete(uuid,uuid,bigint) FROM PUBLIC;
 GRANT EXECUTE ON PROCEDURE entity.crud_entityinstance_delete(uuid,uuid,bigint) TO PUBLIC;
 GRANT EXECUTE ON PROCEDURE entity.crud_entityinstance_delete(uuid,uuid,bigint) TO tendreladmin WITH GRANT OPTION;
+GRANT EXECUTE ON PROCEDURE entity.crud_entityinstance_delete(uuid,uuid,bigint) TO graphql;

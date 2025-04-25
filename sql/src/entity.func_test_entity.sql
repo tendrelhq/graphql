@@ -99,3 +99,4 @@ $function$;
 REVOKE ALL ON FUNCTION entity.func_test_entity() FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION entity.func_test_entity() TO PUBLIC;
 GRANT EXECUTE ON FUNCTION entity.func_test_entity() TO tendreladmin WITH GRANT OPTION;
+GRANT EXECUTE ON FUNCTION entity.func_test_entity() TO graphql;

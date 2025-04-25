@@ -19,16 +19,16 @@ select get_workerinstanceid
 into ins_userid
 from _api.util_user_details();
 
-if (select owner in (select * from _api.util_get_onwership()) )
-	then  
+--if (select owner in (select * from _api.util_get_onwership()) )
+--	then  
 	  call entity.crud_customer_delete(
 	      create_customerownerentityuuid := owner,
 	      create_customerentityuuid := id,
 	      create_modifiedbyid := ins_userid
 	  );
-	else
-		return;  -- need an exception here
-end if;
+--	else
+--		return;  -- need an exception here
+--end if;
 
   return query
     select *

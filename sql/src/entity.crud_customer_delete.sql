@@ -70,6 +70,7 @@ end if;
 update entity.entityinstance
 set entityinstancedeleted = true,
 	entityinstancemodifieddate = now(),
+	entityinstanceenddate = now(),
 	entityinstancemodifiedbyuuid = (select workerinstanceuuid from workerinstance where workerinstanceid = create_modifiedbyid)
 where entityinstanceownerentityuuid = create_customerownerentityuuid
 	and entityinstanceuuid = create_customerentityuuid;
@@ -82,3 +83,4 @@ $procedure$;
 REVOKE ALL ON PROCEDURE entity.crud_customer_delete(uuid,uuid,bigint) FROM PUBLIC;
 GRANT EXECUTE ON PROCEDURE entity.crud_customer_delete(uuid,uuid,bigint) TO PUBLIC;
 GRANT EXECUTE ON PROCEDURE entity.crud_customer_delete(uuid,uuid,bigint) TO tendreladmin WITH GRANT OPTION;
+GRANT EXECUTE ON PROCEDURE entity.crud_customer_delete(uuid,uuid,bigint) TO graphql;

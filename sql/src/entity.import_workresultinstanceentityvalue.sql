@@ -60,3 +60,4 @@ $procedure$;
 REVOKE ALL ON PROCEDURE entity.import_workresultinstanceentityvalue(text) FROM PUBLIC;
 GRANT EXECUTE ON PROCEDURE entity.import_workresultinstanceentityvalue(text) TO PUBLIC;
 GRANT EXECUTE ON PROCEDURE entity.import_workresultinstanceentityvalue(text) TO tendreladmin WITH GRANT OPTION;
+GRANT EXECUTE ON PROCEDURE entity.import_workresultinstanceentityvalue(text) TO graphql;

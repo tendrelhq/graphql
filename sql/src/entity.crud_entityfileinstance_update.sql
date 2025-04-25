@@ -65,3 +65,4 @@ $procedure$;
 REVOKE ALL ON PROCEDURE entity.crud_entityfileinstance_update(uuid,uuid,uuid,uuid,text,uuid,boolean,boolean,text,uuid) FROM PUBLIC;
 GRANT EXECUTE ON PROCEDURE entity.crud_entityfileinstance_update(uuid,uuid,uuid,uuid,text,uuid,boolean,boolean,text,uuid) TO PUBLIC;
 GRANT EXECUTE ON PROCEDURE entity.crud_entityfileinstance_update(uuid,uuid,uuid,uuid,text,uuid,boolean,boolean,text,uuid) TO tendreladmin WITH GRANT OPTION;
+GRANT EXECUTE ON PROCEDURE entity.crud_entityfileinstance_update(uuid,uuid,uuid,uuid,text,uuid,boolean,boolean,text,uuid) TO graphql;

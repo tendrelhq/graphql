@@ -169,5 +169,7 @@ begin
   return;
 end $function$;
 
-revoke all on function engine0.build_instantiation_plan_v2 from public;
-grant execute on function engine0.build_instantiation_plan_v2 to graphql;
+
+REVOKE ALL ON FUNCTION engine0.build_instantiation_plan_v2(text) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION engine0.build_instantiation_plan_v2(text) TO graphql;
+GRANT EXECUTE ON FUNCTION engine0.build_instantiation_plan_v2(text) TO tendrelservice;

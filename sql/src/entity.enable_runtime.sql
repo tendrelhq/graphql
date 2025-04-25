@@ -6,10 +6,9 @@ CREATE OR REPLACE PROCEDURE entity.enable_runtime(IN create_customer_uuid uuid, 
 AS $procedure$
 declare
 
-
   ins_locations text[];
   ins_template text;
-  template_type_id text;
+  ins_template_type_n bigint;
   runtime_config_template_uuid text;
   runtime_config_uuid text;
   create_locationentityuuid uuid;
@@ -138,7 +137,6 @@ begin
 -- Create the first runtime template.
 -- FUTURE:  Eventually we need to modify this to point to the entity model --
 
-
   select t.id into ins_template
   from legacy0.create_task_t(
       customer_id := create_original_customer_uuid,
@@ -157,25 +155,29 @@ begin
 -- Set the Runtime Template Type
 -- FUTURE:  Eventually we need to modify this to point to the entity model 
 
-    select t.id
-	into template_type_id
-    from
-        public.systag as s,
-        legacy0.create_template_type(
-            template_id := ins_template,
-            systag_id := s.systaguuid,
-            modified_by := modified_by
-        ) as t
-    where s.systagparentid = 882 and s.systagtype in ('Trackable', 'Runtime')
+	-- NOTE: I'm not exactly sure _why_ this happens but previously we were doing
+	-- something like this:
+	--   select t.id into template_type_id
+	-- and we noticed that only the Runtime template type was being created. I
+	-- *think* this is because the query planner sees that the `into` target is
+	-- singular and so implicitly `LIMIT`s the query accordingly.
+	select count(*) into ins_template_type_n
+	from
+		public.systag as s,
+		legacy0.create_template_type(
+			template_id := ins_template,
+			systag_id := s.systaguuid,
+			modified_by := modified_by
+		) as t
+	where s.systagparentid = 882 and s.systagtype in ('Trackable', 'Runtime')
   ;
   --
-  if template_type_id isNull
-  	then raise exception 'failed to create template type';
+  if ins_template_type_n != 2
+      then raise exception 'failed to create template types for root template';
   end if;
 
 -- Setup the Template Fields
 -- FUTURE:  Do we need an override by?  It is how we do timeclock. --
-
 
     create temp table field (f_name, f_type, f_is_primary, f_order) as (
         values
@@ -217,30 +219,35 @@ begin
   	then raise exception 'failed to create template fields';
   end if;
 
-
-  -- The canonical on-demand in-progress "respawn" rule. This rule causes a new,
-  -- Open task instance to be created when a task transitions to InProgress.
+  -- The canonical respawn rule.
+  -- This rule tells the engine to create an open Runtime instance whenever an existing instance moves to InProgress.
+  -- Note that there are two modes of instantiation under the legacy model (i.e. worktemplatenexttemplate): eager and lazy.
+  -- The mode of instantiation is driven by worktemplatenexttemplatenexttypeid, which is a foreign key to systag.
+  -- A next type of 'On Demand' indicates lazy instantiation and, practically speaking, allows the _end user_ (e.g. the mobile app)
+  -- to explicitly request what to instantiate (if they do not so choose, nothing will be instantiated).
+  -- Conversely, any other next type (e.g. Task, Audit, Remediation) implies eager instantiation and will result in
+  -- automatic instantiation (by the engine) when the given rule is satisfied (i.e. it satisfies the status constraint
+  -- (worktemplatenexttemplateviastatuschangeid) and/or the result constraint (worktemplatenexttemplateviaworkresultid)).
   
     perform '  +irule', t.next
     from legacy0.create_instantiation_rule(
         prev_template_id := ins_template,
         next_template_id := ins_template,
         state_condition := 'In Progress',
-        type_tag := 'On Demand',
+        type_tag := 'Task', -- Eager instantiation := driven by the engine
         modified_by := modified_by
     ) as t;
   --
+
   if not found then
     raise exception 'failed to create canonical on-demand in-progress irule';
   end if;
-
 
   -----------------------------------------------------------------------
   -- Create the constraint for the root template at each child location.
   -- Dumbed this down since there is only one.
   -- FUTURE: From what I can tell we are only creating one right now.  
   -- FUTURE: Fix Subfunctions to use entity.  SHORT TERM: look up from entity locationid and pass it in  
-
 
        create temp table ins_constraint as 
                select *
@@ -281,7 +288,7 @@ begin
 									   read_languagetranslationtypeentityuuid := create_language_type_uuid
 									)),
                    target_state := 'Open',
-                   target_type := 'On Demand',
+                   target_type := 'Task',
                    modified_by := modified_by
                )
            ;
@@ -295,7 +302,6 @@ begin
          group by t.instance
        )
      ;
-
   --
   if not found then
     raise exception 'failed to create location constraint/initial instance';
@@ -303,15 +309,19 @@ begin
 
    drop table ins_constraint;
    drop table ins_instance;
-
-
-  -- Create the Idle Time template, which is a transition from public.
+-------------------------------------------------------------------------------------------------
+  -- Create the Idle Time template, which is a transition from Runtime.
+  -- Note that, under Runtime, Idle is a _choice_. When Runtime is active, the user may _choose_ to
+  -- transition into Idle by explicitly choosing it from the list (e.g. clicking the button in the
+  -- mobile app). This is the (practical) difference between eager and lazy instantiation.
+  -- Lazy instantiations are driven by the user while eager instantiations are automatic (i.e. driven by the engine).
 
     create temp table field (f_name, f_type, f_is_primary, f_order) as (
             values
                 ('Override Start Time'::text, 'Date'::text, true::boolean, 0::integer),
                 ('Override End Time', 'Date', true, 1),
-                ('Description', 'String', false, 2)
+                ('Description', 'String', false, 2),
+				('Reason Code', 'String', false, 3)
         );
 
      create temp table ins_next as 
@@ -326,6 +336,7 @@ begin
             ) as t
         ;
 
+	
        create temp table ins_type as (
             select t.*
             from ins_next, public.systag as s
@@ -359,7 +370,7 @@ begin
                 ) as t
         );
 
-        create temp table ins_nt_rule as (
+        create temp table ins_nt_rule as (		
             select t.*
             from ins_next
             cross join
@@ -367,23 +378,32 @@ begin
                     prev_template_id := ins_template,
                     next_template_id := ins_next.id,
                     state_condition := 'In Progress',
-                    type_tag := 'On Demand',
+                    type_tag := 'On Demand', -- Lazy instantiation (read the comments above)
                     modified_by := modified_by
                 ) as t
         );
 
-
-        create temp table ins_constraint as (
-            select t.*
-            from
-                unnest(ins_locations) as ins_location(id),
-                ins_next,
-                legacy0.create_template_constraint_on_location(
-                    template_id := ins_next.id,
-                    location_id := ins_location.id,
-                    modified_by := modified_by
-                ) as t
-        );
+-- replaced with this which matches what is working for main template.
+       create temp table ins_constraint as 
+               select *
+               from legacy0.create_template_constraint_on_location(
+                   template_id := (select id from ins_next),
+                   location_id := ( select locationuuid
+				   					from entity.crud_location_read_min(
+									   read_locationownerentityuuid := create_customer_uuid, 
+									   read_locationentityuuid := create_locationentityuuid, 
+									   read_locationparententityuuid := null, 
+									   read_locationcornerstoneentityuuid := null, 
+									   read_alllocations := false, 
+									   read_locationtag := null, 
+									   read_locationsenddeleted := null, 
+									   read_locationsenddrafts := null, 
+									   read_locationsendinactive := null, 
+									   read_languagetranslationtypeentityuuid := create_language_type_uuid
+									)),
+                   modified_by := modified_by
+               ) as t
+           ;
 
         perform '  +next', ins_nt_rule.next
         from ins_nt_rule
@@ -409,14 +429,18 @@ begin
    drop table ins_nt_rule;
    drop table ins_constraint;
 
-	
-  -- Create the Downtime template, which is a transition from public.
+  -- Create the Downtime template, which is a transition from Runtime.
+  -- Note that, under Runtime, Idle is a _choice_. When Runtime is active, the user may _choose_ to
+  -- transition into Down by explicitly choosing it from the list (e.g. clicking the button in the
+  -- mobile app). This is the (practical) difference between eager and lazy instantiation.
+  -- Lazy instantiations are driven by the user while eager instantiations are automatic (i.e. driven by the engine).
 
     create temp table field (f_name, f_type, f_is_primary, f_order) as (
             values
                 ('Override Start Time'::text, 'Date'::text, true::boolean, 0::integer),
                 ('Override End Time', 'Date', true, 1),
-                ('Description', 'String', false, 2)
+                ('Description', 'String', false, 2),
+				('Reason Code', 'String', false, 3)
         );
 
         create temp table ins_next as (
@@ -472,22 +496,32 @@ begin
                     prev_template_id := ins_template,
                     next_template_id := ins_next.id,
                     state_condition := 'In Progress',
-                    type_tag := 'On Demand',
+                    type_tag := 'On Demand', -- Lazy instantiation (read the comments above)
                     modified_by := modified_by
                 ) as t
         );
 
-        create temp table ins_constraint as (
-            select t.*
-            from
-                unnest(ins_locations) as ins_location(id),
-                ins_next,
-                legacy0.create_template_constraint_on_location(
-                    template_id := ins_next.id,
-                    location_id := ins_location.id,
-                    modified_by := modified_by
-                ) as t
-        );
+-- replaced with this which matches what is working for main template.
+       create temp table ins_constraint as 
+               select *
+               from legacy0.create_template_constraint_on_location(
+                   template_id := (select id from ins_next),
+                   location_id := ( select locationuuid
+				   					from entity.crud_location_read_min(
+									   read_locationownerentityuuid := create_customer_uuid, 
+									   read_locationentityuuid := create_locationentityuuid, 
+									   read_locationparententityuuid := null, 
+									   read_locationcornerstoneentityuuid := null, 
+									   read_alllocations := false, 
+									   read_locationtag := null, 
+									   read_locationsenddeleted := null, 
+									   read_locationsenddrafts := null, 
+									   read_locationsendinactive := null, 
+									   read_languagetranslationtypeentityuuid := create_language_type_uuid
+									)),
+                   modified_by := modified_by
+               ) as t
+           ;
 
         perform '  +next', ins_nt_rule.next
         from ins_nt_rule
@@ -512,7 +546,6 @@ begin
    drop table ins_field;
    drop table ins_nt_rule;
    drop table ins_constraint;
-
 
   select uuid
   into runtime_config_template_uuid
@@ -539,3 +572,4 @@ $procedure$;
 REVOKE ALL ON PROCEDURE entity.enable_runtime(uuid,text,uuid,text,uuid,text,bigint,text) FROM PUBLIC;
 GRANT EXECUTE ON PROCEDURE entity.enable_runtime(uuid,text,uuid,text,uuid,text,bigint,text) TO PUBLIC;
 GRANT EXECUTE ON PROCEDURE entity.enable_runtime(uuid,text,uuid,text,uuid,text,bigint,text) TO tendreladmin WITH GRANT OPTION;
+GRANT EXECUTE ON PROCEDURE entity.enable_runtime(uuid,text,uuid,text,uuid,text,bigint,text) TO graphql;

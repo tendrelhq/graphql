@@ -532,6 +532,8 @@ drop table locmodified;
 
     call datawarehouse.insert_tendy_tracker(0, 2521, 12496, 811, 844, 20786, 18068, 20787,20785, customer_start);
   end if;
+
+
 End;
 
 $procedure$;
@@ -540,3 +542,4 @@ $procedure$;
 REVOKE ALL ON PROCEDURE entity.import_entity_location(text) FROM PUBLIC;
 GRANT EXECUTE ON PROCEDURE entity.import_entity_location(text) TO PUBLIC;
 GRANT EXECUTE ON PROCEDURE entity.import_entity_location(text) TO tendreladmin WITH GRANT OPTION;
+GRANT EXECUTE ON PROCEDURE entity.import_entity_location(text) TO graphql;

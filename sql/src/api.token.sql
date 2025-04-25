@@ -1,4 +1,28 @@
 
+-- Type: grant_type
+
+-- DROP TYPE IF EXISTS api.grant_type;
+
+CREATE TYPE api.grant_type AS ENUM
+    ('urn:ietf:params:oauth:grant-type:token-exchange');
+
+ALTER TYPE api.grant_type
+    OWNER TO tendreladmin;
+
+GRANT USAGE ON TYPE api.grant_type TO PUBLIC;
+
+-- Type: token_type
+
+-- DROP TYPE IF EXISTS api.token_type;
+
+CREATE TYPE api.token_type AS ENUM
+    ('urn:ietf:params:oauth:token-type:jwt');
+
+ALTER TYPE api.token_type
+    OWNER TO tendreladmin;
+
+GRANT USAGE ON TYPE api.token_type TO PUBLIC;
+
 -- Type: FUNCTION ; Name: api.token(api.grant_type,text,api.token_type,text,text); Owner: tendreladmin
 
 CREATE OR REPLACE FUNCTION api.token(grant_type api.grant_type, subject_token text, subject_token_type api.token_type, actor_token text DEFAULT NULL::text, actor_token_type text DEFAULT NULL::text)
@@ -12,15 +36,15 @@ declare
 begin
   if grant_type != 'urn:ietf:params:oauth:grant-type:token-exchange' then
     raise sqlstate 'PGRST' using
-      message = '{"code":"unsupported_grant_type","message":"The authorization grant type is not supported by the authorization server."}',
-      detail = '{"status":400,"headers":{"Cache-Control":"no-store","Pragma":"no-cache"}}'
+      message = '{code:unsupported_grant_type,message:The authorization grant type is not supported by the authorization server.}',
+      detail = '{status:400,headers:{Cache-Control:no-store,Pragma:no-cache}}'
     ;
   end if;
 
   if subject_token_type != 'urn:ietf:params:oauth:token-type:jwt' then
     raise sqlstate 'PGRST' using
-      message = '{"code":"invalid_request","message":"The subject token type is not supported by the authorization server."}',
-      detail = '{"status":400,"headers":{"Cache-Control":"no-store","Pragma":"no-cache"}}'
+      message = '{code:invalid_request,message:The subject token type is not supported by the authorization server.}',
+      detail = '{status:400,headers:{Cache-Control:no-store,Pragma:no-cache}}'
     ;
   end if;
 
@@ -42,7 +66,7 @@ begin
         'scope', string_agg(systagtype, ' '),
         'exp', extract(epoch from now() + '24hr'::interval),
         'iat', extract(epoch from now()),
-        'iss', 'urn:tendrel:test',
+        'iss', 'urn:tendrel:beta',
         'nbf', extract(epoch from now() - '30s'::interval),
         'sub', current_setting('request.jwt.claims')::jsonb ->> 'sub'
       )

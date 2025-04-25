@@ -94,10 +94,10 @@ if read_allsystags = true
 	ei.entityinstancecornerstoneorder as systagorder,
 	ei.entityinstancedeleted, 
 	ei.entityinstancedraft,
-	case when ei.entityinstanceenddate notnull and ei.entityinstanceenddate::Date < now()::date
-		then false
-		else true
-	end as entityinstanceactive
+		case when ei.entityinstancedraft = true then false
+				when ei.entityinstanceenddate notnull and ei.entityinstanceenddate::Date < now()::date then false
+				else true
+		end as entityinstanceactive
 from entity.entityinstance ei
 	Join (select customerid,customeruuid, customerentityuuid  
 				from entity.crud_customer_read_min(read_ownerentityuuid,null, null,allowners, read_systagsenddeleted,read_systagsenddrafts,read_systagsendinactive,null)) as cust  
@@ -143,10 +143,10 @@ if read_systagentityuuid notNull
 	ei.entityinstancecornerstoneorder as systagorder,
 	ei.entityinstancedeleted, 
 	ei.entityinstancedraft,
-	case when ei.entityinstanceenddate notnull and ei.entityinstanceenddate::Date < now()::date
-		then false
-		else true
-	end as entityinstanceactive
+		case when ei.entityinstancedraft = true then false
+				when ei.entityinstanceenddate notnull and ei.entityinstanceenddate::Date < now()::date then false
+				else true
+		end as entityinstanceactive
 from entity.entityinstance ei
 	Join (select customerid,customeruuid, customerentityuuid  from entity.crud_customer_read_min (read_ownerentityuuid,null, null,allowners, read_systagsenddeleted,read_systagsenddrafts,read_systagsendinactive,null)) as cust  
 		on cust.customerentityuuid = ei.entityinstanceownerentityuuid
@@ -192,10 +192,10 @@ if read_systagparententityuuid isNull and read_ownerentityuuid notNull
 	ei.entityinstancecornerstoneorder as systagorder,
 	ei.entityinstancedeleted, 
 	ei.entityinstancedraft,
-	case when ei.entityinstanceenddate notnull and ei.entityinstanceenddate::Date < now()::date
-		then false
-		else true
-	end as entityinstanceactive
+		case when ei.entityinstancedraft = true then false
+				when ei.entityinstanceenddate notnull and ei.entityinstanceenddate::Date < now()::date then false
+				else true
+		end as entityinstanceactive
 from entity.entityinstance ei
 	Join (select customerid,customeruuid, customerentityuuid from entity.crud_customer_read_min(read_ownerentityuuid,null, null,allowners,read_systagsenddeleted,read_systagsenddrafts,read_systagsendinactive, null)) as cust  
 		on cust.customerentityuuid = ei.entityinstanceownerentityuuid
@@ -241,10 +241,10 @@ if read_systagparententityuuid notNull and read_ownerentityuuid notNull
 	ei.entityinstancecornerstoneorder as systagorder,
 	ei.entityinstancedeleted, 
 	ei.entityinstancedraft,
-	case when ei.entityinstanceenddate notnull and ei.entityinstanceenddate::Date < now()::date
-		then false
-		else true
-	end as entityinstanceactive
+		case when ei.entityinstancedraft = true then false
+				when ei.entityinstanceenddate notnull and ei.entityinstanceenddate::Date < now()::date then false
+				else true
+		end as entityinstanceactive
 from entity.entityinstance ei
 	Join (select customerid,customeruuid, customerentityuuid from entity.crud_customer_read_min(read_ownerentityuuid,null, null,allowners,read_systagsenddeleted,read_systagsenddrafts,read_systagsendinactive, null)) as cust  
 		on cust.customerentityuuid = ei.entityinstanceownerentityuuid
@@ -269,3 +269,4 @@ $function$;
 REVOKE ALL ON FUNCTION entity.crud_systag_read_min(uuid,uuid,uuid,uuid,boolean,boolean,boolean,boolean,uuid) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION entity.crud_systag_read_min(uuid,uuid,uuid,uuid,boolean,boolean,boolean,boolean,uuid) TO PUBLIC;
 GRANT EXECUTE ON FUNCTION entity.crud_systag_read_min(uuid,uuid,uuid,uuid,boolean,boolean,boolean,boolean,uuid) TO tendreladmin WITH GRANT OPTION;
+GRANT EXECUTE ON FUNCTION entity.crud_systag_read_min(uuid,uuid,uuid,uuid,boolean,boolean,boolean,boolean,uuid) TO graphql;

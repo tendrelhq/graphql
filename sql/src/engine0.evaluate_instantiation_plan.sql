@@ -28,5 +28,5 @@ Evaluate an instantiation plan.
 ';
 
 REVOKE ALL ON FUNCTION engine0.evaluate_instantiation_plan(text,text,engine0.closure[]) FROM PUBLIC;
-GRANT EXECUTE ON FUNCTION engine0.evaluate_instantiation_plan(text,text,engine0.closure[]) TO PUBLIC;
-GRANT EXECUTE ON FUNCTION engine0.evaluate_instantiation_plan(text,text,engine0.closure[]) TO tendreladmin WITH GRANT OPTION;
+GRANT EXECUTE ON FUNCTION engine0.evaluate_instantiation_plan(text,text,engine0.closure[]) TO tendrelservice;
+GRANT EXECUTE ON FUNCTION engine0.evaluate_instantiation_plan(text,text,engine0.closure[]) TO graphql;

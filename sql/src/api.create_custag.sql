@@ -16,15 +16,20 @@ declare
 	ins_languagetypeuuid text;	
 	ins_languagetypeentityuuid uuid;
 	ins_languagetypeid bigint;
+	ins_customerentityuuid uuid;
 begin
 
 select get_workerinstanceid, get_workerinstanceuuid, get_languagetypeid, get_languagetypeuuid, get_languagetypeentityuuid
 into ins_userid, ins_useruuid, ins_languagetypeid,ins_languagetypeuuid, ins_languagetypeentityuuid
 from _api.util_user_details();
 
+select customerentityuuid
+into ins_customerentityuuid
+from entity.crud_customer_read_min(null,null, null, true, null,null,null,null)
+where customerid = (select workerinstancecustomerid from workerinstance where workerinstanceid = ins_userid);
 
   call entity.crud_custag_create(
-  		create_custagownerentityuuid := new.owner, 
+  		create_custagownerentityuuid := ins_customerentityuuid, 
 		create_custagparententityuuid := new.parent, 
 		create_custagcornerstoneentityuuid := new.cornerstone, 
 		create_custagcornerstoneorder := new._order, 

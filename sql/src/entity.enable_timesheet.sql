@@ -310,7 +310,7 @@ Begin
 
     RAISE NOTICE 'inserted template';
     -- Add in workresults here
---"Time At Task"
+--Time At Task
 
     INSERT INTO public.workresult(workresultworktemplateid,
                                   workresultcustomerid,
@@ -333,7 +333,7 @@ Begin
             FALSE,
             create_modifiedby);
 
---"Worker"
+--Worker
     insert into public.languagemaster
     (languagemastercustomerid,
      languagemastercustomersiteid,
@@ -380,7 +380,7 @@ Begin
             FALSE,
             create_modifiedby);
 
---"Start Location"
+--Start Location
     insert into public.languagemaster
     (languagemastercustomerid,
      languagemastercustomersiteid,
@@ -427,7 +427,7 @@ Begin
             FALSE,
             create_modifiedby);
 
---"End Location"
+--End Location
     insert into public.languagemaster
     (languagemastercustomerid,
      languagemastercustomersiteid,
@@ -474,7 +474,7 @@ Begin
             FALSE,
             create_modifiedby);
 
---"Start Override"
+--Start Override
     insert into public.languagemaster
     (languagemastercustomerid,
      languagemastercustomersiteid,
@@ -521,7 +521,7 @@ Begin
             FALSE,
             create_modifiedby);
 
---"End Override"
+--End Override
     insert into public.languagemaster
     (languagemastercustomerid,
      languagemastercustomersiteid,
@@ -568,7 +568,7 @@ Begin
             FALSE,
             create_modifiedby);
 
---"Override By"
+--Override By
     insert into public.languagemaster
     (languagemastercustomerid,
      languagemastercustomersiteid,
@@ -615,7 +615,7 @@ Begin
             FALSE,
             create_modifiedby);
 
---"Location"
+--Location
     insert into public.languagemaster
     (languagemastercustomerid,
      languagemastercustomersiteid,
@@ -663,7 +663,7 @@ Begin
             create_modifiedby)
     Returning workresultid into tempworkresultid;
 
---"Worker"
+--Worker
     insert into public.languagemaster
     (languagemastercustomerid,
      languagemastercustomersiteid,
@@ -868,7 +868,7 @@ Begin
             create_original_customer_uuid);
 
     -- Add in workresults here
---"Time At Task"
+--Time At Task
 
     INSERT INTO public.workresult(workresultworktemplateid,
                                   workresultcustomerid,
@@ -891,7 +891,7 @@ Begin
             FALSE,
             create_modifiedby);
 
---"Worker"
+--Worker
     insert into public.languagemaster
     (languagemastercustomerid,
      languagemastercustomersiteid,
@@ -938,7 +938,7 @@ Begin
             FALSE,
             create_modifiedby);
 
---"Start Location"
+--Start Location
     insert into public.languagemaster
     (languagemastercustomerid,
      languagemastercustomersiteid,
@@ -985,7 +985,7 @@ Begin
             FALSE,
             create_modifiedby);
 
---"End Location"
+--End Location
     insert into public.languagemaster
     (languagemastercustomerid,
      languagemastercustomersiteid,
@@ -1032,7 +1032,7 @@ Begin
             FALSE,
             create_modifiedby);
 
---"Start Override"
+--Start Override
     insert into public.languagemaster
     (languagemastercustomerid,
      languagemastercustomersiteid,
@@ -1079,7 +1079,7 @@ Begin
             FALSE,
             create_modifiedby);
 
---"End Override"
+--End Override
     insert into public.languagemaster
     (languagemastercustomerid,
      languagemastercustomersiteid,
@@ -1126,7 +1126,7 @@ Begin
             FALSE,
             create_modifiedby);
 
---"Override By"
+--Override By
     insert into public.languagemaster
     (languagemastercustomerid,
      languagemastercustomersiteid,
@@ -1173,7 +1173,7 @@ Begin
             FALSE,
             create_modifiedby);
 
---"Location"
+--Location
     insert into public.languagemaster
     (languagemastercustomerid,
      languagemastercustomersiteid,
@@ -1221,7 +1221,7 @@ Begin
             create_modifiedby)
     Returning workresultid into tempworkresultid;
 
---"Worker"
+--Worker
     insert into public.languagemaster
     (languagemastercustomerid,
      languagemastercustomersiteid,
@@ -1410,7 +1410,7 @@ Begin
                                             config_value := 'true', modified_by := modified_by_uuid,
                                             config_id := timeclock_config_uuid);
 
-    commit;
+    
 
 End;
 
@@ -1420,3 +1420,4 @@ $procedure$;
 REVOKE ALL ON PROCEDURE entity.enable_timesheet(uuid,text,uuid,text,uuid,text,text,bigint) FROM PUBLIC;
 GRANT EXECUTE ON PROCEDURE entity.enable_timesheet(uuid,text,uuid,text,uuid,text,text,bigint) TO PUBLIC;
 GRANT EXECUTE ON PROCEDURE entity.enable_timesheet(uuid,text,uuid,text,uuid,text,text,bigint) TO tendreladmin WITH GRANT OPTION;
+GRANT EXECUTE ON PROCEDURE entity.enable_timesheet(uuid,text,uuid,text,uuid,text,text,bigint) TO graphql;

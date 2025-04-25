@@ -172,4 +172,5 @@ from engine0.instantiate(
 ';
 
 REVOKE ALL ON FUNCTION engine0.instantiate(text,text,text,text,bigint,text,text) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION engine0.instantiate(text,text,text,text,bigint,text,text) TO tendrelservice;
 GRANT EXECUTE ON FUNCTION engine0.instantiate(text,text,text,text,bigint,text,text) TO graphql;

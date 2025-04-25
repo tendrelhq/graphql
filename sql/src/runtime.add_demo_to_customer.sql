@@ -384,4 +384,5 @@ end $function$;
 
 
 REVOKE ALL ON FUNCTION runtime.add_demo_to_customer(text,text,bigint,text) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION runtime.add_demo_to_customer(text,text,bigint,text) TO tendreladmin WITH GRANT OPTION;
 GRANT EXECUTE ON FUNCTION runtime.add_demo_to_customer(text,text,bigint,text) TO graphql;

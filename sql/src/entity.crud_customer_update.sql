@@ -28,7 +28,22 @@ UPDATE entity.entityinstance
 		entityinstancestartdate = case when update_customerstartdate notnull 
 								then update_customerstartdate
 								else entityinstancestartdate end,
-		entityinstanceenddate = update_customerenddate,
+		entityinstancedraft = update_customerdraft,
+		entityinstancedeleted = update_customerdeleted,
+		entityinstanceenddate = case 	when update_customerdeleted = true 
+											and entityinstanceenddate isNull
+											and update_customerenddate isNull then now()
+										when update_customerdeleted = true 
+											and entityinstanceenddate isNull
+											and update_customerenddate notNull then update_customerenddate 
+										when update_customerdeleted = true 
+											and entityinstanceenddate notNull
+											and update_customerenddate isNull then entityinstanceenddate
+										when update_customerdeleted = true and entityinstanceenddate notNull
+											and update_customerenddate notNull and update_customerenddate <> entityinstanceenddate
+											then update_customerenddate	
+										else null
+									end,
 		entityinstancemodifieddate =now(),
 		entityinstancemodifiedbyuuid = update_modifiedby
 WHERE entityinstanceuuid = update_customerentityuuid;
@@ -41,9 +56,18 @@ select systagid,systaguuid into templanguagetypeid,templanguagetypeuuid
 
 if  update_customername notNull and (coalesce(update_customername,'') <> '')
 	then
+		update public.languagetranslations
+			set languagetranslationvalue = update_customername
+		from entity.entityinstance
+			where entityinstanceuuid = update_customerentityuuid
+				and languagetranslationmasterid = (select languagemasterid from languagemaster where languagemasteruuid = entityinstancenameuuid)
+				and languagetranslationtypeid = templanguagetypeid
+				and languagetranslationvalue <> update_customername;
+		
 		update languagemaster
 			set languagemastersourcelanguagetypeid = templanguagetypeid,
 				languagemastersource = update_customername,
+				languagemastermodifieddate = now(),
 				languagemastermodifiedby = (select workerinstanceid from workerinstance where workerinstanceuuid = update_modifiedby),
 				languagemasterstatus = 'NEEDS_COMPLETE_RETRANSLATION'		
 			from entity.entityinstance
@@ -55,6 +79,18 @@ end if;
 -- update display name
 if  update_customerdisplayname notNull and (coalesce(update_customerdisplayname,'') <> '')
 	then
+		update public.languagetranslations
+			set languagetranslationvalue = update_customerdisplayname
+		from entity.entityinstance
+		where languagetranslationmasterid = (select languagemasterid 
+												from languagemaster 
+												where languagemasteruuid = (select entityfieldinstancevaluelanguagemasteruuid 
+																			from entity.entityfieldinstance
+																			where entityfieldinstanceentityinstanceentityuuid = update_customerentityuuid
+																				and  entityfieldinstanceentityfieldentityuuid = 'd15bb9c2-0601-4e4f-9009-c791a40be191'))
+				and languagetranslationtypeid = templanguagetypeid
+				and languagetranslationvalue <> update_customerdisplayname;
+				
 		update public.languagemaster
 			set languagemastersourcelanguagetypeid = templanguagetypeid,
 				languagemastersource = update_customerdisplayname,
@@ -64,7 +100,8 @@ if  update_customerdisplayname notNull and (coalesce(update_customerdisplayname,
 		where languagemasteruuid = (select entityfieldinstancevaluelanguagemasteruuid 
 									from entity.entityfieldinstance
 									where entityfieldinstanceentityinstanceentityuuid = update_customerentityuuid
-										and  entityfieldinstanceentityfieldentityuuid = 'd15bb9c2-0601-4e4f-9009-c791a40be191');
+										and  entityfieldinstanceentityfieldentityuuid = 'd15bb9c2-0601-4e4f-9009-c791a40be191')
+				and languagemastersource <> update_customerdisplayname;
 
 		update entity.entityfieldinstance
 			set entityfieldinstancevalue = update_customerdisplayname,
@@ -72,7 +109,8 @@ if  update_customerdisplayname notNull and (coalesce(update_customerdisplayname,
 				entityfieldinstancemodifieddate = now(),
 				entityfieldinstancemodifiedbyuuid = update_modifiedby
 		where entityfieldinstanceentityinstanceentityuuid = update_customerentityuuid
-				and  entityfieldinstanceentityfieldentityuuid = 'd15bb9c2-0601-4e4f-9009-c791a40be191';
+				and  entityfieldinstanceentityfieldentityuuid = 'd15bb9c2-0601-4e4f-9009-c791a40be191'
+				and entityfieldinstancevalue <> update_customerdisplayname;
 end if;
 
 -- update customerlanguagetypeuuid
@@ -88,6 +126,8 @@ if  update_languagetypeuuid notNull
 				and  entityfieldinstanceentityfieldentityuuid = 'c51fbd4a-dbf5-40a2-892c-edaf81bee4ad';
 end if;
 
+	
+
 End;
 
 $procedure$;
@@ -96,3 +136,4 @@ $procedure$;
 REVOKE ALL ON PROCEDURE entity.crud_customer_update(text,text,text,uuid,uuid,uuid,text,uuid,boolean,boolean,timestamp with time zone,timestamp with time zone,uuid,text) FROM PUBLIC;
 GRANT EXECUTE ON PROCEDURE entity.crud_customer_update(text,text,text,uuid,uuid,uuid,text,uuid,boolean,boolean,timestamp with time zone,timestamp with time zone,uuid,text) TO PUBLIC;
 GRANT EXECUTE ON PROCEDURE entity.crud_customer_update(text,text,text,uuid,uuid,uuid,text,uuid,boolean,boolean,timestamp with time zone,timestamp with time zone,uuid,text) TO tendreladmin WITH GRANT OPTION;
+GRANT EXECUTE ON PROCEDURE entity.crud_customer_update(text,text,text,uuid,uuid,uuid,text,uuid,boolean,boolean,timestamp with time zone,timestamp with time zone,uuid,text) TO graphql;

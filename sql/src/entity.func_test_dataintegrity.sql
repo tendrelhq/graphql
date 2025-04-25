@@ -332,3 +332,4 @@ $function$;
 REVOKE ALL ON FUNCTION entity.func_test_dataintegrity(bigint,bigint,boolean,text,text) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION entity.func_test_dataintegrity(bigint,bigint,boolean,text,text) TO PUBLIC;
 GRANT EXECUTE ON FUNCTION entity.func_test_dataintegrity(bigint,bigint,boolean,text,text) TO tendreladmin WITH GRANT OPTION;
+GRANT EXECUTE ON FUNCTION entity.func_test_dataintegrity(bigint,bigint,boolean,text,text) TO graphql;

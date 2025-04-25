@@ -26,3 +26,4 @@ end $function$;
 REVOKE ALL ON FUNCTION runtime.create_location(text,bigint,text,text,text,text,text) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION runtime.create_location(text,bigint,text,text,text,text,text) TO PUBLIC;
 GRANT EXECUTE ON FUNCTION runtime.create_location(text,bigint,text,text,text,text,text) TO tendreladmin WITH GRANT OPTION;
+GRANT EXECUTE ON FUNCTION runtime.create_location(text,bigint,text,text,text,text,text) TO graphql;

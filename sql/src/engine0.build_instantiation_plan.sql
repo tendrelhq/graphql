@@ -175,5 +175,5 @@ Build an instantiation plan based on the current state of the system.
 ';
 
 REVOKE ALL ON FUNCTION engine0.build_instantiation_plan(text) FROM PUBLIC;
-GRANT EXECUTE ON FUNCTION engine0.build_instantiation_plan(text) TO PUBLIC;
-GRANT EXECUTE ON FUNCTION engine0.build_instantiation_plan(text) TO tendreladmin WITH GRANT OPTION;
+GRANT EXECUTE ON FUNCTION engine0.build_instantiation_plan(text) TO graphql;
+GRANT EXECUTE ON FUNCTION engine0.build_instantiation_plan(text) TO tendrelservice;

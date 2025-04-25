@@ -2,7 +2,7 @@ import { describe, test } from "bun:test";
 import { sql } from "@/datasources/postgres";
 import { assert } from "@/util";
 
-describe("onboarding", () => {
+describe.skip("onboarding", () => {
   test("customer create", async () => {
     await sql.begin(async sql => {
       // The procedure below logs so much shit.

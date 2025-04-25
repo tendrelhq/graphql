@@ -17,6 +17,7 @@ declare
   --
   runtime_config_uuid text;
 begin
+/*
   perform set_config('user.id', workeridentityid, true)
   from public.workerinstance
   inner join public.worker on workerinstanceworkerid = workerid
@@ -372,7 +373,7 @@ begin
       modified_by := null,
       config_id := runtime_config_uuid
       );
-
+*/
   return;
 end
 $function$;

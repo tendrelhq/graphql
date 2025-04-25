@@ -6,7 +6,6 @@ CREATE OR REPLACE PROCEDURE entity.crud_customer_create(IN create_customername t
 AS $procedure$
 Declare
 
-
 /*
 
 -- generic version
@@ -155,7 +154,10 @@ end if;
 		(select entitytemplatetypeentityuuid from entity.entitytemplate where entitytemplatename = 'Customer'),
 		now(), 
 		now(), 
-		now(), 
+		case when tempcustomerdraft = true
+			then null
+			else now() 
+		end, 
 		null,
 		create_customerbillingid, 
 		null,
@@ -386,3 +388,4 @@ $procedure$;
 REVOKE ALL ON PROCEDURE entity.crud_customer_create(text,uuid,uuid,text,uuid,boolean,boolean,uuid[],bigint) FROM PUBLIC;
 GRANT EXECUTE ON PROCEDURE entity.crud_customer_create(text,uuid,uuid,text,uuid,boolean,boolean,uuid[],bigint) TO PUBLIC;
 GRANT EXECUTE ON PROCEDURE entity.crud_customer_create(text,uuid,uuid,text,uuid,boolean,boolean,uuid[],bigint) TO tendreladmin WITH GRANT OPTION;
+GRANT EXECUTE ON PROCEDURE entity.crud_customer_create(text,uuid,uuid,text,uuid,boolean,boolean,uuid[],bigint) TO graphql;

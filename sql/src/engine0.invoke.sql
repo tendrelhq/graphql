@@ -14,3 +14,4 @@ end $function$;
 REVOKE ALL ON FUNCTION engine0.invoke(engine0.closure) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION engine0.invoke(engine0.closure) TO PUBLIC;
 GRANT EXECUTE ON FUNCTION engine0.invoke(engine0.closure) TO tendreladmin WITH GRANT OPTION;
+GRANT EXECUTE ON FUNCTION engine0.invoke(engine0.closure) TO graphql;

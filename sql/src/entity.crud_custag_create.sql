@@ -361,7 +361,7 @@ end if;
 			create_custag,
 			clock_timestamp(),
 			create_modifiedbyid,
-      tempcustagcornerstoneorder)
+			tempcustagcornerstoneorder)
 			Returning custaguuid, custagid into tempcustaguuid,tempcustagid;
 
 	update entity.entityinstance
@@ -381,3 +381,4 @@ $procedure$;
 REVOKE ALL ON PROCEDURE entity.crud_custag_create(uuid,uuid,uuid,integer,text,uuid,text,uuid,boolean,boolean,bigint) FROM PUBLIC;
 GRANT EXECUTE ON PROCEDURE entity.crud_custag_create(uuid,uuid,uuid,integer,text,uuid,text,uuid,boolean,boolean,bigint) TO PUBLIC;
 GRANT EXECUTE ON PROCEDURE entity.crud_custag_create(uuid,uuid,uuid,integer,text,uuid,text,uuid,boolean,boolean,bigint) TO tendreladmin WITH GRANT OPTION;
+GRANT EXECUTE ON PROCEDURE entity.crud_custag_create(uuid,uuid,uuid,integer,text,uuid,text,uuid,boolean,boolean,bigint) TO graphql;

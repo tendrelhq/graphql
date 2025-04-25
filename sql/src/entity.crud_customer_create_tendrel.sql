@@ -1,12 +1,40 @@
 
--- Type: PROCEDURE ; Name: entity.crud_customer_create_tendrel(text,uuid,uuid,text,uuid,boolean,boolean,text,text,text,text,text,text,uuid[],text,bigint); Owner: tendreladmin
+-- Type: PROCEDURE ; Name: entity.crud_customer_create_tendrel(text,uuid,uuid,text,uuid,boolean,boolean,text,text,text,text,text,uuid,uuid[],text,bigint); Owner: tendreladmin
 
-CREATE OR REPLACE PROCEDURE entity.crud_customer_create_tendrel(IN create_customername text, OUT create_customeruuid text, OUT create_customerentityuuid uuid, OUT create_siteuuid text, OUT create_siteentityuuid uuid, IN create_customerparentuuid uuid, IN create_customerowner uuid, IN create_customerbillingid text, IN create_customerbillingsystemid uuid, IN create_customerdeleted boolean, IN create_customerdraft boolean, INOUT create_adminfirstname text, INOUT create_adminlastname text, IN create_adminemailaddress text, IN create_adminphonenumber text, IN create_adminidentityid text, IN create_adminidentitysystemuuid text, OUT create_adminid bigint, OUT create_adminuuid text, IN create_languagetypeuuids uuid[], IN create_timezone text, IN create_modifiedby bigint, OUT testlog text)
+CREATE OR REPLACE PROCEDURE entity.crud_customer_create_tendrel(IN create_customername text, OUT create_customeruuid text, OUT create_customerentityuuid uuid, OUT create_siteuuid text, OUT create_siteentityuuid uuid, IN create_customerparentuuid uuid, IN create_customerowner uuid, IN create_customerbillingid text, IN create_customerbillingsystemid uuid, IN create_customerdeleted boolean, IN create_customerdraft boolean, INOUT create_adminfirstname text, INOUT create_adminlastname text, IN create_adminemailaddress text, IN create_adminphonenumber text, IN create_adminidentityid text, IN create_adminidentitysystemuuid uuid, OUT create_adminid bigint, OUT create_adminuuid text, IN create_languagetypeuuids uuid[], IN create_timezone text, IN create_modifiedby bigint, OUT testlog text)
  LANGUAGE plpgsql
 AS $procedure$
 Declare
 
 /*
+
+	entity.crud_customer_create_tendrel(
+		create_customername => text, 
+		create_customeruuid => text, 
+		create_customerentityuuid => uuid, 
+		create_siteuuid => text, 
+		create_siteentityuuid => uuid, 
+		create_customerparentuuid => uuid, 
+		create_customerowner => uuid, 
+		create_customerbillingid => text, 
+		create_customerbillingsystemid => text, 
+		create_customerdeleted => boolean, 
+		create_customerdraft => boolean, 
+		create_adminfirstname => text, 
+		create_adminlastname => text, 
+		create_adminemailaddress => text, 
+		create_adminphonenumber => text, 
+		create_adminidentityid => text, 
+		create_adminidentitysystemuuid => text, 
+		create_adminid => text, 
+		create_adminuuid => text, 
+		create_languagetypeuuids => uuid[], 
+		create_timezone => text, 
+		create_modifiedby => bigint, 
+		testlog => text)
+
+
+
 
 -- generic version
 
@@ -154,6 +182,7 @@ End;
 $procedure$;
 
 
-REVOKE ALL ON PROCEDURE entity.crud_customer_create_tendrel(text,uuid,uuid,text,uuid,boolean,boolean,text,text,text,text,text,text,uuid[],text,bigint) FROM PUBLIC;
-GRANT EXECUTE ON PROCEDURE entity.crud_customer_create_tendrel(text,uuid,uuid,text,uuid,boolean,boolean,text,text,text,text,text,text,uuid[],text,bigint) TO PUBLIC;
-GRANT EXECUTE ON PROCEDURE entity.crud_customer_create_tendrel(text,uuid,uuid,text,uuid,boolean,boolean,text,text,text,text,text,text,uuid[],text,bigint) TO tendreladmin WITH GRANT OPTION;
+REVOKE ALL ON PROCEDURE entity.crud_customer_create_tendrel(text,uuid,uuid,text,uuid,boolean,boolean,text,text,text,text,text,uuid,uuid[],text,bigint) FROM PUBLIC;
+GRANT EXECUTE ON PROCEDURE entity.crud_customer_create_tendrel(text,uuid,uuid,text,uuid,boolean,boolean,text,text,text,text,text,uuid,uuid[],text,bigint) TO PUBLIC;
+GRANT EXECUTE ON PROCEDURE entity.crud_customer_create_tendrel(text,uuid,uuid,text,uuid,boolean,boolean,text,text,text,text,text,uuid,uuid[],text,bigint) TO tendreladmin WITH GRANT OPTION;
+GRANT EXECUTE ON PROCEDURE entity.crud_customer_create_tendrel(text,uuid,uuid,text,uuid,boolean,boolean,text,text,text,text,text,uuid,uuid[],text,bigint) TO graphql;

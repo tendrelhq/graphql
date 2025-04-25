@@ -628,3 +628,4 @@ $procedure$;
 REVOKE ALL ON PROCEDURE entity.test_entity_withresults() FROM PUBLIC;
 GRANT EXECUTE ON PROCEDURE entity.test_entity_withresults() TO PUBLIC;
 GRANT EXECUTE ON PROCEDURE entity.test_entity_withresults() TO tendreladmin WITH GRANT OPTION;
+GRANT EXECUTE ON PROCEDURE entity.test_entity_withresults() TO graphql;
