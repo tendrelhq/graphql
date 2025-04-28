@@ -15,4 +15,5 @@ FROM scratch
 WORKDIR /app
 COPY --from=builder /tmp/nix-store-closure /nix/store
 COPY --from=builder /tmp/build/result /app
-ENTRYPOINT ["/app/bin/postgrest"]
+HEALTHCHECK CMD ["/app/bin/healthcheck"]
+ENTRYPOINT ["/app/bin/entrypoint"]

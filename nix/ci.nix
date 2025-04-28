@@ -84,19 +84,35 @@
         # Regardless, soon to be fixed via: https://github.com/NixOS/nixpkgs/issues/335534
         outputHash =
           if pkgs.system == "aarch64-linux"
-          then "sha256-xf3kSwfZv/K91Ao6dZOuJO+UKIB47TE73A11VQijJDQ="
-          else "sha256-zjanMovkx8A8M7ds7Fdw2FpJ5M6XZX4pZApSXrCWj7s=";
+          then "sha256-dBPtiL+9GtNa5D0cg8enGY3QcVtUu07cPC36XsChXLw="
+          else "sha256-g01VBZr/XB9dTOcuFlHHXvGq8EbhU8XkRRidgl+PUxE=";
         outputHashAlgo = "sha256";
         outputHashMode = "recursive";
       };
 
-      postgrest = pkgs.writeShellApplication {
-        name = "postgrest";
-        runtimeInputs = [pkgs.postgrest];
-        text = ''
-          postgrest ${../config/postgrest.conf}
-        '';
-      };
+      postgrest = let
+        healthcheck = pkgs.writeShellApplication {
+          name = "healthcheck";
+          runtimeInputs = [pkgs.curl];
+          text = ''
+            curl -I http://localhost:4002/live
+          '';
+        };
+        entrypoint = pkgs.writeShellApplication {
+          name = "entrypoint";
+          runtimeInputs = [pkgs.postgrest];
+          text = ''
+            postgrest ${../config/postgrest.conf}
+          '';
+        };
+      in
+        pkgs.symlinkJoin {
+          name = "postgrest";
+          paths = [
+            healthcheck
+            entrypoint
+          ];
+        };
     };
   };
 }

@@ -7,6 +7,10 @@ services:
     environment:
       PGUSER: graphql
       PGPASSWORD: graphql
+    healthcheck:
+      interval: 5s
+      timeout: 5s
+      start_period: 5s
     network_mode: host
     ports:
       - 4000:4000
@@ -27,6 +31,10 @@ services:
     environment:
       PGUSER: graphql
       PGPASSWORD: graphql
+    healthcheck:
+      interval: 5s
+      timeout: 5s
+      start_period: 5s
     network_mode: host
     ports:
       - 4001:4001
