@@ -55,11 +55,8 @@ begin
           on nt.worktemplatenexttemplateviaworkresultcontstraintid = f_op.systagid
         left join public.systag as s
           on nt.worktemplatenexttemplateviastatuschangeid = s.systagid
-        where mode.systagtype != 'On Demand'
-          and (
-            nt.worktemplatenexttemplateprevlocationid is null
-            or nt.worktemplatenexttemplateprevlocationid = prev.target
-          )
+        where nt.worktemplatenexttemplateprevlocationid is null
+          or nt.worktemplatenexttemplateprevlocationid = prev.target
       ),
 
       field_plan as (
