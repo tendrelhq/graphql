@@ -1,8 +1,6 @@
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
-import { sql } from "@/datasources/postgres";
 import { schema } from "@/schema/final";
 import { Location } from "@/schema/platform/archetype/location";
-import { decodeGlobalId } from "@/schema/system";
 import { Task } from "@/schema/system/component/task";
 import { TestCreateTemplateConstraintDocument } from "@/schema/system/engine0/createTemplateConstraint.test.generated";
 import {
@@ -48,7 +46,7 @@ describe("extended runtime demo", () => {
 
   test.skip("should be okay without a constraint/instance", async () => {
     const result = await execute(schema, TestRuntimeEntrypointDocument, {
-      root: CUSTOMER,
+      parent: CUSTOMER,
     });
     expect(result.errors).toBeFalsy();
     const t = result.data?.trackables?.edges?.find(
@@ -74,7 +72,7 @@ describe("extended runtime demo", () => {
     "it should show up in the app",
     async () => {
       const result = await execute(schema, TestRuntimeEntrypointDocument, {
-        root: CUSTOMER,
+        parent: CUSTOMER,
       });
       expect(result.errors).toBeFalsy();
       const t = result.data?.trackables?.edges?.find(

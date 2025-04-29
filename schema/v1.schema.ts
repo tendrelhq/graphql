@@ -31,6 +31,7 @@ import {
 } from "./system/component";
 import {
   applyFieldEdits as mutationApplyFieldEditsResolver,
+  rebase as mutationRebaseResolver,
   assignees as taskAssigneesResolver,
   attachments as taskAttachmentsResolver,
   chainAgg as taskChainAggResolver,
@@ -1251,6 +1252,10 @@ export function getSchema(): GraphQLSchema {
           name: "previous",
           type: TaskType,
         },
+        root: {
+          name: "root",
+          type: TaskType,
+        },
         state: {
           name: "state",
           type: TaskStateType,
@@ -2327,6 +2332,25 @@ export function getSchema(): GraphQLSchema {
             return assertNonNull(
               mutationDeleteNodeResolver(args.node, context),
             );
+          },
+        },
+        rebase: {
+          description:
+            "Rebase a Task onto another (Task) chain.\nThe net effect of this mutation is that the Task identified by `node` will\nhave its root (`Task.root`) set to the Task identified by `base`.",
+          name: "rebase",
+          type: TaskType,
+          args: {
+            base: {
+              name: "base",
+              type: new GraphQLNonNull(GraphQLID),
+            },
+            node: {
+              name: "node",
+              type: new GraphQLNonNull(GraphQLID),
+            },
+          },
+          resolve(_source, args, context) {
+            return assertNonNull(mutationRebaseResolver(args, context));
           },
         },
         updateLocation: {

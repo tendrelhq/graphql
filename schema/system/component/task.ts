@@ -510,6 +510,23 @@ export class Task implements Assignable, Component, Refetchable, Trackable {
   /**
    * @gqlField
    */
+  async root(): Promise<Task | null> {
+    if (this._type !== "workinstance") return null;
+    const [row] = await sql<[ConstructorArgs?]>`
+      select engine1.base64_encode(convert_to('workinstance:' || root.id, 'utf8')) as id
+      from public.workinstance as node
+      inner join public.workinstance as root
+        on node.workinstanceoriginatorworkinstanceid = root.workinstanceid
+      where node.id = ${this._id}
+        and node.workinstanceid is distinct from node.workinstanceoriginatorworkinstanceid
+    `;
+    if (!row) return null;
+    return new Task(row);
+  }
+
+  /**
+   * @gqlField
+   */
   async name(ctx: Context): Promise<DisplayName> {
     return await ctx.orm.displayName.load(this.id);
   }
@@ -1118,28 +1135,31 @@ export type AdvanceTaskResult = {
  */
 export async function advance(
   ctx: Context,
-  t: Task,
+  task: Task,
   opts: Omit<AdvanceTaskOptions, "id">,
 ): Promise<AdvanceTaskResult> {
   return await sql.begin(async sql => {
     await setCurrentIdentity(sql, ctx);
-    return await advanceTask(sql, ctx, t, opts);
+    return await advanceTask({ task, opts }, sql, ctx);
   });
 }
 
 export async function advanceTask(
+  args: {
+    task: Task;
+    opts: Omit<AdvanceTaskOptions, "id">;
+  },
   sql: TxSql,
   ctx: Context,
-  t: Task,
-  opts: Omit<AdvanceTaskOptions, "id">,
 ): Promise<AdvanceTaskResult> {
-  if (t._type !== "workinstance") {
+  const { task, opts } = args;
+  if (task._type !== "workinstance") {
     // Punt on this for now. We can come back to it.
     // This is, at least at present, used solely by the `advance` implementation
     // for StateMachine<Task>.
-    console.warn(`Task ${t} is not an instance`);
+    console.warn(`Task ${task} is not an instance`);
     return {
-      task: t,
+      task: task,
       diagnostics: [
         {
           __typename: "Diagnostic",
@@ -1153,7 +1173,7 @@ export async function advanceTask(
   assert(!!opts.hash, "hash is required");
   if (!opts.hash) {
     return {
-      task: t,
+      task: task,
       diagnostics: [
         {
           __typename: "Diagnostic",
@@ -1164,14 +1184,14 @@ export async function advanceTask(
     };
   }
 
-  const { hash, version } = await computeTaskHash(sql, t);
+  const { hash, version } = await computeTaskHash(sql, task);
   if (hash !== opts.hash) {
     console.warn("WARNING: Hash mismatch precludes advancement");
-    console.debug(`| task: ${t.id}`);
+    console.debug(`| task: ${task.id}`);
     console.debug(`| ours: ${hash}`);
     console.debug(`| theirs: ${opts.hash}`);
     return {
-      task: t,
+      task: task,
       diagnostics: [
         {
           __typename: "Diagnostic",
@@ -1200,7 +1220,7 @@ export async function advanceTask(
                 workinstancestartdate = now(),
                 workinstancemodifieddate = now(),
                 workinstancemodifiedby = auth.current_identity(workinstancecustomerid, ${ctx.auth.userId})
-            where wi.id = ${t._id}
+            where wi.id = ${task._id}
               and wi.workinstancestatusid = 706
               and wi.version = ${version}
             returning
@@ -1217,7 +1237,7 @@ export async function advanceTask(
                 workinstancecompleteddate = now(),
                 workinstancemodifieddate = now(),
                 workinstancemodifiedby = auth.current_identity(workinstancecustomerid, ${ctx.auth.userId})
-            where wi.id = ${t._id}
+            where wi.id = ${task._id}
               and wi.workinstancestatusid = 707
               and wi.version = ${version}
             returning
@@ -1244,10 +1264,10 @@ export async function advanceTask(
     // here. This would mean allowing for arbitrary task states via something
     // like wtnt rather than assuming the canonical open -> in-prog -> closed.
     console.error(
-      `Discarding candidate change, presumably because the Task (${t}) is not in a state suitable to advancement.`,
+      `Discarding candidate change, presumably because the Task (${task}) is not in a state suitable to advancement.`,
     );
     return {
-      task: t,
+      task: task,
       diagnostics: [
         {
           __typename: "Diagnostic",
@@ -1261,14 +1281,14 @@ export async function advanceTask(
   {
     /** @see {@link applyAssignments_} */
     const ma = "replace";
-    const result = await sql`${applyAssignments_(sql, ctx, t, ma)}`;
+    const result = await sql`${applyAssignments_(sql, ctx, task, ma)}`;
     console.debug(
       `advance: applied ${result.count} assignments (mergeAction: ${ma})`,
     );
   }
 
   if (opts?.overrides?.length) {
-    const result = await applyFieldEdits_(sql, ctx, t, opts.overrides);
+    const result = await applyFieldEdits_(sql, ctx, task, opts.overrides);
     console.debug(`advance: applied ${result.count} field-level edits`);
   }
 
@@ -1282,7 +1302,7 @@ export async function advanceTask(
           workresultinstancemodifiedby = auth.current_identity(workresultinstancecustomerid, ${ctx.auth.userId})
       from public.workinstance as i
       where
-          i.id = ${t._id}
+          i.id = ${task._id}
           and workresultinstanceworkinstanceid = i.workinstanceid
           and workresultinstanceworkresultid = (
               select workresultid
@@ -1301,7 +1321,7 @@ export async function advanceTask(
     with t as (
         select *
         from public.workinstance
-        where id = ${t._id}
+        where id = ${task._id}
     )
 
     select encode(('workinstance:' || i.instance)::bytea, 'base64') as id
@@ -1313,7 +1333,7 @@ export async function advanceTask(
   console.debug(`advance: engine.execute.count: ${instantiations.length}`);
 
   return {
-    task: t,
+    task: task,
     instantiations: instantiations.map(i => ({
       cursor: i.id,
       node: new Task(i),
@@ -1671,4 +1691,33 @@ export async function computeTaskHash(
     where wi.id = ${t._id}
   `;
   return assertNonNull(row);
+}
+
+/**
+ * Rebase a Task onto another (Task) chain.
+ * The net effect of this mutation is that the Task identified by `node` will
+ * have its root (`Task.root`) set to the Task identified by `base`.
+ *
+ * @gqlMutationField
+ */
+export async function rebase(
+  args: { node: ID; base: ID },
+  ctx: Context,
+): Promise<Task> {
+  const node = new Task({ id: args.node });
+  const base = new Task({ id: args.base });
+  assertUnderlyingType("workinstance", node._type);
+  assertUnderlyingType("workinstance", base._type);
+  // TODO: verify hash.
+  const result = await sql`
+    update public.workinstance as node
+    set workinstanceoriginatorworkinstanceid = base.workinstanceid,
+        workinstancepreviousid = base.workinstanceid,
+        workinstancemodifieddate = now(),
+        workinstancemodifiedby = auth.current_identity(node.workinstancecustomerid, ${ctx.auth.userId})
+    from public.workinstance as base
+    where node.id = ${node._id} and base.id = ${base._id}
+  `;
+  assert(result.count === 1);
+  return node;
 }

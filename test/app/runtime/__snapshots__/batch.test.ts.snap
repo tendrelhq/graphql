@@ -1,86 +1,5 @@
 // Bun Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`runtime + batch tracking no batches at first 1`] = `
-{
-  "trackables": {
-    "__typename": "TrackableConnection",
-    "edges": [
-      {
-        "__typename": "TrackableEdge",
-        "node": {
-          "__typename": "Location",
-          "name": {
-            "__typename": "Name",
-            "value": "Mixing Line",
-          },
-          "timeZone": "utc",
-          "tracking": {
-            "edges": [],
-          },
-        },
-      },
-      {
-        "__typename": "TrackableEdge",
-        "node": {
-          "__typename": "Location",
-          "name": {
-            "__typename": "Name",
-            "value": "Fill Line",
-          },
-          "timeZone": "utc",
-          "tracking": {
-            "edges": [],
-          },
-        },
-      },
-      {
-        "__typename": "TrackableEdge",
-        "node": {
-          "__typename": "Location",
-          "name": {
-            "__typename": "Name",
-            "value": "Assembly Line",
-          },
-          "timeZone": "utc",
-          "tracking": {
-            "edges": [],
-          },
-        },
-      },
-      {
-        "__typename": "TrackableEdge",
-        "node": {
-          "__typename": "Location",
-          "name": {
-            "__typename": "Name",
-            "value": "Cartoning Line",
-          },
-          "timeZone": "utc",
-          "tracking": {
-            "edges": [],
-          },
-        },
-      },
-      {
-        "__typename": "TrackableEdge",
-        "node": {
-          "__typename": "Location",
-          "name": {
-            "__typename": "Name",
-            "value": "Packaging Line",
-          },
-          "timeZone": "utc",
-          "tracking": {
-            "edges": [],
-          },
-        },
-      },
-    ],
-    "totalCount": 5,
-  },
-}
-`;
-
 exports[`runtime + batch tracking create a new batch 1`] = `
 {
   "createInstance": {
@@ -265,7 +184,496 @@ exports[`runtime + batch tracking but it shows up via the batch entrypoint query
 }
 `;
 
-exports[`runtime + batch tracking transition to cartoning 1`] = `
+exports[`runtime + batch tracking start run @ mixing line 1`] = `
+{
+  "assignees": {
+    "edges": [
+      {
+        "node": {
+          "assignedTo": {
+            "displayName": "Jerry Garcia",
+          },
+        },
+      },
+    ],
+  },
+  "description": null,
+  "fields": {
+    "edges": [
+      {
+        "node": {
+          "description": null,
+          "name": {
+            "value": "Override Start Time",
+          },
+          "value": {
+            "__typename": "TimestampValue",
+            "timestamp": null,
+          },
+          "valueType": "timestamp",
+        },
+      },
+      {
+        "node": {
+          "description": null,
+          "name": {
+            "value": "Override End Time",
+          },
+          "value": {
+            "__typename": "TimestampValue",
+            "timestamp": null,
+          },
+          "valueType": "timestamp",
+        },
+      },
+      {
+        "node": {
+          "description": null,
+          "name": {
+            "value": "Run Output",
+          },
+          "value": {
+            "__typename": "NumberValue",
+          },
+          "valueType": "number",
+        },
+      },
+      {
+        "node": {
+          "description": null,
+          "name": {
+            "value": "Reject Count",
+          },
+          "value": {
+            "__typename": "NumberValue",
+          },
+          "valueType": "number",
+        },
+      },
+      {
+        "node": {
+          "description": null,
+          "name": {
+            "value": "Comments",
+          },
+          "value": {
+            "__typename": "StringValue",
+            "string": null,
+          },
+          "valueType": "string",
+        },
+      },
+    ],
+  },
+  "name": {
+    "value": "Run",
+  },
+  "parent": {
+    "name": {
+      "value": "Mixing Line",
+    },
+  },
+  "state": {
+    "__typename": "InProgress",
+    "inProgressBy": {
+      "displayName": "Jerry Garcia",
+    },
+  },
+}
+`;
+
+exports[`runtime + batch tracking end run @ mixing line 1`] = `
+{
+  "assignees": {
+    "edges": [
+      {
+        "node": {
+          "assignedTo": null,
+        },
+      },
+    ],
+  },
+  "description": null,
+  "fields": {
+    "edges": [
+      {
+        "node": {
+          "description": null,
+          "name": {
+            "value": "Override Start Time",
+          },
+          "value": {
+            "__typename": "TimestampValue",
+            "timestamp": null,
+          },
+          "valueType": "timestamp",
+        },
+      },
+      {
+        "node": {
+          "description": null,
+          "name": {
+            "value": "Override End Time",
+          },
+          "value": {
+            "__typename": "TimestampValue",
+            "timestamp": null,
+          },
+          "valueType": "timestamp",
+        },
+      },
+      {
+        "node": {
+          "description": null,
+          "name": {
+            "value": "Run Output",
+          },
+          "value": {
+            "__typename": "NumberValue",
+          },
+          "valueType": "number",
+        },
+      },
+      {
+        "node": {
+          "description": null,
+          "name": {
+            "value": "Reject Count",
+          },
+          "value": {
+            "__typename": "NumberValue",
+          },
+          "valueType": "number",
+        },
+      },
+      {
+        "node": {
+          "description": null,
+          "name": {
+            "value": "Comments",
+          },
+          "value": {
+            "__typename": "StringValue",
+            "string": null,
+          },
+          "valueType": "string",
+        },
+      },
+    ],
+  },
+  "name": {
+    "value": "Run",
+  },
+  "parent": {
+    "name": {
+      "value": "Fill Line",
+    },
+  },
+  "state": {
+    "__typename": "Open",
+  },
+}
+`;
+
+exports[`runtime + batch tracking end run @ mixing line 2`] = `
+{
+  "__typename": "TaskConnection",
+  "edges": [
+    {
+      "__typename": "TaskEdge",
+      "node": {
+        "__typename": "Task",
+        "name": {
+          "__typename": "DisplayName",
+          "value": "Batch",
+        },
+        "state": {
+          "__typename": "InProgress",
+        },
+      },
+    },
+    {
+      "__typename": "TaskEdge",
+      "node": {
+        "__typename": "Task",
+        "name": {
+          "__typename": "DisplayName",
+          "value": "Run",
+        },
+        "state": {
+          "__typename": "Closed",
+        },
+      },
+    },
+    {
+      "__typename": "TaskEdge",
+      "node": {
+        "__typename": "Task",
+        "name": {
+          "__typename": "DisplayName",
+          "value": "Run",
+        },
+        "state": {
+          "__typename": "Open",
+        },
+      },
+    },
+  ],
+}
+`;
+
+exports[`runtime + batch tracking start run @ fill line 1`] = `
+{
+  "assignees": {
+    "edges": [
+      {
+        "node": {
+          "assignedTo": {
+            "displayName": "Jerry Garcia",
+          },
+        },
+      },
+    ],
+  },
+  "description": null,
+  "fields": {
+    "edges": [
+      {
+        "node": {
+          "description": null,
+          "name": {
+            "value": "Override Start Time",
+          },
+          "value": {
+            "__typename": "TimestampValue",
+            "timestamp": null,
+          },
+          "valueType": "timestamp",
+        },
+      },
+      {
+        "node": {
+          "description": null,
+          "name": {
+            "value": "Override End Time",
+          },
+          "value": {
+            "__typename": "TimestampValue",
+            "timestamp": null,
+          },
+          "valueType": "timestamp",
+        },
+      },
+      {
+        "node": {
+          "description": null,
+          "name": {
+            "value": "Run Output",
+          },
+          "value": {
+            "__typename": "NumberValue",
+          },
+          "valueType": "number",
+        },
+      },
+      {
+        "node": {
+          "description": null,
+          "name": {
+            "value": "Reject Count",
+          },
+          "value": {
+            "__typename": "NumberValue",
+          },
+          "valueType": "number",
+        },
+      },
+      {
+        "node": {
+          "description": null,
+          "name": {
+            "value": "Comments",
+          },
+          "value": {
+            "__typename": "StringValue",
+            "string": null,
+          },
+          "valueType": "string",
+        },
+      },
+    ],
+  },
+  "name": {
+    "value": "Run",
+  },
+  "parent": {
+    "name": {
+      "value": "Fill Line",
+    },
+  },
+  "state": {
+    "__typename": "InProgress",
+    "inProgressBy": {
+      "displayName": "Jerry Garcia",
+    },
+  },
+}
+`;
+
+exports[`runtime + batch tracking end run @ fill line 1`] = `
+{
+  "assignees": {
+    "edges": [
+      {
+        "node": {
+          "assignedTo": null,
+        },
+      },
+    ],
+  },
+  "description": null,
+  "fields": {
+    "edges": [
+      {
+        "node": {
+          "description": null,
+          "name": {
+            "value": "Override Start Time",
+          },
+          "value": {
+            "__typename": "TimestampValue",
+            "timestamp": null,
+          },
+          "valueType": "timestamp",
+        },
+      },
+      {
+        "node": {
+          "description": null,
+          "name": {
+            "value": "Override End Time",
+          },
+          "value": {
+            "__typename": "TimestampValue",
+            "timestamp": null,
+          },
+          "valueType": "timestamp",
+        },
+      },
+      {
+        "node": {
+          "description": null,
+          "name": {
+            "value": "Run Output",
+          },
+          "value": {
+            "__typename": "NumberValue",
+          },
+          "valueType": "number",
+        },
+      },
+      {
+        "node": {
+          "description": null,
+          "name": {
+            "value": "Reject Count",
+          },
+          "value": {
+            "__typename": "NumberValue",
+          },
+          "valueType": "number",
+        },
+      },
+      {
+        "node": {
+          "description": null,
+          "name": {
+            "value": "Comments",
+          },
+          "value": {
+            "__typename": "StringValue",
+            "string": null,
+          },
+          "valueType": "string",
+        },
+      },
+    ],
+  },
+  "name": {
+    "value": "Run",
+  },
+  "parent": {
+    "name": {
+      "value": "Assembly Line",
+    },
+  },
+  "state": {
+    "__typename": "Open",
+  },
+}
+`;
+
+exports[`runtime + batch tracking end run @ fill line 2`] = `
+{
+  "__typename": "TaskConnection",
+  "edges": [
+    {
+      "__typename": "TaskEdge",
+      "node": {
+        "__typename": "Task",
+        "name": {
+          "__typename": "DisplayName",
+          "value": "Batch",
+        },
+        "state": {
+          "__typename": "InProgress",
+        },
+      },
+    },
+    {
+      "__typename": "TaskEdge",
+      "node": {
+        "__typename": "Task",
+        "name": {
+          "__typename": "DisplayName",
+          "value": "Run",
+        },
+        "state": {
+          "__typename": "Closed",
+        },
+      },
+    },
+    {
+      "__typename": "TaskEdge",
+      "node": {
+        "__typename": "Task",
+        "name": {
+          "__typename": "DisplayName",
+          "value": "Run",
+        },
+        "state": {
+          "__typename": "Closed",
+        },
+      },
+    },
+    {
+      "__typename": "TaskEdge",
+      "node": {
+        "__typename": "Task",
+        "name": {
+          "__typename": "DisplayName",
+          "value": "Run",
+        },
+        "state": {
+          "__typename": "Open",
+        },
+      },
+    },
+  ],
+}
+`;
+
+exports[`runtime + batch tracking close out the batch 1`] = `
 {
   "advance": {
     "__typename": "AdvanceTaskStateMachineResult",
@@ -280,9 +688,7 @@ exports[`runtime + batch tracking transition to cartoning 1`] = `
             "edges": [
               {
                 "node": {
-                  "assignedTo": {
-                    "displayName": "Jerry Garcia",
-                  },
+                  "assignedTo": null,
                 },
               },
             ],
@@ -360,480 +766,20 @@ exports[`runtime + batch tracking transition to cartoning 1`] = `
           },
           "parent": {
             "name": {
-              "value": "Cartoning Line",
-            },
-          },
-          "state": {
-            "__typename": "InProgress",
-            "inProgressBy": {
-              "displayName": "Jerry Garcia",
-            },
-          },
-        },
-        "transitions": {
-          "edges": [],
-        },
-      },
-    },
-  },
-}
-`;
-
-exports[`runtime + batch tracking transition to cartoning 2`] = `
-{
-  "advance": {
-    "__typename": "AdvanceTaskStateMachineResult",
-    "diagnostics": null,
-    "instantiations": [
-      {
-        "__typename": "TaskEdge",
-        "node": {
-          "__typename": "Task",
-          "chain": {
-            "__typename": "TaskConnection",
-            "totalCount": 1,
-          },
-          "name": {
-            "__typename": "DisplayName",
-            "value": "Run",
-          },
-          "parent": {
-            "__typename": "Location",
-            "name": {
-              "__typename": "Name",
-              "value": "Packaging Line",
+              "value": "Assembly Line",
             },
           },
           "state": {
             "__typename": "Open",
           },
         },
-      },
-    ],
-    "root": {
-      "__typename": "Task",
-      "fsm": {
-        "__typename": "TaskStateMachine",
-        "active": {
-          "assignees": {
-            "edges": [
-              {
-                "node": {
-                  "assignedTo": {
-                    "displayName": "Jerry Garcia",
-                  },
-                },
-              },
-            ],
-          },
-          "description": null,
-          "fields": {
-            "edges": [
-              {
-                "node": {
-                  "description": null,
-                  "name": {
-                    "value": "Customer",
-                  },
-                  "value": {
-                    "__typename": "StringValue",
-                    "string": "Ross's Salsa",
-                  },
-                  "valueType": "string",
-                },
-              },
-              {
-                "node": {
-                  "description": null,
-                  "name": {
-                    "value": "Product Name",
-                  },
-                  "value": {
-                    "__typename": "StringValue",
-                    "string": "Mild Green Salsa",
-                  },
-                  "valueType": "string",
-                },
-              },
-              {
-                "node": {
-                  "description": null,
-                  "name": {
-                    "value": "SKU",
-                  },
-                  "value": {
-                    "__typename": "StringValue",
-                    "string": "SLS-GRN-ML",
-                  },
-                  "valueType": "string",
-                },
-              },
-            ],
-          },
-          "name": {
-            "value": "Batch",
-          },
-          "parent": {
-            "name": {
-              "value": "Frozen Tendy Factory",
-            },
-          },
-          "state": {
-            "__typename": "InProgress",
-            "inProgressBy": {
-              "displayName": "Jerry Garcia",
-            },
-          },
-        },
         "transitions": {
-          "edges": [
-            {
-              "node": {
-                "fields": {
-                  "edges": [
-                    {
-                      "node": {
-                        "name": {
-                          "value": "Override Start Time",
-                        },
-                        "value": {
-                          "__typename": "TimestampValue",
-                        },
-                      },
-                    },
-                    {
-                      "node": {
-                        "name": {
-                          "value": "Override End Time",
-                        },
-                        "value": {
-                          "__typename": "TimestampValue",
-                        },
-                      },
-                    },
-                    {
-                      "node": {
-                        "name": {
-                          "value": "Run Output",
-                        },
-                        "value": {
-                          "__typename": "NumberValue",
-                        },
-                      },
-                    },
-                    {
-                      "node": {
-                        "name": {
-                          "value": "Reject Count",
-                        },
-                        "value": {
-                          "__typename": "NumberValue",
-                        },
-                      },
-                    },
-                    {
-                      "node": {
-                        "name": {
-                          "value": "Comments",
-                        },
-                        "value": {
-                          "__typename": "StringValue",
-                        },
-                      },
-                    },
-                  ],
-                },
-                "name": {
-                  "value": "Run",
-                },
-              },
-              "target": {
-                "name": {
-                  "value": "Mixing Line",
-                },
-              },
-            },
-            {
-              "node": {
-                "fields": {
-                  "edges": [
-                    {
-                      "node": {
-                        "name": {
-                          "value": "Override Start Time",
-                        },
-                        "value": {
-                          "__typename": "TimestampValue",
-                        },
-                      },
-                    },
-                    {
-                      "node": {
-                        "name": {
-                          "value": "Override End Time",
-                        },
-                        "value": {
-                          "__typename": "TimestampValue",
-                        },
-                      },
-                    },
-                    {
-                      "node": {
-                        "name": {
-                          "value": "Run Output",
-                        },
-                        "value": {
-                          "__typename": "NumberValue",
-                        },
-                      },
-                    },
-                    {
-                      "node": {
-                        "name": {
-                          "value": "Reject Count",
-                        },
-                        "value": {
-                          "__typename": "NumberValue",
-                        },
-                      },
-                    },
-                    {
-                      "node": {
-                        "name": {
-                          "value": "Comments",
-                        },
-                        "value": {
-                          "__typename": "StringValue",
-                        },
-                      },
-                    },
-                  ],
-                },
-                "name": {
-                  "value": "Run",
-                },
-              },
-              "target": {
-                "name": {
-                  "value": "Fill Line",
-                },
-              },
-            },
-            {
-              "node": {
-                "fields": {
-                  "edges": [
-                    {
-                      "node": {
-                        "name": {
-                          "value": "Override Start Time",
-                        },
-                        "value": {
-                          "__typename": "TimestampValue",
-                        },
-                      },
-                    },
-                    {
-                      "node": {
-                        "name": {
-                          "value": "Override End Time",
-                        },
-                        "value": {
-                          "__typename": "TimestampValue",
-                        },
-                      },
-                    },
-                    {
-                      "node": {
-                        "name": {
-                          "value": "Run Output",
-                        },
-                        "value": {
-                          "__typename": "NumberValue",
-                        },
-                      },
-                    },
-                    {
-                      "node": {
-                        "name": {
-                          "value": "Reject Count",
-                        },
-                        "value": {
-                          "__typename": "NumberValue",
-                        },
-                      },
-                    },
-                    {
-                      "node": {
-                        "name": {
-                          "value": "Comments",
-                        },
-                        "value": {
-                          "__typename": "StringValue",
-                        },
-                      },
-                    },
-                  ],
-                },
-                "name": {
-                  "value": "Run",
-                },
-              },
-              "target": {
-                "name": {
-                  "value": "Assembly Line",
-                },
-              },
-            },
-            {
-              "node": {
-                "fields": {
-                  "edges": [
-                    {
-                      "node": {
-                        "name": {
-                          "value": "Override Start Time",
-                        },
-                        "value": {
-                          "__typename": "TimestampValue",
-                        },
-                      },
-                    },
-                    {
-                      "node": {
-                        "name": {
-                          "value": "Override End Time",
-                        },
-                        "value": {
-                          "__typename": "TimestampValue",
-                        },
-                      },
-                    },
-                    {
-                      "node": {
-                        "name": {
-                          "value": "Run Output",
-                        },
-                        "value": {
-                          "__typename": "NumberValue",
-                        },
-                      },
-                    },
-                    {
-                      "node": {
-                        "name": {
-                          "value": "Reject Count",
-                        },
-                        "value": {
-                          "__typename": "NumberValue",
-                        },
-                      },
-                    },
-                    {
-                      "node": {
-                        "name": {
-                          "value": "Comments",
-                        },
-                        "value": {
-                          "__typename": "StringValue",
-                        },
-                      },
-                    },
-                  ],
-                },
-                "name": {
-                  "value": "Run",
-                },
-              },
-              "target": {
-                "name": {
-                  "value": "Cartoning Line",
-                },
-              },
-            },
-            {
-              "node": {
-                "fields": {
-                  "edges": [
-                    {
-                      "node": {
-                        "name": {
-                          "value": "Override Start Time",
-                        },
-                        "value": {
-                          "__typename": "TimestampValue",
-                        },
-                      },
-                    },
-                    {
-                      "node": {
-                        "name": {
-                          "value": "Override End Time",
-                        },
-                        "value": {
-                          "__typename": "TimestampValue",
-                        },
-                      },
-                    },
-                    {
-                      "node": {
-                        "name": {
-                          "value": "Run Output",
-                        },
-                        "value": {
-                          "__typename": "NumberValue",
-                        },
-                      },
-                    },
-                    {
-                      "node": {
-                        "name": {
-                          "value": "Reject Count",
-                        },
-                        "value": {
-                          "__typename": "NumberValue",
-                        },
-                      },
-                    },
-                    {
-                      "node": {
-                        "name": {
-                          "value": "Comments",
-                        },
-                        "value": {
-                          "__typename": "StringValue",
-                        },
-                      },
-                    },
-                  ],
-                },
-                "name": {
-                  "value": "Run",
-                },
-              },
-              "target": {
-                "name": {
-                  "value": "Packaging Line",
-                },
-              },
-            },
-          ],
+          "edges": [],
         },
       },
-    },
-  },
-}
-`;
-
-exports[`runtime + batch tracking close out the batch 1`] = `
-{
-  "advance": {
-    "__typename": "AdvanceTaskStateMachineResult",
-    "diagnostics": null,
-    "instantiations": [],
-    "root": {
-      "__typename": "Task",
-      "fsm": null,
+      "state": {
+        "__typename": "Closed",
+      },
     },
   },
 }

@@ -142,6 +142,14 @@ export async function assertTaskIsNamed(
   );
 }
 
+export async function assertTaskParentIs(t: Task, p: Location) {
+  const tp = await t.parent();
+  assert(
+    p._type === tp?._type && p._id === tp?._id,
+    `Expect Task to have parent '${p.id}' but got '${tp}'`,
+  );
+}
+
 export function assertNoDiagnostics<
   T extends { diagnostics?: Array<unknown> | null },
 >(result?: T | null) {

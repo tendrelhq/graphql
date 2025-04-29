@@ -40,7 +40,7 @@ describe("runtime demo", () => {
     "entrypoint query",
     async () => {
       const result = await execute(schema, TestRuntimeEntrypointDocument, {
-        root: CUSTOMER,
+        parent: CUSTOMER,
       });
       expect(result.errors).toBeFalsy();
       expect(result.data).toMatchSnapshot();
@@ -548,7 +548,7 @@ describe("runtime demo", () => {
 
     // Without `includeInactive` we should get nothing back.
     const r1 = await execute(schema, TestRuntimeEntrypointDocument, {
-      root: CUSTOMER,
+      parent: CUSTOMER,
       impl: "Task",
     });
     expect(r1.data?.trackables?.totalCount).toBe(0);
@@ -557,7 +557,7 @@ describe("runtime demo", () => {
     // previous test: "history query". We just assert on the count since we
     // already asserted on the content in the aforementioned test.
     const r2 = await execute(schema, TestRuntimeEntrypointDocument, {
-      root: CUSTOMER,
+      parent: CUSTOMER,
       impl: "Task",
       includeInactive: true,
     });

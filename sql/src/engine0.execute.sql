@@ -37,7 +37,25 @@ begin
             on prev.workinstanceworktemplateid = t.worktemplateid
           inner join public.workinstance as r
             on prev.workinstanceoriginatorworkinstanceid = r.workinstanceid
-          where prev.id = task_id and t.id != p.node
+          where prev.id = task_id
+            and (
+              -- N.B. this is the best we can do under the current model.
+              -- This will soon change. The implication is that new chains are
+              -- created under two conditions:
+              -- (1) The task and target [templates] are different. This is the
+              -- canonical on-demand in-progress "respawn" rule: a "respawned"
+              -- instance is a new chain of work.
+              t.id != p.node
+              -- (2) The templates are the *same* but the instantiation is
+              -- cross-location. I think this will be the case for Batch, i.e.
+              -- we want to continue the Batch at a new location, e.g. moving
+              -- the Batch from Mixing to Assembly... but perhaps not?
+              or exists (
+                select 1
+                from legacy0.primary_location_for_instance(task_id) as prev_location
+                where prev_location.id is distinct from p.target
+              )
+            )
         ),
         modified_by := modified_by
       ) t

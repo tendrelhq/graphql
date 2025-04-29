@@ -6,41 +6,43 @@ import type { Location } from "@/schema/platform/archetype/location";
 import type { Task } from "@/schema/system/component/task";
 import {
   type Customer,
+  assertTaskIsNamed,
+  assertTaskParentIs,
   createEmptyCustomer,
   createTestContext,
   execute,
   getFieldByName,
 } from "@/test/prelude";
-import { assert, assertNonNull, map } from "@/util";
-import type { Maybe } from "graphql/jsutils/Maybe";
-import type { ID } from "grats";
+import { assert, assertNonNull } from "@/util";
 import {
+  AssignBatchMutationDocument,
   CreateBatchMutationDocument,
   TestBatchEntrypointDocument,
 } from "./batch.test.generated";
-import {
-  getLatestFsm,
-  mostRecentInstance,
-  mostRecentlyInProgress,
-} from "./prelude";
+import { getLatestFsm, mostRecentInstance } from "./prelude";
 import {
   TestRuntimeDetailDocument,
   TestRuntimeEntrypointDocument,
   TestRuntimeTransitionMutationDocument,
 } from "./runtime.test.generated";
 
-describe.skip("runtime + batch tracking", () => {
+const ctx = await createTestContext();
+
+describe("runtime + batch tracking", () => {
   // See beforeAll for initialization of these variables.
   let CUSTOMER: Customer;
   let BATCH_TEMPLATE: Task;
   let FACTORY: Location;
+  let MIXING_LINE: Location;
+  let FILL_LINE: Location;
+  let RUN_TEMPLATE: Task;
 
   test("no batches at first", async () => {
-    const result = await execute(schema, TestRuntimeEntrypointDocument, {
-      root: CUSTOMER.id,
+    const result = await execute(schema, TestBatchEntrypointDocument, {
+      parent: CUSTOMER.id,
     });
     expect(result.errors).toBeFalsy();
-    expect(result.data).toMatchSnapshot();
+    expect(result.data?.trackables?.edges?.length).toBe(0);
   });
 
   let batchId = 0;
@@ -79,7 +81,7 @@ describe.skip("runtime + batch tracking", () => {
 
   test("still no batches via the canonical entrypoint query", async () => {
     const result = await execute(schema, TestRuntimeEntrypointDocument, {
-      root: CUSTOMER.id,
+      parent: CUSTOMER.id,
     });
     expect(result.errors).toBeFalsy();
     expect(result.data).toMatchSnapshot();
@@ -87,15 +89,50 @@ describe.skip("runtime + batch tracking", () => {
 
   test("but it shows up via the batch entrypoint query", async () => {
     const result = await execute(schema, TestBatchEntrypointDocument, {
-      customerId: CUSTOMER.id,
+      parent: CUSTOMER.id,
     });
     expect(result.errors).toBeFalsy();
     expect(result.data).toMatchSnapshot();
   });
 
-  let nextTransition: Maybe<ID>;
+  test("assign the batch", async () => {
+    const node = await RUN_TEMPLATE.instantiate(
+      {
+        location: MIXING_LINE.id,
+      },
+      ctx,
+    );
+    const base = await mostRecentInstance(BATCH_TEMPLATE);
+    expect(node.id).not.toBe(base.id);
 
-  test("put the batch in-progress", async () => {
+    const result = await execute(schema, AssignBatchMutationDocument, {
+      node: node.id,
+      base: base.id,
+    });
+    expect(result.errors).toBeFalsy();
+    expect(result.data).toMatchObject({
+      rebase: {
+        name: {
+          value: "Run",
+        },
+        parent: {
+          name: {
+            value: "Mixing Line",
+          },
+        },
+        root: {
+          name: {
+            value: "Batch",
+          },
+        },
+        state: {
+          __typename: "Open",
+        },
+      },
+    });
+  });
+
+  test("start the batch", async () => {
     const t = await mostRecentInstance(BATCH_TEMPLATE);
     const h = await t.hash();
     const result = await execute(
@@ -123,157 +160,36 @@ describe.skip("runtime + batch tracking", () => {
           fsm: {
             active: {
               name: {
-                value: "Batch",
+                value: "Run",
               },
               parent: {
                 name: {
-                  value: "Frozen Tendy Factory",
+                  value: "Mixing Line",
                 },
               },
               state: {
-                __typename: "InProgress",
+                __typename: "Open",
               },
-            },
-            transitions: {
-              edges: [
-                {
-                  node: {
-                    name: {
-                      value: "Run",
-                    },
-                  },
-                  target: {
-                    name: {
-                      value: "Mixing Line",
-                    },
-                  },
-                },
-                {
-                  node: {
-                    name: {
-                      value: "Run",
-                    },
-                  },
-                  target: {
-                    name: {
-                      value: "Fill Line",
-                    },
-                  },
-                },
-                {
-                  node: {
-                    name: {
-                      value: "Run",
-                    },
-                  },
-                  target: {
-                    name: {
-                      value: "Assembly Line",
-                    },
-                  },
-                },
-                {
-                  node: {
-                    name: {
-                      value: "Run",
-                    },
-                  },
-                  target: {
-                    name: {
-                      value: "Cartoning Line",
-                    },
-                  },
-                },
-                {
-                  node: {
-                    name: {
-                      value: "Run",
-                    },
-                  },
-                  target: {
-                    name: {
-                      value: "Packaging Line",
-                    },
-                  },
-                },
-              ],
             },
           },
         },
       },
     });
-
-    nextTransition = map(
-      result.data?.advance?.root?.fsm?.transitions?.edges?.find(
-        e => e.target?.name.value === "Cartoning Line",
-      ),
-      e => e.id,
-    );
   });
 
-  // Note that I am starting here (Cartoning) just for the sake of testing:
-  test("transition to cartoning", async () => {
-    const t = assertNonNull(nextTransition);
-    const fsm = await mostRecentInstance(BATCH_TEMPLATE);
-    const startCartoning = await execute(
-      schema,
-      TestRuntimeTransitionMutationDocument,
-      {
-        includeChain: false,
-        opts: {
-          fsm: {
-            id: fsm.id,
-            hash: await fsm.hash(),
-          },
-          task: {
-            id: t,
-            hash: "", // doesn't matter when transitioning
-          },
-        },
-      },
-    );
-    expect(startCartoning.errors).toBeFalsy();
-    expect(startCartoning.data).toMatchSnapshot();
+  test("start run @ mixing line", async () => {
+    // We should already have an *open* Run instance at the Mixing Line because
+    // we rebased onto the Batch in an earlier test!
+    const { fsm, root } = await getLatestFsm(BATCH_TEMPLATE);
+    const active = assertNonNull(fsm.active, "should be active");
+    assertTaskIsNamed(active, "Run", ctx);
+    assertTaskParentIs(active, MIXING_LINE);
 
-    // Close out cartoning and move to packaging.
-    const i = await mostRecentlyInProgress(fsm);
-    const finishCartoning = await execute(
+    const startRun = await execute(
       schema,
       TestRuntimeTransitionMutationDocument,
       {
-        includeChain: false,
-        opts: {
-          fsm: {
-            id: fsm.id,
-            hash: await fsm.hash(),
-          },
-          task: {
-            id: i.id,
-            hash: await i.hash(),
-          },
-        },
-      },
-    );
-    expect(finishCartoning.errors).toBeFalsy();
-    expect(finishCartoning.data).toMatchSnapshot();
-  });
-
-  // FIXME: the user would still see the in-progress transitions after
-  // completing this task. Do we have any way to avoid this? Could we use a
-  // field+state rule? What about auto-close? I'm not sure we have the ability
-  // to do that right now... but certainly in the forthcoming new model.
-  // Note that this is the final transition:
-  test("start + close packaging", async () => {
-    // Due to how we've set things up, we should *already have* an open instance
-    // at the Packaging Line.
-    const { root, fsm } = await getLatestFsm(BATCH_TEMPLATE);
-    assert(root.id !== fsm.active?.id, "should be in runtime");
-    const active = assertNonNull(fsm.active);
-    const startPackaging = await execute(
-      schema,
-      TestRuntimeTransitionMutationDocument,
-      {
-        includeChain: false,
+        includeChain: true,
         opts: {
           fsm: {
             id: root.id,
@@ -286,34 +202,95 @@ describe.skip("runtime + batch tracking", () => {
         },
       },
     );
-    expect(startPackaging.errors).toBeFalsy();
-    expect(startPackaging.data).toMatchSnapshot();
+    expect(startRun.errors).toBeFalsy();
+    expect(startRun.data?.advance?.root?.fsm?.active).toMatchSnapshot();
+  });
 
-    const i = await mostRecentlyInProgress(root);
-    const finishCartoning = await execute(
+  test("end run @ mixing line", async () => {
+    const { fsm, root } = await getLatestFsm(BATCH_TEMPLATE);
+    const active = assertNonNull(fsm.active, "should be active");
+    assertTaskIsNamed(active, "Run", ctx);
+
+    const finishRun = await execute(
       schema,
       TestRuntimeTransitionMutationDocument,
       {
-        includeChain: false,
+        includeChain: true,
         opts: {
           fsm: {
             id: root.id,
             hash: await root.hash(),
           },
           task: {
-            id: i.id,
-            hash: await i.hash(),
+            id: active.id,
+            hash: await active.hash(),
           },
         },
       },
     );
-    expect(finishCartoning.errors).toBeFalsy();
-    expect(finishCartoning.data).toMatchSnapshot();
+    expect(finishRun.errors).toBeFalsy();
+    expect(finishRun.data?.advance?.root?.fsm?.active).toMatchSnapshot();
+    expect(finishRun.data?.advance?.root?.chain).toMatchSnapshot();
+  });
+
+  test("start run @ fill line", async () => {
+    // The engine will have created a Run instance at the Fill Line, as per the
+    // transitions we configure in the `beforeAll` phase.
+    const { fsm, root } = await getLatestFsm(BATCH_TEMPLATE);
+    const active = assertNonNull(fsm.active, "should be active");
+    assertTaskIsNamed(active, "Run", ctx);
+    assertTaskParentIs(active, FILL_LINE);
+
+    const startRun = await execute(
+      schema,
+      TestRuntimeTransitionMutationDocument,
+      {
+        includeChain: true,
+        opts: {
+          fsm: {
+            id: root.id,
+            hash: await root.hash(),
+          },
+          task: {
+            id: active.id,
+            hash: await active.hash(),
+          },
+        },
+      },
+    );
+    expect(startRun.errors).toBeFalsy();
+    expect(startRun.data?.advance?.root?.fsm?.active).toMatchSnapshot();
+  });
+
+  test("end run @ fill line", async () => {
+    const { fsm, root } = await getLatestFsm(BATCH_TEMPLATE);
+    const active = assertNonNull(fsm.active, "should be active");
+    assertTaskIsNamed(active, "Run", ctx);
+
+    const finishRun = await execute(
+      schema,
+      TestRuntimeTransitionMutationDocument,
+      {
+        includeChain: true,
+        opts: {
+          fsm: {
+            id: root.id,
+            hash: await root.hash(),
+          },
+          task: {
+            id: active.id,
+            hash: await active.hash(),
+          },
+        },
+      },
+    );
+    expect(finishRun.errors).toBeFalsy();
+    expect(finishRun.data?.advance?.root?.fsm?.active).toMatchSnapshot();
+    expect(finishRun.data?.advance?.root?.chain).toMatchSnapshot();
   });
 
   test("close out the batch", async () => {
-    const { root, fsm } = await getLatestFsm(BATCH_TEMPLATE);
-    assert(root.id === fsm.active?.id, "expected batch to be all that's left");
+    const { root } = await getLatestFsm(BATCH_TEMPLATE);
     const rootHash = await root.hash();
     const result = await execute(
       schema,
@@ -341,34 +318,22 @@ describe.skip("runtime + batch tracking", () => {
     const result = await execute(schema, TestRuntimeDetailDocument, {
       node: i.id,
       overTypes: ["Batch", "Runtime"],
+      includeChainParents: true,
     });
     expect(result.errors).toBeFalsy();
     expect(result.data).toMatchObject({
       node: {
-        __typename: "Task",
         chain: {
-          __typename: "TaskConnection",
           edges: [
             {
-              __typename: "TaskEdge",
               node: {
-                __typename: "Task",
                 name: {
-                  __typename: "DisplayName",
                   value: "Batch", // FIXME
                 },
-                state: {
-                  __typename: "Closed",
-                },
-              },
-            },
-            {
-              __typename: "TaskEdge",
-              node: {
-                __typename: "Task",
-                name: {
-                  __typename: "DisplayName",
-                  value: "Run",
+                parent: {
+                  name: {
+                    value: "Frozen Tendy Factory",
+                  },
                 },
                 state: {
                   __typename: "Closed",
@@ -376,37 +341,67 @@ describe.skip("runtime + batch tracking", () => {
               },
             },
             {
-              __typename: "TaskEdge",
               node: {
-                __typename: "Task",
                 name: {
-                  __typename: "DisplayName",
                   value: "Run",
+                },
+                parent: {
+                  name: {
+                    value: "Mixing Line",
+                  },
                 },
                 state: {
                   __typename: "Closed",
+                },
+              },
+            },
+            {
+              node: {
+                name: {
+                  value: "Run",
+                },
+                parent: {
+                  name: {
+                    value: "Fill Line",
+                  },
+                },
+                state: {
+                  __typename: "Closed",
+                },
+              },
+            },
+            // TODO: Cascade when operating on the root?
+            // Or, ideally, any ancestor.
+            {
+              node: {
+                name: {
+                  value: "Run",
+                },
+                parent: {
+                  name: {
+                    value: "Assembly Line",
+                  },
+                },
+                state: {
+                  __typename: "Open",
                 },
               },
             },
           ],
-          totalCount: 3,
+          totalCount: 4,
         },
         chainAgg: [
           {
-            __typename: "Aggregate",
             group: "Batch",
             value: expect.stringMatching(/\d+.\d+/),
           },
           {
-            __typename: "Aggregate",
             group: "Runtime",
             value: expect.stringMatching(/\d+.\d+/),
           },
         ],
         parent: {
-          __typename: "Location",
           name: {
-            __typename: "Name",
             value: "Frozen Tendy Factory",
           },
         },
@@ -417,7 +412,6 @@ describe.skip("runtime + batch tracking", () => {
   beforeAll(async () => {
     // Setup:
     await sql.begin(async sql => {
-      const ctx = await createTestContext();
       await setCurrentIdentity(sql, ctx);
 
       CUSTOMER = await createEmptyCustomer(
@@ -450,12 +444,12 @@ describe.skip("runtime + batch tracking", () => {
         ctx,
         sql,
       );
-      const mixingLine = await FACTORY.insertChild(
+      MIXING_LINE = await FACTORY.insertChild(
         { name: "Mixing Line", order: 0, type: "Runtime Location" },
         ctx,
         sql,
       );
-      const fillLine = await FACTORY.insertChild(
+      FILL_LINE = await FACTORY.insertChild(
         { name: "Fill Line", order: 1, type: "Runtime Location" },
         ctx,
         sql,
@@ -490,7 +484,7 @@ describe.skip("runtime + batch tracking", () => {
         ctx,
         sql,
       );
-      const runTemplate = await FACTORY.createTemplate(
+      RUN_TEMPLATE = await FACTORY.createTemplate(
         {
           name: "Run",
           fields: [
@@ -576,12 +570,12 @@ describe.skip("runtime + batch tracking", () => {
         ctx,
         sql,
       );
-      for (const t of [runTemplate, downTemplate, idleTemplate]) {
+      for (const t of [RUN_TEMPLATE, downTemplate, idleTemplate]) {
         await t.ensureInstantiableAt(
           {
             locations: [
-              mixingLine.id,
-              fillLine.id,
+              MIXING_LINE.id,
+              FILL_LINE.id,
               assemblyLine.id,
               cartoningLine.id,
               packagingLine.id,
@@ -597,8 +591,8 @@ describe.skip("runtime + batch tracking", () => {
       // should go next. For the purposes of this test, we will allow for the
       // Batch to start at any Line.
       for (const l of [
-        mixingLine,
-        fillLine,
+        MIXING_LINE,
+        FILL_LINE,
         assemblyLine,
         cartoningLine,
         packagingLine,
@@ -607,7 +601,7 @@ describe.skip("runtime + batch tracking", () => {
           {
             whenStatusChangesTo: "InProgress",
             instantiate: {
-              template: runTemplate.id,
+              template: RUN_TEMPLATE.id,
               atLocation: l.id,
               withType: "On Demand", // Choice.
             },
@@ -618,13 +612,13 @@ describe.skip("runtime + batch tracking", () => {
       }
 
       // Mixing -> Fill
-      await runTemplate.createTransition(
+      await RUN_TEMPLATE.createTransition(
         {
-          atLocation: mixingLine.id,
+          atLocation: MIXING_LINE.id,
           whenStatusChangesTo: "Closed",
           instantiate: {
-            template: runTemplate.id,
-            atLocation: fillLine.id,
+            template: RUN_TEMPLATE.id,
+            atLocation: FILL_LINE.id,
             withType: "Task", // Eager. This is the default.
           },
         },
@@ -633,12 +627,12 @@ describe.skip("runtime + batch tracking", () => {
       );
 
       // Fill -> Assembly
-      await runTemplate.createTransition(
+      await RUN_TEMPLATE.createTransition(
         {
-          atLocation: fillLine.id,
+          atLocation: FILL_LINE.id,
           whenStatusChangesTo: "Closed",
           instantiate: {
-            template: runTemplate.id,
+            template: RUN_TEMPLATE.id,
             atLocation: assemblyLine.id,
           },
         },
@@ -647,12 +641,12 @@ describe.skip("runtime + batch tracking", () => {
       );
 
       // Assembly -> Cartoning
-      await runTemplate.createTransition(
+      await RUN_TEMPLATE.createTransition(
         {
           atLocation: assemblyLine.id,
           whenStatusChangesTo: "Closed",
           instantiate: {
-            template: runTemplate.id,
+            template: RUN_TEMPLATE.id,
             atLocation: cartoningLine.id,
           },
         },
@@ -661,12 +655,12 @@ describe.skip("runtime + batch tracking", () => {
       );
 
       // Cartoning -> Packaging
-      await runTemplate.createTransition(
+      await RUN_TEMPLATE.createTransition(
         {
           atLocation: cartoningLine.id,
           whenStatusChangesTo: "Closed",
           instantiate: {
-            template: runTemplate.id,
+            template: RUN_TEMPLATE.id,
             atLocation: packagingLine.id,
           },
         },

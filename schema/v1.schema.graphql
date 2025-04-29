@@ -615,6 +615,12 @@ type Mutation {
   This operation is a no-op if the node has already been deleted.
   """
   deleteNode(node: ID!): [ID!] @semanticNonNull
+  """
+  Rebase a Task onto another (Task) chain.
+  The net effect of this mutation is that the Task identified by `node` will
+  have its root (`Task.root`) set to the Task identified by `base`.
+  """
+  rebase(base: ID!, node: ID!): Task @semanticNonNull
   updateLocation(input: UpdateLocationInput!): Location @semanticNonNull
 }
 
@@ -816,6 +822,7 @@ type Task implements Assignable & Component & Node & Trackable {
   than the current Task.
   """
   previous: Task
+  root: Task
   state: TaskState
   """
   Entrypoint into the "tracking system(s)" for the given Task.

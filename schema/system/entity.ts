@@ -368,13 +368,13 @@ export async function templates(
         inner join public.customer
           on worktemplatecustomerid = customerid
           and customeruuid = ${owner.id}
-        inner join public.worktemplatetype
-          on worktemplateid = worktemplatetypeworktemplateid
-          and worktemplatetypesystagid in (
-            select systagid
-            from public.systag
-            where systagparentid = 882 and systagtype in ${sql(args.type)}
-          )
+        where exists (
+          select 1
+          from public.worktemplatetype
+          inner join public.systag on worktemplatetypesystagid = systagid
+          where worktemplate.worktemplateid = worktemplatetypeworktemplateid
+            and systagtype in ${sql(args.type)}
+        )
       `
     : sql`
         select

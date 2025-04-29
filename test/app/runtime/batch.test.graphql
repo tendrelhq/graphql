@@ -1,5 +1,5 @@
-query TestBatchEntrypoint($customerId: ID!) {
-  trackables(parent: $customerId, withImplementation: "Batch") {
+query TestBatchEntrypoint($parent: ID!) {
+  trackables(parent: $parent, withImplementation: "Batch") {
     edges {
       node {
         ... on Task {
@@ -79,6 +79,29 @@ mutation CreateBatchMutation(
           }
         }
       }
+    }
+  }
+}
+
+mutation AssignBatchMutation($node: ID!, $base: ID!) {
+  rebase(node: $node, base: $base) {
+    name {
+      value
+    }
+    parent {
+      ... on Location {
+        name {
+          value
+        }
+      }
+    }
+    root {
+      name {
+        value
+      }
+    }
+    state {
+      __typename
     }
   }
 }

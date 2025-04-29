@@ -1,4 +1,3 @@
-import { setCurrentIdentity } from "@/auth";
 import { sql } from "@/datasources/postgres";
 import { assertUnderlyingType } from "@/util";
 import { GraphQLError } from "graphql";

@@ -14,7 +14,6 @@ import type { Edge } from "../pagination";
 import {
   type AdvanceTaskOptions,
   Task,
-  type ConstructorArgs as TaskConstructorArgs,
   advanceTask,
   applyAssignments_,
   applyFieldEdits_,
@@ -160,7 +159,7 @@ export async function advance(
 
   return await sql.begin(async sql => {
     await setCurrentIdentity(sql, ctx);
-    const [fsm] = await sql<[FSM?]>`${fsm$fragment(root)}`;
+    const fsm = await fsm_(sql, root);
     if (!fsm) {
       return {
         root,
@@ -228,7 +227,7 @@ export async function advance(
       .otherwise(() => ({ choice: new Task(opts.task), target: null }));
     console.debug(`choice: ${choice.id}`);
 
-    if (is_valid_advancement(fsm, choice) === false) {
+    if (isValidAdvancement(root, fsm, choice) === false) {
       console.warn("WARNING: Task is not a valid choice");
       console.debug(`| root: ${root.id}`);
       console.debug(`| choice: ${choice.id}`);
@@ -244,11 +243,20 @@ export async function advance(
       } satisfies AdvanceTaskStateMachineResult;
     }
 
-    if (compareBase64(choice.id, fsm.active)) {
+    if (compareBase64(root.id, choice.id)) {
+      console.debug("advance: operating on the root");
+      const r = await advanceTask({ task: choice, opts: opts.task }, sql, ctx);
+      return {
+        root,
+        ...r,
+      };
+    }
+
+    if (fsm.active && compareBase64(choice.id, fsm.active.id)) {
       console.debug("advance: operating on the active task");
       // When the "choice" is the active task, we advance that task's internal
       // state machine as defined by its own `advance` implementation.
-      const r = await advanceTask(sql, ctx, choice, opts.task);
+      const r = await advanceTask({ task: choice, opts: opts.task }, sql, ctx);
       return {
         root,
         ...r,
@@ -268,7 +276,7 @@ export async function advance(
 async function advanceFsm(
   args: {
     choice: Task;
-    fsm: FSM;
+    fsm: StateMachine<Task>;
     location?: string | null;
     opts: Omit<AdvanceFsmOptions, "fsm">;
     root: Task;
@@ -276,7 +284,7 @@ async function advanceFsm(
   ctx: Context,
   sql: TxSql,
 ): Promise<AdvanceTaskStateMachineResult> {
-  assert(!!args.fsm.active, "fsm is not active");
+  const active = assertNonNull(args.fsm.active, "fsm is not active");
   return await match(args.choice._type)
     .with("workinstance", () => {
       // This path is not currently possible: transitions are guaranteed to be
@@ -294,6 +302,7 @@ async function advanceFsm(
       } satisfies AdvanceTaskStateMachineResult;
     })
     .with("worktemplate", async () => {
+      assert(active._type === "workinstance");
       const result = await sql<[{ instance: ID }]>`
         with options as (
             select
@@ -301,7 +310,7 @@ async function advanceFsm(
                 auth.current_identity(w.workinstancecustomerid, ${ctx.auth.userId}) as modified_by,
                 (select l.id from legacy0.primary_location_for_instance(w.id) as l) as location_id
             from public.workinstance as w
-            where w.id = ${decodeGlobalId(args.fsm.active).id}
+            where w.id = ${active._id}
         )
 
         select encode(('workinstance:' || t.instance)::bytea, 'base64') as instance
@@ -378,12 +387,14 @@ async function advanceFsm(
 /**
  * Checks whether a Task is a valid advancement of an FSM.
  * A "valid advancement" means that it is _either_ the active task for the
- * given FSM _or_ it is one of the available transitions.
- *
- * Note that this is a potential source of conflict in the face of concurrency
- * and/or stale (client) data. We are not going to handle this right now.
+ * given FSM _or_ it is one of the available transitions _or_ it is the FSM
+ * itself.
  */
-function is_valid_advancement(fsm: FSM, t: Task) {
-  if (compareBase64(fsm.active, t.id)) return true;
-  return fsm.transitions?.some(id => compareBase64(id.node, t.id)) === true;
+function isValidAdvancement(root: Task, fsm: StateMachine<Task>, t: Task) {
+  if (compareBase64(root.id, t.id)) return true;
+  if (fsm.active && compareBase64(fsm.active.id, t.id)) return true;
+  return (
+    fsm.transitions?.edges.some(edge => compareBase64(edge.node.id, t.id)) ===
+    true
+  );
 }

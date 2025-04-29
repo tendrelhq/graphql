@@ -1,13 +1,13 @@
 query TestRuntimeEntrypoint(
   $count: Int
-  $root: ID!
+  $parent: ID!
   $impl: String
   $includeInactive: Boolean
   $includeTransitionIds: Boolean! = false
 ) {
   trackables(
     first: $count
-    parent: $root
+    parent: $parent
     includeInactive: $includeInactive
     withImplementation: $impl
   ) {
@@ -52,6 +52,7 @@ query TestRuntimeEntrypoint(
 query TestRuntimeDetail(
   $node: ID!
   $overTypes: [String!] = ["Runtime", "Idle Time", "Downtime"]
+  $includeChainParents: Boolean! = false
 ) {
   node(id: $node) {
     ... on Task {
@@ -81,6 +82,13 @@ query TestRuntimeDetail(
           node {
             name {
               value
+            }
+            parent @include(if: $includeChainParents) {
+              ... on Location {
+                name {
+                  value
+                }
+              }
             }
             state {
               __typename
@@ -124,6 +132,9 @@ mutation TestRuntimeTransitionMutation(
       }
       fsm {
         ...TaskFSM_fragment
+      }
+      state {
+        __typename
       }
     }
     instantiations {
