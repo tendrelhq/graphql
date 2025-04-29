@@ -355,6 +355,11 @@ export async function parent(field: Field): Promise<Task> {
   return new Task(row);
 }
 
+/** @gqlField */
+export async function isRequired(field: Field, ctx: Context): Promise<boolean> {
+  return (await ctx.orm.requirement.load(field.id)) === true;
+}
+
 /** @gqlInput */
 export type FieldDefinitionInput = {
   name: string;

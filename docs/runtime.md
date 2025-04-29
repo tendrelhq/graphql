@@ -81,7 +81,7 @@ The resulting edges will be in custagorder (which you control).
 ### Setup
 
 Until Batch has been released, you will need to create the necessary template
-type (i.e. systag) manually:
+type (i.e. systag) manually, e.g.:
 
 ```sql
 begin;
@@ -95,23 +95,29 @@ from ast.create_system_type('Batch', 'Template Type', 895);
 commit;
 ```
 
+Note that `create_system_type` is not idempotent :( sorry.
+
 ### Design
 
-Database changes:
+Batch is built on the Task backend, i.e. workinstance/template. There is a new
+model for this in the works, which is what the `instances` and `templates`
+entrypoints will eventually use however until then they are just dumb mappings.
 
-```sql
--- Allows for cross-location instantiation.
-alter table public.worktemplatenexttemplate
-add column worktemplatenexttemplateprevlocationid text
-    references public.location (locationuuid),
-add column worktemplatenexttemplatenextlocationid text
-    references public.location (locationuuid),
-add column worktemplatenexttemplateuuid text
-    not null unique default gen_random_uuid()
-;
-```
+In general, the only thing that differs about a Batch vs a Run (or Idle or Down)
+is the worktemplatetype, i.e. 'Batch'. This is what the `withImplementation`
+argument to the below "List batches" query is doing[^2].
 
-Frontend (query):
+Ultimately it is up to you to decide how exactly you want to organize things. I
+_suggest_ that you model Batches as part of the `chain`. Put the Batch at the
+root and all of the Run instances are children. This is what the test suite
+does. The benefit of this is that aggregation becomes very easy (and fast), and
+the normal `chainAgg` interface will give you aggregate time spent in each task
+type _for a single Batch, across all Locations_ (which I suppose is really only
+helpful on the "Batch detail page" but still).
+
+### Frontend
+
+List batches:
 
 ```graphql
 query BatchesViewConsoleQuery {
@@ -121,7 +127,7 @@ query BatchesViewConsoleQuery {
         # This is the Batch (workinstance).
         ... on Task {
           name {
-            value # User supplied "batch id/number/name/whatever"
+            value # Batch ID
           }
           fields {
             # Customer, Product Name, SKU, etc
@@ -168,47 +174,34 @@ query BatchesViewConsoleQuery {
 }
 ```
 
-NOTE: The frontend will need to start passing the `transitions.edges.id` to
+Note: the frontend will need to start passing the `transitions.edges.id` to
 `advance`, rather than the `transitions.edges.node.id` as is currently the case.
-This really only matters in the event of _cross location instantiation_, and
-only if you _want_ this instantiation to be user-driven vis-a-vis downtime and
-idle time. You can of course configure instantiation to happen automatically
-(i.e. eager) in which case the user would do nothing.
 
-Frontend (mutation):
+Creating batches:
+
+You will need the Batch template in addition to the Fields. In the console you
+could put this in the page query or even better the "add batch" button. You can
+find an example of this in [EnabledLanguage.tsx#L259] (although you probably
+want some more like [^1]). Similarly in the mobile app it could go in the drawer
+or wherever the "create a new batch" component is.
+
+As far as the query is concerned, you should get only a single edge back.
 
 ```graphql
-query ListTemplateTypesQuery {
-  # If you don't provide an `id` argument, you will get back the "root"
-  # template. You can think of this as being similar to "systag 1". Taking that
-  # comparision literally would yield things like Language, Timezone, Result
-  # Status, Reason Code, etc. However note that this API is driven by the entity
-  # model and is not limited to just systags.
-  # types: root(kind: "template") {
-  # -or-
-  types: template {
-    # Grab the id of the top-level string type. We'll use it to create the SKU
-    # type later on. You may want to explicitly grab the system-owned type, or
-    # you may not. Note that a similar phenomenon to TypeScript's "declaration
-    # merging" feature occurs at the template/type level: identical types at the
-    # same level of the tree are merged. This allows for type composition. Note
-    # that you can only _add_ to a type. You cannot "remove a field" or "change
-    # a field's type", for example.
-    # N.B. `system` is an alias for "customer 0". It is only used here for
-    # demonstration purposes.
-    string: child(type: "String", owner: "system") {
-      id # $stringTypeId
-    }
-    # In a full-fledged template editing experience, you might instead grab all
-    # of the top-level types and let the user choose.
-    all: children {
-      edges {
-        node {
-          id
-          name {
-            value # Translated, e.g. "Boolean", "Number", "Reason Code", "String", etc
+query {
+  templates(owner: $customerId, type: ["Batch"]) {
+    edges {
+      node {
+        asTask {
+          id # henceforth: $batchTemplateId
+          fields {
+            edges {
+              node {
+                id # e.g. for `key` prop
+                ...FieldInput_fragment
+              }
+            }
           }
-          type # Never translated.
         }
       }
     }
@@ -216,58 +209,17 @@ query ListTemplateTypesQuery {
 }
 ```
 
-```jsx
-<form>
-  <label for="fieldType">Field Type:</label>
-  <select id="fieldType" name="fieldType">
-    {types.all.edges.map((e) => (
-      <option value={e.node.id}>{e.node.name.value}</option>
-    ))}
-  </select>
-</form>
-```
+This is the mutation that you will call to actually create a new Batch.
 
 ```graphql
-mutation CreateBatchMutation {
-"""
-This will eventually be the API. For now, you can do the same thing you do for
-Reason Codes to achieve pre-defined SKUs, if that is what you want.
-
-  # Create a SKU type. This would be useful if, as with Reason Codes, you wanted
-  # to confine the set of available SKUs rather than allowing arbitrary strings.
-  createTemplate(name: "SKU", type: $stringTypeId) {
-    edge {
-      node {
-        id # $skuTypeId
-      }
-    }
-  }
-"""
-
-  # Create a Batch type.
-  createTemplate(
-    name: "Batch"
-    fields: [
-      { name: "Customer", valueType: "string" }
-      { name: "Product Name", valueType: "string" }
-      { name: "SKU", valueType: "string" }
-    ]
-  ) {
-    edge {
-      node {
-        id # $batchTemplateId
-      }
-    }
-  }
-
-  # Create some batches.
+mutation {
   createInstance(
     template: { id: $batchTemplateId }
-    name: "12345"
+    name: "12345" # or whatever
     fields: [
-      { id: $customerFieldId, value: { string: "Ross's Salsa" } }
-      { id: $productNameFieldId, value: { string: "Medium Red Salsa" } }
-      { id: $skuFieldId, value: { id: "SLS-RED-ME" } }
+      { id: "...", value: { string: "Ross's Salsa" } }
+      { id: "...", value: { string: "Medium Red Salsa" } }
+      { id: "...", value: { id: "SLS-RED-ME" } }
     ]
   ) {
     edge @appendEdge(connections: $connections) {
@@ -276,6 +228,10 @@ Reason Codes to achieve pre-defined SKUs, if that is what you want.
   }
 }
 ```
+
+### Test suite
+
+The test suite (batch.test.ts) configures batch like so:
 
 ```mermaid
 flowchart TD;
@@ -291,6 +247,20 @@ flowchart TD;
     F-->G
     G-->H
 ```
+
+which is to say:
+
+- When you close a Run instance of a Batch, it will move to Open at the "next"
+  location: Mixing > Fill > Assembly > Cartoning > Packaging. I do this in the
+  test suite to test eager cross-location instantiation.
+- Given an InProgress Batch instance, you can create an InProgress Run instance
+  of the Batch at any of the locations. This is to test lazy cross-location
+  instantiation.
+
+This may or may not be how you want things to work. Have a look at
+[batch.test.ts](../test/app/runtime/batch.test.ts#L593) for how this is all
+setup. You can modify the test suite to achieve the specific configuration you
+want if different.
 
 ### UX design decisions:
 
@@ -350,3 +320,50 @@ and then there is an option to advance into D, E, or F, and then eagerly through
 H, which is the final step. Note also that this has nothing to do with Batch,
 but rather is a side effect of implementing Batch (i.e. cross location
 instantiation).
+
+[EnabledLanguage.tsx#L259]: https://github.com/tendrelhq/console/blob/f9d4f6cee6bc8dc31506f7f53e99082a9786f78f/src/app/(app)/(home)/languages/EnabledLanguage.tsx#L259
+
+[^1]:
+    ```diff
+    diff --git a/src/app/(app)/(home)/languages/EnabledLanguage.tsx b/src/app/(app)/(home)/languages/EnabledLanguage.tsx
+    index 5c6b7b2..f693095 100644
+    --- a/src/app/(app)/(home)/languages/EnabledLanguage.tsx
+    +++ b/src/app/(app)/(home)/languages/EnabledLanguage.tsx
+    @@ -295,18 +295,25 @@ function AddLanguageButton(props: { connectionId: string }) {
+         <Dialog
+           open={open}
+           onOpenChange={open => {
+    -        if (open) {
+    +        // If the queryRef does not exist then the data is not present in the
+    +        // store, i.e. it has not been loaded. In such cases we want to load the
+    +        // query within a transition so we can capture the loading state and
+    +        // display a nice spinner to the user. When the queryRef *does* exist,
+    +        // the data is present in the store. In such cases calling loadQuery()
+    +        // is effectively a no-op but we don't want to blindly do this in a
+    +        // transition since it will *still trigger the loading state* and you
+    +        // will see the spinner flash on screen before the dialog opens.
+    +        if (open && !queryRef) {
+               startTransition(() => {
+    +            // Load and then open.
+                 loadQuery({});
+                 setOpen(true);
+               });
+    -        }
+    -        // TODO: not sure if this is what we want, but playing around with it
+    -        // for now. From the docs: calling dispose() implies "the data is liable
+    -        // to be garbage collected". Key word "liable"... not sure so we'll see.
+    -        else {
+    -          dispose();
+    +        } else if (open) {
+    +          setOpen(true);
+    +        } else {
+               setOpen(false);
+    +          dispose();
+             }
+           }}
+           modal
+    ```
+
+[^2]:
+    This _is_ specific to Batch. Passing `Location` (the default) or `Task`
+    does _not_ map to worktemplatetype. This is a WIP move to the new model.

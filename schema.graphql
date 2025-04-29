@@ -906,6 +906,7 @@ type Field {
   Unique identifier for this Field.
   """
   id: ID @semanticNonNull
+  isRequired: Boolean @semanticNonNull
   """
   Display name for a Field.
   """

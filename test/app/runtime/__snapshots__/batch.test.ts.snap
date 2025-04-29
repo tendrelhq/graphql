@@ -12,7 +12,7 @@ exports[`runtime + batch tracking create a new batch 1`] = `
           "__typename": "Task",
           "name": {
             "__typename": "DisplayName",
-            "value": "Batch",
+            "value": "Batch 0",
           },
           "parent": {
             "__typename": "Location",
@@ -175,7 +175,7 @@ exports[`runtime + batch tracking but it shows up via the batch entrypoint query
           },
           "name": {
             "__typename": "DisplayName",
-            "value": "Batch",
+            "value": "Batch 0",
           },
         },
       },
@@ -385,7 +385,7 @@ exports[`runtime + batch tracking end run @ mixing line 2`] = `
         "__typename": "Task",
         "name": {
           "__typename": "DisplayName",
-          "value": "Batch",
+          "value": "Batch 0",
         },
         "state": {
           "__typename": "InProgress",
@@ -623,7 +623,7 @@ exports[`runtime + batch tracking end run @ fill line 2`] = `
         "__typename": "Task",
         "name": {
           "__typename": "DisplayName",
-          "value": "Batch",
+          "value": "Batch 0",
         },
         "state": {
           "__typename": "InProgress",

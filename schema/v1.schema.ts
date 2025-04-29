@@ -26,6 +26,7 @@ import {
   attachments as fieldAttachmentsResolver,
   completions as fieldCompletionsResolver,
   description as fieldDescriptionResolver,
+  isRequired as fieldIsRequiredResolver,
   name as fieldNameResolver,
   parent as fieldParentResolver,
 } from "./system/component";
@@ -1368,6 +1369,13 @@ export function getSchema(): GraphQLSchema {
             return assertNonNull(
               defaultFieldResolver(source, args, context, info),
             );
+          },
+        },
+        isRequired: {
+          name: "isRequired",
+          type: GraphQLBoolean,
+          resolve(source, _args, context) {
+            return assertNonNull(fieldIsRequiredResolver(source, context));
           },
         },
         name: {

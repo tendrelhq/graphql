@@ -55,7 +55,7 @@ describe("runtime + batch tracking", () => {
     const sku = await getFieldByName(BATCH_TEMPLATE, "SKU");
     const result = await execute(schema, CreateBatchMutationDocument, {
       batchTemplateId: BATCH_TEMPLATE.id,
-      batchId: (batchId++).toString(),
+      batchId: `Batch ${batchId++}`,
       fields: [
         {
           field: customer.id,
@@ -122,7 +122,7 @@ describe("runtime + batch tracking", () => {
         },
         root: {
           name: {
-            value: "Batch",
+            value: "Batch 0",
           },
         },
         state: {
@@ -328,7 +328,7 @@ describe("runtime + batch tracking", () => {
             {
               node: {
                 name: {
-                  value: "Batch", // FIXME
+                  value: "Batch 0",
                 },
                 parent: {
                   name: {

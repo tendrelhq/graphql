@@ -412,6 +412,25 @@ export class Task implements Assignable, Component, Refetchable, Trackable {
       `;
       const t = new Task(row);
 
+      if (args.name?.length) {
+        const r = await sql`
+          update public.workinstance
+          set workinstancenameid = (
+            select n.id
+            from
+              public.customer,
+              i18n.create_localized_content(
+                  owner := customeruuid,
+                  content := ${args.name},
+                  language := ${ctx.req.i18n.language}
+              ) as n
+            where customerid = workinstancecustomerid
+          )
+          where id = ${t._id}
+        `;
+        assert(r.count === 1);
+      }
+
       if (args.fields?.length) {
         await applyFieldEdits_(sql, ctx, t, args.fields);
       }

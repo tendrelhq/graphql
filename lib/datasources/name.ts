@@ -37,12 +37,12 @@ export function makeDisplayNameLoader(_req: Request) {
           () => sql`
               SELECT
                   wi.id AS _key,
-                  encode(('name:' || languagemasteruuid)::bytea, 'base64') AS id
+                  encode(('name:' || coalesce(wi.workinstancenameid, wtn.languagemasteruuid))::bytea, 'base64') AS id
               FROM public.workinstance AS wi
               INNER JOIN public.worktemplate AS wt
                   ON wi.workinstanceworktemplateid = wt.worktemplateid
-              INNER JOIN public.languagemaster
-                  ON worktemplatenameid = languagemasterid
+              INNER JOIN public.languagemaster AS wtn
+                  ON wt.worktemplatenameid = wtn.languagemasterid
               WHERE wi.id IN ${sql(ids.map(i => i.id))}
           `,
         )
