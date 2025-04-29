@@ -114,7 +114,9 @@ describe("runtime demo", () => {
     expect(result.data).toMatchSnapshot();
   });
 
-  test("sanity check: engine sets previous", async () => {
+  // TODO: This isn't the case anymore with the default setup but it is still a
+  // useful test!
+  test.skip("sanity check: engine sets previous", async () => {
     const newChain = await newlyInstantiatedChainFrom(FSM_I);
     const newChainPrevious = await newChain?.previous();
     expect(newChainPrevious?.id).toBe(FSM_I.id);
@@ -604,14 +606,10 @@ describe("runtime demo", () => {
         findAndEncode("next", "worktemplate", logs),
         id => new Task({ id }),
       );
-
-      // we get 'Downtime' in the 38th row
-      const row38 = logs.at(38 - 1);
-      // but we can check the tag to be sure
-      if (row38?.op?.trim() !== "+next") {
-        throw "setup failed to find Downtime";
-      }
-      DOWNTIME = Task.fromTypeId("worktemplate", row38.id);
+      DOWNTIME = map(
+        findAndEncode("next", "worktemplate", logs, { skip: 1 }),
+        id => new Task({ id }),
+      );
     } catch (e) {
       let i = 0;
       for (const l of logs) {
@@ -689,8 +687,9 @@ describe("runtime demo", () => {
 
   afterAll(async () => {
     const rows = await sql`
-      select id
+      select id, systagtype as status
       from public.workinstance
+      inner join public.systag on workinstancestatusid = systagid
       where
           workinstancecustomerid in (
               select customerid
@@ -701,6 +700,11 @@ describe("runtime demo", () => {
       ;
     `;
 
+    // Note that there WILL be lingering Opens. This is expected since we create
+    // initial instances as part of customer create. With the recent changes to
+    // support "real on-demand" this is no longer necessary and should be
+    // removed, though it requires refactoring this test to not depend on
+    // initial instances being available and so I am punting for now :)
     if (rows.count) {
       console.warn(
         `

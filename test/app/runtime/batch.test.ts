@@ -262,6 +262,65 @@ describe("runtime + batch tracking", () => {
     expect(startRun.data?.advance?.root?.fsm?.active).toMatchSnapshot();
   });
 
+  test("start downtime @ fill line", async () => {
+    const { fsm, root } = await getLatestFsm(BATCH_TEMPLATE);
+    const choice = assertNonNull(
+      fsm.transitions?.edges.at(0),
+      "should have transitions",
+    );
+    // N.B. see below where we create these templates and explicitly assign them
+    // an order. Downtime gets to go first :party:
+    assertTaskIsNamed(choice.node, "Downtime", ctx);
+
+    const startDowntime = await execute(
+      schema,
+      TestRuntimeTransitionMutationDocument,
+      {
+        includeChain: true,
+        opts: {
+          fsm: {
+            id: root.id,
+            hash: await root.hash(),
+          },
+          task: {
+            id: choice.id,
+            hash: await choice.node.hash(),
+          },
+        },
+      },
+    );
+    expect(startDowntime.errors).toBeFalsy();
+    expect(startDowntime.data?.advance?.root?.fsm?.active).toMatchSnapshot();
+  });
+
+  test("end downtime @ fill line", async () => {
+    const { fsm, root } = await getLatestFsm(BATCH_TEMPLATE);
+    const active = assertNonNull(fsm.active, "should be active");
+    assertTaskIsNamed(active, "Downtime", ctx);
+    assertTaskParentIs(active, FILL_LINE);
+
+    const finishDowntime = await execute(
+      schema,
+      TestRuntimeTransitionMutationDocument,
+      {
+        includeChain: true,
+        opts: {
+          fsm: {
+            id: root.id,
+            hash: await root.hash(),
+          },
+          task: {
+            id: active.id,
+            hash: await active.hash(),
+          },
+        },
+      },
+    );
+    expect(finishDowntime.errors).toBeFalsy();
+    expect(finishDowntime.data?.advance?.root?.fsm?.active).toMatchSnapshot();
+    expect(finishDowntime.data?.advance?.root?.chain).toMatchSnapshot();
+  });
+
   test("end run @ fill line", async () => {
     const { fsm, root } = await getLatestFsm(BATCH_TEMPLATE);
     const active = assertNonNull(fsm.active, "should be active");
@@ -317,7 +376,7 @@ describe("runtime + batch tracking", () => {
     const i = await mostRecentInstance(BATCH_TEMPLATE);
     const result = await execute(schema, TestRuntimeDetailDocument, {
       node: i.id,
-      overTypes: ["Batch", "Runtime"],
+      overTypes: ["Batch", "Downtime", "Runtime"],
       includeChainParents: true,
     });
     expect(result.errors).toBeFalsy();
@@ -370,6 +429,16 @@ describe("runtime + batch tracking", () => {
                 },
               },
             },
+            {
+              node: {
+                name: {
+                  value: "Downtime",
+                },
+                state: {
+                  __typename: "Closed",
+                },
+              },
+            },
             // TODO: Cascade when operating on the root?
             // Or, ideally, any ancestor.
             {
@@ -388,11 +457,15 @@ describe("runtime + batch tracking", () => {
               },
             },
           ],
-          totalCount: 4,
+          totalCount: 5,
         },
         chainAgg: [
           {
             group: "Batch",
+            value: expect.stringMatching(/\d+.\d+/),
+          },
+          {
+            group: "Downtime",
             value: expect.stringMatching(/\d+.\d+/),
           },
           {
@@ -530,6 +603,7 @@ describe("runtime + batch tracking", () => {
             },
             { name: "Description", type: "string", order: 99 },
           ],
+          order: 0,
           types: ["Downtime"],
         },
         ctx,
@@ -553,6 +627,7 @@ describe("runtime + batch tracking", () => {
             },
             { name: "Description", type: "string", order: 99 },
           ],
+          order: 1,
           types: ["Idle Time"],
         },
         ctx,
@@ -587,9 +662,25 @@ describe("runtime + batch tracking", () => {
       }
 
       // Rules.
-      // When the Batch goes in-progress, prompt the user to choose where it
-      // should go next. For the purposes of this test, we will allow for the
-      // Batch to start at any Line.
+      // The usual Idle and Down transitions.
+      for (const t of [downTemplate, idleTemplate]) {
+        await RUN_TEMPLATE.createTransition(
+          {
+            whenStatusChangesTo: "InProgress",
+            instantiate: {
+              template: t.id,
+              withType: "On Demand",
+            },
+          },
+          ctx,
+          sql,
+        );
+      }
+
+      // For InProgress Batches, allow the user to explicitly instantiate a Run
+      // at any of the following Locations. This probably isn't how we want this
+      // configured in production however we do it here for the sake of test
+      // coverage.
       for (const l of [
         MIXING_LINE,
         FILL_LINE,
@@ -610,6 +701,11 @@ describe("runtime + batch tracking", () => {
           sql,
         );
       }
+
+      // The following rules are again likely not what we want in production,
+      // and are again included here for the sake of test coverage. These rules
+      // have the effect of automatically "moving the Batch down the lines", in
+      // the spirit of a truly sequential process.
 
       // Mixing -> Fill
       await RUN_TEMPLATE.createTransition(
@@ -674,6 +770,34 @@ describe("runtime + batch tracking", () => {
   });
 
   afterAll(async () => {
+    const rows = await sql`
+      select id, systagtype as status
+      from public.workinstance
+      inner join public.systag on workinstancestatusid = systagid
+      where
+          workinstancecustomerid in (
+              select customerid
+              from public.customer
+              where customeruuid = ${CUSTOMER._id}
+          )
+          and workinstancestatusid in (706, 707)
+      ;
+    `;
+
+    if (rows.count) {
+      console.warn(
+        `
+==========
+Test suite finished with ${rows.length} open/in progress instances lingering.
+This is a known bug at the moment :(
+
+Linguine instances:
+${rows.map(r => ` - ${r.id} (${r.status})`).join("\n")}
+==========
+        `,
+      );
+    }
+
     // Cleanup:
     // await cleanup(CUSTOMER);
   });

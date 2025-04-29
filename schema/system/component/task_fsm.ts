@@ -98,10 +98,6 @@ export async function fsm_(
   t: Task,
 ): Promise<StateMachine<Task> | null> {
   if (t._type !== "workinstance") {
-    assert(
-      false,
-      "only instances can participate in task-based state machines",
-    );
     return null;
   }
 

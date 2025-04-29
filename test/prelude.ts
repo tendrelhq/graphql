@@ -146,7 +146,7 @@ export async function assertTaskParentIs(t: Task, p: Location) {
   const tp = await t.parent();
   assert(
     p._type === tp?._type && p._id === tp?._id,
-    `Expect Task to have parent '${p.id}' but got '${tp}'`,
+    `Expect Task to have parent '${p._id}' but got '${tp?._id}'`,
   );
 }
 

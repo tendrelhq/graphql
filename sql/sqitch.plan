@@ -5,3 +5,4 @@
 02-patch-entity-import-customer 2025-04-15T23:00:33Z Will Ruggiano <ruggiano@tendrel.io> # remove 10 min delay
 fix-x-location 2025-04-29T08:00:35Z Will Ruggiano <ruggiano@tendrel.io> # fix: cross location instantiation
 workinstancenameid 2025-04-29T08:41:34Z Will Ruggiano <ruggiano@tendrel.io> # for batch
+real-on-demand 2025-04-29T22:17:55Z Will Ruggiano <ruggiano@tendrel.io> # actually implement on-demand the way its meant to work

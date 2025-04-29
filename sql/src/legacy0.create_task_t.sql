@@ -1,7 +1,7 @@
 
--- Type: FUNCTION ; Name: legacy0.create_task_t(text,text,text,text,bigint,integer); Owner: tendreladmin
+-- Type: FUNCTION ; Name: legacy0.create_task_t(text,text,text,text,bigint,integer,boolean); Owner: tendreladmin
 
-CREATE OR REPLACE FUNCTION legacy0.create_task_t(customer_id text, language_type text, task_name text, task_parent_id text, modified_by bigint, task_order integer DEFAULT 0)
+CREATE OR REPLACE FUNCTION legacy0.create_task_t(customer_id text, language_type text, task_name text, task_parent_id text, modified_by bigint, task_order integer DEFAULT 0, task_supports_lazy_instantiation boolean DEFAULT true)
  RETURNS TABLE(_id bigint, id text)
  LANGUAGE plpgsql
  STRICT
@@ -31,10 +31,9 @@ begin
       customer.customerid,
       location.locationid,
       ins_name._id,
-      true,
+      task_supports_lazy_instantiation,
       1404,
-      -- FIXME: implement audits
-      false,
+      true,
       task_order,
       modified_by
   from public.customer, public.location, ins_name

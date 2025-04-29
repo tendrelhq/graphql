@@ -46,7 +46,16 @@ exports[`runtime + batch tracking still no batches via the canonical entrypoint 
           },
           "timeZone": "utc",
           "tracking": {
-            "edges": [],
+            "edges": [
+              {
+                "node": {
+                  "fsm": null,
+                  "name": {
+                    "value": "Run",
+                  },
+                },
+              },
+            ],
           },
         },
       },
@@ -60,7 +69,16 @@ exports[`runtime + batch tracking still no batches via the canonical entrypoint 
           },
           "timeZone": "utc",
           "tracking": {
-            "edges": [],
+            "edges": [
+              {
+                "node": {
+                  "fsm": null,
+                  "name": {
+                    "value": "Run",
+                  },
+                },
+              },
+            ],
           },
         },
       },
@@ -74,7 +92,16 @@ exports[`runtime + batch tracking still no batches via the canonical entrypoint 
           },
           "timeZone": "utc",
           "tracking": {
-            "edges": [],
+            "edges": [
+              {
+                "node": {
+                  "fsm": null,
+                  "name": {
+                    "value": "Run",
+                  },
+                },
+              },
+            ],
           },
         },
       },
@@ -88,7 +115,16 @@ exports[`runtime + batch tracking still no batches via the canonical entrypoint 
           },
           "timeZone": "utc",
           "tracking": {
-            "edges": [],
+            "edges": [
+              {
+                "node": {
+                  "fsm": null,
+                  "name": {
+                    "value": "Run",
+                  },
+                },
+              },
+            ],
           },
         },
       },
@@ -102,7 +138,16 @@ exports[`runtime + batch tracking still no batches via the canonical entrypoint 
           },
           "timeZone": "utc",
           "tracking": {
-            "edges": [],
+            "edges": [
+              {
+                "node": {
+                  "fsm": null,
+                  "name": {
+                    "value": "Run",
+                  },
+                },
+              },
+            ],
           },
         },
       },
@@ -520,6 +565,238 @@ exports[`runtime + batch tracking start run @ fill line 1`] = `
 }
 `;
 
+exports[`runtime + batch tracking start downtime @ fill line 1`] = `
+{
+  "assignees": {
+    "edges": [
+      {
+        "node": {
+          "assignedTo": {
+            "displayName": "Jerry Garcia",
+          },
+        },
+      },
+    ],
+  },
+  "description": null,
+  "fields": {
+    "edges": [
+      {
+        "node": {
+          "description": null,
+          "name": {
+            "value": "Override Start Time",
+          },
+          "value": {
+            "__typename": "TimestampValue",
+            "timestamp": null,
+          },
+          "valueType": "timestamp",
+        },
+      },
+      {
+        "node": {
+          "description": null,
+          "name": {
+            "value": "Override End Time",
+          },
+          "value": {
+            "__typename": "TimestampValue",
+            "timestamp": null,
+          },
+          "valueType": "timestamp",
+        },
+      },
+      {
+        "node": {
+          "description": null,
+          "name": {
+            "value": "Description",
+          },
+          "value": {
+            "__typename": "StringValue",
+            "string": null,
+          },
+          "valueType": "string",
+        },
+      },
+    ],
+  },
+  "name": {
+    "value": "Downtime",
+  },
+  "parent": {
+    "name": {
+      "value": "Fill Line",
+    },
+  },
+  "state": {
+    "__typename": "InProgress",
+    "inProgressBy": {
+      "displayName": "Jerry Garcia",
+    },
+  },
+}
+`;
+
+exports[`runtime + batch tracking end downtime @ fill line 1`] = `
+{
+  "assignees": {
+    "edges": [
+      {
+        "node": {
+          "assignedTo": {
+            "displayName": "Jerry Garcia",
+          },
+        },
+      },
+    ],
+  },
+  "description": null,
+  "fields": {
+    "edges": [
+      {
+        "node": {
+          "description": null,
+          "name": {
+            "value": "Override Start Time",
+          },
+          "value": {
+            "__typename": "TimestampValue",
+            "timestamp": null,
+          },
+          "valueType": "timestamp",
+        },
+      },
+      {
+        "node": {
+          "description": null,
+          "name": {
+            "value": "Override End Time",
+          },
+          "value": {
+            "__typename": "TimestampValue",
+            "timestamp": null,
+          },
+          "valueType": "timestamp",
+        },
+      },
+      {
+        "node": {
+          "description": null,
+          "name": {
+            "value": "Run Output",
+          },
+          "value": {
+            "__typename": "NumberValue",
+          },
+          "valueType": "number",
+        },
+      },
+      {
+        "node": {
+          "description": null,
+          "name": {
+            "value": "Reject Count",
+          },
+          "value": {
+            "__typename": "NumberValue",
+          },
+          "valueType": "number",
+        },
+      },
+      {
+        "node": {
+          "description": null,
+          "name": {
+            "value": "Comments",
+          },
+          "value": {
+            "__typename": "StringValue",
+            "string": null,
+          },
+          "valueType": "string",
+        },
+      },
+    ],
+  },
+  "name": {
+    "value": "Run",
+  },
+  "parent": {
+    "name": {
+      "value": "Fill Line",
+    },
+  },
+  "state": {
+    "__typename": "InProgress",
+    "inProgressBy": {
+      "displayName": "Jerry Garcia",
+    },
+  },
+}
+`;
+
+exports[`runtime + batch tracking end downtime @ fill line 2`] = `
+{
+  "__typename": "TaskConnection",
+  "edges": [
+    {
+      "__typename": "TaskEdge",
+      "node": {
+        "__typename": "Task",
+        "name": {
+          "__typename": "DisplayName",
+          "value": "Batch 0",
+        },
+        "state": {
+          "__typename": "InProgress",
+        },
+      },
+    },
+    {
+      "__typename": "TaskEdge",
+      "node": {
+        "__typename": "Task",
+        "name": {
+          "__typename": "DisplayName",
+          "value": "Run",
+        },
+        "state": {
+          "__typename": "Closed",
+        },
+      },
+    },
+    {
+      "__typename": "TaskEdge",
+      "node": {
+        "__typename": "Task",
+        "name": {
+          "__typename": "DisplayName",
+          "value": "Run",
+        },
+        "state": {
+          "__typename": "InProgress",
+        },
+      },
+    },
+    {
+      "__typename": "TaskEdge",
+      "node": {
+        "__typename": "Task",
+        "name": {
+          "__typename": "DisplayName",
+          "value": "Downtime",
+        },
+        "state": {
+          "__typename": "Closed",
+        },
+      },
+    },
+  ],
+}
+`;
+
 exports[`runtime + batch tracking end run @ fill line 1`] = `
 {
   "assignees": {
@@ -650,6 +927,19 @@ exports[`runtime + batch tracking end run @ fill line 2`] = `
         "name": {
           "__typename": "DisplayName",
           "value": "Run",
+        },
+        "state": {
+          "__typename": "Closed",
+        },
+      },
+    },
+    {
+      "__typename": "TaskEdge",
+      "node": {
+        "__typename": "Task",
+        "name": {
+          "__typename": "DisplayName",
+          "value": "Downtime",
         },
         "state": {
           "__typename": "Closed",

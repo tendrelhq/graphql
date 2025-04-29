@@ -621,32 +621,7 @@ exports[`runtime demo start run 1`] = `
   "advance": {
     "__typename": "AdvanceTaskStateMachineResult",
     "diagnostics": null,
-    "instantiations": [
-      {
-        "__typename": "TaskEdge",
-        "node": {
-          "__typename": "Task",
-          "chain": {
-            "__typename": "TaskConnection",
-            "totalCount": 1,
-          },
-          "name": {
-            "__typename": "DisplayName",
-            "value": "Run",
-          },
-          "parent": {
-            "__typename": "Location",
-            "name": {
-              "__typename": "Name",
-              "value": "Mixing Line",
-            },
-          },
-          "state": {
-            "__typename": "Open",
-          },
-        },
-      },
-    ],
+    "instantiations": [],
     "root": {
       "__typename": "Task",
       "fsm": {
