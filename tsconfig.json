@@ -24,22 +24,15 @@
     "noUnusedParameters": false,
     "noPropertyAccessFromIndexSignature": false,
 
-    "paths": {
-      "@/*": ["./lib/*"],
-      "@/schema": ["./schema/index.ts"],
-      "@/schema/*": ["./schema/*"],
-      "@/test/*": ["./test/*"]
-    },
-
     // DX
-    "pretty": false
+    "pretty": false,
+
+    "paths": {
+      "@/*": ["./packages/server/lib/*"],
+      "@/schema": ["./packages/server/schema/index.ts"],
+      "@/schema/*": ["./packages/server/schema/*"],
+      "@/test/*": ["./packages/server/test/*"]
+    }
   },
-  "exclude": ["node_modules", "out"],
-  "grats": {
-    "graphqlSchema": "./schema/v1.schema.graphql",
-    "tsSchema": "./schema/v1.schema.ts",
-    "schemaHeader": null,
-    "strictSemanticNullability": true,
-    "tsSchemaHeader": null
-  }
+  "exclude": ["node_modules", "out"]
 }

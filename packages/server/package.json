@@ -1,0 +1,65 @@
+{
+  "name": "@tendrelhq/graphql-server",
+  "version": "0.31.1",
+  "type": "module",
+  "exports": {
+    "./lib/*": "./lib/*",
+    "./schema/*": "./schema/*",
+    "./test/*": "./test/*"
+  },
+  "scripts": {
+    "build": "bun build ./bin/app.ts --compile --env=disable --minify --sourcemap",
+    "check": "biome check --write && tsc --pretty",
+    "dev": "bun run --hot --no-clear-screen ./bin/app.ts",
+    "generate": "grats && bun ./scripts/generate-legacy-schema.ts && bun ./scripts/print-schema.ts",
+    "postgenerate": "eval $TREEFMT",
+    "postinstall": "bun generate"
+  },
+  "devDependencies": {
+    "@clerk/types": "^4.6.1",
+    "@eddeee888/gcg-typescript-resolver-files": "^0.8.1",
+    "@graphql-codegen/cli": "^5.0.2",
+    "@graphql-codegen/near-operation-file-preset": "^3.0.0",
+    "@graphql-codegen/schema-ast": "^4.1.0",
+    "@graphql-codegen/typed-document-node": "^5.0.9",
+    "@graphql-codegen/typescript": "^4.0.8",
+    "@graphql-codegen/typescript-graphql-files-modules": "^3.0.0",
+    "@graphql-codegen/typescript-resolvers": "^4.2.0",
+    "@graphql-tools/schema": "^10.0.4",
+    "@supabase/postgrest-js": "^1.19.4",
+    "@types/bun": "latest",
+    "@types/cors": "^2.8.17",
+    "@types/morgan": "^1.9.9",
+    "@types/negotiator": "^0.6.3",
+    "@types/swagger-ui-express": "^4.1.8",
+    "dedent": "^1.5.3",
+    "grats": "^0.0.31",
+    "swagger-ui-express": "^5.0.1"
+  },
+  "peerDependencies": {
+    "typescript": "^5.6.3"
+  },
+  "dependencies": {
+    "@apollo/server": "^4.10.4",
+    "@aws-sdk/client-s3": "^3.692.0",
+    "@aws-sdk/s3-request-presigner": "^3.692.0",
+    "@clerk/clerk-sdk-node": "^5.0.12",
+    "@clerk/shared": "^2.3.1",
+    "@formatjs/intl-localematcher": "^0.5.4",
+    "@js-temporal/polyfill": "^0.4.4",
+    "cors": "^2.8.5",
+    "dataloader": "^2.2.2",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "graphql": "^16.9.0",
+    "graphql-scalars": "^1.23.0",
+    "graphql-tag": "^2.12.6",
+    "jose": "^6.0.9",
+    "morgan": "^1.10.0",
+    "myzod": "^1.11.0",
+    "negotiator": "^0.6.3",
+    "pattycake": "^0.0.2",
+    "postgres": "^3.4.4",
+    "ts-pattern": "^5.5.0"
+  }
+}

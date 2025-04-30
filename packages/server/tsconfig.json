@@ -1,0 +1,10 @@
+{
+  "extends": "../../tsconfig.json",
+  "grats": {
+    "graphqlSchema": "./schema/v1.schema.graphql",
+    "tsSchema": "./schema/v1.schema.ts",
+    "schemaHeader": null,
+    "strictSemanticNullability": true,
+    "tsSchemaHeader": null
+  }
+}

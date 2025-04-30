@@ -1,4 +1,0 @@
-{
-  "$schema": "./node_modules/graphql-config/config-schema.json",
-  "schema": "./schema/**/*.schema.graphql"
-}

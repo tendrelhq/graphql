@@ -1,0 +1,66 @@
+diff --git a/node_modules/@ardatan/relay-compiler/.bun-tag-41d78d26bf464ae6 b/.bun-tag-41d78d26bf464ae6
+new file mode 100644
+index 0000000000000000000000000000000000000000..e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
+diff --git a/node_modules/@ardatan/relay-compiler/.bun-tag-49d258a7f5d1b989 b/.bun-tag-49d258a7f5d1b989
+new file mode 100644
+index 0000000000000000000000000000000000000000..e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
+diff --git a/bin/RelayCompilerBin.js.flow b/home/bombadil/.cache/.bun/install/cache/@ardatan/relay-compiler@12.0.0@@@1/bin/RelayCompilerBin.js.flow
+deleted file mode 100644
+index c7e3e2ece5e2880a0a0871c5d4cb93a3366f5a8b..0000000000000000000000000000000000000000
+diff --git a/bin/RelayCompilerMain.js.flow b/home/bombadil/.cache/.bun/install/cache/@ardatan/relay-compiler@12.0.0@@@1/bin/RelayCompilerMain.js.flow
+deleted file mode 100644
+index 7fe668eedad08f391c88b5a52241e15e583bc075..0000000000000000000000000000000000000000
+diff --git a/bin/__fixtures__/plugin-module.js.flow b/home/bombadil/.cache/.bun/install/cache/@ardatan/relay-compiler@12.0.0@@@1/bin/__fixtures__/plugin-module.js.flow
+deleted file mode 100644
+index d25875cee3c6cdc2c47f1efb8997a32f8676e6ba..0000000000000000000000000000000000000000
+diff --git a/bin/relay-compiler b/home/bombadil/.cache/.bun/install/cache/@ardatan/relay-compiler@12.0.0@@@1/bin/relay-compiler
+deleted file mode 100755
+index 19536a6a9a30934377dfa11e9d58f0999e81edfb..0000000000000000000000000000000000000000
+diff --git a/package.json b/package.json
+index 852e9b80a1927dd1699906a61226db7a45b4d238..25bd32f14f439e365751a96c19c54abb054ad342 100644
+--- a/package.json
++++ b/package.json
+@@ -1,42 +1,5 @@
+ {
+   "name": "@ardatan/relay-compiler",
+   "description": "A compiler tool for building GraphQL-driven applications.",
+-  "version": "12.0.0",
+-  "keywords": [
+-    "graphql",
+-    "relay"
+-  ],
+-  "license": "MIT",
+-  "homepage": "https://relay.dev",
+-  "bugs": "https://github.com/facebook/relay/issues",
+-  "repository": "facebook/relay",
+-  "main": "index.js",
+-  "bin": {
+-    "relay-compiler": "bin/relay-compiler"
+-  },
+-  "dependencies": {
+-    "@babel/core": "^7.14.0",
+-    "@babel/generator": "^7.14.0",
+-    "@babel/parser": "^7.14.0",
+-    "@babel/runtime": "^7.0.0",
+-    "@babel/traverse": "^7.14.0",
+-    "@babel/types": "^7.0.0",
+-    "babel-preset-fbjs": "^3.4.0",
+-    "chalk": "^4.0.0",
+-    "fb-watchman": "^2.0.0",
+-    "fbjs": "^3.0.0",
+-    "glob": "^7.1.1",
+-    "immutable": "~3.7.6",
+-    "invariant": "^2.2.4",
+-    "nullthrows": "^1.1.1",
+-    "relay-runtime": "12.0.0",
+-    "signedsource": "^1.0.0",
+-    "yargs": "^15.3.1"
+-  },
+-  "peerDependencies": {
+-    "graphql": "*"
+-  },
+-  "publishConfig": {
+-    "access": "public"
+-  }
++  "version": "0.0.0"
+ }

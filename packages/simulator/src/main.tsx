@@ -245,7 +245,6 @@ const Simulation = (props: {
 }) => {
   const data = useFragment(AppSimulationNode, props.batches);
   const [mode, setMode] = useState<"g" | "s">("g");
-  console.error("mode", mode);
 
   useInput((input, key) => {
     // TODO: better input event handling.
@@ -277,7 +276,8 @@ const Simulation = (props: {
               label: e.node.id, // doesn't matter
               value: e.node,
             }))}
-            itemComponent={item => <Batch queryRef={item.value} />}
+            // biome-ignore lint/suspicious/noExplicitAny:
+            itemComponent={item => <Batch queryRef={(item as any).value} />}
           />
         ))
         .exhaustive()}

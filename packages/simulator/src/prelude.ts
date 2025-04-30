@@ -1,7 +1,7 @@
 import { setCurrentIdentity } from "@/auth";
 import { sql } from "@/datasources/postgres";
+import { createEmptyCustomer, createTestContext } from "@/test/prelude";
 import { assertNonNull } from "@/util";
-import { createEmptyCustomer, createTestContext } from "../prelude";
 
 export async function setup() {
   const ctx = await createTestContext();
