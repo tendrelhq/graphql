@@ -1,0 +1,223 @@
+{
+  "name": "Canonical Runtime simulation",
+  "entities": [
+    {
+      "$template": "Customer",
+      "name": "Frozen Tendy Factory"
+    },
+    {
+      "$template": "Worker",
+      "identity": "{{ env X_TENDREL_USER }}",
+      "parent": { "$ref": "#/entities/0" },
+      "type": ["Admin"]
+    },
+    {
+      "$template": "Location",
+      "name": "Frozen Tendy Factory",
+      "parent": { "$ref": "#/entities/0" },
+      "type": ["Frozen Tendy Factory"]
+    },
+    {
+      "$template": "Location",
+      "$order": 1,
+      "name": "Mixing Line",
+      "parent": { "$ref": "#/entities/2" },
+      "type": ["Runtime Location"]
+    },
+    {
+      "$template": "Location",
+      "$order": 2,
+      "name": "Fill Line",
+      "parent": { "$ref": "#/entities/2" },
+      "type": ["Runtime Location"]
+    },
+    {
+      "$template": "Location",
+      "$order": 3,
+      "name": "Assembly Line",
+      "parent": { "$ref": "#/entities/2" },
+      "type": ["Runtime Location"]
+    },
+    {
+      "$template": "Location",
+      "$order": 4,
+      "name": "Cartoning Line",
+      "parent": { "$ref": "#/entities/2" },
+      "type": ["Runtime Location"]
+    },
+    {
+      "$template": "Location",
+      "$order": 5,
+      "name": "Packaging Line",
+      "parent": { "$ref": "#/entities/2" },
+      "type": ["Runtime Location"]
+    }
+  ],
+  "templates": [
+    {
+      "name": "Batch",
+      "fields": [
+        {
+          "name": "Customer",
+          "type": "string"
+        },
+        {
+          "name": "Product Name",
+          "type": "string"
+        },
+        {
+          "name": "SKU",
+          "type": "string"
+        }
+      ],
+      "type": ["Batch"],
+      "$template": "Task"
+    },
+    {
+      "name": "Run",
+      "fields": [
+        {
+          "name": "Override Start Time",
+          "type": "timestamp",
+          "isPrimary": true,
+          "$order": 0
+        },
+        {
+          "name": "Override End Time",
+          "type": "timestamp",
+          "isPrimary": true,
+          "$order": 1
+        },
+        {
+          "name": "Run Output",
+          "type": "number",
+          "$order": 2
+        },
+        {
+          "name": "Reject Count",
+          "type": "number",
+          "$order": 3
+        },
+        {
+          "name": "Comments",
+          "type": "string",
+          "$order": 99
+        }
+      ],
+      "type": ["Runtime", "Trackable"],
+      "$template": "Task",
+      "$order": 0
+    },
+    {
+      "name": "Downtime",
+      "fields": [
+        {
+          "name": "Override Start Time",
+          "type": "timestamp",
+          "isPrimary": true,
+          "$order": 0
+        },
+        {
+          "name": "Override End Time",
+          "type": "timestamp",
+          "isPrimary": true,
+          "$order": 1
+        },
+        {
+          "name": "Description",
+          "type": "string",
+          "$order": 99
+        }
+      ],
+      "type": ["Run", "Downtime"],
+      "$template": "Task",
+      "$order": 1
+    },
+    {
+      "name": "Idle Time",
+      "fields": [
+        {
+          "name": "Override Start Time",
+          "type": "timestamp",
+          "isPrimary": true,
+          "$order": 0
+        },
+        {
+          "name": "Override End Time",
+          "type": "timestamp",
+          "isPrimary": true,
+          "$order": 1
+        },
+        {
+          "name": "Description",
+          "type": "string",
+          "$order": 99
+        }
+      ],
+      "type": ["Run", "Idle Time"],
+      "$template": "Task",
+      "$order": 2
+    }
+  ],
+  "constraints": [
+    {
+      "op": "engine/instantiate",
+      "template": [{ "$ref": "#/templates/0" }],
+      "entity": [{ "$ref": "#/entities/3" }],
+      "$comment": "Allow Batches to be instantiated at the Factory level"
+    },
+    {
+      "op": "engine/instantiate",
+      "template": [
+        { "$ref": "#/templates/1" },
+        { "$ref": "#/templates/2" },
+        { "$ref": "#/templates/3" }
+      ],
+      "entity": [
+        { "$ref": "#/entities/4" },
+        { "$ref": "#/entities/5" },
+        { "$ref": "#/entities/6" },
+        { "$ref": "#/entities/7" },
+        { "$ref": "#/entities/8" }
+      ],
+      "$comment": "Allow Runs, and their transitions, to be instantiated at any of the child Locations"
+    }
+  ],
+  "rules": [
+    {
+      "in": {
+        "op": "engine/advance",
+        "template": [{ "$ref": "#/templates/0" }]
+      },
+      "whenStatusChangesTo": "InProgress",
+      "out": [
+        {
+          "op": "engine/instantiate?mode=lazy",
+          "location": [
+            { "$ref": "#/entities/4" },
+            { "$ref": "#/entities/5" },
+            { "$ref": "#/entities/6" },
+            { "$ref": "#/entities/7" },
+            { "$ref": "#/entities/8" }
+          ],
+          "template": [{ "$ref": "#/templates/1" }]
+        }
+      ],
+      "$comment": "Allow Batches to be Runnable at all child locations."
+    },
+    {
+      "in": {
+        "op": "engine/advance",
+        "template": [{ "$ref": "#/templates/1" }]
+      },
+      "whenStatusChangesTo": "InProgress",
+      "out": [
+        {
+          "op": "engine/instantiate?mode=lazy",
+          "template": [{ "$ref": "#/templates/2" }, { "$ref": "#/templates/3" }]
+        }
+      ],
+      "$comment": "When in Runtime, allow transitioning into Downtime or Idle Time."
+    }
+  ]
+}

@@ -5,7 +5,9 @@
   "scripts": {
     "clean": "git clean -dfx -e .direnv -e .env.local -e .envrc -e .pre-commit-config.yaml -e /data -e postgrestools.jsonc",
     "server:build": "bun run --filter ./packages/server build",
-    "server:generate": "bun run --filter ./packages/server generate"
+    "server:generate": "bun run --filter ./packages/server generate",
+    "simulator:generate": "bun run --filter ./packages/simulator generate",
+    "simulator:start": "bun run ./packages/simulator/src/main.tsx"
   },
   "devDependencies": {
     "@biomejs/biome": "^1.9.4",

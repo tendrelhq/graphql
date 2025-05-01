@@ -8,7 +8,6 @@ import { ErrorBoundary, type FallbackProps } from "react-error-boundary";
 import {
   RelayEnvironmentProvider,
   useFragment,
-  useLazyLoadQuery,
   useMutation,
 } from "react-relay";
 import {
@@ -20,6 +19,7 @@ import {
   RecordSource,
   Store,
 } from "relay-runtime";
+import { match } from "ts-pattern";
 import AppBatchInputNode, {
   type AppBatchInput_fragment$key,
 } from "./__generated__/AppBatchInput_fragment.graphql";
@@ -29,13 +29,13 @@ import AppBatchFragment, {
 import AppGenerateBatchNode, {
   type AppGenerateBatchMutation,
 } from "./__generated__/AppGenerateBatchMutation.graphql";
-import AppRootNode, { type AppQuery } from "./__generated__/AppQuery.graphql";
 import AppSimulationNode, {
   type AppSimulation_fragment$key,
 } from "./__generated__/AppSimulation_fragment.graphql";
+import { App } from "./components/App";
 import { Field, FieldInput } from "./components/Field";
+import { ModeControl } from "./components/simulator/mode";
 import { setup } from "./prelude";
-import { match } from "ts-pattern";
 
 // Runtime simulator v0
 //
@@ -55,20 +55,10 @@ import { match } from "ts-pattern";
 // between the lines, and are therefore interested in cross-location (i.e.
 // batch-level) progress. Doesn't matter. I made it up. Enjoy :)
 
-const {
-  customer,
-  worker,
-  factory,
-  batchTemplate,
-  mixingLine,
-  fillLine,
-  assemblyLine,
-  cartoningLine,
-  packagingLine,
-} = await setup().catch(e => {
-  console.trace("error during setup", e);
-  throw e;
-});
+// const { customer, worker, factory, batchTemplate } = await setup().catch(e => {
+//   console.trace("error during setup", e);
+//   throw e;
+// });
 
 const fetchFn: FetchFunction = (params, variables) => {
   const res = fetch("http://localhost:4000", {
@@ -76,7 +66,7 @@ const fetchFn: FetchFunction = (params, variables) => {
     headers: {
       "Content-Type": "application/json",
       // TODO: OAuth.
-      "X-Tendrel-User": worker,
+      "X-Tendrel-User": "",
     },
     body: JSON.stringify({
       query: params.text,
@@ -195,24 +185,24 @@ const GenerateBatch = (props: {
             }}
           />
         ))}
-        <SubmitGeneratedBatch
-          onSubmit={() => {
-            commit({
-              variables: {
-                batchId: (nextBatchId++).toString(),
-                batchTemplateId: batchTemplate.id,
-                location: factory.id,
-                fields: ref.current,
-                connections: [props.connectionId],
-              },
-              onCompleted(_, errors) {
-                ref.current = [];
-                setEditing(false);
-                setErrors(errors);
-              },
-            });
-          }}
-        />
+        {/* <SubmitGeneratedBatch */}
+        {/*   onSubmit={() => { */}
+        {/*     commit({ */}
+        {/*       variables: { */}
+        {/*         batchId: (nextBatchId++).toString(), */}
+        {/*         batchTemplateId: batchTemplate.id, */}
+        {/*         location: factory.id, */}
+        {/*         fields: ref.current, */}
+        {/*         connections: [props.connectionId], */}
+        {/*       }, */}
+        {/*       onCompleted(_, errors) { */}
+        {/*         ref.current = []; */}
+        {/*         setEditing(false); */}
+        {/*         setErrors(errors); */}
+        {/*       }, */}
+        {/*     }); */}
+        {/*   }} */}
+        {/* /> */}
       </Box>
     );
   }
@@ -285,37 +275,23 @@ const Simulation = (props: {
   );
 };
 
-const Main = () => {
-  const data = useLazyLoadQuery<AppQuery>(AppRootNode, {
-    customerId: customer.id,
-    batchTemplateId: batchTemplate.id,
-  });
-
-  return (
-    <Box flexDirection="column">
-      <Text color="yellowBright">
-        {data.customer.me?.displayName} @ {data.customer.name?.value}
-      </Text>
-      <Simulation batches={data.batches} batchTemplate={data.batchTemplate} />
-    </Box>
-  );
-};
-
 const Fallback = (props: FallbackProps) => {
   console.error(props.error);
   return <Text color="red">{props.error?.message ?? "Unknown error"}</Text>;
 };
 
-const App = () => {
+const Main = () => {
   return (
     <ErrorBoundary FallbackComponent={Fallback}>
       <Suspense>
         <RelayEnvironmentProvider environment={environment}>
-          <Main />
+          <ModeControl>
+            <App nodeId={""} />
+          </ModeControl>
         </RelayEnvironmentProvider>
       </Suspense>
     </ErrorBoundary>
   );
 };
 
-render(<App />);
+render(<Main />);

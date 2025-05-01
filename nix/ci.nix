@@ -49,7 +49,7 @@
         installPhase = ''
           runHook preInstall
           mkdir -p $out/bin
-          cp ./packages/server/app $out/bin/entrypoint
+          cp ./packages/server/out/app $out/bin/entrypoint
           runHook postInstall
         '';
 
