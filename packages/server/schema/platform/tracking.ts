@@ -300,6 +300,24 @@ export async function trackables(
         limit ${args.first ?? null}
       `;
     })
+    .with("worktemplate", () => {
+      if (args.withImplementation !== "Task") {
+        throw "not yet implemented";
+      }
+
+      return sql<Trackable[]>`
+        select
+          'Task' as "__typename",
+          engine1.base64_encode(convert_to('workinstance:' || chain.id, 'utf8')) as id
+        from public.worktemplate as parent
+        inner join public.workinstance as chain
+          on parent.worktemplateid = chain.workinstanceworktemplateid
+          and chain.workinstanceid = chain.workinstanceoriginatorworkinstanceid
+        where parent.id = ${id}
+        order by chain.workinstanceid desc
+        limit ${args.first ?? null}
+      `;
+    })
     .otherwise(() => {
       console.warn(`Unknown parent type '${type}'`);
       return [];

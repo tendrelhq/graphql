@@ -1,0 +1,15 @@
+extend type Query {
+  simulation: Simulation
+}
+
+type Simulation {
+  state: SimulationState @semanticNonNull
+  time: Int @semanticNonNull
+}
+
+enum SimulationState {
+  starting
+  running
+  stopping
+  stopped
+}

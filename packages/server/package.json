@@ -1,6 +1,6 @@
 {
   "name": "@tendrelhq/graphql-server",
-  "version": "0.31.1",
+  "version": "0.31.2",
   "type": "module",
   "exports": {
     "./lib/*": "./lib/*",
@@ -8,12 +8,10 @@
     "./test/*": "./test/*"
   },
   "scripts": {
-    "build": "bun build ./bin/app.ts --compile --env=disable --minify --sourcemap",
+    "build": "bun build ./bin/app.ts --compile --env=disable --minify --outfile=out/app --sourcemap",
     "check": "biome check --write && tsc --pretty",
     "dev": "bun run --hot --no-clear-screen ./bin/app.ts",
-    "generate": "grats && bun ./scripts/generate-legacy-schema.ts && bun ./scripts/print-schema.ts",
-    "postgenerate": "eval $TREEFMT",
-    "postinstall": "bun generate"
+    "generate": "grats && bun ./scripts/generate-legacy-schema.ts && bun ./scripts/print-schema.ts"
   },
   "devDependencies": {
     "@clerk/types": "^4.6.1",

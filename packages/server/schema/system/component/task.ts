@@ -397,6 +397,7 @@ export class Task implements Assignable, Component, Refetchable, Trackable {
     sql: TxSql,
   ): Promise<Task | null> {
     assertUnderlyingType("worktemplate", this._type);
+    console.debug(`Instantiating for parent ${args.parent}`);
 
     const chainPrev = map(args.chainPrev, id => new Task({ id }));
     const chainRoot = map(args.chainRoot, id => new Task({ id }));

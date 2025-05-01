@@ -49,7 +49,7 @@
         installPhase = ''
           runHook preInstall
           mkdir -p $out/bin
-          cp ./packages/server/app $out/bin/entrypoint
+          cp ./packages/server/out/app $out/bin/entrypoint
           runHook postInstall
         '';
 
@@ -69,7 +69,7 @@
         buildPhase = ''
           runHook preBuild
           export HOME=$TMPDIR
-          bun install --ignore-scripts --frozen-lockfile --no-cache --no-progress --filter ./packages/server
+          bun install --filter=./packages/server --frozen-lockfile --ignore-scripts --no-cache --no-progress
           runHook postBuild
         '';
 
@@ -80,14 +80,7 @@
           runHook postInstall
         '';
 
-        # TODO: Not sure what is causing these to differ.
-        # Regardless, soon to be fixed via: https://github.com/NixOS/nixpkgs/issues/335534
-        # Huh. It fixed itself. Lmao.
-        # outputHash =
-        #   if pkgs.system == "aarch64-linux"
-        #   then "sha256-j1DhYYPic49ZZIPHTq/H7lb7nsAqj46CESquC+WkZUM="
-        #   else "sha256-j1DhYYPic49ZZIPHTq/H7lb7nsAqj46CESquC+WkZUM=";
-        outputHash = "sha256-j1DhYYPic49ZZIPHTq/H7lb7nsAqj46CESquC+WkZUM=";
+        outputHash = "sha256-PrRd0NXxsSh5CcLFYU8b8ECt7fIZYpWp+GmuE4g4RBU=";
         outputHashAlgo = "sha256";
         outputHashMode = "recursive";
       };

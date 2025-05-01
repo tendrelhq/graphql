@@ -1,40 +1,24 @@
 import { graphql } from "relay-runtime";
 
-// Just a bunch of Relay fragments, so relay-compiler will work correctly.
-
 graphql`
-  query AppQuery($customerId: ID!, $batchTemplateId: ID!) @throwOnFieldError {
-    batches: trackables(parent: $customerId, withImplementation: "Batch") {
-      ...AppSimulation_fragment
-    }
-    batchTemplate: node(id: $batchTemplateId) {
-      ...AppBatchInput_fragment
-    }
-    customer: node(id: $customerId) {
-      ... on Organization {
-        me {
-          displayName
-          role {
-            name {
-              value
-            }
-          }
-        }
-        name {
-          value
-        }
+  query AppQuery @throwOnFieldError {
+    user {
+      ...User_fragment
+      organizations {
+        ...AppSelectOwner_fragment
       }
     }
   }
 `;
 
 graphql`
-  fragment AppSimulation_fragment on TrackableConnection @throwOnFieldError {
-    __id
+  fragment AppSelectOwner_fragment on OrganizationConnection @throwOnFieldError {
     edges {
       node {
         id
-        ...AppBatch_fragment
+        name {
+          value
+        }
       }
     }
     totalCount
@@ -42,79 +26,40 @@ graphql`
 `;
 
 graphql`
-  fragment AppBatch_fragment on Task @throwOnFieldError {
-    id
-    fields {
-      edges {
-        node {
-          id
-          ...Field_fragment
-        }
-      }
-    }
-    fsm {
-      active {
+  query AppSelectedOwnerQuery($id: ID!) @throwOnFieldError {
+    node(id: $id) {
+      ... on Organization {
+        __typename
+        id
         name {
           value
         }
-        parent {
-          ... on Location {
+      }
+    }
+    templates(owner: $id) {
+      edges {
+        node {
+          asTask {
+            id
             name {
               value
             }
           }
         }
       }
+      totalCount
     }
-    name {
-      value
-    }
-    parent {
-      ... on Location {
+  }
+`;
+
+graphql`
+  query AppSelectedTemplateQuery($id: ID!) @throwOnFieldError {
+    node(id: $id) {
+      ... on Task {
+        __typename
+        id
         name {
           value
-        }
-      }
-    }
-    state {
-      __typename
-    }
-  }
-`;
-
-graphql`
-  fragment AppBatchInput_fragment on Task @throwOnFieldError {
-    fields {
-      edges {
-        node {
-          id
-          valueType
-          ...Field_fragment
-        }
-      }
-    }
-  }
-`;
-
-graphql`
-  mutation AppGenerateBatchMutation(
-    $batchTemplateId: ID!
-    $batchId: String!
-    $fields: [FieldInput!]!
-    $location: ID!
-    $connections: [ID!]!
-  ) {
-    createInstance(
-      template: $batchTemplateId
-      location: $location
-      name: $batchId
-      fields: $fields
-    ) {
-      edge {
-        node {
-          asTask @appendNode(connections: $connections, edgeTypeName: "TrackableEdge") {
-            ...AppBatch_fragment
-          }
         }
       }
     }

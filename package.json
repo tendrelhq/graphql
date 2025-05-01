@@ -3,9 +3,19 @@
   "private": true,
   "workspaces": ["packages/*"],
   "scripts": {
-    "clean": "git clean -dfx -e .direnv -e .env.local -e .envrc -e .pre-commit-config.yaml -e /data -e postgrestools.jsonc",
-    "server:build": "bun run --filter ./packages/server build",
-    "server:generate": "bun run --filter ./packages/server generate"
+    "clean": "git clean -dffx -e .direnv -e .env.local -e .envrc -e .pre-commit-config.yaml -e /data -e postgrestools.jsonc",
+    "format": "eval $TREEFMT",
+    "generate": "bun run --filter='./packages/*' generate",
+    "postgenerate": "bun format",
+    "install:clean": "bun clean && bun i",
+    "postinstall": "bun generate",
+    "server:build": "bun run --filter=./packages/server build",
+    "server:generate": "bun run --filter=./packages/server generate",
+    "simulator:generate": "bun run --filter=./packages/simulator generate",
+    "simulator:start": "bun run ./packages/simulator/src/main.tsx"
+  },
+  "dependencies": {
+    "zod": "^3.24.4"
   },
   "devDependencies": {
     "@biomejs/biome": "^1.9.4",
@@ -14,8 +24,5 @@
     "graphql-language-service-cli": "^3.5.0",
     "prettier": "^3.5.3",
     "typescript-language-server": "^4.3.4"
-  },
-  "patchedDependencies": {
-    "@ardatan/relay-compiler@12.0.0": "patches/@ardatan%2Frelay-compiler@12.0.0.patch"
   }
 }
