@@ -1,15 +1,15 @@
 import { Box, Spacer, Text, useInput } from "ink";
+import { useState } from "react";
 import { useFragment, useLazyLoadQuery } from "react-relay";
 import AppRootNode, { type AppQuery } from "../__generated__/AppQuery.graphql";
 import AppUserInfo, {
   type AppUserInfo_fragment$key,
 } from "../__generated__/AppUserInfo_fragment.graphql";
 import Help from "./Help";
-import { ModeGuard, useSimulatorMode, type Mode } from "./simulator/mode";
-import { useState } from "react";
+import { type Mode, ModeGuard, useSimulatorMode } from "./simulator/mode";
 
 export function App(props: { nodeId: string }) {
-  // const data = useLazyLoadQuery<AppQuery>(AppRootNode, props);
+  const data = useLazyLoadQuery<AppQuery>(AppRootNode, props);
   const mode = useSimulatorMode();
   const [isModeSelectActive, setIsModeSelectActive] = useState(false);
 
@@ -29,7 +29,7 @@ export function App(props: { nodeId: string }) {
 
   return (
     <Box flexDirection="column">
-      {/* <Header customer={data.customer} /> */}
+      <Header customer={data.customer} />
       <Box>
         <ModeSelect
           isActive={isModeSelectActive || mode.active === "%unset%"}

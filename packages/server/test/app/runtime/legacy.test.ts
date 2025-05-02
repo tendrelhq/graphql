@@ -13,7 +13,7 @@ import {
 } from "@/test/prelude";
 import { assert, assertNonNull, mapOrElse } from "@/util";
 import { Faker, base, en } from "@faker-js/faker";
-import { createCustomer } from "./prelude/canonical";
+import { createCustomer } from "../../../../simulator/corpus/runtime/legacy.config";
 import {
   TestRuntimeApplyFieldEditsMutationDocument,
   TestRuntimeDetailDocument,

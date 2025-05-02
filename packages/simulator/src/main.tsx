@@ -55,10 +55,10 @@ import { setup } from "./prelude";
 // between the lines, and are therefore interested in cross-location (i.e.
 // batch-level) progress. Doesn't matter. I made it up. Enjoy :)
 
-// const { customer, worker, factory, batchTemplate } = await setup().catch(e => {
-//   console.trace("error during setup", e);
-//   throw e;
-// });
+const { customer, worker, factory, batchTemplate } = await setup().catch(e => {
+  console.trace("error during setup", e);
+  throw e;
+});
 
 const fetchFn: FetchFunction = (params, variables) => {
   const res = fetch("http://localhost:4000", {
@@ -66,7 +66,8 @@ const fetchFn: FetchFunction = (params, variables) => {
     headers: {
       "Content-Type": "application/json",
       // TODO: OAuth.
-      "X-Tendrel-User": "",
+      // biome-ignore lint/style/noNonNullAssertion: FIXME
+      "X-Tendrel-User": process.env.X_TENDREL_USER!,
     },
     body: JSON.stringify({
       query: params.text,
@@ -286,7 +287,7 @@ const Main = () => {
       <Suspense>
         <RelayEnvironmentProvider environment={environment}>
           <ModeControl>
-            <App nodeId={""} />
+            <App nodeId={customer.id} />
           </ModeControl>
         </RelayEnvironmentProvider>
       </Suspense>

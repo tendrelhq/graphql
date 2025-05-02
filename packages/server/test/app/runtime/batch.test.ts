@@ -4,18 +4,18 @@ import { schema } from "@/schema/final";
 import { type Customer, createTestContext, execute } from "@/test/prelude";
 import { assert, assertNonNull, map, mapOrElse } from "@/util";
 import { Faker, en } from "@faker-js/faker";
+import { createCustomer } from "../../../../simulator/corpus/runtime/batch.config";
 import {
   AssignBatchMutationDocument,
   CreateBatchMutationDocument,
   TestBatchEntrypointDocument,
   TestListBatchTemplatesDocument,
 } from "./batch.test.generated";
-import { createCustomer } from "./prelude/batch";
 import {
   TestRuntimeEntrypointDocument,
   type TestRuntimeEntrypointQuery,
   TestRuntimeTransitionMutationDocument,
-} from "./runtime.test.generated";
+} from "./legacy.test.generated";
 
 const ctx = await createTestContext();
 

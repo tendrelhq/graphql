@@ -2,8 +2,6 @@ import { setCurrentIdentity } from "@/auth";
 import { sql } from "@/datasources/postgres";
 import type { Context } from "@/schema";
 import type { Location } from "@/schema/platform/archetype/location";
-import { type Customer, createEmptyCustomer } from "@/test/prelude";
-import { assertNonNull } from "@/util";
 import type { Faker } from "@faker-js/faker";
 import {
   DEFAULT_RUNTIME_CHILD_LOCATIONS,
@@ -11,7 +9,9 @@ import {
   createDefaultDowntimeTemplate,
   createDefaultIdleTimeTemplate,
   createDefaultRuntimeTemplate,
-} from "../prelude";
+} from "@/test/app/runtime/prelude";
+import { type Customer, createEmptyCustomer } from "@/test/prelude";
+import { assertNonNull } from "@/util";
 
 /**
  * Create the canonical Runtime customer, i.e. before Batch and Reason Codes

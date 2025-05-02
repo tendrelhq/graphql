@@ -2,8 +2,6 @@ import { setCurrentIdentity } from "@/auth";
 import { sql } from "@/datasources/postgres";
 import type { Context } from "@/schema";
 import type { Location } from "@/schema/platform/archetype/location";
-import { type Customer, createEmptyCustomer } from "@/test/prelude";
-import { assertNonNull } from "@/util";
 import {
   DEFAULT_RUNTIME_CHILD_LOCATIONS,
   DEFAULT_RUNTIME_LOCATION_TYPE,
@@ -11,7 +9,9 @@ import {
   createDefaultDowntimeTemplate,
   createDefaultIdleTimeTemplate,
   createDefaultRuntimeTemplate,
-} from "../prelude";
+} from "@/test/app/runtime/prelude";
+import { type Customer, createEmptyCustomer } from "@/test/prelude";
+import { assertNonNull } from "@/util";
 
 /**
  * Create a Batch-enabled Runtime customer. This is the latest and greatest
