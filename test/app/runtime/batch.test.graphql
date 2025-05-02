@@ -1,8 +1,10 @@
-query TestBatchEntrypoint($parent: ID!) {
+query TestBatchEntrypoint($parent: ID!, $includeTrackingIds: Boolean! = false) {
   trackables(parent: $parent, withImplementation: "Batch") {
     edges {
       node {
         ... on Task {
+          id @include(if: $includeTrackingIds)
+          hash
           name {
             value # Batch id/name/number (user defined)
           }
@@ -15,14 +17,38 @@ query TestBatchEntrypoint($parent: ID!) {
               }
             }
           }
+          chain {
+            edges {
+              node {
+                name {
+                  value
+                }
+                state {
+                  __typename
+                }
+              }
+            }
+          }
+          chainAgg(overType: ["Batch", "Runtime", "Downtime", "Idle Time"]) {
+            group
+            value
+          }
           fsm {
             active {
+              id
+              hash
+              name {
+                value
+              }
               parent {
                 ... on Location {
                   name {
                     value
                   }
                 }
+              }
+              state {
+                __typename
               }
             }
             transitions {
@@ -43,10 +69,49 @@ query TestBatchEntrypoint($parent: ID!) {
               }
             }
           }
+          state {
+            __typename
+          }
         }
       }
     }
   }
+}
+
+query TestListBatchTemplates($owner: ID!) {
+  owner: node(id: $owner) {
+    ... on Organization {
+      locations(search: { isSite: true }) {
+        edges {
+          node {
+            id
+          }
+        }
+      }
+    }
+  }
+  templates(owner: $owner, type: ["Batch"]) {
+    edges {
+      node {
+        asTask {
+          id
+          customer: field(byName: "Customer") {
+            ...FieldInput_fragment
+          }
+          productName: field(byName: "Product Name") {
+            ...FieldInput_fragment
+          }
+          sku: field(byName: "SKU") {
+            ...FieldInput_fragment
+          }
+        }
+      }
+    }
+  }
+}
+
+fragment FieldInput_fragment on Field {
+  id
 }
 
 mutation CreateBatchMutation(
@@ -83,8 +148,8 @@ mutation CreateBatchMutation(
   }
 }
 
-mutation AssignBatchMutation($node: ID!, $base: ID!) {
-  rebase(node: $node, base: $base) {
+mutation AssignBatchMutation($node: ID!, $base: ID!, $location: ID) {
+  rebase(node: $node, base: $base, location: $location) {
     name {
       value
     }

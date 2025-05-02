@@ -1,162 +1,765 @@
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
-import { setCurrentIdentity } from "@/auth";
 import { sql } from "@/datasources/postgres";
 import { schema } from "@/schema/final";
-import type { Location } from "@/schema/platform/archetype/location";
-import type { Task } from "@/schema/system/component/task";
-import {
-  type Customer,
-  assertTaskIsNamed,
-  assertTaskParentIs,
-  createEmptyCustomer,
-  createTestContext,
-  execute,
-  getFieldByName,
-} from "@/test/prelude";
-import { assert, assertNonNull } from "@/util";
+import { type Customer, createTestContext, execute } from "@/test/prelude";
+import { assert, assertNonNull, map, mapOrElse } from "@/util";
+import { Faker, en } from "@faker-js/faker";
 import {
   AssignBatchMutationDocument,
   CreateBatchMutationDocument,
   TestBatchEntrypointDocument,
+  TestListBatchTemplatesDocument,
 } from "./batch.test.generated";
-import { getLatestFsm, mostRecentInstance } from "./prelude";
+import { createCustomer } from "./prelude/batch";
 import {
-  TestRuntimeDetailDocument,
   TestRuntimeEntrypointDocument,
+  type TestRuntimeEntrypointQuery,
   TestRuntimeTransitionMutationDocument,
 } from "./runtime.test.generated";
 
 const ctx = await createTestContext();
 
+const seed = mapOrElse(
+  process.env.SEED,
+  seed => {
+    const s = Number.parseInt(seed);
+    assert(Number.isFinite(s), "invalid seed");
+    return s;
+  },
+  Date.now(),
+);
+const faker = new Faker({ locale: [en], seed });
+
+const customerName = seed.toString();
+
 describe("runtime + batch tracking", () => {
   // See beforeAll for initialization of these variables.
   let CUSTOMER: Customer;
-  let BATCH_TEMPLATE: Task;
-  let FACTORY: Location;
-  let MIXING_LINE: Location;
-  let FILL_LINE: Location;
-  let RUN_TEMPLATE: Task;
 
-  test("no batches at first", async () => {
-    const result = await execute(schema, TestBatchEntrypointDocument, {
-      parent: CUSTOMER.id,
-    });
-    expect(result.errors).toBeFalsy();
-    expect(result.data?.trackables?.edges?.length).toBe(0);
-  });
-
-  let batchId = 0;
-
-  test("create a new batch", async () => {
-    // Note that this only creates an *open* Batch instance. In particular, this
-    // would not show up on the current Runtime home screen.
-    const customer = await getFieldByName(BATCH_TEMPLATE, "Customer");
-    const productName = await getFieldByName(BATCH_TEMPLATE, "Product Name");
-    const sku = await getFieldByName(BATCH_TEMPLATE, "SKU");
-    const result = await execute(schema, CreateBatchMutationDocument, {
-      batchTemplateId: BATCH_TEMPLATE.id,
-      batchId: `Batch ${batchId++}`,
-      fields: [
-        {
-          field: customer.id,
-          valueType: customer.valueType,
-          value: { string: "Ross's Salsa" },
-        },
-        {
-          field: productName.id,
-          valueType: productName.valueType,
-          value: { string: "Mild Green Salsa" },
-        },
-        {
-          field: sku.id,
-          valueType: sku.valueType,
-          value: { string: "SLS-GRN-ML" },
-        },
-      ],
-      location: FACTORY.id,
-    });
-    expect(result.errors).toBeFalsy();
-    expect(result.data).toMatchSnapshot();
-  });
-
-  test("still no batches via the canonical entrypoint query", async () => {
+  let initialEntrypointData: TestRuntimeEntrypointQuery | null;
+  test("entrypoint query", async () => {
     const result = await execute(schema, TestRuntimeEntrypointDocument, {
       parent: CUSTOMER.id,
     });
     expect(result.errors).toBeFalsy();
-    expect(result.data).toMatchSnapshot();
+
+    expect(result.data?.trackables?.edges?.length).toBe(5);
+    expect(result.data?.trackables?.edges).toMatchObject([
+      {
+        node: {
+          name: {
+            value: "Mixing Line",
+          },
+          tracking: {
+            edges: [
+              {
+                node: {
+                  fsm: null, // Not an instance!
+                  name: {
+                    value: "Run",
+                  },
+                  state: null, // Not an instance!
+                },
+              },
+            ],
+          },
+        },
+      },
+      {
+        node: {
+          name: {
+            value: "Fill Line",
+          },
+        },
+      },
+      {
+        node: {
+          name: {
+            value: "Assembly Line",
+          },
+        },
+      },
+      {
+        node: {
+          name: {
+            value: "Cartoning Line",
+          },
+        },
+      },
+      {
+        node: {
+          name: {
+            value: "Packaging Line",
+          },
+        },
+      },
+    ]);
+
+    // biome-ignore lint/suspicious/noExplicitAny:
+    initialEntrypointData = result.data as any;
   });
 
-  test("but it shows up via the batch entrypoint query", async () => {
+  test.todo("the normal Runtime test suite", async () => {
+    //
+  });
+
+  test("batch entrypoint query", async () => {
     const result = await execute(schema, TestBatchEntrypointDocument, {
       parent: CUSTOMER.id,
     });
     expect(result.errors).toBeFalsy();
-    expect(result.data).toMatchSnapshot();
+    // We have yet to create any Batch instances!
+    expect(result.data?.trackables?.edges?.length).toBe(0);
   });
 
-  test("assign the batch", async () => {
-    const node = await RUN_TEMPLATE.instantiate(
-      {
-        location: MIXING_LINE.id,
-      },
-      ctx,
-    );
-    const base = await mostRecentInstance(BATCH_TEMPLATE);
-    expect(node.id).not.toBe(base.id);
+  test("create some batches", async () => {
+    const result0 = await execute(schema, TestListBatchTemplatesDocument, {
+      owner: CUSTOMER.id,
+    });
+    expect(result0.errors).toBeFalsy();
 
-    const result = await execute(schema, AssignBatchMutationDocument, {
-      node: node.id,
-      base: base.id,
+    const batchTemplate = assertNonNull(
+      result0.data?.templates?.edges?.at(0)?.node?.asTask,
+      "no batch template?",
+    );
+    const factory = assertNonNull(
+      result0.data?.owner.__typename === "Organization"
+        ? result0.data.owner.locations.edges.at(0)?.node
+        : undefined,
+      "no site?",
+    );
+
+    const customerField = assertNonNull(batchTemplate.customer?.id);
+    const productNameField = assertNonNull(batchTemplate.productName?.id);
+    const skuField = assertNonNull(batchTemplate.sku?.id);
+    for (let batchId = 0; batchId < 5; batchId++) {
+      const result = await execute(schema, CreateBatchMutationDocument, {
+        batchTemplateId: batchTemplate.id,
+        batchId: `Batch ${batchId}`,
+        fields: [
+          {
+            field: customerField,
+            value: { string: faker.company.name() },
+            valueType: "string",
+          },
+          {
+            field: productNameField,
+            value: { string: faker.commerce.productName() },
+            valueType: "string",
+          },
+          {
+            field: skuField,
+            value: { string: faker.commerce.isbn() },
+            valueType: "string",
+          },
+        ],
+        location: factory.id,
+      });
+      expect(result.errors).toBeFalsy();
+    }
+  });
+
+  test("entrypoint query has not changed", async () => {
+    const result = await execute(schema, TestRuntimeEntrypointDocument, {
+      parent: CUSTOMER.id,
+    });
+    expect(result.data).toEqual(initialEntrypointData);
+  });
+
+  test("batch query has updated", async () => {
+    const result = await execute(schema, TestBatchEntrypointDocument, {
+      parent: CUSTOMER.id,
     });
     expect(result.errors).toBeFalsy();
-    expect(result.data).toMatchObject({
-      rebase: {
-        name: {
-          value: "Run",
-        },
-        parent: {
+    // Most recent first.
+    expect(result.data?.trackables?.edges).toMatchObject([
+      {
+        node: {
           name: {
-            value: "Mixing Line",
+            value: "Batch 4",
+          },
+          fsm: {
+            active: {
+              // Batches are instantiated at the site-level, which have the same
+              // name as the customer (in this test).
+              parent: {
+                name: {
+                  value: customerName,
+                },
+              },
+              state: {
+                __typename: "Open",
+              },
+            },
+            transitions: {
+              edges: [],
+            },
           },
         },
-        root: {
+      },
+      {
+        node: {
+          name: {
+            value: "Batch 3",
+          },
+          fsm: {
+            active: {
+              // Batches are instantiated at the site-level, which have the same
+              // name as the customer (in this test).
+              parent: {
+                name: {
+                  value: customerName,
+                },
+              },
+              state: {
+                __typename: "Open",
+              },
+            },
+            transitions: {
+              edges: [],
+            },
+          },
+        },
+      },
+      {
+        node: {
+          name: {
+            value: "Batch 2",
+          },
+          fsm: {
+            active: {
+              // Batches are instantiated at the site-level, which have the same
+              // name as the customer (in this test).
+              parent: {
+                name: {
+                  value: customerName,
+                },
+              },
+              state: {
+                __typename: "Open",
+              },
+            },
+            transitions: {
+              edges: [],
+            },
+          },
+        },
+      },
+      {
+        node: {
+          name: {
+            value: "Batch 1",
+          },
+          fsm: {
+            active: {
+              // Batches are instantiated at the site-level, which have the same
+              // name as the customer (in this test).
+              parent: {
+                name: {
+                  value: customerName,
+                },
+              },
+              state: {
+                __typename: "Open",
+              },
+            },
+            transitions: {
+              edges: [],
+            },
+          },
+        },
+      },
+      {
+        node: {
           name: {
             value: "Batch 0",
           },
-        },
-        state: {
-          __typename: "Open",
+          fsm: {
+            active: {
+              // Batches are instantiated at the site-level, which have the same
+              // name as the customer (in this test).
+              parent: {
+                name: {
+                  value: customerName,
+                },
+              },
+              state: {
+                __typename: "Open",
+              },
+            },
+            transitions: {
+              edges: [],
+            },
+          },
         },
       },
-    });
+    ]);
   });
 
-  test("start the batch", async () => {
-    const t = await mostRecentInstance(BATCH_TEMPLATE);
-    const h = await t.hash();
-    const result = await execute(
+  test("assign all batches", async () => {
+    // We do this from the perspective of the entrypoint query, which is
+    // location-based. At each location we know we have an "on-demand" sitting
+    // there waiting for us to grab it. An important difference with the
+    // canonical configuration is that these "on-demand" tasks are actually
+    // worktemplates, not workinstances! We do not pre-create instances in this
+    // more modern configuration. An implication of this is that the "Start Run"
+    // button will return a *different Task* upon calling advance! On the
+    // frontend this will need handling, e.g. via a router call:
+    // ```typescript
+    // onComplete(result) {
+    //   if (result.root.id !== selectedTaskId) {
+    //     router.replace(...); // re-render with a different Task
+    //   }
+    // }
+    // ```
+    const entrypointQuery = await execute(
       schema,
-      TestRuntimeTransitionMutationDocument,
+      TestRuntimeEntrypointDocument,
       {
-        includeChain: false,
-        includeTransitionIds: true,
-        opts: {
-          fsm: {
-            id: t.id,
-            hash: h,
+        includeTrackingIds: true,
+        parent: CUSTOMER.id,
+      },
+    );
+    expect(entrypointQuery.errors).toBeFalsy();
+
+    const locations = assertNonNull(
+      entrypointQuery.data?.trackables?.edges?.map(e => {
+        assert(e.node?.__typename === "Location");
+        return assertNonNull(e.node) as typeof e.node & {
+          __typename: "Location";
+        };
+      }),
+      "no locations?",
+    );
+
+    const batchQuery = await execute(schema, TestBatchEntrypointDocument, {
+      includeTrackingIds: true,
+      parent: CUSTOMER.id,
+    });
+    expect(batchQuery.errors).toBeFalsy();
+
+    const batches = assertNonNull(
+      batchQuery.data?.trackables?.edges?.map(e => {
+        assert(e.node?.__typename === "Task");
+        return assertNonNull(e.node) as typeof e.node & { __typename: "Task" };
+      }),
+      "no batches?",
+    );
+
+    expect(locations.length).toBe(batches.length);
+
+    for (let i = 0; i < 5; i++) {
+      const batch = assertNonNull(batches.at(i)?.id);
+      const location = assertNonNull(locations.at(i));
+      const run = assertNonNull(
+        map(location.tracking?.edges?.at(0)?.node, node => {
+          assert(node.__typename === "Task");
+          return (node as typeof node & { __typename: "Task" }).id;
+        }),
+      );
+      const result = await execute(schema, AssignBatchMutationDocument, {
+        base: batch,
+        node: run,
+        location: location.id,
+      });
+      expect(result.errors).toBeFalsy();
+    }
+  });
+
+  test("batches open, runs opens", async () => {
+    const batchQuery = await execute(schema, TestBatchEntrypointDocument, {
+      parent: CUSTOMER.id,
+    });
+    expect(batchQuery.errors).toBeFalsy();
+    // Most recent first.
+    expect(batchQuery.data?.trackables?.edges).toMatchObject([
+      {
+        node: {
+          name: {
+            value: "Batch 4",
           },
-          task: {
-            id: t.id,
-            hash: h,
+          fsm: {
+            active: {
+              name: {
+                value: "Run",
+              },
+              parent: {
+                name: {
+                  value: "Mixing Line",
+                },
+              },
+              state: {
+                __typename: "Open",
+              },
+            },
+            transitions: {
+              edges: [],
+            },
+          },
+          state: {
+            __typename: "Open",
           },
         },
       },
+      {
+        node: {
+          name: {
+            value: "Batch 3",
+          },
+          fsm: {
+            active: {
+              name: {
+                value: "Run",
+              },
+              parent: {
+                name: {
+                  value: "Fill Line",
+                },
+              },
+              state: {
+                __typename: "Open",
+              },
+            },
+            transitions: {
+              edges: [],
+            },
+          },
+          state: {
+            __typename: "Open",
+          },
+        },
+      },
+      {
+        node: {
+          name: {
+            value: "Batch 2",
+          },
+          fsm: {
+            active: {
+              name: {
+                value: "Run",
+              },
+              parent: {
+                name: {
+                  value: "Assembly Line",
+                },
+              },
+              state: {
+                __typename: "Open",
+              },
+            },
+            transitions: {
+              edges: [],
+            },
+          },
+          state: {
+            __typename: "Open",
+          },
+        },
+      },
+      {
+        node: {
+          name: {
+            value: "Batch 1",
+          },
+          fsm: {
+            active: {
+              name: {
+                value: "Run",
+              },
+              parent: {
+                name: {
+                  value: "Cartoning Line",
+                },
+              },
+              state: {
+                __typename: "Open",
+              },
+            },
+            transitions: {
+              edges: [],
+            },
+          },
+          state: {
+            __typename: "Open",
+          },
+        },
+      },
+      {
+        node: {
+          name: {
+            value: "Batch 0",
+          },
+          fsm: {
+            active: {
+              name: {
+                value: "Run",
+              },
+              parent: {
+                name: {
+                  value: "Packaging Line",
+                },
+              },
+              state: {
+                __typename: "Open",
+              },
+            },
+            transitions: {
+              edges: [],
+            },
+          },
+          state: {
+            __typename: "Open",
+          },
+        },
+      },
+    ]);
+
+    const entrypointQuery = await execute(
+      schema,
+      TestRuntimeEntrypointDocument,
+      {
+        parent: CUSTOMER.id,
+      },
     );
-    expect(result.errors).toBeFalsy();
-    expect(result.data).toMatchObject({
-      advance: {
-        root: {
+    expect(entrypointQuery.errors).toBeFalsy();
+
+    expect(entrypointQuery.data?.trackables?.edges?.length).toBe(5);
+    expect(entrypointQuery.data?.trackables?.edges).toMatchObject([
+      {
+        node: {
+          name: {
+            value: "Mixing Line",
+          },
+          tracking: {
+            edges: [
+              {
+                node: {
+                  name: {
+                    value: "Run",
+                  },
+                  parent: {
+                    name: {
+                      value: "Mixing Line",
+                    },
+                  },
+                  root: {
+                    name: {
+                      value: "Batch 4",
+                    },
+                    parent: {
+                      name: {
+                        value: customerName,
+                      },
+                    },
+                  },
+                  state: {
+                    __typename: "Open",
+                  },
+                },
+              },
+            ],
+          },
+        },
+      },
+      {
+        node: {
+          name: {
+            value: "Fill Line",
+          },
+          tracking: {
+            edges: [
+              {
+                node: {
+                  name: {
+                    value: "Run",
+                  },
+                  parent: {
+                    name: {
+                      value: "Fill Line",
+                    },
+                  },
+                  root: {
+                    name: {
+                      value: "Batch 3",
+                    },
+                    parent: {
+                      name: {
+                        value: customerName,
+                      },
+                    },
+                  },
+                  state: {
+                    __typename: "Open",
+                  },
+                },
+              },
+            ],
+          },
+        },
+      },
+      {
+        node: {
+          name: {
+            value: "Assembly Line",
+          },
+          tracking: {
+            edges: [
+              {
+                node: {
+                  name: {
+                    value: "Run",
+                  },
+                  parent: {
+                    name: {
+                      value: "Assembly Line",
+                    },
+                  },
+                  root: {
+                    name: {
+                      value: "Batch 2",
+                    },
+                    parent: {
+                      name: {
+                        value: customerName,
+                      },
+                    },
+                  },
+                  state: {
+                    __typename: "Open",
+                  },
+                },
+              },
+            ],
+          },
+        },
+      },
+      {
+        node: {
+          name: {
+            value: "Cartoning Line",
+          },
+          tracking: {
+            edges: [
+              {
+                node: {
+                  name: {
+                    value: "Run",
+                  },
+                  parent: {
+                    name: {
+                      value: "Cartoning Line",
+                    },
+                  },
+                  root: {
+                    name: {
+                      value: "Batch 1",
+                    },
+                    parent: {
+                      name: {
+                        value: customerName,
+                      },
+                    },
+                  },
+                  state: {
+                    __typename: "Open",
+                  },
+                },
+              },
+            ],
+          },
+        },
+      },
+      {
+        node: {
+          name: {
+            value: "Packaging Line",
+          },
+          tracking: {
+            edges: [
+              {
+                node: {
+                  name: {
+                    value: "Run",
+                  },
+                  parent: {
+                    name: {
+                      value: "Packaging Line",
+                    },
+                  },
+                  root: {
+                    name: {
+                      value: "Batch 0",
+                    },
+                    parent: {
+                      name: {
+                        value: customerName,
+                      },
+                    },
+                  },
+                  state: {
+                    __typename: "Open",
+                  },
+                },
+              },
+            ],
+          },
+        },
+      },
+    ]);
+  });
+
+  test("start all batches", async () => {
+    const batchQuery = await execute(schema, TestBatchEntrypointDocument, {
+      includeTrackingIds: true,
+      parent: CUSTOMER.id,
+    });
+    expect(batchQuery.errors).toBeFalsy();
+
+    const batches = assertNonNull(
+      batchQuery.data?.trackables?.edges?.map(e => {
+        assert(e.node?.__typename === "Task");
+        return assertNonNull(e.node) as typeof e.node & { __typename: "Task" };
+      }),
+      "no batches?",
+    );
+
+    expect(batches.length).toBe(5);
+    for (const batch of batches) {
+      const batchId = assertNonNull(batch.id);
+      const hash = assertNonNull(batch.hash);
+      const result = await execute(
+        schema,
+        TestRuntimeTransitionMutationDocument,
+        {
+          opts: {
+            fsm: {
+              id: batchId,
+              hash: hash,
+            },
+            task: {
+              id: batchId,
+              hash: hash,
+            },
+          },
+        },
+      );
+      expect(result.errors).toBeFalsy();
+    }
+  });
+
+  test("batches in-progress, runs remain open", async () => {
+    const batchQuery = await execute(schema, TestBatchEntrypointDocument, {
+      parent: CUSTOMER.id,
+    });
+    expect(batchQuery.errors).toBeFalsy();
+    // Most recent first.
+    expect(batchQuery.data?.trackables?.edges).toMatchObject([
+      {
+        node: {
+          name: {
+            value: "Batch 4",
+          },
           fsm: {
             active: {
               name: {
@@ -172,601 +775,1144 @@ describe("runtime + batch tracking", () => {
               },
             },
           },
+          state: {
+            __typename: "InProgress",
+          },
         },
       },
+      {
+        node: {
+          name: {
+            value: "Batch 3",
+          },
+          fsm: {
+            active: {
+              name: {
+                value: "Run",
+              },
+              parent: {
+                name: {
+                  value: "Fill Line",
+                },
+              },
+              state: {
+                __typename: "Open",
+              },
+            },
+          },
+          state: {
+            __typename: "InProgress",
+          },
+        },
+      },
+      {
+        node: {
+          name: {
+            value: "Batch 2",
+          },
+          fsm: {
+            active: {
+              name: {
+                value: "Run",
+              },
+              parent: {
+                name: {
+                  value: "Assembly Line",
+                },
+              },
+              state: {
+                __typename: "Open",
+              },
+            },
+          },
+          state: {
+            __typename: "InProgress",
+          },
+        },
+      },
+      {
+        node: {
+          name: {
+            value: "Batch 1",
+          },
+          fsm: {
+            active: {
+              name: {
+                value: "Run",
+              },
+              parent: {
+                name: {
+                  value: "Cartoning Line",
+                },
+              },
+              state: {
+                __typename: "Open",
+              },
+            },
+          },
+          state: {
+            __typename: "InProgress",
+          },
+        },
+      },
+      {
+        node: {
+          name: {
+            value: "Batch 0",
+          },
+          fsm: {
+            active: {
+              name: {
+                value: "Run",
+              },
+              parent: {
+                name: {
+                  value: "Packaging Line",
+                },
+              },
+              state: {
+                __typename: "Open",
+              },
+            },
+          },
+          state: {
+            __typename: "InProgress",
+          },
+        },
+      },
+    ]);
+
+    const entrypointQuery = await execute(
+      schema,
+      TestRuntimeEntrypointDocument,
+      {
+        parent: CUSTOMER.id,
+      },
+    );
+    expect(entrypointQuery.errors).toBeFalsy();
+
+    expect(entrypointQuery.data?.trackables?.edges?.length).toBe(5);
+    expect(entrypointQuery.data?.trackables?.edges).toMatchObject([
+      {
+        node: {
+          name: {
+            value: "Mixing Line",
+          },
+          tracking: {
+            edges: [
+              {
+                node: {
+                  name: {
+                    value: "Run",
+                  },
+                  parent: {
+                    name: {
+                      value: "Mixing Line",
+                    },
+                  },
+                  root: {
+                    name: {
+                      value: "Batch 4",
+                    },
+                    parent: {
+                      name: {
+                        value: customerName,
+                      },
+                    },
+                  },
+                  state: {
+                    __typename: "Open",
+                  },
+                },
+              },
+            ],
+          },
+        },
+      },
+      {
+        node: {
+          name: {
+            value: "Fill Line",
+          },
+          tracking: {
+            edges: [
+              {
+                node: {
+                  name: {
+                    value: "Run",
+                  },
+                  parent: {
+                    name: {
+                      value: "Fill Line",
+                    },
+                  },
+                  root: {
+                    name: {
+                      value: "Batch 3",
+                    },
+                    parent: {
+                      name: {
+                        value: customerName,
+                      },
+                    },
+                  },
+                  state: {
+                    __typename: "Open",
+                  },
+                },
+              },
+            ],
+          },
+        },
+      },
+      {
+        node: {
+          name: {
+            value: "Assembly Line",
+          },
+          tracking: {
+            edges: [
+              {
+                node: {
+                  name: {
+                    value: "Run",
+                  },
+                  parent: {
+                    name: {
+                      value: "Assembly Line",
+                    },
+                  },
+                  root: {
+                    name: {
+                      value: "Batch 2",
+                    },
+                    parent: {
+                      name: {
+                        value: customerName,
+                      },
+                    },
+                  },
+                  state: {
+                    __typename: "Open",
+                  },
+                },
+              },
+            ],
+          },
+        },
+      },
+      {
+        node: {
+          name: {
+            value: "Cartoning Line",
+          },
+          tracking: {
+            edges: [
+              {
+                node: {
+                  name: {
+                    value: "Run",
+                  },
+                  parent: {
+                    name: {
+                      value: "Cartoning Line",
+                    },
+                  },
+                  root: {
+                    name: {
+                      value: "Batch 1",
+                    },
+                    parent: {
+                      name: {
+                        value: customerName,
+                      },
+                    },
+                  },
+                  state: {
+                    __typename: "Open",
+                  },
+                },
+              },
+            ],
+          },
+        },
+      },
+      {
+        node: {
+          name: {
+            value: "Packaging Line",
+          },
+          tracking: {
+            edges: [
+              {
+                node: {
+                  name: {
+                    value: "Run",
+                  },
+                  parent: {
+                    name: {
+                      value: "Packaging Line",
+                    },
+                  },
+                  root: {
+                    name: {
+                      value: "Batch 0",
+                    },
+                    parent: {
+                      name: {
+                        value: customerName,
+                      },
+                    },
+                  },
+                  state: {
+                    __typename: "Open",
+                  },
+                },
+              },
+            ],
+          },
+        },
+      },
+    ]);
+  });
+
+  test("start all runs", async () => {
+    const batchQuery = await execute(schema, TestBatchEntrypointDocument, {
+      includeTrackingIds: true,
+      parent: CUSTOMER.id,
     });
-  });
+    expect(batchQuery.errors).toBeFalsy();
 
-  test("start run @ mixing line", async () => {
-    // We should already have an *open* Run instance at the Mixing Line because
-    // we rebased onto the Batch in an earlier test!
-    const { fsm, root } = await getLatestFsm(BATCH_TEMPLATE);
-    const active = assertNonNull(fsm.active, "should be active");
-    assertTaskIsNamed(active, "Run", ctx);
-    assertTaskParentIs(active, MIXING_LINE);
+    const batches = assertNonNull(
+      batchQuery.data?.trackables?.edges?.map(e => {
+        assert(e.node?.__typename === "Task");
+        return assertNonNull(e.node) as typeof e.node & { __typename: "Task" };
+      }),
+      "no batches?",
+    );
 
-    const startRun = await execute(
-      schema,
-      TestRuntimeTransitionMutationDocument,
-      {
-        includeChain: true,
-        opts: {
-          fsm: {
-            id: root.id,
-            hash: await root.hash(),
-          },
-          task: {
-            id: active.id,
-            hash: await active.hash(),
+    expect(batches.length).toBe(5);
+    for (const batch of batches) {
+      const result = await execute(
+        schema,
+        TestRuntimeTransitionMutationDocument,
+        {
+          opts: {
+            fsm: {
+              id: assertNonNull(batch.id),
+              hash: assertNonNull(batch.hash),
+            },
+            task: {
+              id: assertNonNull(batch.fsm?.active?.id),
+              hash: assertNonNull(batch.fsm?.active?.hash),
+            },
           },
         },
-      },
-    );
-    expect(startRun.errors).toBeFalsy();
-    expect(startRun.data?.advance?.root?.fsm?.active).toMatchSnapshot();
+      );
+      expect(result.errors).toBeFalsy();
+    }
   });
 
-  test("end run @ mixing line", async () => {
-    const { fsm, root } = await getLatestFsm(BATCH_TEMPLATE);
-    const active = assertNonNull(fsm.active, "should be active");
-    assertTaskIsNamed(active, "Run", ctx);
-
-    const finishRun = await execute(
-      schema,
-      TestRuntimeTransitionMutationDocument,
-      {
-        includeChain: true,
-        opts: {
-          fsm: {
-            id: root.id,
-            hash: await root.hash(),
-          },
-          task: {
-            id: active.id,
-            hash: await active.hash(),
-          },
-        },
-      },
-    );
-    expect(finishRun.errors).toBeFalsy();
-    expect(finishRun.data?.advance?.root?.fsm?.active).toMatchSnapshot();
-    expect(finishRun.data?.advance?.root?.chain).toMatchSnapshot();
-  });
-
-  test("start run @ fill line", async () => {
-    // The engine will have created a Run instance at the Fill Line, as per the
-    // transitions we configure in the `beforeAll` phase.
-    const { fsm, root } = await getLatestFsm(BATCH_TEMPLATE);
-    const active = assertNonNull(fsm.active, "should be active");
-    assertTaskIsNamed(active, "Run", ctx);
-    assertTaskParentIs(active, FILL_LINE);
-
-    const startRun = await execute(
-      schema,
-      TestRuntimeTransitionMutationDocument,
-      {
-        includeChain: true,
-        opts: {
-          fsm: {
-            id: root.id,
-            hash: await root.hash(),
-          },
-          task: {
-            id: active.id,
-            hash: await active.hash(),
-          },
-        },
-      },
-    );
-    expect(startRun.errors).toBeFalsy();
-    expect(startRun.data?.advance?.root?.fsm?.active).toMatchSnapshot();
-  });
-
-  test("start downtime @ fill line", async () => {
-    const { fsm, root } = await getLatestFsm(BATCH_TEMPLATE);
-    const choice = assertNonNull(
-      fsm.transitions?.edges.at(0),
-      "should have transitions",
-    );
-    // N.B. see below where we create these templates and explicitly assign them
-    // an order. Downtime gets to go first :party:
-    assertTaskIsNamed(choice.node, "Downtime", ctx);
-
-    const startDowntime = await execute(
-      schema,
-      TestRuntimeTransitionMutationDocument,
-      {
-        includeChain: true,
-        opts: {
-          fsm: {
-            id: root.id,
-            hash: await root.hash(),
-          },
-          task: {
-            id: choice.id,
-            hash: await choice.node.hash(),
-          },
-        },
-      },
-    );
-    expect(startDowntime.errors).toBeFalsy();
-    expect(startDowntime.data?.advance?.root?.fsm?.active).toMatchSnapshot();
-  });
-
-  test("end downtime @ fill line", async () => {
-    const { fsm, root } = await getLatestFsm(BATCH_TEMPLATE);
-    const active = assertNonNull(fsm.active, "should be active");
-    assertTaskIsNamed(active, "Downtime", ctx);
-    assertTaskParentIs(active, FILL_LINE);
-
-    const finishDowntime = await execute(
-      schema,
-      TestRuntimeTransitionMutationDocument,
-      {
-        includeChain: true,
-        opts: {
-          fsm: {
-            id: root.id,
-            hash: await root.hash(),
-          },
-          task: {
-            id: active.id,
-            hash: await active.hash(),
-          },
-        },
-      },
-    );
-    expect(finishDowntime.errors).toBeFalsy();
-    expect(finishDowntime.data?.advance?.root?.fsm?.active).toMatchSnapshot();
-    expect(finishDowntime.data?.advance?.root?.chain).toMatchSnapshot();
-  });
-
-  test("end run @ fill line", async () => {
-    const { fsm, root } = await getLatestFsm(BATCH_TEMPLATE);
-    const active = assertNonNull(fsm.active, "should be active");
-    assertTaskIsNamed(active, "Run", ctx);
-
-    const finishRun = await execute(
-      schema,
-      TestRuntimeTransitionMutationDocument,
-      {
-        includeChain: true,
-        opts: {
-          fsm: {
-            id: root.id,
-            hash: await root.hash(),
-          },
-          task: {
-            id: active.id,
-            hash: await active.hash(),
-          },
-        },
-      },
-    );
-    expect(finishRun.errors).toBeFalsy();
-    expect(finishRun.data?.advance?.root?.fsm?.active).toMatchSnapshot();
-    expect(finishRun.data?.advance?.root?.chain).toMatchSnapshot();
-  });
-
-  test("close out the batch", async () => {
-    const { root } = await getLatestFsm(BATCH_TEMPLATE);
-    const rootHash = await root.hash();
-    const result = await execute(
-      schema,
-      TestRuntimeTransitionMutationDocument,
-      {
-        includeChain: false,
-        opts: {
-          fsm: {
-            id: root.id,
-            hash: rootHash,
-          },
-          task: {
-            id: root.id,
-            hash: rootHash,
-          },
-        },
-      },
-    );
-    expect(result.errors).toBeFalsy();
-    expect(result.data).toMatchSnapshot();
-  });
-
-  test("closed batch view", async () => {
-    const i = await mostRecentInstance(BATCH_TEMPLATE);
-    const result = await execute(schema, TestRuntimeDetailDocument, {
-      node: i.id,
-      overTypes: ["Batch", "Downtime", "Runtime"],
-      includeChainParents: true,
+  test("batches in-progress, runs in-progress", async () => {
+    const batchQuery = await execute(schema, TestBatchEntrypointDocument, {
+      parent: CUSTOMER.id,
     });
-    expect(result.errors).toBeFalsy();
-    expect(result.data).toMatchObject({
-      node: {
-        chain: {
-          edges: [
-            {
-              node: {
+    expect(batchQuery.errors).toBeFalsy();
+    // Most recent first.
+    expect(batchQuery.data?.trackables?.edges).toMatchObject([
+      {
+        node: {
+          name: {
+            value: "Batch 4",
+          },
+          fsm: {
+            active: {
+              name: {
+                value: "Run",
+              },
+              parent: {
                 name: {
-                  value: "Batch 0",
+                  value: "Mixing Line",
                 },
-                parent: {
-                  name: {
-                    value: "Frozen Tendy Factory",
-                  },
-                },
-                state: {
-                  __typename: "Closed",
-                },
+              },
+              state: {
+                __typename: "InProgress",
               },
             },
-            {
-              node: {
+          },
+          state: {
+            __typename: "InProgress",
+          },
+        },
+      },
+      {
+        node: {
+          name: {
+            value: "Batch 3",
+          },
+          fsm: {
+            active: {
+              name: {
+                value: "Run",
+              },
+              parent: {
                 name: {
-                  value: "Run",
+                  value: "Fill Line",
                 },
-                parent: {
-                  name: {
-                    value: "Mixing Line",
-                  },
-                },
-                state: {
-                  __typename: "Closed",
-                },
+              },
+              state: {
+                __typename: "InProgress",
               },
             },
-            {
-              node: {
+          },
+          state: {
+            __typename: "InProgress",
+          },
+        },
+      },
+      {
+        node: {
+          name: {
+            value: "Batch 2",
+          },
+          fsm: {
+            active: {
+              name: {
+                value: "Run",
+              },
+              parent: {
                 name: {
-                  value: "Run",
+                  value: "Assembly Line",
                 },
-                parent: {
-                  name: {
-                    value: "Fill Line",
-                  },
-                },
-                state: {
-                  __typename: "Closed",
-                },
+              },
+              state: {
+                __typename: "InProgress",
               },
             },
-            {
-              node: {
+          },
+          state: {
+            __typename: "InProgress",
+          },
+        },
+      },
+      {
+        node: {
+          name: {
+            value: "Batch 1",
+          },
+          fsm: {
+            active: {
+              name: {
+                value: "Run",
+              },
+              parent: {
                 name: {
-                  value: "Downtime",
+                  value: "Cartoning Line",
                 },
-                state: {
-                  __typename: "Closed",
-                },
+              },
+              state: {
+                __typename: "InProgress",
               },
             },
-            // TODO: Cascade when operating on the root?
-            // Or, ideally, any ancestor.
-            {
-              node: {
+          },
+          state: {
+            __typename: "InProgress",
+          },
+        },
+      },
+      {
+        node: {
+          name: {
+            value: "Batch 0",
+          },
+          fsm: {
+            active: {
+              name: {
+                value: "Run",
+              },
+              parent: {
                 name: {
-                  value: "Run",
-                },
-                parent: {
-                  name: {
-                    value: "Assembly Line",
-                  },
-                },
-                state: {
-                  __typename: "Open",
+                  value: "Packaging Line",
                 },
               },
+              state: {
+                __typename: "InProgress",
+              },
+            },
+          },
+          state: {
+            __typename: "InProgress",
+          },
+        },
+      },
+    ]);
+
+    const entrypointQuery = await execute(
+      schema,
+      TestRuntimeEntrypointDocument,
+      {
+        parent: CUSTOMER.id,
+      },
+    );
+    expect(entrypointQuery.errors).toBeFalsy();
+
+    expect(entrypointQuery.data?.trackables?.edges?.length).toBe(5);
+    expect(entrypointQuery.data?.trackables?.edges).toMatchObject([
+      {
+        node: {
+          name: {
+            value: "Mixing Line",
+          },
+          tracking: {
+            edges: [
+              {
+                node: {
+                  name: {
+                    value: "Run",
+                  },
+                  parent: {
+                    name: {
+                      value: "Mixing Line",
+                    },
+                  },
+                  root: {
+                    name: {
+                      value: "Batch 4",
+                    },
+                    parent: {
+                      name: {
+                        value: customerName,
+                      },
+                    },
+                  },
+                  state: {
+                    __typename: "InProgress",
+                  },
+                },
+              },
+            ],
+          },
+        },
+      },
+      {
+        node: {
+          name: {
+            value: "Fill Line",
+          },
+          tracking: {
+            edges: [
+              {
+                node: {
+                  name: {
+                    value: "Run",
+                  },
+                  parent: {
+                    name: {
+                      value: "Fill Line",
+                    },
+                  },
+                  root: {
+                    name: {
+                      value: "Batch 3",
+                    },
+                    parent: {
+                      name: {
+                        value: customerName,
+                      },
+                    },
+                  },
+                  state: {
+                    __typename: "InProgress",
+                  },
+                },
+              },
+            ],
+          },
+        },
+      },
+      {
+        node: {
+          name: {
+            value: "Assembly Line",
+          },
+          tracking: {
+            edges: [
+              {
+                node: {
+                  name: {
+                    value: "Run",
+                  },
+                  parent: {
+                    name: {
+                      value: "Assembly Line",
+                    },
+                  },
+                  root: {
+                    name: {
+                      value: "Batch 2",
+                    },
+                    parent: {
+                      name: {
+                        value: customerName,
+                      },
+                    },
+                  },
+                  state: {
+                    __typename: "InProgress",
+                  },
+                },
+              },
+            ],
+          },
+        },
+      },
+      {
+        node: {
+          name: {
+            value: "Cartoning Line",
+          },
+          tracking: {
+            edges: [
+              {
+                node: {
+                  name: {
+                    value: "Run",
+                  },
+                  parent: {
+                    name: {
+                      value: "Cartoning Line",
+                    },
+                  },
+                  root: {
+                    name: {
+                      value: "Batch 1",
+                    },
+                    parent: {
+                      name: {
+                        value: customerName,
+                      },
+                    },
+                  },
+                  state: {
+                    __typename: "InProgress",
+                  },
+                },
+              },
+            ],
+          },
+        },
+      },
+      {
+        node: {
+          name: {
+            value: "Packaging Line",
+          },
+          tracking: {
+            edges: [
+              {
+                node: {
+                  name: {
+                    value: "Run",
+                  },
+                  parent: {
+                    name: {
+                      value: "Packaging Line",
+                    },
+                  },
+                  root: {
+                    name: {
+                      value: "Batch 0",
+                    },
+                    parent: {
+                      name: {
+                        value: customerName,
+                      },
+                    },
+                  },
+                  state: {
+                    __typename: "InProgress",
+                  },
+                },
+              },
+            ],
+          },
+        },
+      },
+    ]);
+  });
+
+  test("close all runs", async () => {
+    const batchQuery = await execute(schema, TestBatchEntrypointDocument, {
+      includeTrackingIds: true,
+      parent: CUSTOMER.id,
+    });
+    expect(batchQuery.errors).toBeFalsy();
+
+    const batches = assertNonNull(
+      batchQuery.data?.trackables?.edges?.map(e => {
+        assert(e.node?.__typename === "Task");
+        return assertNonNull(e.node) as typeof e.node & { __typename: "Task" };
+      }),
+      "no batches?",
+    );
+
+    expect(batches.length).toBe(5);
+    for (const batch of batches) {
+      const result = await execute(
+        schema,
+        TestRuntimeTransitionMutationDocument,
+        {
+          opts: {
+            fsm: {
+              id: assertNonNull(batch.id),
+              hash: assertNonNull(batch.hash),
+            },
+            task: {
+              id: assertNonNull(batch.fsm?.active?.id),
+              hash: assertNonNull(batch.fsm?.active?.hash),
+            },
+          },
+        },
+      );
+      expect(result.errors).toBeFalsy();
+    }
+  });
+
+  test("batches in-progress, runs closed", async () => {
+    const batchQuery = await execute(schema, TestBatchEntrypointDocument, {
+      parent: CUSTOMER.id,
+    });
+    expect(batchQuery.errors).toBeFalsy();
+    // Most recent first.
+    expect(batchQuery.data?.trackables?.edges).toMatchObject([
+      {
+        node: {
+          name: {
+            value: "Batch 4",
+          },
+          fsm: {
+            active: {
+              name: {
+                value: "Batch 4",
+              },
+              parent: {
+                name: {
+                  value: customerName,
+                },
+              },
+              state: {
+                __typename: "InProgress",
+              },
+            },
+          },
+          state: {
+            __typename: "InProgress",
+          },
+        },
+      },
+      {
+        node: {
+          name: {
+            value: "Batch 3",
+          },
+          fsm: {
+            active: {
+              name: {
+                value: "Batch 3",
+              },
+              parent: {
+                name: {
+                  value: customerName,
+                },
+              },
+              state: {
+                __typename: "InProgress",
+              },
+            },
+          },
+          state: {
+            __typename: "InProgress",
+          },
+        },
+      },
+      {
+        node: {
+          name: {
+            value: "Batch 2",
+          },
+          fsm: {
+            active: {
+              name: {
+                value: "Batch 2",
+              },
+              parent: {
+                name: {
+                  value: customerName,
+                },
+              },
+              state: {
+                __typename: "InProgress",
+              },
+            },
+          },
+          state: {
+            __typename: "InProgress",
+          },
+        },
+      },
+      {
+        node: {
+          name: {
+            value: "Batch 1",
+          },
+          fsm: {
+            active: {
+              name: {
+                value: "Batch 1",
+              },
+              parent: {
+                name: {
+                  value: customerName,
+                },
+              },
+              state: {
+                __typename: "InProgress",
+              },
+            },
+          },
+          state: {
+            __typename: "InProgress",
+          },
+        },
+      },
+      {
+        node: {
+          name: {
+            value: "Batch 0",
+          },
+          fsm: {
+            active: {
+              name: {
+                value: "Batch 0",
+              },
+              parent: {
+                name: {
+                  value: customerName,
+                },
+              },
+              state: {
+                __typename: "InProgress",
+              },
+            },
+          },
+          state: {
+            __typename: "InProgress",
+          },
+        },
+      },
+    ]);
+
+    const entrypointQuery = await execute(
+      schema,
+      TestRuntimeEntrypointDocument,
+      {
+        parent: CUSTOMER.id,
+      },
+    );
+    expect(entrypointQuery.errors).toBeFalsy();
+
+    expect(entrypointQuery.data?.trackables?.edges?.length).toBe(5);
+    expect(entrypointQuery.data).toEqual(initialEntrypointData);
+  });
+
+  test("close all batches", async () => {
+    const batchQuery = await execute(schema, TestBatchEntrypointDocument, {
+      includeTrackingIds: true,
+      parent: CUSTOMER.id,
+    });
+    expect(batchQuery.errors).toBeFalsy();
+
+    const batches = assertNonNull(
+      batchQuery.data?.trackables?.edges?.map(e => {
+        assert(e.node?.__typename === "Task");
+        return assertNonNull(e.node) as typeof e.node & { __typename: "Task" };
+      }),
+      "no batches?",
+    );
+
+    expect(batches.length).toBe(5);
+    for (const batch of batches) {
+      const batchId = assertNonNull(batch.id);
+      const hash = assertNonNull(batch.hash);
+      const result = await execute(
+        schema,
+        TestRuntimeTransitionMutationDocument,
+        {
+          opts: {
+            fsm: {
+              id: batchId,
+              hash: hash,
+            },
+            task: {
+              id: batchId,
+              hash: hash,
+            },
+          },
+        },
+      );
+      expect(result.errors).toBeFalsy();
+    }
+  });
+
+  test("batches closed, runs closed", async () => {
+    const batchQuery = await execute(schema, TestBatchEntrypointDocument, {
+      parent: CUSTOMER.id,
+    });
+    expect(batchQuery.errors).toBeFalsy();
+    // Most recent first.
+    expect(batchQuery.data?.trackables?.edges).toMatchObject([
+      {
+        node: {
+          name: {
+            value: "Batch 4",
+          },
+          chain: {
+            edges: [
+              {
+                node: {
+                  name: {
+                    value: "Batch 4",
+                  },
+                  state: {
+                    __typename: "Closed",
+                  },
+                },
+              },
+              {
+                node: {
+                  name: {
+                    value: "Run",
+                  },
+                  state: {
+                    __typename: "Closed",
+                  },
+                },
+              },
+            ],
+          },
+          chainAgg: [
+            {
+              group: "Batch",
+              value: expect.stringMatching(/\d+.\d+/),
+            },
+            {
+              group: "Runtime",
+              value: expect.stringMatching(/\d+.\d+/),
             },
           ],
-          totalCount: 5,
-        },
-        chainAgg: [
-          {
-            group: "Batch",
-            value: expect.stringMatching(/\d+.\d+/),
-          },
-          {
-            group: "Downtime",
-            value: expect.stringMatching(/\d+.\d+/),
-          },
-          {
-            group: "Runtime",
-            value: expect.stringMatching(/\d+.\d+/),
-          },
-        ],
-        parent: {
-          name: {
-            value: "Frozen Tendy Factory",
+          fsm: null,
+          state: {
+            __typename: "Closed",
           },
         },
       },
-    });
+      {
+        node: {
+          name: {
+            value: "Batch 3",
+          },
+          chain: {
+            edges: [
+              {
+                node: {
+                  name: {
+                    value: "Batch 3",
+                  },
+                  state: {
+                    __typename: "Closed",
+                  },
+                },
+              },
+              {
+                node: {
+                  name: {
+                    value: "Run",
+                  },
+                  state: {
+                    __typename: "Closed",
+                  },
+                },
+              },
+            ],
+          },
+          chainAgg: [
+            {
+              group: "Batch",
+              value: expect.stringMatching(/\d+.\d+/),
+            },
+            {
+              group: "Runtime",
+              value: expect.stringMatching(/\d+.\d+/),
+            },
+          ],
+          fsm: null,
+          state: {
+            __typename: "Closed",
+          },
+        },
+      },
+      {
+        node: {
+          name: {
+            value: "Batch 2",
+          },
+          chain: {
+            edges: [
+              {
+                node: {
+                  name: {
+                    value: "Batch 2",
+                  },
+                  state: {
+                    __typename: "Closed",
+                  },
+                },
+              },
+              {
+                node: {
+                  name: {
+                    value: "Run",
+                  },
+                  state: {
+                    __typename: "Closed",
+                  },
+                },
+              },
+            ],
+          },
+          chainAgg: [
+            {
+              group: "Batch",
+              value: expect.stringMatching(/\d+.\d+/),
+            },
+            {
+              group: "Runtime",
+              value: expect.stringMatching(/\d+.\d+/),
+            },
+          ],
+          fsm: null,
+          state: {
+            __typename: "Closed",
+          },
+        },
+      },
+      {
+        node: {
+          name: {
+            value: "Batch 1",
+          },
+          chain: {
+            edges: [
+              {
+                node: {
+                  name: {
+                    value: "Batch 1",
+                  },
+                  state: {
+                    __typename: "Closed",
+                  },
+                },
+              },
+              {
+                node: {
+                  name: {
+                    value: "Run",
+                  },
+                  state: {
+                    __typename: "Closed",
+                  },
+                },
+              },
+            ],
+          },
+          chainAgg: [
+            {
+              group: "Batch",
+              value: expect.stringMatching(/\d+.\d+/),
+            },
+            {
+              group: "Runtime",
+              value: expect.stringMatching(/\d+.\d+/),
+            },
+          ],
+          fsm: null,
+          state: {
+            __typename: "Closed",
+          },
+        },
+      },
+      {
+        node: {
+          name: {
+            value: "Batch 0",
+          },
+          chain: {
+            edges: [
+              {
+                node: {
+                  name: {
+                    value: "Batch 0",
+                  },
+                  state: {
+                    __typename: "Closed",
+                  },
+                },
+              },
+              {
+                node: {
+                  name: {
+                    value: "Run",
+                  },
+                  state: {
+                    __typename: "Closed",
+                  },
+                },
+              },
+            ],
+          },
+          chainAgg: [
+            {
+              group: "Batch",
+              value: expect.stringMatching(/\d+.\d+/),
+            },
+            {
+              group: "Runtime",
+              value: expect.stringMatching(/\d+.\d+/),
+            },
+          ],
+          fsm: null,
+          state: {
+            __typename: "Closed",
+          },
+        },
+      },
+    ]);
+
+    const entrypointQuery = await execute(
+      schema,
+      TestRuntimeEntrypointDocument,
+      {
+        parent: CUSTOMER.id,
+      },
+    );
+    expect(entrypointQuery.errors).toBeFalsy();
+
+    expect(entrypointQuery.data?.trackables?.edges?.length).toBe(5);
+    expect(entrypointQuery.data).toEqual(initialEntrypointData);
   });
 
   beforeAll(async () => {
-    // Setup:
-    await sql.begin(async sql => {
-      await setCurrentIdentity(sql, ctx);
-
-      CUSTOMER = await createEmptyCustomer(
-        { name: "Frozen Tendy Factory" },
-        ctx,
-        sql,
-      );
-
-      await CUSTOMER.addWorker(
-        { identityId: assertNonNull(process.env.X_TENDREL_USER) },
-        ctx,
-        sql,
-      );
-
-      // Setup "Runtime" and configure "Batch tracking".
-      // This involves:
-      // 1. Locations: site + Mixing, Fill, Assembly, Cartoning and Packaging Lines
-      // 2. Templates:
-      //   - Batch: instantiated at the site level
-      //   - Run, Down, Idle: instantiated at the "Lines" level
-      // 3. Rules:
-      //   - *No* in-progress/respawn rule. Batches (instances) must be created
-      //     manually.
-      //   - When a Run instance is Closed, an Open Run instance should be
-      //     [eagerly] created at the "next" line. Same originator (i.e. Batch).
-
-      // Locations.
-      FACTORY = await CUSTOMER.addLocation(
-        { name: "Frozen Tendy Factory", type: "Frozen Tendy Factory" },
-        ctx,
-        sql,
-      );
-      MIXING_LINE = await FACTORY.insertChild(
-        { name: "Mixing Line", order: 0, type: "Runtime Location" },
-        ctx,
-        sql,
-      );
-      FILL_LINE = await FACTORY.insertChild(
-        { name: "Fill Line", order: 1, type: "Runtime Location" },
-        ctx,
-        sql,
-      );
-      const assemblyLine = await FACTORY.insertChild(
-        { name: "Assembly Line", order: 2, type: "Runtime Location" },
-        ctx,
-        sql,
-      );
-      const cartoningLine = await FACTORY.insertChild(
-        { name: "Cartoning Line", order: 3, type: "Runtime Location" },
-        ctx,
-        sql,
-      );
-      const packagingLine = await FACTORY.insertChild(
-        { name: "Packaging Line", order: 4, type: "Runtime Location" },
-        ctx,
-        sql,
-      );
-
-      // Templates.
-      BATCH_TEMPLATE = await FACTORY.createTemplate(
-        {
-          name: "Batch",
-          fields: [
-            { name: "Customer", type: "string" },
-            { name: "Product Name", type: "string" },
-            { name: "SKU", type: "string" },
-          ],
-          types: ["Batch"],
-        },
-        ctx,
-        sql,
-      );
-      RUN_TEMPLATE = await FACTORY.createTemplate(
-        {
-          name: "Run",
-          fields: [
-            // Note that we still have the primary/order requirement for
-            // Overrides (primary + 0 => start, 1 => end).
-            // This will be removed in the future.
-            {
-              name: "Override Start Time",
-              type: "timestamp",
-              isPrimary: true,
-              order: 0,
-            },
-            {
-              name: "Override End Time",
-              type: "timestamp",
-              isPrimary: true,
-              order: 1,
-            },
-            { name: "Run Output", type: "number", order: 2 },
-            { name: "Reject Count", type: "number", order: 3 },
-            { name: "Comments", type: "string", order: 99 },
-          ],
-          types: ["Trackable", "Runtime"],
-        },
-        ctx,
-        sql,
-      );
-      const downTemplate = await FACTORY.createTemplate(
-        {
-          name: "Downtime",
-          fields: [
-            {
-              name: "Override Start Time",
-              type: "timestamp",
-              isPrimary: true,
-              order: 0,
-            },
-            {
-              name: "Override End Time",
-              type: "timestamp",
-              isPrimary: true,
-              order: 1,
-            },
-            { name: "Description", type: "string", order: 99 },
-          ],
-          order: 0,
-          types: ["Downtime"],
-        },
-        ctx,
-        sql,
-      );
-      const idleTemplate = await FACTORY.createTemplate(
-        {
-          name: "Idle Time",
-          fields: [
-            {
-              name: "Override Start Time",
-              type: "timestamp",
-              isPrimary: true,
-              order: 0,
-            },
-            {
-              name: "Override End Time",
-              type: "timestamp",
-              isPrimary: true,
-              order: 1,
-            },
-            { name: "Description", type: "string", order: 99 },
-          ],
-          order: 1,
-          types: ["Idle Time"],
-        },
-        ctx,
-        sql,
-      );
-
-      // Constraints.
-      await BATCH_TEMPLATE.ensureInstantiableAt(
-        { locations: [FACTORY.id] },
-        ctx,
-        sql,
-      );
-      await BATCH_TEMPLATE.ensureInstantiableAt(
-        { locations: [FACTORY.id] },
-        ctx,
-        sql,
-      );
-      for (const t of [RUN_TEMPLATE, downTemplate, idleTemplate]) {
-        await t.ensureInstantiableAt(
-          {
-            locations: [
-              MIXING_LINE.id,
-              FILL_LINE.id,
-              assemblyLine.id,
-              cartoningLine.id,
-              packagingLine.id,
-            ],
-          },
-          ctx,
-          sql,
-        );
-      }
-
-      // Rules.
-      // The usual Idle and Down transitions.
-      for (const t of [downTemplate, idleTemplate]) {
-        await RUN_TEMPLATE.createTransition(
-          {
-            whenStatusChangesTo: "InProgress",
-            instantiate: {
-              template: t.id,
-              withType: "On Demand",
-            },
-          },
-          ctx,
-          sql,
-        );
-      }
-
-      // For InProgress Batches, allow the user to explicitly instantiate a Run
-      // at any of the following Locations. This probably isn't how we want this
-      // configured in production however we do it here for the sake of test
-      // coverage.
-      for (const l of [
-        MIXING_LINE,
-        FILL_LINE,
-        assemblyLine,
-        cartoningLine,
-        packagingLine,
-      ]) {
-        await BATCH_TEMPLATE.createTransition(
-          {
-            whenStatusChangesTo: "InProgress",
-            instantiate: {
-              template: RUN_TEMPLATE.id,
-              atLocation: l.id,
-              withType: "On Demand", // Choice.
-            },
-          },
-          ctx,
-          sql,
-        );
-      }
-
-      // The following rules are again likely not what we want in production,
-      // and are again included here for the sake of test coverage. These rules
-      // have the effect of automatically "moving the Batch down the lines", in
-      // the spirit of a truly sequential process.
-
-      // Mixing -> Fill
-      await RUN_TEMPLATE.createTransition(
-        {
-          atLocation: MIXING_LINE.id,
-          whenStatusChangesTo: "Closed",
-          instantiate: {
-            template: RUN_TEMPLATE.id,
-            atLocation: FILL_LINE.id,
-            withType: "Task", // Eager. This is the default.
-          },
-        },
-        ctx,
-        sql,
-      );
-
-      // Fill -> Assembly
-      await RUN_TEMPLATE.createTransition(
-        {
-          atLocation: FILL_LINE.id,
-          whenStatusChangesTo: "Closed",
-          instantiate: {
-            template: RUN_TEMPLATE.id,
-            atLocation: assemblyLine.id,
-          },
-        },
-        ctx,
-        sql,
-      );
-
-      // Assembly -> Cartoning
-      await RUN_TEMPLATE.createTransition(
-        {
-          atLocation: assemblyLine.id,
-          whenStatusChangesTo: "Closed",
-          instantiate: {
-            template: RUN_TEMPLATE.id,
-            atLocation: cartoningLine.id,
-          },
-        },
-        ctx,
-        sql,
-      );
-
-      // Cartoning -> Packaging
-      await RUN_TEMPLATE.createTransition(
-        {
-          atLocation: cartoningLine.id,
-          whenStatusChangesTo: "Closed",
-          instantiate: {
-            template: RUN_TEMPLATE.id,
-            atLocation: packagingLine.id,
-          },
-        },
-        ctx,
-        sql,
-      );
-
-      // FIXME: use Keller's API for customer create through the entity model.
-      // await sql`call entity.import_entity(null)`;
-    });
+    CUSTOMER = await createCustomer(customerName, ctx);
   });
 
   afterAll(async () => {
@@ -789,7 +1935,7 @@ describe("runtime + batch tracking", () => {
         `
 ==========
 Test suite finished with ${rows.length} open/in progress instances lingering.
-This is a known bug at the moment :(
+This should be considered a BUG!
 
 Linguine instances:
 ${rows.map(r => ` - ${r.id} (${r.status})`).join("\n")}
@@ -800,5 +1946,11 @@ ${rows.map(r => ` - ${r.id} (${r.status})`).join("\n")}
 
     // Cleanup:
     // await cleanup(CUSTOMER);
+
+    console.log(`
+To reproduce this test:
+
+  SEED=${seed} bun test batch.test --bail
+    `);
   });
 });

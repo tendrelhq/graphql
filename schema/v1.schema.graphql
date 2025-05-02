@@ -570,11 +570,25 @@ type Location implements Component & Node & Trackable {
   timeZone: String @semanticNonNull
   """
   Entrypoint into the "tracking system(s)" for the given Location.
+  Note that this will return a connection representing the "active" chains at
+  the given Location and, more specifically, the active chain *roots*. It may
+  thus be that the Tasks returned by this API are *not* those that were
+  instantiated at the given Location, but rather those that have *any active
+  child* at the given Location. Also note that the active child *may not be*
+  the `fsm.active` Task - this depends on ordering - but should exist in the
+  `chain`.
   """
   tracking(
     after: ID
     first: Int
     withStatus: [TaskStateName!]
+    """
+    Further refine your search by including only those Tasks with any of the
+    given types, e.g. "Batch" or "Runtime". Note that if no types are given,
+    a default type of "Trackable" will be used. This is to preserve legacy
+    behavior until we have to time to deprecate it in our applications.
+    """
+    withType: [String!]
   ): TrackableConnection @semanticNonNull
 }
 
@@ -621,7 +635,7 @@ type Mutation {
   The net effect of this mutation is that the Task identified by `node` will
   have its root (`Task.root`) set to the Task identified by `base`.
   """
-  rebase(base: ID!, node: ID!): Task @semanticNonNull
+  rebase(base: ID!, location: ID, node: ID!): Task @semanticNonNull
   updateLocation(input: UpdateLocationInput!): Location @semanticNonNull
 }
 

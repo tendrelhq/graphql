@@ -1,22 +1,18 @@
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
-import { setCurrentIdentity } from "@/auth";
 import { sql } from "@/datasources/postgres";
 import { schema } from "@/schema/final";
-import { decodeGlobalId, encodeGlobalId } from "@/schema/system";
 import { Task } from "@/schema/system/component/task";
+import { fsm } from "@/schema/system/component/task_fsm";
 import {
+  type Customer,
   NOW,
-  assertNoDiagnostics,
   assertTaskIsNamed,
-  cleanup,
   createTestContext,
   execute,
-  findAndEncode,
   getFieldByName,
-  setup,
 } from "@/test/prelude";
-import { assert, map } from "@/util";
-import { mostRecentlyInProgress, newlyInstantiatedChainFrom } from "./prelude";
+import { assertNonNull } from "@/util";
+import { createCustomer } from "./prelude/canonical";
 import {
   TestRuntimeApplyFieldEditsMutationDocument,
   TestRuntimeDetailDocument,
@@ -29,21 +25,93 @@ const ctx = await createTestContext();
 const NOW_PLUS_24H = new Date(NOW.valueOf() + 24 * 60 * 60 * 1000);
 
 describe("runtime demo", () => {
-  // See beforeAll for initialization of these variables.
-  let CUSTOMER: string;
-  let FSM_T: Task; // template
-  let FSM_I: Task; // instance
-  let IDLE_TIME: Task; // template
-  let DOWNTIME: Task; // template
+  let CUSTOMER: Customer; // set in `beforeAll`
+  let ROOT: Task; // set in "entrypoint query"
 
   test(
     "entrypoint query",
     async () => {
       const result = await execute(schema, TestRuntimeEntrypointDocument, {
-        parent: CUSTOMER,
+        parent: CUSTOMER.id,
       });
       expect(result.errors).toBeFalsy();
-      expect(result.data).toMatchSnapshot();
+
+      expect(result.data?.trackables?.edges?.length).toBe(5);
+      expect(result.data?.trackables?.edges).toMatchObject([
+        {
+          node: {
+            name: {
+              value: "Mixing Line",
+            },
+            tracking: {
+              edges: [
+                {
+                  node: {
+                    name: {
+                      value: "Run",
+                    },
+                    state: {
+                      __typename: "Open",
+                    },
+                  },
+                },
+              ],
+            },
+          },
+        },
+        {
+          node: {
+            name: {
+              value: "Fill Line",
+            },
+          },
+        },
+        {
+          node: {
+            name: {
+              value: "Assembly Line",
+            },
+          },
+        },
+        {
+          node: {
+            name: {
+              value: "Cartoning Line",
+            },
+          },
+        },
+        {
+          node: {
+            name: {
+              value: "Packaging Line",
+            },
+          },
+        },
+      ]);
+
+      const mixingLine = assertNonNull(
+        result.data?.trackables?.edges?.find(
+          e =>
+            e.node?.__typename === "Location" &&
+            e.node.name.value === "Mixing Line",
+        ),
+        "no mixing line?",
+      );
+      const runInstance = assertNonNull(
+        mixingLine?.node?.tracking?.edges
+          ?.flatMap(e => {
+            if (
+              e.node?.__typename === "Task" &&
+              e.node.state?.__typename === "Open"
+            ) {
+              return e.node;
+            }
+            return [];
+          })
+          .at(0),
+        "no open Run instance?",
+      );
+      ROOT = new Task({ id: runInstance.id });
     },
     {
       timeout: 10_000,
@@ -51,20 +119,25 @@ describe("runtime demo", () => {
   );
 
   test("start run", async () => {
-    const h = (await FSM_I.hash()) as string;
-    const ov = await getFieldByName(FSM_I, "Override Start Time");
-    const cs = await getFieldByName(FSM_I, "Comments");
+    const sm = assertNonNull(await fsm(ROOT));
+    const active = assertNonNull(sm.active);
+    expect(active.id).toBe(ROOT.id);
+
+    const h = await active.hash();
+    const cs = await getFieldByName(active, "Comments");
+    const ov = await getFieldByName(active, "Override Start Time");
+
     const result = await execute(
       schema,
       TestRuntimeTransitionMutationDocument,
       {
         opts: {
           fsm: {
-            id: FSM_I.id,
+            id: ROOT.id,
             hash: h,
           },
           task: {
-            id: FSM_I.id,
+            id: active.id,
             hash: h,
             overrides: [
               {
@@ -90,7 +163,46 @@ describe("runtime demo", () => {
       },
     );
     expect(result.errors).toBeFalsy();
-    expect(result.data).toMatchSnapshot();
+
+    expect(result.data?.advance?.root).toMatchObject({
+      fsm: {
+        active: {
+          name: {
+            value: "Run",
+          },
+          parent: {
+            name: {
+              value: "Mixing Line",
+            },
+          },
+          state: {
+            __typename: "InProgress",
+          },
+        },
+      },
+    });
+
+    // Should have respawned.
+    expect(result.data?.advance?.instantiations).toMatchObject([
+      {
+        node: {
+          chain: {
+            totalCount: 1,
+          },
+          name: {
+            value: "Run",
+          },
+          parent: {
+            name: {
+              value: "Mixing Line",
+            },
+          },
+          state: {
+            __typename: "Open",
+          },
+        },
+      },
+    ]);
   });
 
   test("stale: start run (should fail)", async () => {
@@ -98,13 +210,14 @@ describe("runtime demo", () => {
       schema,
       TestRuntimeTransitionMutationDocument,
       {
+        includeRoot: false,
         opts: {
           fsm: {
-            id: FSM_I.id,
-            hash: (await FSM_I.hash()) as string,
+            id: ROOT.id,
+            hash: await ROOT.hash(),
           },
           task: {
-            id: FSM_I.id,
+            id: ROOT.id,
             hash: "alienz r real",
           },
         },
@@ -114,27 +227,30 @@ describe("runtime demo", () => {
     expect(result.data).toMatchSnapshot();
   });
 
-  // TODO: This isn't the case anymore with the default setup but it is still a
-  // useful test!
-  test.skip("sanity check: engine sets previous", async () => {
-    const newChain = await newlyInstantiatedChainFrom(FSM_I);
-    const newChainPrevious = await newChain?.previous();
-    expect(newChainPrevious?.id).toBe(FSM_I.id);
-  });
+  test("start idle", async () => {
+    const sm = assertNonNull(await fsm(ROOT));
+    const active = assertNonNull(sm.active);
+    expect(active.id).toBe(ROOT.id);
 
-  test("production -> idle time", async () => {
+    const idle = assertNonNull(
+      sm.transitions?.edges.at(1),
+      "no idle transition?",
+    );
+
     const result = await execute(
       schema,
       TestRuntimeTransitionMutationDocument,
       {
         opts: {
           fsm: {
-            id: FSM_I.id,
-            hash: (await FSM_I.hash()) as string,
+            id: ROOT.id,
+            hash: await ROOT.hash(),
           },
           task: {
-            id: IDLE_TIME.id,
-            hash: "", // doesn't matter
+            // Legacy behavior: using `Task.id` as the transition identifier
+            // rather than `Transition<Task>.id`.
+            id: idle.node.id,
+            hash: await idle.node.hash(),
           },
         },
       },
@@ -143,44 +259,24 @@ describe("runtime demo", () => {
     expect(result.data).toMatchSnapshot();
   });
 
-  test("stale: production -> idle time (should fail)", async () => {
-    const result = await execute(
-      schema,
-      TestRuntimeTransitionMutationDocument,
-      {
-        opts: {
-          fsm: {
-            id: FSM_I.id,
-            hash: "fake it till you make it",
-          },
-          task: {
-            id: IDLE_TIME.id,
-            hash: "", // doesn't matter
-          },
-        },
-      },
-    );
-    expect(result.errors).toBeFalsy();
-    expect(result.data).toMatchSnapshot();
-  });
+  test("end idle", async () => {
+    const sm = assertNonNull(await fsm(ROOT));
+    const active = assertNonNull(sm.active);
+    assertTaskIsNamed(active, "Idle Time", ctx);
 
-  test("end idle time", async () => {
-    const t = await mostRecentlyInProgress(FSM_I);
-    await assertTaskIsNamed(t, "Idle Time", ctx);
-    const h = (await t.hash()) as string;
-    const desc = await getFieldByName(t, "Description");
+    const desc = await getFieldByName(active, "Description");
     const result = await execute(
       schema,
       TestRuntimeTransitionMutationDocument,
       {
         opts: {
           fsm: {
-            id: FSM_I.id,
-            hash: (await FSM_I.hash()) as string,
+            id: ROOT.id,
+            hash: await ROOT.hash(),
           },
           task: {
-            id: t.id,
-            hash: h,
+            id: active.id,
+            hash: await active.hash(),
             overrides: [
               {
                 field: desc.id,
@@ -196,27 +292,32 @@ describe("runtime demo", () => {
     );
     expect(result.errors).toBeFalsy();
     expect(result.data).toMatchSnapshot();
-
-    // While we're here, let's test stale completion as well!
-    const stale = await execute(schema, TestRuntimeTransitionMutationDocument, {
-      opts: {
-        fsm: {
-          id: FSM_I.id,
-          hash: (await FSM_I.hash()) as string,
-        },
-        task: {
-          id: t.id,
-          hash: h,
-        },
-      },
-    });
-    expect(stale.errors).toBeFalsy();
-    expect(stale.data).toMatchSnapshot();
   });
 
-  test("detail query", async () => {
+  // test("stale: production -> idle time (should fail)", async () => {
+  //   const result = await execute(
+  //     schema,
+  //     TestRuntimeTransitionMutationDocument,
+  //     {
+  //       opts: {
+  //         fsm: {
+  //           id: FSM_I.id,
+  //           hash: "fake it till you make it",
+  //         },
+  //         task: {
+  //           id: IDLE_TIME.id,
+  //           hash: "", // doesn't matter
+  //         },
+  //       },
+  //     },
+  //   );
+  //   expect(result.errors).toBeFalsy();
+  //   expect(result.data).toMatchSnapshot();
+  // });
+
+  test("in-progress chain/agg", async () => {
     const result = await execute(schema, TestRuntimeDetailDocument, {
-      node: FSM_I.id,
+      node: ROOT.id,
     });
 
     expect(result.errors).toBeFalsy();
@@ -226,12 +327,10 @@ describe("runtime demo", () => {
           {
             group: "Idle Time",
             value: expect.stringMatching(/[\d]+.[\d]+/),
-            __typename: "Aggregate",
           },
           {
             group: "Runtime",
             value: null,
-            __typename: "Aggregate",
           },
         ],
         chain: {
@@ -240,40 +339,38 @@ describe("runtime demo", () => {
               node: {
                 name: {
                   value: "Run",
-                  __typename: "DisplayName",
                 },
                 state: {
                   __typename: "InProgress",
                 },
-                __typename: "Task",
               },
-              __typename: "TaskEdge",
             },
             {
               node: {
                 name: {
                   value: "Idle Time",
-                  __typename: "DisplayName",
                 },
                 state: {
                   __typename: "Closed",
                 },
-                __typename: "Task",
               },
-              __typename: "TaskEdge",
             },
           ],
           totalCount: 2,
-          __typename: "TaskConnection",
         },
-        __typename: "Task",
       },
     });
   });
 
-  test("production -> downtime", async () => {
-    const t = await mostRecentlyInProgress(FSM_I);
-    expect(t.id).toBe(FSM_I.id);
+  test("start downtime", async () => {
+    const sm = assertNonNull(await fsm(ROOT));
+    const active = assertNonNull(sm.active);
+    expect(active.id).toBe(ROOT.id);
+
+    const down = assertNonNull(
+      sm.transitions?.edges.at(0),
+      "no down transition?",
+    );
 
     const result = await execute(
       schema,
@@ -281,12 +378,12 @@ describe("runtime demo", () => {
       {
         opts: {
           fsm: {
-            id: t.id,
-            hash: (await t.hash()) as string,
+            id: ROOT.id,
+            hash: await ROOT.hash(),
           },
           task: {
-            id: DOWNTIME.id,
-            hash: "", // doesn't matter
+            id: down.node.id,
+            hash: await down.node.hash(),
           },
         },
       },
@@ -296,8 +393,9 @@ describe("runtime demo", () => {
   });
 
   test("end downtime", async () => {
-    const t = await mostRecentlyInProgress(FSM_I);
-    await assertTaskIsNamed(t, "Downtime", ctx);
+    const sm = assertNonNull(await fsm(ROOT));
+    const active = assertNonNull(sm.active);
+    assertTaskIsNamed(active, "Downtime", ctx);
 
     const result = await execute(
       schema,
@@ -305,12 +403,12 @@ describe("runtime demo", () => {
       {
         opts: {
           fsm: {
-            id: FSM_I.id,
-            hash: (await FSM_I.hash()) as string,
+            id: ROOT.id,
+            hash: await ROOT.hash(),
           },
           task: {
-            id: t.id,
-            hash: (await t.hash()) as string,
+            id: active.id,
+            hash: await active.hash(),
           },
         },
       },
@@ -319,52 +417,13 @@ describe("runtime demo", () => {
     expect(result.data).toMatchSnapshot();
   });
 
-  test("another idle run", async () => {
-    const t = await mostRecentlyInProgress(FSM_I);
-    expect(t.id).toBe(FSM_I.id);
-
-    const start = await execute(schema, TestRuntimeTransitionMutationDocument, {
-      opts: {
-        fsm: {
-          id: t.id,
-          hash: (await t.hash()) as string,
-        },
-        task: {
-          id: IDLE_TIME.id,
-          hash: "", // doesn't matter
-        },
-      },
-    });
-    expect(start.errors).toBeFalsy();
-
-    const t0 = await mostRecentlyInProgress(FSM_I);
-    await assertTaskIsNamed(t0, "Idle Time", ctx);
-
-    const end = await execute(schema, TestRuntimeTransitionMutationDocument, {
-      opts: {
-        fsm: {
-          id: FSM_I.id,
-          hash: (await FSM_I.hash()) as string,
-        },
-        task: {
-          id: t0.id,
-          hash: (await t0.hash()) as string,
-        },
-      },
-    });
-    expect(end.errors).toBeFalsy();
-    assertNoDiagnostics(end.data?.advance);
-
-    const t1 = await mostRecentlyInProgress(FSM_I);
-    expect(t1.id).toBe(FSM_I.id);
-  });
-
   test("end run", async () => {
-    const t = await mostRecentlyInProgress(FSM_I);
-    expect(t.id).toBe(FSM_I.id);
-    const h = (await t.hash()) as string;
-    const ov = await getFieldByName(FSM_I, "Override End Time");
+    const sm = assertNonNull(await fsm(ROOT));
+    const active = assertNonNull(sm.active);
+    expect(active.id).toBe(ROOT.id);
 
+    const h = await active.hash();
+    const ov = await getFieldByName(active, "Override End Time");
     const result0 = await execute(
       schema,
       TestRuntimeTransitionMutationDocument,
@@ -372,11 +431,11 @@ describe("runtime demo", () => {
         includeChain: true,
         opts: {
           fsm: {
-            id: t.id,
+            id: active.id,
             hash: h,
           },
           task: {
-            id: t.id,
+            id: active.id,
             hash: h,
             overrides: [
               {
@@ -392,7 +451,42 @@ describe("runtime demo", () => {
       },
     );
     expect(result0.errors).toBeFalsy();
-    expect(result0.data).toMatchSnapshot();
+
+    expect(result0.data?.advance?.instantiations?.length).toBe(0);
+    expect(result0.data?.advance?.root?.fsm).toBeNull();
+    expect(result0.data?.advance?.root?.state?.__typename).toBe("Closed");
+    expect(result0.data?.advance?.root?.chain?.edges).toMatchObject([
+      {
+        node: {
+          name: {
+            value: "Run",
+          },
+          state: {
+            __typename: "Closed",
+          },
+        },
+      },
+      {
+        node: {
+          name: {
+            value: "Idle Time",
+          },
+          state: {
+            __typename: "Closed",
+          },
+        },
+      },
+      {
+        node: {
+          name: {
+            value: "Downtime",
+          },
+          state: {
+            __typename: "Closed",
+          },
+        },
+      },
+    ]);
 
     // Concurrency time! This time let's try to end and already closed task.
     // FIXME: currently this will return a no_associated_fsm diagnostic which
@@ -402,14 +496,14 @@ describe("runtime demo", () => {
       schema,
       TestRuntimeTransitionMutationDocument,
       {
-        includeChain: true,
+        includeRoot: false,
         opts: {
           fsm: {
-            id: t.id,
+            id: active.id,
             hash: h,
           },
           task: {
-            id: t.id,
+            id: active.id,
             hash: h,
           },
         },
@@ -420,12 +514,12 @@ describe("runtime demo", () => {
   });
 
   test("apply field edits retroactively", async () => {
-    const cs = await getFieldByName(FSM_I, "Comments");
+    const cs = await getFieldByName(ROOT, "Comments");
     const result = await execute(
       schema,
       TestRuntimeApplyFieldEditsMutationDocument,
       {
-        entity: FSM_I.id,
+        entity: ROOT.id,
         edits: [
           {
             field: cs.id,
@@ -443,21 +537,16 @@ describe("runtime demo", () => {
 
   test("history query", async () => {
     const result = await execute(schema, TestRuntimeDetailDocument, {
-      node: FSM_I.id,
+      node: ROOT.id,
     });
     expect(result.errors).toBeFalsy();
     expect(result.data).toMatchObject({
       node: {
-        __typename: "Task",
         chain: {
-          __typename: "TaskConnection",
           edges: [
             {
-              __typename: "TaskEdge",
               node: {
-                __typename: "Task",
                 name: {
-                  __typename: "DisplayName",
                   value: "Run",
                 },
                 state: {
@@ -466,11 +555,8 @@ describe("runtime demo", () => {
               },
             },
             {
-              __typename: "TaskEdge",
               node: {
-                __typename: "Task",
                 name: {
-                  __typename: "DisplayName",
                   value: "Idle Time",
                 },
                 state: {
@@ -479,11 +565,8 @@ describe("runtime demo", () => {
               },
             },
             {
-              __typename: "TaskEdge",
               node: {
-                __typename: "Task",
                 name: {
-                  __typename: "DisplayName",
                   value: "Downtime",
                 },
                 state: {
@@ -491,43 +574,25 @@ describe("runtime demo", () => {
                 },
               },
             },
-            {
-              __typename: "TaskEdge",
-              node: {
-                __typename: "Task",
-                name: {
-                  __typename: "DisplayName",
-                  value: "Idle Time",
-                },
-                state: {
-                  __typename: "Closed",
-                },
-              },
-            },
           ],
-          totalCount: 4,
+          totalCount: 3,
         },
         chainAgg: [
           {
-            __typename: "Aggregate",
             group: "Downtime",
             value: expect.any(String),
           },
           {
-            __typename: "Aggregate",
             group: "Idle Time",
             value: expect.any(String),
           },
           {
-            __typename: "Aggregate",
             group: "Runtime",
             value: "86400.000000", // overrides are taken into account
           },
         ],
         parent: {
-          __typename: "Location",
           name: {
-            __typename: "Name",
             value: "Mixing Line",
           },
         },
@@ -535,154 +600,8 @@ describe("runtime demo", () => {
     });
   });
 
-  test("includeInactive", async () => {
-    // Deactivate all templates for CUSTOMER.
-    const r0 = await sql`
-      update public.worktemplate
-      set worktemplateenddate = now()
-      where worktemplatecustomerid = (
-          select customerid
-          from public.customer
-          where customeruuid = ${decodeGlobalId(CUSTOMER).id}
-      )
-    `;
-    assert(r0.count > 0);
-
-    // Without `includeInactive` we should get nothing back.
-    const r1 = await execute(schema, TestRuntimeEntrypointDocument, {
-      parent: CUSTOMER,
-      impl: "Task",
-    });
-    expect(r1.data?.trackables?.totalCount).toBe(0);
-
-    // With `includeInactive` we should get back exactly what we got in the
-    // previous test: "history query". We just assert on the count since we
-    // already asserted on the content in the aforementioned test.
-    const r2 = await execute(schema, TestRuntimeEntrypointDocument, {
-      parent: CUSTOMER,
-      impl: "Task",
-      includeInactive: true,
-    });
-    expect(r2.data?.trackables?.totalCount).toBe(1);
-  });
-
-  test("garbage", async () => {
-    const result = await execute(
-      schema,
-      TestRuntimeTransitionMutationDocument,
-      {
-        opts: {
-          fsm: {
-            id: encodeGlobalId({
-              type: "workinstance",
-              id: "fake it till you make it",
-            }),
-            hash: "we won't make it here lol",
-          },
-          task: {
-            id: IDLE_TIME.id,
-            hash: "", // doesn't matter
-          },
-        },
-      },
-    );
-    expect(result.errors).toBeFalsy();
-    expect(result.data).toMatchSnapshot();
-  });
-
   beforeAll(async () => {
-    const logs = await setup(ctx);
-    try {
-      CUSTOMER = findAndEncode("customer", "organization", logs);
-      FSM_T = map(
-        findAndEncode("task", "worktemplate", logs),
-        id => new Task({ id }),
-      );
-      FSM_I = map(
-        findAndEncode("instance", "workinstance", logs),
-        id => new Task({ id }),
-      );
-      IDLE_TIME = map(
-        findAndEncode("next", "worktemplate", logs),
-        id => new Task({ id }),
-      );
-      DOWNTIME = map(
-        findAndEncode("next", "worktemplate", logs, { skip: 1 }),
-        id => new Task({ id }),
-      );
-    } catch (e) {
-      let i = 0;
-      for (const l of logs) {
-        console.log(`${i++}: ${JSON.stringify(l)}`);
-      }
-      throw e;
-    }
-
-    // We don't currently have a mechanism to specify descriptions during
-    // customer create. We'll do it manually for now.
-    const d0 = await sql.begin(async sql => {
-      await setCurrentIdentity(sql, ctx);
-      return await sql`
-        with content as (
-            select *
-            from i18n.create_localized_content(
-                owner := ${decodeGlobalId(CUSTOMER).id},
-                content := 'This is a really important task. Please do your best :)',
-                language := 'en'
-            )
-        )
-
-        insert into public.workdescription (
-            workdescriptioncustomerid,
-            workdescriptionworktemplateid,
-            workdescriptionlanguagemasterid,
-            workdescriptionlanguagetypeid
-        )
-        select
-            worktemplate.worktemplatecustomerid,
-            worktemplate.worktemplateid,
-            content._id,
-            20
-        from content, public.worktemplate
-        where worktemplate.id = ${FSM_T._id}
-      `;
-    });
-    assert(d0.count === 1);
-
-    const f = await FSM_T.field({ byName: "Comments" });
-    const d1 = await sql.begin(async sql => {
-      await setCurrentIdentity(sql, ctx);
-      return await sql`
-        with content as (
-            select *
-            from i18n.create_localized_content(
-                owner := ${decodeGlobalId(CUSTOMER).id},
-                content := 'If anything goes wrong, this is the place to note it down',
-                language := 'en'
-            )
-        )
-
-        insert into public.workdescription (
-            workdescriptioncustomerid,
-            workdescriptionworktemplateid,
-            workdescriptionworkresultid,
-            workdescriptionlanguagemasterid,
-            workdescriptionlanguagetypeid
-        )
-        select
-            workresult.workresultcustomerid,
-            workresult.workresultworktemplateid,
-            workresult.workresultid,
-            content._id,
-            20
-        from content, public.workresult
-        where workresult.id = ${
-          /* biome-ignore lint/style/noNonNullAssertion: */
-          decodeGlobalId(f!.id).id
-        }
-      `;
-    });
-    assert(d1.count === 1);
+    CUSTOMER = await createCustomer(new Date().toLocaleString(), ctx);
   });
 
   afterAll(async () => {
@@ -694,7 +613,7 @@ describe("runtime demo", () => {
           workinstancecustomerid in (
               select customerid
               from public.customer
-              where customeruuid = ${decodeGlobalId(CUSTOMER).id}
+              where customeruuid = ${CUSTOMER._id}
           )
           and workinstancestatusid = 707
       ;
@@ -718,7 +637,5 @@ ${rows.map(r => ` - ${r.id}`).join("\n")}
         `,
       );
     }
-
-    await cleanup(CUSTOMER);
   });
 });

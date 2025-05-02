@@ -84,8 +84,8 @@
         # Regardless, soon to be fixed via: https://github.com/NixOS/nixpkgs/issues/335534
         outputHash =
           if pkgs.system == "aarch64-linux"
-          then "sha256-dBPtiL+9GtNa5D0cg8enGY3QcVtUu07cPC36XsChXLw="
-          else "sha256-g01VBZr/XB9dTOcuFlHHXvGq8EbhU8XkRRidgl+PUxE=";
+          then "sha256-RSEpWk1sVxT1N6OMABSxV9OIYEOBRPDU6ZOALbpLbDg="
+          else "sha256-IMgsvC3ncj5Wi9nlUTlI0rFfKA51SoqOrsSp9JGLG+8=";
         outputHashAlgo = "sha256";
         outputHashMode = "recursive";
       };

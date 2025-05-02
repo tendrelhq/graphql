@@ -3,6 +3,7 @@ query TestRuntimeEntrypoint(
   $parent: ID!
   $impl: String
   $includeInactive: Boolean
+  $includeTrackingIds: Boolean! = false
   $includeTransitionIds: Boolean! = false
 ) {
   trackables(
@@ -13,6 +14,7 @@ query TestRuntimeEntrypoint(
   ) {
     edges {
       node {
+        id @include(if: $includeTrackingIds)
         ... on Location {
           name {
             value
@@ -111,13 +113,14 @@ query TestRuntimeDetail(
 mutation TestRuntimeTransitionMutation(
   $opts: AdvanceFsmOptions!
   $includeChain: Boolean! = false
+  $includeRoot: Boolean! = true
   $includeTransitionIds: Boolean! = false
 ) {
   advance(opts: $opts) {
     diagnostics {
       code
     }
-    root {
+    root @include(if: $includeRoot) {
       chain @include(if: $includeChain) {
         edges {
           node {
@@ -191,12 +194,36 @@ fragment Trackables_fragment on Trackable {
   tracking {
     edges {
       node {
+        __typename
         ... on Task {
+          id
+          fsm {
+            ...TaskFSM_fragment
+          }
           name {
             value
           }
-          fsm {
-            ...TaskFSM_fragment
+          parent {
+            ... on Location {
+              name {
+                value
+              }
+            }
+          }
+          root {
+            name {
+              value
+            }
+            parent {
+              ... on Location {
+                name {
+                  value
+                }
+              }
+            }
+          }
+          state {
+            __typename
           }
         }
       }

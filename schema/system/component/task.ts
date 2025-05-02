@@ -302,8 +302,11 @@ export class Task implements Assignable, Component, Refetchable, Trackable {
       instantiate: {
         template: ID;
         atLocation?: ID | null;
-        withType?: "On Demand" | "Task" | "Audit" | "Remediation";
+        /** @default "Task" */
+        withType?: "Task" | "Audit" | "Remediation";
       };
+      /** @default "eager" */
+      type?: "eager" | "lazy";
     },
     ctx: Context,
     sql: TxSql,
@@ -330,13 +333,18 @@ export class Task implements Assignable, Component, Refetchable, Trackable {
       return id;
     });
 
+    const typeTag =
+      args.type === "lazy"
+        ? "On Demand"
+        : (args.instantiate.withType ?? "Task");
+
     const r = await sql`
       select 1
       from legacy0.create_instantiation_rule_v2(
         prev_template_id := ${this._id},
         next_template_id := ${nextTemplate},
         state_condition := ${stateCondition},
-        type_tag := ${args.instantiate.withType ?? "Task"},
+        type_tag := ${typeTag},
         prev_location_id := ${prevLocation ?? null},
         next_location_id := ${nextLocation ?? null},
         modified_by := 895
@@ -387,56 +395,56 @@ export class Task implements Assignable, Component, Refetchable, Trackable {
       state?: TaskStateInput | null;
     },
     ctx: Context,
+    sql: TxSql,
   ): Promise<Task> {
     assertUnderlyingType("worktemplate", this._type);
     const chainPrev = map(args.chainPrev, id => new Task({ id }));
     const chainRoot = map(args.chainRoot, id => new Task({ id }));
     const location = new Location({ id: args.location });
-    const targetState = "Open";
-    const targetType = "Task";
-    return await sql.begin(async sql => {
-      await setCurrentIdentity(sql, ctx);
-      // TODO: Set modified_by correctly.
-      const [row] = await sql<[ConstructorArgs]>`
-        select encode(('workinstance:' || t.instance)::bytea, 'base64') as id
-        from engine0.instantiate(
-            template_id := ${this._id},
-            location_id := ${location._id},
-            target_state := ${targetState},
-            target_type := ${targetType},
-            modified_by := 895,
-            chain_root_id := ${chainRoot?._id ?? null},
-            chain_prev_id := ${chainPrev?._id ?? null}
-        ) as t
-        group by t.instance
+    const targetState = match(args.state)
+      .with({ open: P._ }, () => "Open")
+      .with({ inProgress: P._ }, () => "In Progress")
+      .with({ closed: P._ }, () => "Completed")
+      .otherwise(() => "Open");
+    const [row] = await sql<[ConstructorArgs]>`
+      select encode(('workinstance:' || t.instance)::bytea, 'base64') as id
+      from engine0.instantiate(
+          template_id := ${this._id},
+          location_id := ${location._id},
+          target_state := ${targetState},
+          target_type := 'Task',
+          modified_by := 895,
+          chain_root_id := ${chainRoot?._id ?? null},
+          chain_prev_id := ${chainPrev?._id ?? null}
+      ) as t
+      group by t.instance
+    `;
+    const t = new Task(row);
+
+    if (args.name?.length) {
+      const r = await sql`
+        update public.workinstance
+        set workinstancenameid = (
+          select n.id
+          from
+            public.customer,
+            i18n.create_localized_content(
+                owner := customeruuid,
+                content := ${args.name},
+                language := ${ctx.req.i18n.language}
+            ) as n
+          where customerid = workinstancecustomerid
+        )
+        where id = ${t._id}
       `;
-      const t = new Task(row);
+      assert(r.count === 1);
+    }
 
-      if (args.name?.length) {
-        const r = await sql`
-          update public.workinstance
-          set workinstancenameid = (
-            select n.id
-            from
-              public.customer,
-              i18n.create_localized_content(
-                  owner := customeruuid,
-                  content := ${args.name},
-                  language := ${ctx.req.i18n.language}
-              ) as n
-            where customerid = workinstancecustomerid
-          )
-          where id = ${t._id}
-        `;
-        assert(r.count === 1);
-      }
+    if (args.fields?.length) {
+      await applyFieldEdits_(sql, ctx, t, args.fields);
+    }
 
-      if (args.fields?.length) {
-        await applyFieldEdits_(sql, ctx, t, args.fields);
-      }
-
-      return t;
-    });
+    return t;
   }
 
   /**
@@ -482,15 +490,7 @@ export class Task implements Assignable, Component, Refetchable, Trackable {
           where parent._id = location.locationid
         `,
       )
-      .with(
-        "worktemplate",
-        () => sql<[LocationConstructorArgs]>`
-          select encode(('location:' || locationuuid)::bytea, 'base64') as id
-          from public.worktemplate
-          inner join public.location on worktemplatesiteid = locationid
-          where worktemplate.id = ${this._id}
-        `,
-      )
+      .with("worktemplate", () => [null])
       .otherwise(t => {
         console.warn(`Unknown underlying type ${t} for Task`);
         return [null];
@@ -498,7 +498,6 @@ export class Task implements Assignable, Component, Refetchable, Trackable {
 
     if (row) return new Location(row);
 
-    console.warn(`No parent for Task ${this}`);
     return null;
   }
 
@@ -744,10 +743,10 @@ export class Task implements Assignable, Component, Refetchable, Trackable {
    *
    * @gqlField
    */
-  async tracking(
-    first?: Int | null,
-    after?: ID | null,
-  ): Promise<Connection<Trackable> | null> {
+  async tracking(args: {
+    first?: Int | null;
+    after?: ID | null;
+  }): Promise<Connection<Trackable> | null> {
     return null;
   }
 
@@ -1720,23 +1719,41 @@ export async function computeTaskHash(
  * @gqlMutationField
  */
 export async function rebase(
-  args: { node: ID; base: ID },
+  args: { node: ID; base: ID; location?: ID | null },
   ctx: Context,
 ): Promise<Task> {
-  const node = new Task({ id: args.node });
   const base = new Task({ id: args.base });
-  assertUnderlyingType("workinstance", node._type);
   assertUnderlyingType("workinstance", base._type);
-  // TODO: verify hash.
-  const result = await sql`
-    update public.workinstance as node
-    set workinstanceoriginatorworkinstanceid = base.workinstanceid,
-        workinstancepreviousid = base.workinstanceid,
-        workinstancemodifieddate = now(),
-        workinstancemodifiedby = auth.current_identity(node.workinstancecustomerid, ${ctx.auth.userId})
-    from public.workinstance as base
-    where node.id = ${node._id} and base.id = ${base._id}
-  `;
-  assert(result.count === 1);
-  return node;
+  const node = new Task({ id: args.node });
+  return await match(node._type)
+    .with("workinstance", async () => {
+      // TODO: verify hash.
+      const result = await sql`
+        update public.workinstance as node
+        set workinstanceoriginatorworkinstanceid = base.workinstanceid,
+            workinstancepreviousid = base.workinstanceid,
+            workinstancemodifieddate = now(),
+            workinstancemodifiedby = auth.current_identity(node.workinstancecustomerid, ${ctx.auth.userId})
+        from public.workinstance as base
+        where node.id = ${node._id} and base.id = ${base._id}
+      `;
+      assert(result.count === 1);
+      return node;
+    })
+    .with("worktemplate", () =>
+      sql.begin(async sql => {
+        console.debug("rebase: requires instantiation");
+        await setCurrentIdentity(sql, ctx);
+        return await node.instantiate(
+          {
+            location: assertNonNull(args.location),
+            chainPrev: base.id,
+            chainRoot: base.id,
+          },
+          ctx,
+          sql,
+        );
+      }),
+    )
+    .exhaustive();
 }

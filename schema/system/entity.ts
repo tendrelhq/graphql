@@ -1,5 +1,5 @@
 import { constructHeadersFromArgs, extractPageInfo } from "@/api";
-import { getAccessToken } from "@/auth";
+import { getAccessToken, setCurrentIdentity } from "@/auth";
 import { sql } from "@/datasources/postgres";
 import { assert, assertUnderlyingType } from "@/util";
 import { GraphQLError } from "graphql";
@@ -294,7 +294,10 @@ export async function createInstance(
   ctx: Context,
 ): Promise<CreateInstancePayload> {
   const t = new Task({ id: args.template });
-  const i = await t.instantiate(args, ctx);
+  const i = await sql.begin(async sql => {
+    await setCurrentIdentity(sql, ctx);
+    return await t.instantiate(args, ctx, sql);
+  });
   return {
     edge: {
       cursor: i.id,

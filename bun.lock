@@ -30,6 +30,7 @@
         "@biomejs/biome": "^1.9.4",
         "@clerk/types": "^4.6.1",
         "@eddeee888/gcg-typescript-resolver-files": "^0.8.1",
+        "@faker-js/faker": "^9.7.0",
         "@graphql-codegen/cli": "^5.0.2",
         "@graphql-codegen/near-operation-file-preset": "^3.0.0",
         "@graphql-codegen/schema-ast": "^4.1.0",
@@ -346,6 +347,8 @@
     "@eddeee888/gcg-server-config": ["@eddeee888/gcg-server-config@0.2.1", "", { "dependencies": { "@graphql-codegen/typescript": "^4.0.7", "@graphql-codegen/typescript-resolvers": "^4.1.0", "tslib": "^2.3.0" } }, "sha512-mrx0/Um1FNLjmvqAUg1+pitDtaAoGE8FS59Msc0YnKbhPNgm9bl3CJG6AQRmCvr5Ks8PE5RLMlXytx1ns7VM5Q=="],
 
     "@eddeee888/gcg-typescript-resolver-files": ["@eddeee888/gcg-typescript-resolver-files@0.8.1", "", { "dependencies": { "@eddeee888/gcg-server-config": "0.2.1", "@graphql-codegen/add": "^5.0.2", "@graphql-codegen/plugin-helpers": "^5.0.4", "@graphql-codegen/typescript": "^4.0.7", "@graphql-codegen/typescript-resolvers": "^4.1.0", "@graphql-tools/utils": "^10.0.0", "micromatch": "^4.0.0", "ts-morph": "^22.0.0", "tslib": "^2.3.0" }, "peerDependencies": { "graphql": "^15.0.0 || ^16.0.0" } }, "sha512-yGJpEoiNM7IqOS7ysYfwlRI9fNmZv/ClR5JQt9yYsubxs48YExIszkTpJO4LD8HMLLI3Dd31zqzR6D0CJ5D7Ww=="],
+
+    "@faker-js/faker": ["@faker-js/faker@9.7.0", "", {}, "sha512-aozo5vqjCmDoXLNUJarFZx2IN/GgGaogY4TMJ6so/WLZOWpSV7fvj2dmrV6sEAnUm1O7aCrhTibjpzeDFgNqbg=="],
 
     "@formatjs/intl-localematcher": ["@formatjs/intl-localematcher@0.5.4", "", { "dependencies": { "tslib": "^2.4.0" } }, "sha512-zTwEpWOzZ2CiKcB93BLngUX59hQkuZjT2+SAQEscSm52peDW/getsawMcWF1rGRpMCX6D7nSJA3CzJ8gn13N/g=="],
 

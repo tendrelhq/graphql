@@ -30,10 +30,10 @@ export interface Trackable extends Component {
    *
    * @gqlField
    */
-  tracking(
-    first?: Int | null,
-    after?: ID | null,
-  ): Promise<Connection<Trackable> | null>;
+  tracking(args: {
+    first?: Int | null;
+    after?: ID | null;
+  }): Promise<Connection<Trackable> | null>;
 }
 
 // TODO:

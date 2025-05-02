@@ -861,7 +861,7 @@ export function getSchema(): GraphQLSchema {
         },
         tracking: {
           description:
-            'Entrypoint into the "tracking system(s)" for the given Location.',
+            'Entrypoint into the "tracking system(s)" for the given Location.\nNote that this will return a connection representing the "active" chains at\nthe given Location and, more specifically, the active chain *roots*. It may\nthus be that the Tasks returned by this API are *not* those that were\ninstantiated at the given Location, but rather those that have *any active\nchild* at the given Location. Also note that the active child *may not be*\nthe `fsm.active` Task - this depends on ordering - but should exist in the\n`chain`.',
           name: "tracking",
           type: TrackableConnectionType,
           args: {
@@ -877,10 +877,16 @@ export function getSchema(): GraphQLSchema {
               name: "withStatus",
               type: new GraphQLList(new GraphQLNonNull(TaskStateNameType)),
             },
+            withType: {
+              description:
+                'Further refine your search by including only those Tasks with any of the\ngiven types, e.g. "Batch" or "Runtime". Note that if no types are given,\na default type of "Trackable" will be used. This is to preserve legacy\nbehavior until we have to time to deprecate it in our applications.',
+              name: "withType",
+              type: new GraphQLList(new GraphQLNonNull(GraphQLString)),
+            },
           },
-          resolve(source, args) {
+          resolve(source, args, context, info) {
             return assertNonNull(
-              source.tracking(args.first, args.after, args.withStatus),
+              defaultFieldResolver(source, args, context, info),
             );
           },
         },
@@ -1278,9 +1284,6 @@ export function getSchema(): GraphQLSchema {
               name: "first",
               type: GraphQLInt,
             },
-          },
-          resolve(source, args) {
-            return source.tracking(args.first, args.after);
           },
         },
       };
@@ -2351,6 +2354,10 @@ export function getSchema(): GraphQLSchema {
             base: {
               name: "base",
               type: new GraphQLNonNull(GraphQLID),
+            },
+            location: {
+              name: "location",
+              type: GraphQLID,
             },
             node: {
               name: "node",

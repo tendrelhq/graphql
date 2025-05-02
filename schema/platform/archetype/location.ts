@@ -59,19 +59,29 @@ export class Location implements Component, Refetchable, Trackable {
    *
    * @gqlField
    */
-  async tracking(
-    first?: Int | null,
-    after?: ID | null,
-    withStatus?: TaskStateName[] | null,
-  ): Promise<Connection<Trackable>> {
-    const statuses = withStatus?.map(s =>
+  async tracking(args: {
+    first?: Int | null;
+    after?: ID | null;
+    withStatus?: TaskStateName[] | null;
+    /**
+     * Further refine your search by including only those Tasks with any of the
+     * given types, e.g. "Batch" or "Runtime". Note that if no types are given,
+     * a default type of "Trackable" will be used. This is to preserve legacy
+     * behavior until we have to time to deprecate it in our applications.
+     */
+    withType?: string[] | null;
+  }): Promise<Connection<Trackable>> {
+    const statuses = args.withStatus?.map(s =>
       match(s)
         .with("Open", () => "Open")
         .with("InProgress", () => "In Progress")
         .with("Closed", () => "Complete")
         .exhaustive(),
     ) ?? ["Open", "In Progress"];
-    assert(statuses.length > 0, "must provided at least one status");
+    assert(statuses.length > 0, "must provide at least one status");
+
+    const types = args.withType?.length ? args.withType : ["Trackable"];
+    assert(types.length > 0, "must provide at least one type");
 
     const nodes = await sql<TaskConstructorArgs[]>`
       with
@@ -90,46 +100,50 @@ export class Location implements Component, Refetchable, Trackable {
           inner join public.worktemplate as wt
             on wtc.worktemplateconstrainttemplateid = wt.id
             and (wt.worktemplateenddate is null or wt.worktemplateenddate > now())
-          inner join public.worktemplatetype as wtt
-            on wt.id = wtt.worktemplatetypeworktemplateuuid
-            and wtt.worktemplatetypesystaguuid in (
-                select systaguuid
-                from public.systag
-                where systagparentid = 882 and systagtype = 'Trackable'
-            )
           where l.locationuuid = ${this._id}
+            and exists (
+              select 1
+              from public.worktemplatetype
+              where wt.id = worktemplatetypeworktemplateuuid
+                and worktemplatetypesystaguuid in (
+                    select systaguuid
+                    from public.systag
+                    where systagparentid = 882 and systagtype in ${sql(types)}
+                )
+            )
         ),
 
-        -- All root instances of the instantiable templates.
+        -- All instances of the above templates.
         instances as (
           select distinct
-            root.workinstanceworktemplateid as _template,
-            engine1.base64_encode(convert_to('workinstance:' || root.id, 'utf8')) as id
+            t._template,
+            engine1.base64_encode(convert_to('workinstance:' || node.id, 'utf8')) as id
           from templates as t
-          inner join public.workresult as field_t
-            on t._template = field_t.workresultworktemplateid
-            and field_t.workresulttypeid = (
-                select systagid
-                from public.systag
-                where systagparentid = 699 and systagtype = 'Entity'
-            )
-            and field_t.workresultentitytypeid = (
-                select systagid
-                from public.systag
-                where systagparentid = 849 and systagtype = 'Location'
-            )
-            and field_t.workresultisprimary = true
-          inner join public.workresultinstance as field
-            on field_t.workresultid = field.workresultinstanceworkresultid
-            and t._parent::text = field.workresultinstancevalue
-          inner join public.workinstance as node
-            on t._template = node.workinstanceworktemplateid
-            and field.workresultinstanceworkinstanceid = node.workinstanceid
+          inner join lateral (
+            select workinstance.*
+            from public.workresult as field_t
+            inner join public.workresultinstance as field
+              on field_t.workresultid = field.workresultinstanceworkresultid
+              and t._parent::text = field.workresultinstancevalue
+            inner join public.workinstance
+              on t._template = workinstanceworktemplateid
+              and field.workresultinstanceworkinstanceid = workinstanceid
+            where t._template = field_t.workresultworktemplateid
+              and field_t.workresulttypeid = (
+                  select systagid
+                  from public.systag
+                  where systagparentid = 699 and systagtype = 'Entity'
+              )
+              and field_t.workresultentitytypeid = (
+                  select systagid
+                  from public.systag
+                  where systagparentid = 849 and systagtype = 'Location'
+              )
+              and field_t.workresultisprimary = true
+          ) as node on true
           inner join public.systag as task_state
             on node.workinstancestatusid = task_state.systagid
             and task_state.systagtype in ${sql(statuses)}
-          inner join public.workinstance as root
-            on node.workinstanceoriginatorworkinstanceid = root.workinstanceid
         )
 
       select coalesce(i.id, t.id) as id
@@ -164,6 +178,10 @@ export class Location implements Component, Refetchable, Trackable {
       name: string;
       order?: number | null;
       fields: FieldDefinitionInput[];
+      /**
+       * Default: `true`
+       */
+      supportsLazyInstantiation?: boolean;
       types: string[];
     },
     ctx: Context,
@@ -189,6 +207,7 @@ export class Location implements Component, Refetchable, Trackable {
         task_name := ${args.name},
         task_parent_id := cte.task_parent_id,
         task_order := ${args.order ?? 0},
+        task_supports_lazy_instantiation := ${args.supportsLazyInstantiation ?? true},
         modified_by := cte.me
       ) as t;
     `;
