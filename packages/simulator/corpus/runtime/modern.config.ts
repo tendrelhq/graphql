@@ -3,19 +3,20 @@ import { sql } from "@/datasources/postgres";
 import type { Context } from "@/schema";
 import type { Location } from "@/schema/platform/archetype/location";
 import { type Customer, createEmptyCustomer } from "@/test/prelude";
-import { assertNonNull, map } from "@/util";
+import { assertNonNull } from "@/util";
 import {
   DEFAULT_RUNTIME_CHILD_LOCATIONS,
   DEFAULT_RUNTIME_LOCATION_TYPE,
-  createDefaultBatchTemplate,
   createDefaultDowntimeTemplate,
   createDefaultIdleTimeTemplate,
   createDefaultRuntimeTemplate,
 } from "./lib";
 
 /**
- * Create a Batch-enabled Runtime customer. This is the latest and greatest
- * configuration, although it may yet be a bit buggy :/
+ * Create a so-called "modern" Runtime customer. The only tangible difference
+ * here is that our Run tasks are truly on-demand, i.e. they support lazy
+ * instantiation, i.e. we do NOT pre-create instances nor do we "respawn"
+ * instance when the Runs go in-progress.
  */
 export async function createCustomer(
   name: string,
@@ -37,19 +38,10 @@ export async function createCustomer(
       sql,
     );
 
-    // The initial site has the same name as the customer.
+    // Same as the legacy setup.
     const site = await customer.addLocation({ name, type: name }, ctx, sql);
 
-    // As with the canonical Runtime configuration, there are five Locations as
-    // well as the usual Run, Down and Idle templates. Different from the
-    // canonical configuration is that the Run template does NOT have a respawn
-    // rule but is configured to support lazy instantiation. This affects the
-    // frontend, since you will see Tasks come back that do not have an fsm,
-    // parent, state, etc... because they are "on demand" tasks, i.e.
-    // worktemplates. Therefore the process of "starting a run" will be slightly
-    // different, since you will need to, e.g., `router.replace(...)` in
-    // `onComplete` after the first `advance` to start the run.
-
+    // Same as the legacy setup.
     const lines: Location[] = [];
     let order = 0;
     for (const name of DEFAULT_RUNTIME_CHILD_LOCATIONS) {
@@ -65,16 +57,6 @@ export async function createCustomer(
       lines.push(line);
     }
 
-    const batch = await createDefaultBatchTemplate(
-      { location: site },
-      ctx,
-      sql,
-    );
-
-    // Note the differences with the canonical setup:
-    // 1. the Run template supports lazy instantiation (i.e. you can always do a Run at any location).
-    // 2. there is no respawn rule (because^)
-    // 3. we create no initial instances
     const run = await createDefaultRuntimeTemplate(
       { location: site },
       ctx,
@@ -86,25 +68,6 @@ export async function createCustomer(
       sql,
     );
 
-    // For InProgress Batches, allow the user to explicitly instantiate a Run
-    // at any of the following Locations. The newly instantiated Run will be
-    // part of the Batch chain.
-    for (const line of lines) {
-      await batch.createTransition(
-        {
-          whenStatusChangesTo: "InProgress",
-          instantiate: {
-            template: run.id,
-            atLocation: line.id,
-          },
-          type: "lazy",
-        },
-        ctx,
-        sql,
-      );
-    }
-
-    // The rest is the same as in the canonical setup.
     const down = await createDefaultDowntimeTemplate(
       { location: site },
       ctx,
@@ -127,9 +90,6 @@ export async function createCustomer(
       sql,
     );
 
-    // Note that these two transitions use *lazy instantiation*.
-    // (This is what `withType: "On Demand"` means)
-    //
     // Runtime -> Downtime
     run.createTransition(
       {
@@ -150,23 +110,6 @@ export async function createCustomer(
       ctx,
       sql,
     );
-
-    // TODO: use Keller's API?
-    const start = Date.now();
-    // process.stdout.write("beforeAll: importing entities... ");
-    await sql`call entity.import_entity(null)`.then(() => {
-      const ms = Date.now() - start;
-      const took = map(ms, ms => {
-        if (ms < 1000) return `${ms}ms`;
-        return `${ms / 1000}s`;
-      });
-      const e = map(ms, ms => {
-        if (ms < 1000) return "😍";
-        if (ms < 5000) return "😐";
-        return "🫣";
-      });
-      // console.log(`done. [took: ${took} ${e}]`);
-    });
 
     return customer;
   });

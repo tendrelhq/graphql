@@ -34,13 +34,13 @@ export function Field({ queryRef }: { queryRef: Field_fragment$key }) {
         );
       })
       .with({ __typename: "NumberValue", number: P.number }, v => (
-        <Text>{v.number}</Text>
+        <Text>{v.number.toLocaleString()}</Text>
       ))
       .with({ __typename: "StringValue", string: P.string }, v => (
         <Text>{v.string}</Text>
       ))
       .with({ __typename: "TimestampValue", timestamp: P.string }, v => (
-        <Text>{Temporal.Instant.from(v.timestamp).toString()}</Text>
+        <Text>{Temporal.Instant.from(v.timestamp).toLocaleString()}</Text>
       ))
       .otherwise(() => <Text color="gray">null</Text>);
 

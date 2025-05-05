@@ -4,18 +4,19 @@ const modes = {
   "%unset%": {
     //
   },
-  config: {
+  start: {
+    //
+  },
+  history: {
     //
   },
   help: {
     //
   },
-  main: {
-    //
-  },
 };
 
 export type Mode = keyof typeof modes;
+export type UserMode = Exclude<Mode, "%unset%" | "help">;
 
 type ModeContext = {
   active: Mode;
@@ -41,7 +42,9 @@ export function ModeControl(props: React.PropsWithChildren) {
       value={{
         active: mode,
         alternate: alt,
-        available: ["config", "main"],
+        available: Object.keys(modes).filter(
+          m => !["%unset%", "help"].includes(m),
+        ) as UserMode[],
         switch(newMode) {
           if (newMode === "%") {
             setMode(alt ?? "%unset%");
@@ -64,10 +67,10 @@ interface ModeGuardProps extends React.PropsWithChildren {
 
 export function ModeGuard(props: ModeGuardProps) {
   const { active } = useSimulatorMode();
-  if (props.whenNotIn?.includes(active)) {
-    return null;
-  }
-  if (props.whenIn && !props.whenIn.includes(active)) {
+  if (
+    props.whenNotIn?.includes(active) ||
+    (props.whenIn && !props.whenIn?.includes(active))
+  ) {
     return null;
   }
   return props.children;

@@ -3,25 +3,9 @@ import { graphql } from "relay-runtime";
 // Just a bunch of Relay fragments, so relay-compiler will work correctly.
 
 graphql`
-  query AppQuery($nodeId: ID!) @throwOnFieldError {
-    customer: node(id: $nodeId) {
-      ...AppUserInfo_fragment
-    }
-  }
-`;
-
-graphql`
-  fragment AppUserInfo_fragment on Organization {
-    me {
-      displayName
-      role {
-        name {
-          value
-        }
-      }
-    }
-    name {
-      value
+  query AppQuery @throwOnFieldError {
+    user {
+      ...User_fragment
     }
   }
 `;

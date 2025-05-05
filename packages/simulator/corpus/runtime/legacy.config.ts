@@ -2,6 +2,8 @@ import { setCurrentIdentity } from "@/auth";
 import { sql } from "@/datasources/postgres";
 import type { Context } from "@/schema";
 import type { Location } from "@/schema/platform/archetype/location";
+import { type Customer, createEmptyCustomer } from "@/test/prelude";
+import { assertNonNull } from "@/util";
 import type { Faker } from "@faker-js/faker";
 import {
   DEFAULT_RUNTIME_CHILD_LOCATIONS,
@@ -9,17 +11,13 @@ import {
   createDefaultDowntimeTemplate,
   createDefaultIdleTimeTemplate,
   createDefaultRuntimeTemplate,
-} from "@/test/app/runtime/prelude";
-import { type Customer, createEmptyCustomer } from "@/test/prelude";
-import { assertNonNull } from "@/util";
+} from "./lib";
 
 /**
- * Create the canonical Runtime customer, i.e. before Batch and Reason Codes
- * when there was just Run, Down and Idle. This test is intended to be a sort of
- * backwards compatibility test, e.g. it passes Task ids into `advance` where
- * the newer model expects Transition ids instead (to enable cross-location
- * instantiation). In practice this configuration will soon be defunct (as soon
- * as folks upgrade to the latest app build).
+ * Create a so-called "legacy" Runtime customer. This is the canonical setup as
+ * of tendrelhq/graphql#v0.30.0. It is expected that this configuration works
+ * with app versions ^1.2.0. Caveat: on app versions ^1.3.0 it is still expected
+ * to work albeit *not* when cross-location instantiation is involved.
  */
 export async function createCustomer(
   args: {
@@ -83,7 +81,7 @@ export async function createCustomer(
         location: site,
         // The canonical configuration did this by default (it was the only way
         // at the time) and so we maintain that behavior here for the sake of
-        // testing. Nowadays we *default* to supporting lazy instantiation.
+        // backwards compatibility. Nowadays lazy instantiation is the default.
         supportsLazyInstantiation: false,
       },
       ctx,
@@ -109,6 +107,7 @@ export async function createCustomer(
       await run.instantiate({ location: line.id }, ctx, sql);
     }
 
+    // Down template
     const down = await createDefaultDowntimeTemplate(
       { location: site },
       ctx,
@@ -120,6 +119,7 @@ export async function createCustomer(
       sql,
     );
 
+    // Idle template
     const idle = await createDefaultIdleTimeTemplate(
       { location: site },
       ctx,
@@ -131,9 +131,6 @@ export async function createCustomer(
       sql,
     );
 
-    // Note that these two transitions use *lazy instantiation*.
-    // (This is what `withType: "On Demand"` means)
-    //
     // Runtime -> Downtime
     run.createTransition(
       {

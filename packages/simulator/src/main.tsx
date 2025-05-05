@@ -1,41 +1,19 @@
-import type { FieldInput as FieldInputSchema } from "@/schema/system/component";
-import type { ID } from "grats";
-import { Box, Text, render, useFocus, useFocusManager, useInput } from "ink";
-import SelectInput from "ink-select-input";
-import TextInput from "ink-text-input";
-import { Suspense, useRef, useState } from "react";
+import { assertNonNull, map } from "@/util";
+import { Text, render } from "ink";
+import { Suspense } from "react";
 import { ErrorBoundary, type FallbackProps } from "react-error-boundary";
-import {
-  RelayEnvironmentProvider,
-  useFragment,
-  useMutation,
-} from "react-relay";
+import { RelayEnvironmentProvider } from "react-relay";
 import {
   Environment,
   type FetchFunction,
   Network,
   Observable,
-  type PayloadError,
   RecordSource,
   Store,
 } from "relay-runtime";
-import { match } from "ts-pattern";
-import AppBatchInputNode, {
-  type AppBatchInput_fragment$key,
-} from "./__generated__/AppBatchInput_fragment.graphql";
-import AppBatchFragment, {
-  type AppBatch_fragment$key,
-} from "./__generated__/AppBatch_fragment.graphql";
-import AppGenerateBatchNode, {
-  type AppGenerateBatchMutation,
-} from "./__generated__/AppGenerateBatchMutation.graphql";
-import AppSimulationNode, {
-  type AppSimulation_fragment$key,
-} from "./__generated__/AppSimulation_fragment.graphql";
 import { App } from "./components/App";
-import { Field, FieldInput } from "./components/Field";
 import { ModeControl } from "./components/simulator/mode";
-import { setup } from "./prelude";
+import Loading from "./components/Loading";
 
 // Runtime simulator v0
 //
@@ -55,26 +33,46 @@ import { setup } from "./prelude";
 // between the lines, and are therefore interested in cross-location (i.e.
 // batch-level) progress. Doesn't matter. I made it up. Enjoy :)
 
-const { customer, worker, factory, batchTemplate } = await setup().catch(e => {
-  console.trace("error during setup", e);
-  throw e;
+// TODO: OAuth.
+const X_TENDREL_USER = assertNonNull(
+  process.env.X_TENDREL_USER,
+  "Set the X_TENDREL_USER environment variable to the workeridentityid of your choosing. This in lieu of a legitimate commandline authentication flow.",
+);
+
+/**
+ * Set the INJECT_LATENCY environment variable to add arbitrary latency to
+ * network requests, e.g. `INJECT_LATENCY=2000 bun simulator:start` will add
+ * 2000 ms of latency to every request.
+ */
+const injectLatency = map(process.env.INJECT_LATENCY, s => {
+  const ms = Number.parseInt(s);
+  if (Number.isFinite(ms)) return ms;
+  return;
 });
 
 const fetchFn: FetchFunction = (params, variables) => {
-  const res = fetch("http://localhost:4000", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      // TODO: OAuth.
-      // biome-ignore lint/style/noNonNullAssertion: FIXME
-      "X-Tendrel-User": process.env.X_TENDREL_USER!,
-    },
-    body: JSON.stringify({
-      query: params.text,
-      variables,
-    }),
+  const p = new Promise(resolve => {
+    if (injectLatency) {
+      setTimeout(resolve, injectLatency);
+      return;
+    }
+    resolve(undefined);
+  }).then(async () => {
+    const res = await fetch("http://localhost:4000", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Tendrel-User": X_TENDREL_USER,
+      },
+      body: JSON.stringify({
+        query: params.text,
+        variables,
+      }),
+    });
+    return await res.json();
   });
-  return Observable.from(res.then(data => data.json()));
+
+  return Observable.from(p);
 };
 
 function createEnvironment() {
@@ -85,6 +83,7 @@ function createEnvironment() {
 
 const environment = createEnvironment();
 
+/*
 const Batch = ({ queryRef }: { queryRef: AppBatch_fragment$key }) => {
   const data = useFragment(AppBatchFragment, queryRef);
 
@@ -179,31 +178,30 @@ const GenerateBatch = (props: {
               ref.current[i] = {
                 field: e.node.id,
                 value: value,
-                // biome-ignore lint/suspicious/noExplicitAny: FIXME
                 valueType: e.node.valueType as any,
               };
               focusNext();
             }}
           />
         ))}
-        {/* <SubmitGeneratedBatch */}
-        {/*   onSubmit={() => { */}
-        {/*     commit({ */}
-        {/*       variables: { */}
-        {/*         batchId: (nextBatchId++).toString(), */}
-        {/*         batchTemplateId: batchTemplate.id, */}
-        {/*         location: factory.id, */}
-        {/*         fields: ref.current, */}
-        {/*         connections: [props.connectionId], */}
-        {/*       }, */}
-        {/*       onCompleted(_, errors) { */}
-        {/*         ref.current = []; */}
-        {/*         setEditing(false); */}
-        {/*         setErrors(errors); */}
-        {/*       }, */}
-        {/*     }); */}
-        {/*   }} */}
-        {/* /> */}
+        <SubmitGeneratedBatch
+          onSubmit={() => {
+            commit({
+              variables: {
+                batchId: (nextBatchId++).toString(),
+                batchTemplateId: batchTemplate.id,
+                location: factory.id,
+                fields: ref.current,
+                connections: [props.connectionId],
+              },
+              onCompleted(_, errors) {
+                ref.current = [];
+                setEditing(false);
+                setErrors(errors);
+              },
+            });
+          }}
+        />
       </Box>
     );
   }
@@ -253,7 +251,7 @@ const Simulation = (props: {
         .with("g", () => (
           <Box
             flexDirection="column"
-            marginLeft={2 /* to align with select-mode */}
+            marginLeft={2}
           >
             {data.edges.map(e => (
               <Batch key={e.node.id} queryRef={e.node} />
@@ -275,6 +273,7 @@ const Simulation = (props: {
     </Box>
   );
 };
+*/
 
 const Fallback = (props: FallbackProps) => {
   console.error(props.error);
@@ -284,10 +283,10 @@ const Fallback = (props: FallbackProps) => {
 const Main = () => {
   return (
     <ErrorBoundary FallbackComponent={Fallback}>
-      <Suspense>
+      <Suspense fallback={<Loading message="Initializing environment..." />}>
         <RelayEnvironmentProvider environment={environment}>
           <ModeControl>
-            <App nodeId={customer.id} />
+            <App />
           </ModeControl>
         </RelayEnvironmentProvider>
       </Suspense>

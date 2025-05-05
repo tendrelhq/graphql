@@ -19,7 +19,7 @@ import {
   TestRuntimeDetailDocument,
   TestRuntimeEntrypointDocument,
   TestRuntimeTransitionMutationDocument,
-} from "./runtime.test.generated";
+} from "./legacy.test.generated";
 
 const ctx = await createTestContext();
 
