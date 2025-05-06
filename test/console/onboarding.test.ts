@@ -1,7 +1,7 @@
 import { afterAll, describe, test } from "bun:test";
 import { sql } from "@/datasources/postgres";
 import { assert, mapOrElse } from "@/util";
-import { Faker, en } from "@faker-js/faker";
+import { Faker, base, en } from "@faker-js/faker";
 
 const seed = mapOrElse(
   process.env.SEED,
@@ -12,7 +12,7 @@ const seed = mapOrElse(
   },
   Date.now(),
 );
-const faker = new Faker({ locale: [en], seed });
+const faker = new Faker({ locale: [en, base], seed });
 
 const customerName = seed.toString();
 describe("onboarding", () => {
@@ -61,7 +61,9 @@ describe("onboarding", () => {
         );
       `;
       assert(rows.at(0)?.create_customeruuid);
-      console.log(rows.at(0)?.create_customeruuid);
+      console.debug(
+        `created customer '${customerName}' with id '${rows.at(0)?.create_customeruuid}'`,
+      );
     });
   });
 

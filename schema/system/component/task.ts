@@ -1726,7 +1726,17 @@ export async function computeTaskHash(
  * @gqlMutationField
  */
 export async function rebase(
-  args: { node: ID; base: ID; location?: ID | null },
+  args: {
+    base: ID;
+    node: ID;
+    /**
+     * When rebasing a Task necessitates instantiation, you may use the `parent`
+     * argument to indicate _where_ to place the new instance. In some cases this
+     * argument is required, e.g. when no suitable parent can be derived (for
+     * example when the new instance represents a new chain).
+     */
+    parent?: ID | null;
+  },
   ctx: Context,
 ): Promise<Task> {
   const base = new Task({ id: args.base });
@@ -1737,13 +1747,8 @@ export async function rebase(
       // TODO: verify hash.
       // TODO: move to SQL + recursive/full chain update
       const result = await sql`
-        update public.workinstance as node
-        set workinstanceoriginatorworkinstanceid = base.workinstanceid,
-            workinstancepreviousid = base.workinstanceid,
-            workinstancemodifieddate = now(),
-            workinstancemodifiedby = auth.current_identity(node.workinstancecustomerid, ${ctx.auth.userId})
-        from public.workinstance as base
-        where node.id = ${node._id} and base.id = ${base._id}
+        select 1
+        from engine0.rebase(${base._id}, ${node._id})
       `;
       assert(result.count === 1);
       return node;
@@ -1754,7 +1759,10 @@ export async function rebase(
         await setCurrentIdentity(sql, ctx);
         return await node.instantiate(
           {
-            location: assertNonNull(args.location),
+            location: assertNonNull(
+              args.parent,
+              "instantiation requires an explicit parent",
+            ),
             chainPrev: base.id,
             chainRoot: base.id,
           },

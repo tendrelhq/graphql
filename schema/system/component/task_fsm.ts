@@ -305,6 +305,10 @@ async function advanceFsm(
   ctx: Context,
   sql: TxSql,
 ): Promise<AdvanceTaskStateMachineResult> {
+  // The hypothesis is that we will never be in this state here. In practice the
+  // only time the fsm is null is when the *root* is lazily instantiated and, in
+  // such cases, we would have taken the `advanceTask` branch above wherein we
+  // "operate on the root". Thus, the following assertion is safe:
   const active = assertNonNull(args.fsm.active, "fsm is not active");
   return await match(args.choice._type)
     .with("workinstance", () => {

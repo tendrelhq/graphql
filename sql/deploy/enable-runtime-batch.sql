@@ -1,5 +1,6 @@
+-- Deploy graphql:enable-runtime-batch to pg
 
--- Type: PROCEDURE ; Name: entity.enable_runtime(uuid,text,uuid,text,uuid,text,bigint,text); Owner: tendreladmin
+BEGIN;
 
 CREATE OR REPLACE PROCEDURE entity.enable_runtime(IN create_customer_uuid uuid, IN create_original_customer_uuid text, IN create_site_uuid uuid, IN create_original_site_uuid text, IN create_language_type_uuid uuid, IN create_original_language_type_uuid text, IN modified_by bigint, IN timezone text, OUT testlog text)
  LANGUAGE plpgsql
@@ -638,8 +639,4 @@ begin
 end
 $procedure$;
 
-
-REVOKE ALL ON PROCEDURE entity.enable_runtime(uuid,text,uuid,text,uuid,text,bigint,text) FROM PUBLIC;
-GRANT EXECUTE ON PROCEDURE entity.enable_runtime(uuid,text,uuid,text,uuid,text,bigint,text) TO PUBLIC;
-GRANT EXECUTE ON PROCEDURE entity.enable_runtime(uuid,text,uuid,text,uuid,text,bigint,text) TO tendreladmin WITH GRANT OPTION;
-GRANT EXECUTE ON PROCEDURE entity.enable_runtime(uuid,text,uuid,text,uuid,text,bigint,text) TO graphql;
+COMMIT;

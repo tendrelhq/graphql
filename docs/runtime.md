@@ -229,7 +229,47 @@ mutation {
 }
 ```
 
+Assigning batches:
+
+There is a mutation for this: `rebase`. This mutation takes three arguments,
+`base: ID!`, `node: ID!` and an optional `parent: ID`, and returns a Task that
+is the rebased node (i.e. `node === response.id`). However this will not always
+be the case (`node !== response.id` is valid) and should be handled accordingly
+by the client application.
+
+This case is what we call the "lazy instantiation" case. Under this model, the
+client may see Tasks that, under the hood, are encoded as worktemplates instead
+of workinstances. The implication is that such Tasks are "always available",
+albeit missing some data that only applies at the instance level, e.g.
+assignees, chain, fsm, status, to name a few. The client application should be
+able to handle this case from a UI perspective. Note that all of the normal
+operations still apply, e.g. you can still `assign` the Task. However, these
+operations when used in such scenarios will perform instantiation under the
+hood, e.g. `assign` will first instantiate (i.e. create a workinstance), _then_
+do the normal assignment operation on the new instance, and finally return the
+_new instance_ back to the client.
+
+Thus, you must be prepared to handle this on the client. It should be relatively
+straightforward in that you can use do some navigation to get you to the right
+screen (e.g. `router.replace(...)` with the new Task returned by the mutation).
+
+```graphql
+mutation AssignBatch($batchId: ID!, $runId: ID!, $runLocationId: ID) {
+  rebase(base: $batchId, node: $runId, parent: $runLocationId) {
+    ...Runtime_fragment # or whatever your screen fragments are
+  }
+}
+```
+
+Some additional notes on the `rebase` mutation:
+
+- You can only rebase chain roots at the moment, i.e. `$runId` in the example
+  above _must_ also be a root (`node.id === node.root.id`)
+- You can rebase at any time, and from any FSM state (even `null` i.e. closed)
+
 ### Test suite
+
+TODO: I think this is a little out of date.
 
 The test suite (batch.test.ts) configures batch like so:
 

@@ -360,13 +360,13 @@ describe("runtime + batch tracking", () => {
       const result = await execute(schema, AssignBatchMutationDocument, {
         base: batch,
         node: run,
-        location: location.id,
+        parent: location.id,
       });
       expect(result.errors).toBeFalsy();
     }
   });
 
-  test("batches open, runs opens", async () => {
+  test("batches open, runs open", async () => {
     const batchQuery = await execute(schema, TestBatchEntrypointDocument, {
       parent: CUSTOMER.id,
     });

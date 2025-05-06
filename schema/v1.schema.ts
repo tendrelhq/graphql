@@ -2361,13 +2361,15 @@ export function getSchema(): GraphQLSchema {
               name: "base",
               type: new GraphQLNonNull(GraphQLID),
             },
-            location: {
-              name: "location",
-              type: GraphQLID,
-            },
             node: {
               name: "node",
               type: new GraphQLNonNull(GraphQLID),
+            },
+            parent: {
+              description:
+                "When rebasing a Task necessitates instantiation, you may use the `parent`\nargument to indicate _where_ to place the new instance. In some cases this\nargument is required, e.g. when no suitable parent can be derived (for\nexample when the new instance represents a new chain).",
+              name: "parent",
+              type: GraphQLID,
             },
           },
           resolve(_source, args, context) {

@@ -1241,7 +1241,17 @@ type Mutation {
   The net effect of this mutation is that the Task identified by `node` will
   have its root (`Task.root`) set to the Task identified by `base`.
   """
-  rebase(base: ID!, location: ID, node: ID!): Task @semanticNonNull
+  rebase(
+    base: ID!
+    node: ID!
+    """
+    When rebasing a Task necessitates instantiation, you may use the `parent`
+    argument to indicate _where_ to place the new instance. In some cases this
+    argument is required, e.g. when no suitable parent can be derived (for
+    example when the new instance represents a new chain).
+    """
+    parent: ID
+  ): Task @semanticNonNull
   saveChecklist(input: ChecklistInput!): ChecklistEdge!
   setStatus(
     entity: ID!

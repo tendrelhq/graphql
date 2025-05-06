@@ -236,7 +236,6 @@ export async function trackables(
                 : sql``
             }
             and tag.systagtype = ${args.withImplementation}
-            --and chain.workinstancecompleteddate is not null
         order by chain.workinstanceid desc
         limit ${args.first ?? null}
       `;

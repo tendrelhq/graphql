@@ -70,6 +70,7 @@ export async function createCustomer(
       ctx,
       sql,
     );
+    await batch.ensureInstantiableAt({ locations: [site.id] }, ctx, sql);
 
     // Note the differences with the canonical setup:
     // 1. the Run template supports lazy instantiation (i.e. you can always do a Run at any location).

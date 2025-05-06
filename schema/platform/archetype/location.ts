@@ -159,6 +159,10 @@ export class Location implements Component, Refetchable, Trackable {
     // supports lazy instantiation (i.e. worktemplateallowondemand = true) will
     // we return it as a stand-in Task if there is no instance. This is the true
     // meaning on "On Demand" i.e. "always available".
+    //
+    // TODO: I don't think this is strictly correct.
+    // 1. We should probably only return the stand-in if withStatus includes Open
+    // 2. There should always be one Open, caveat (1)
 
     return {
       edges: nodes.map(node => ({

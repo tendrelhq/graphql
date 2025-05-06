@@ -148,8 +148,8 @@ mutation CreateBatchMutation(
   }
 }
 
-mutation AssignBatchMutation($node: ID!, $base: ID!, $location: ID) {
-  rebase(node: $node, base: $base, location: $location) {
+mutation AssignBatchMutation($node: ID!, $base: ID!, $parent: ID) {
+  rebase(node: $node, base: $base, parent: $parent) {
     name {
       value
     }
