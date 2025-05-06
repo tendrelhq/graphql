@@ -4,7 +4,6 @@
 CREATE OR REPLACE FUNCTION engine0.execute(task_id text, modified_by bigint)
  RETURNS TABLE(instance text)
  LANGUAGE plpgsql
- STRICT
 AS $function$
 begin
   return query

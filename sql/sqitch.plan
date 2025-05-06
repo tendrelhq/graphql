@@ -6,3 +6,4 @@
 fix-x-location 2025-04-29T08:00:35Z Will Ruggiano <ruggiano@tendrel.io> # fix: cross location instantiation
 workinstancenameid 2025-04-29T08:41:34Z Will Ruggiano <ruggiano@tendrel.io> # for batch
 real-on-demand 2025-04-29T22:17:55Z Will Ruggiano <ruggiano@tendrel.io> # actually implement on-demand the way its meant to work
+instantiate-non-strict 2025-05-05T23:21:45Z Will Ruggiano <ruggiano@tendrel.io> # make engine0.instantiate non strict

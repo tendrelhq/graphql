@@ -1135,6 +1135,13 @@ export type AdvanceTaskOptions = {
    */
   hash: string;
   overrides?: FieldInput[] | null;
+  /**
+   * When advancing a Task necessitates instantiation, you may use the `parent`
+   * argument to indicate _where_ to place the new instance. In some cases this
+   * argument is required, e.g. when no suitable parent can be derived (for
+   * example when the new instance represents a new chain).
+   */
+  parent?: ID | null;
 };
 
 export type AdvanceTaskResult = {
@@ -1728,6 +1735,7 @@ export async function rebase(
   return await match(node._type)
     .with("workinstance", async () => {
       // TODO: verify hash.
+      // TODO: move to SQL + recursive/full chain update
       const result = await sql`
         update public.workinstance as node
         set workinstanceoriginatorworkinstanceid = base.workinstanceid,

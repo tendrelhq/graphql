@@ -13,7 +13,7 @@ import {
 } from "@/test/prelude";
 import { assert, assertNonNull, mapOrElse } from "@/util";
 import { Faker, base, en } from "@faker-js/faker";
-import { createCustomer } from "./prelude/canonical";
+import { createCustomer } from "./prelude/canonical-via-crud";
 import {
   TestRuntimeApplyFieldEditsMutationDocument,
   TestRuntimeDetailDocument,
@@ -36,7 +36,7 @@ const faker = new Faker({ locale: [en, base], seed });
 
 const NOW_PLUS_24H = new Date(NOW.valueOf() + 24 * 60 * 60 * 1000);
 
-describe("runtime demo", () => {
+describe("runtime, via crud_customer_create", () => {
   let CUSTOMER: Customer; // set in `beforeAll`
   let ROOT: Task; // set in "entrypoint query"
 
@@ -48,12 +48,12 @@ describe("runtime demo", () => {
       });
       expect(result.errors).toBeFalsy();
 
-      expect(result.data?.trackables?.edges?.length).toBe(5);
+      expect(result.data?.trackables?.edges?.length).toBe(1);
       expect(result.data?.trackables?.edges).toMatchObject([
         {
           node: {
             name: {
-              value: "Mixing Line",
+              value: "My First Location",
             },
             tracking: {
               edges: [
@@ -71,43 +71,15 @@ describe("runtime demo", () => {
             },
           },
         },
-        {
-          node: {
-            name: {
-              value: "Fill Line",
-            },
-          },
-        },
-        {
-          node: {
-            name: {
-              value: "Assembly Line",
-            },
-          },
-        },
-        {
-          node: {
-            name: {
-              value: "Cartoning Line",
-            },
-          },
-        },
-        {
-          node: {
-            name: {
-              value: "Packaging Line",
-            },
-          },
-        },
       ]);
 
       const mixingLine = assertNonNull(
         result.data?.trackables?.edges?.find(
           e =>
             e.node?.__typename === "Location" &&
-            e.node.name.value === "Mixing Line",
+            e.node.name.value === "My First Location",
         ),
-        "no mixing line?",
+        "no location?",
       );
       const runInstance = assertNonNull(
         mixingLine?.node?.tracking?.edges
@@ -175,6 +147,7 @@ describe("runtime demo", () => {
       },
     );
     expect(result.errors).toBeFalsy();
+    expect(result.data?.advance?.diagnostics).toBeFalsy();
 
     expect(result.data?.advance?.root).toMatchObject({
       fsm: {
@@ -184,7 +157,7 @@ describe("runtime demo", () => {
           },
           parent: {
             name: {
-              value: "Mixing Line",
+              value: "My First Location",
             },
           },
           state: {
@@ -206,7 +179,7 @@ describe("runtime demo", () => {
           },
           parent: {
             name: {
-              value: "Mixing Line",
+              value: "My First Location",
             },
           },
           state: {
@@ -236,7 +209,18 @@ describe("runtime demo", () => {
       },
     );
     expect(result.errors).toBeFalsy();
-    expect(result.data).toMatchSnapshot();
+    expect(result.data).toMatchObject({
+      advance: {
+        __typename: "AdvanceTaskStateMachineResult",
+        diagnostics: [
+          {
+            __typename: "Diagnostic",
+            code: "hash_mismatch_precludes_operation",
+          },
+        ],
+        instantiations: [],
+      },
+    });
   });
 
   test("start idle", async () => {
@@ -605,7 +589,7 @@ describe("runtime demo", () => {
         ],
         parent: {
           name: {
-            value: "Mixing Line",
+            value: "My First Location",
           },
         },
       },

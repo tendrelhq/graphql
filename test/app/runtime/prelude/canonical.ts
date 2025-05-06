@@ -4,6 +4,7 @@ import type { Context } from "@/schema";
 import type { Location } from "@/schema/platform/archetype/location";
 import { type Customer, createEmptyCustomer } from "@/test/prelude";
 import { assertNonNull } from "@/util";
+import type { Faker } from "@faker-js/faker";
 import {
   DEFAULT_RUNTIME_CHILD_LOCATIONS,
   DEFAULT_RUNTIME_LOCATION_TYPE,
@@ -21,13 +22,21 @@ import {
  * as folks upgrade to the latest app build).
  */
 export async function createCustomer(
-  name: string,
+  args: {
+    faker: Faker;
+    seed: number;
+  },
   ctx: Context,
 ): Promise<Customer> {
   return await sql.begin(async sql => {
     await setCurrentIdentity(sql, ctx);
 
-    const customer = await createEmptyCustomer({ name }, ctx, sql);
+    const customerName = args.seed.toString();
+    const customer = await createEmptyCustomer(
+      { name: customerName },
+      ctx,
+      sql,
+    );
 
     await customer.addWorker(
       {
@@ -41,7 +50,11 @@ export async function createCustomer(
     );
 
     // The initial site has the same name as the customer.
-    const site = await customer.addLocation({ name, type: name }, ctx, sql);
+    const site = await customer.addLocation(
+      { name: customerName, type: customerName },
+      ctx,
+      sql,
+    );
 
     // The canonical Runtime setup involves five Locations and just the basic
     // Run, Idle, and Down templates. The user can transition from Run into Idle

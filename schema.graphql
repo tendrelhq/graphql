@@ -85,6 +85,13 @@ input AdvanceTaskOptions {
   hash: String!
   id: ID!
   overrides: [FieldInput!]
+  """
+  When advancing a Task necessitates instantiation, you may use the `parent`
+  argument to indicate _where_ to place the new instance. In some cases this
+  argument is required, e.g. when no suitable parent can be derived (for
+  example when the new instance represents a new chain).
+  """
+  parent: ID
 }
 
 type AdvanceTaskStateMachineResult {

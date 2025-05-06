@@ -264,6 +264,10 @@ export class Customer {
     this.id = normalizeBase64(args.id);
   }
 
+  static fromTypeId(type: "organization", id: string) {
+    return new Customer({ id: encodeGlobalId({ type, id }) });
+  }
+
   async addLocation(
     args: {
       name: string;

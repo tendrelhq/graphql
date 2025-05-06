@@ -1935,6 +1935,12 @@ export function getSchema(): GraphQLSchema {
             name: "overrides",
             type: new GraphQLList(new GraphQLNonNull(FieldInputType)),
           },
+          parent: {
+            description:
+              "When advancing a Task necessitates instantiation, you may use the `parent`\nargument to indicate _where_ to place the new instance. In some cases this\nargument is required, e.g. when no suitable parent can be derived (for\nexample when the new instance represents a new chain).",
+            name: "parent",
+            type: GraphQLID,
+          },
         };
       },
     });

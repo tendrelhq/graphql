@@ -149,8 +149,33 @@ export async function advance(
   ctx: Context,
   opts: AdvanceFsmOptions,
 ): Promise<AdvanceTaskStateMachineResult> {
-  const root = new Task({ id: opts.fsm.id });
+  const root = await map(opts.fsm.id, id => {
+    const t = new Task({ id });
+    return match(t._type)
+      .with("workinstance", () => t)
+      .with("worktemplate", () => {
+        // If our FSM is underlied by a worktemplate (e.g. in the lazy
+        // instantiation case) then we need to instantiate it here and now. Note
+        // that this also implies that the `fsm.parent` argument is required.
+        return sql.begin(sql =>
+          t.instantiate(
+            {
+              location: assertNonNull(
+                opts.fsm.parent,
+                "opts.fsm.parent is required when advancement necessitates instantiation",
+              ),
+              fields: opts.fsm.overrides,
+              // We can't have a `chainRoot` nor a `chainPrev` here.
+            },
+            ctx,
+            sql,
+          ),
+        );
+      })
+      .exhaustive();
+  });
   console.debug(`fsm: ${root.id}`);
+
   assert(root._type === "workinstance");
 
   return await sql.begin(async sql => {
