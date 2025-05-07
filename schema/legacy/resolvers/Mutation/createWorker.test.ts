@@ -1,12 +1,14 @@
 import { describe, expect, test } from "bun:test";
 import { randomUUID } from "node:crypto";
 import { schema } from "@/schema/final";
-import { execute } from "@/test/prelude";
+import { createTestContext, execute } from "@/test/prelude";
 import { TestCreateWorkerDocument } from "./createWorker.test.generated";
+
+const ctx = await createTestContext();
 
 describe.skip("createWorker", () => {
   test("creates worker without conflict", async () => {
-    const result = await execute(schema, TestCreateWorkerDocument, {
+    const result = await execute(ctx, schema, TestCreateWorkerDocument, {
       input: {
         active: true,
         languageId: "7ebd10ee-5018-4e11-9525-80ab5c6aebee",
@@ -23,7 +25,7 @@ describe.skip("createWorker", () => {
   test("duplicate_scan_code", async () => {
     const scanCode = randomUUID();
 
-    await execute(schema, TestCreateWorkerDocument, {
+    await execute(ctx, schema, TestCreateWorkerDocument, {
       input: {
         active: true,
         languageId: "7ebd10ee-5018-4e11-9525-80ab5c6aebee",
@@ -36,7 +38,7 @@ describe.skip("createWorker", () => {
       },
     });
 
-    const result = await execute(schema, TestCreateWorkerDocument, {
+    const result = await execute(ctx, schema, TestCreateWorkerDocument, {
       input: {
         active: true,
         languageId: "7ebd10ee-5018-4e11-9525-80ab5c6aebee",
@@ -57,7 +59,7 @@ describe.skip("createWorker", () => {
   });
 
   test("worker_already_exists", async () => {
-    const result = await execute(schema, TestCreateWorkerDocument, {
+    const result = await execute(ctx, schema, TestCreateWorkerDocument, {
       input: {
         active: true,
         languageId: "7ebd10ee-5018-4e11-9525-80ab5c6aebee",

@@ -1,43 +1,5 @@
 // Bun Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`extended runtime demo diagnostics invalid_type -> template 1`] = `
-{
-  "data": {
-    "createTemplateConstraint": {
-      "__typename": "CreateTemplateConstraintResult",
-      "constraint": null,
-      "diagnostics": [
-        {
-          "__typename": "Diagnostic",
-          "code": "invalid_type",
-          "message": "expected one of: worktemplate; received: __test__",
-        },
-      ],
-      "instantiations": [],
-    },
-  },
-}
-`;
-
-exports[`extended runtime demo diagnostics invalid_type -> entity 1`] = `
-{
-  "data": {
-    "createTemplateConstraint": {
-      "__typename": "CreateTemplateConstraintResult",
-      "constraint": null,
-      "diagnostics": [
-        {
-          "__typename": "Diagnostic",
-          "code": "invalid_type",
-          "message": "expected one of: location; received: __test__",
-        },
-      ],
-      "instantiations": [],
-    },
-  },
-}
-`;
-
 exports[`extended runtime demo it should show up in the app 1`] = `
 {
   "__typename": "TrackableEdge",
@@ -47,11 +9,11 @@ exports[`extended runtime demo it should show up in the app 1`] = `
       "__typename": "Name",
       "value": "Super Fast Assembly Line",
     },
-    "timeZone": "America/Denver",
     "tracking": {
       "edges": [
         {
           "node": {
+            "__typename": "Task",
             "fsm": {
               "active": {
                 "assignees": {
@@ -141,6 +103,7 @@ exports[`extended runtime demo it should show up in the app 1`] = `
                 },
                 "state": {
                   "__typename": "Open",
+                  "openedBy": null,
                 },
               },
               "transitions": {
@@ -149,6 +112,24 @@ exports[`extended runtime demo it should show up in the app 1`] = `
             },
             "name": {
               "value": "Run",
+            },
+            "parent": {
+              "name": {
+                "value": "Super Fast Assembly Line",
+              },
+            },
+            "root": {
+              "name": {
+                "value": "Run",
+              },
+              "parent": {
+                "name": {
+                  "value": "Super Fast Assembly Line",
+                },
+              },
+            },
+            "state": {
+              "__typename": "Open",
             },
           },
         },

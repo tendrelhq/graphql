@@ -15,6 +15,7 @@ const seed = mapOrElse(
 const faker = new Faker({ locale: [en, base], seed });
 
 const customerName = seed.toString();
+
 describe("onboarding", () => {
   test("customer create", async () => {
     await sql.begin(async sql => {

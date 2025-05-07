@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import type { InputMaybe } from "@/schema";
 import { schema } from "@/schema/final";
-import { execute, testGlobalId } from "@/test/prelude";
+import { createTestContext, execute, testGlobalId } from "@/test/prelude";
 import type { ExecutionResult } from "graphql";
 import { TestDocument, type TestQuery } from "./checklists.test.generated";
 
@@ -11,9 +11,11 @@ const LIMIT = 10;
 const PARENT =
   "b3JnYW5pemF0aW9uOmN1c3RvbWVyXzQyY2I5NGVlLWVjMDctNGQzMy04OGVkLTlkNDk2NTllNjhiZQ==";
 
+const ctx = await createTestContext();
+
 describe.skip("checklists", () => {
   test("AST entrypoint by default", async () => {
-    const result = await execute(schema, TestDocument, {
+    const result = await execute(ctx, schema, TestDocument, {
       parent: PARENT,
       limit: LIMIT,
     });
@@ -24,7 +26,7 @@ describe.skip("checklists", () => {
 
   describe("filters", () => {
     test("withName", async () => {
-      const result = await execute(schema, TestDocument, {
+      const result = await execute(ctx, schema, TestDocument, {
         parent: PARENT,
         limit: LIMIT,
         withName: "please",
@@ -35,7 +37,7 @@ describe.skip("checklists", () => {
     });
 
     test("withStatus", async () => {
-      const result = await execute(schema, TestDocument, {
+      const result = await execute(ctx, schema, TestDocument, {
         parent: PARENT,
         limit: LIMIT,
         withStatus: ["open"],
@@ -46,7 +48,7 @@ describe.skip("checklists", () => {
     });
 
     test("withName & withStatus", async () => {
-      const result = await execute(schema, TestDocument, {
+      const result = await execute(ctx, schema, TestDocument, {
         parent: PARENT,
         limit: LIMIT,
         withName: "please",
@@ -60,7 +62,7 @@ describe.skip("checklists", () => {
 
   describe("pagination", () => {
     test("ast - forward", async () => {
-      const r0 = await execute(schema, TestDocument, {
+      const r0 = await execute(ctx, schema, TestDocument, {
         parent: PARENT,
         limit: 1,
       });
@@ -73,7 +75,7 @@ describe.skip("checklists", () => {
       });
       expect(r0.data?.checklists.edges.length).toBe(1);
 
-      const r1 = await execute(schema, TestDocument, {
+      const r1 = await execute(ctx, schema, TestDocument, {
         parent: PARENT,
         cursor: r0.data?.checklists.pageInfo.endCursor ?? undefined,
         limit: 5,
@@ -104,6 +106,7 @@ describe.skip("checklists", () => {
       do {
         // Not sure why we need the explicit type declaration here...
         const result: ExecutionResult<TestQuery> = await execute(
+          ctx,
           schema,
           TestDocument,
           {
@@ -144,6 +147,7 @@ describe.skip("checklists", () => {
       do {
         // Not sure why we need the explicit type declaration here...
         const result: ExecutionResult<TestQuery> = await execute(
+          ctx,
           schema,
           TestDocument,
           {
@@ -178,7 +182,7 @@ describe.skip("checklists", () => {
 
   describe("invalid parent", async () => {
     test("ast (i.e. worktemplate)", async () => {
-      const result = await execute(schema, TestDocument, {
+      const result = await execute(ctx, schema, TestDocument, {
         parent: testGlobalId(),
         limit: LIMIT,
         // <-- no filters mean we'll start in the AST
@@ -193,7 +197,7 @@ describe.skip("checklists", () => {
     });
 
     test("ecs (i.e. workinstance)", async () => {
-      const result = await execute(schema, TestDocument, {
+      const result = await execute(ctx, schema, TestDocument, {
         parent: testGlobalId(),
         limit: LIMIT,
         withStatus: ["open"], // <-- this means we'll start in the ECS
@@ -210,7 +214,7 @@ describe.skip("checklists", () => {
 
   describe("pagination", () => {
     test("invalid (ast) cursor", async () => {
-      const result = await execute(schema, TestDocument, {
+      const result = await execute(ctx, schema, TestDocument, {
         parent: PARENT,
         cursor: testGlobalId(),
         limit: LIMIT,
@@ -225,7 +229,7 @@ describe.skip("checklists", () => {
     });
 
     test("invalid (ecs) cursor", async () => {
-      const result = await execute(schema, TestDocument, {
+      const result = await execute(ctx, schema, TestDocument, {
         parent: PARENT,
         cursor: testGlobalId(),
         limit: LIMIT,

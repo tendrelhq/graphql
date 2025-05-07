@@ -1,6 +1,6 @@
 import { afterAll, describe, expect, test } from "bun:test";
 import { schema } from "@/schema/final";
-import { execute, testGlobalId } from "@/test/prelude";
+import { createTestContext, execute, testGlobalId } from "@/test/prelude";
 import { TestAssignDocument } from "./assign.test.generated";
 import { TestUnassignDocument } from "./unassign.test.generated";
 
@@ -11,9 +11,11 @@ const RUGG =
 const MIKE =
   "d29ya2VyOndvcmtlci1pbnN0YW5jZV83NWJmMjgwOC1hNDk2LTQxOGItOTg1Zi03OTIzZmJjMjVkMzE=";
 
+const ctx = await createTestContext();
+
 describe.skip("assign, reassign, unassign", () => {
   test("assign", async () => {
-    const result = await execute(schema, TestAssignDocument, {
+    const result = await execute(ctx, schema, TestAssignDocument, {
       entity: CHECKLIST,
       to: RUGG,
     });
@@ -22,7 +24,7 @@ describe.skip("assign, reassign, unassign", () => {
   });
 
   test("reassign", async () => {
-    const result = await execute(schema, TestAssignDocument, {
+    const result = await execute(ctx, schema, TestAssignDocument, {
       entity: CHECKLIST,
       to: MIKE,
     });
@@ -31,7 +33,7 @@ describe.skip("assign, reassign, unassign", () => {
   });
 
   test("unassign", async () => {
-    const result = await execute(schema, TestUnassignDocument, {
+    const result = await execute(ctx, schema, TestUnassignDocument, {
       entity: CHECKLIST,
       from: MIKE,
     });
@@ -39,7 +41,7 @@ describe.skip("assign, reassign, unassign", () => {
   });
 
   afterAll(async () => {
-    await execute(schema, TestUnassignDocument, {
+    await execute(ctx, schema, TestUnassignDocument, {
       entity: CHECKLIST,
       from: MIKE,
     });
@@ -48,7 +50,7 @@ describe.skip("assign, reassign, unassign", () => {
 
 describe.skipIf(!!process.env.CI)("not assignable", () => {
   test("entity", async () => {
-    const result = await execute(schema, TestAssignDocument, {
+    const result = await execute(ctx, schema, TestAssignDocument, {
       entity: testGlobalId(),
       to: RUGG,
     });
@@ -61,7 +63,7 @@ describe.skipIf(!!process.env.CI)("not assignable", () => {
   });
 
   test("to", async () => {
-    const result = await execute(schema, TestAssignDocument, {
+    const result = await execute(ctx, schema, TestAssignDocument, {
       entity: CHECKLIST,
       to: testGlobalId(),
     });
@@ -76,11 +78,11 @@ describe.skipIf(!!process.env.CI)("not assignable", () => {
 
 describe("itempotency", () => {
   test("operation is idempotent", async () => {
-    const r0 = await execute(schema, TestAssignDocument, {
+    const r0 = await execute(ctx, schema, TestAssignDocument, {
       entity: CHECKLIST,
       to: RUGG,
     });
-    const r1 = await execute(schema, TestAssignDocument, {
+    const r1 = await execute(ctx, schema, TestAssignDocument, {
       entity: CHECKLIST,
       to: RUGG,
     });
@@ -88,7 +90,7 @@ describe("itempotency", () => {
   });
 
   afterAll(async () => {
-    await execute(schema, TestUnassignDocument, {
+    await execute(ctx, schema, TestUnassignDocument, {
       entity: CHECKLIST,
       from: RUGG,
     });

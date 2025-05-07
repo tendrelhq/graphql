@@ -1,5 +1,8 @@
-query ListLanguagesTest($account: ID!, $search: EnabledLanguageSearchOptions) {
-  node(id: $account) {
+query ListLanguagesTest(
+  $customerId: ID!
+  $search: EnabledLanguageSearchOptions
+) {
+  node(id: $customerId) {
     ... on Organization {
       languages(search: $search) {
         edges {
@@ -17,8 +20,8 @@ query ListLanguagesTest($account: ID!, $search: EnabledLanguageSearchOptions) {
   }
 }
 
-query PaginateLanguagesTest($account: ID!, $first: Int, $after: String) {
-  node(id: $account) {
+query PaginateLanguagesTest($customerId: ID!, $first: Int, $after: String) {
+  node(id: $customerId) {
     ... on Organization {
       languages(first: $first, after: $after) {
         edges {
@@ -37,8 +40,8 @@ query PaginateLanguagesTest($account: ID!, $first: Int, $after: String) {
   }
 }
 
-mutation AddLanguageTest($account: ID!, $languageId: ID!) {
-  enableLanguage(orgId: $account, languageId: $languageId) {
+mutation AddLanguageTest($customerId: ID!, $languageId: ID!) {
+  enableLanguage(orgId: $customerId, languageId: $languageId) {
     node {
       active {
         active

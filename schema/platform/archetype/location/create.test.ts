@@ -1,7 +1,6 @@
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 import { sql } from "@/datasources/postgres";
 import { schema } from "@/schema/final";
-import { decodeGlobalId } from "@/schema/system";
 import {
   cleanup,
   createTestContext,
@@ -19,7 +18,7 @@ describe("createLocation", () => {
   let SITE: Location;
 
   test("only required inputs; parent == customer", async () => {
-    const result = await execute(schema, TestCreateLocationDocument, {
+    const result = await execute(ctx, schema, TestCreateLocationDocument, {
       input: {
         category: "asdf",
         name: "test only required inputs",
@@ -31,7 +30,7 @@ describe("createLocation", () => {
   });
 
   test("with optional inputs", async () => {
-    const result = await execute(schema, TestCreateLocationDocument, {
+    const result = await execute(ctx, schema, TestCreateLocationDocument, {
       input: {
         category: "asdf",
         name: "test optional inputs",
@@ -44,7 +43,7 @@ describe("createLocation", () => {
   });
 
   test("parent == location", async () => {
-    const result = await execute(schema, TestCreateLocationDocument, {
+    const result = await execute(ctx, schema, TestCreateLocationDocument, {
       input: {
         category: "Runtime Location",
         name: "test child location",

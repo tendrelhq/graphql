@@ -2,13 +2,14 @@ import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 import { sql } from "@/datasources/postgres";
 import { schema } from "@/schema/final";
 import {
-  cleanup,
+  type Customer,
   createTestContext,
   execute,
-  findAndEncode,
   paginateQuery,
-  setup,
 } from "@/test/prelude";
+import { assert, mapOrElse } from "@/util";
+import { Faker, base, en } from "@faker-js/faker";
+import { createCustomer } from "../app/runtime/prelude/canonical";
 import {
   AddLanguageTestDocument,
   ListLanguagesTestDocument,
@@ -17,53 +18,69 @@ import {
 
 const ctx = await createTestContext();
 
+const seed = mapOrElse(
+  process.env.SEED,
+  seed => {
+    const s = Number.parseInt(seed);
+    assert(Number.isFinite(s), "invalid seed");
+    return s;
+  },
+  Date.now(),
+);
+const faker = new Faker({ locale: [en, base], seed });
+
 describe("[console] languages", () => {
-  let CUSTOMER: string;
+  let CUSTOMER: Customer;
 
   test("list", async () => {
-    const result = await execute(schema, ListLanguagesTestDocument, {
-      account: CUSTOMER,
+    const listQuery = await execute(ctx, schema, ListLanguagesTestDocument, {
+      customerId: CUSTOMER.id,
     });
-    expect(result.errors).toBeFalsy();
-    expect(result.data).toMatchSnapshot();
+    expect(listQuery.errors).toBeFalsy();
+    expect(listQuery.data).toMatchSnapshot();
   });
 
   test("search", async () => {
-    const result = await execute(schema, ListLanguagesTestDocument, {
-      account: CUSTOMER,
+    const listQuery = await execute(ctx, schema, ListLanguagesTestDocument, {
+      customerId: CUSTOMER.id,
       search: {
         primary: true,
       },
     });
-    expect(result.errors).toBeFalsy();
-    expect(result.data?.node.__typename).toBe("Organization");
-    if (result.data?.node.__typename === "Organization") {
-      expect(result.data.node.languages.totalCount).toBe(1);
+    expect(listQuery.errors).toBeFalsy();
+    expect(listQuery.data?.node.__typename).toBe("Organization");
+    if (listQuery.data?.node.__typename === "Organization") {
+      expect(listQuery.data.node.languages.totalCount).toBe(2);
     }
   });
 
   test("add", async () => {
     const [{ id: languageId }] = await sql`
-        select systaguuid as id
-        from public.systag
-        where systagparentid = 2 and systagtype = 'es'
-
+      select systaguuid as id
+      from public.systag
+      where systagparentid = 2 and systagtype = 'fr'
     `;
 
-    const result = await execute(schema, AddLanguageTestDocument, {
-      account: CUSTOMER,
+    const addMutation = await execute(ctx, schema, AddLanguageTestDocument, {
+      customerId: CUSTOMER.id,
       languageId: languageId,
     });
-    expect(result.errors).toBeFalsy();
-    expect(result.data).toMatchSnapshot();
+    expect(addMutation.errors).toBeFalsy();
+    expect(addMutation.data).toMatchSnapshot();
+
+    const listQuery = await execute(ctx, schema, ListLanguagesTestDocument, {
+      customerId: CUSTOMER.id,
+    });
+    expect(listQuery.errors).toBeFalsy();
+    expect(listQuery.data).toMatchSnapshot();
   });
 
   test("paginate", async () => {
     let i = 0;
     for await (const page of paginateQuery({
       async execute(cursor) {
-        return await execute(schema, PaginateLanguagesTestDocument, {
-          account: CUSTOMER,
+        return await execute(ctx, schema, PaginateLanguagesTestDocument, {
+          customerId: CUSTOMER.id,
           first: 1,
           after: cursor,
         });
@@ -78,15 +95,23 @@ describe("[console] languages", () => {
       expect(page.errors).toBeFalsy();
       i++;
     }
-    expect(i).toBe(2); // 2 total, 1 per page
+    expect(i).toBe(3); // 3 total, 1 per page
   });
 
   beforeAll(async () => {
-    const logs = await setup(ctx);
-    CUSTOMER = findAndEncode("customer", "organization", logs);
+    await sql.begin(async sql => {
+      CUSTOMER = await createCustomer({ faker, seed }, ctx, sql);
+      console.log("identity", ctx.auth.userId);
+    });
   });
 
   afterAll(async () => {
-    await cleanup(CUSTOMER);
+    // await cleanup(CUSTOMER.id);
+
+    console.log(`
+To reproduce this test:
+
+  SEED=${seed} bun test languages.test --bail
+    `);
   });
 });

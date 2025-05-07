@@ -1,7 +1,5 @@
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
-import { sql } from "@/datasources/postgres";
 import { schema } from "@/schema/final";
-import { decodeGlobalId } from "@/schema/system";
 import type { Field } from "@/schema/system/component";
 import { Task } from "@/schema/system/component/task";
 import {
@@ -34,9 +32,14 @@ describe("[app/runtime] attach", () => {
   let FIELD: Field;
 
   test("no attachments", async () => {
-    const result = await execute(schema, TestGetTaskWithAttachmentsDocument, {
-      nodeId: INSTANCE.id,
-    });
+    const result = await execute(
+      ctx,
+      schema,
+      TestGetTaskWithAttachmentsDocument,
+      {
+        nodeId: INSTANCE.id,
+      },
+    );
     expect(result.errors).toBeFalsy();
     expect(result.data).toMatchObject({
       node: {
@@ -49,16 +52,21 @@ describe("[app/runtime] attach", () => {
 
   test.skipIf(SKIP)("add, list, repeat (4x)", async () => {
     for (let i = 0; i < 4; i++) {
-      const add = await execute(schema, TestAttachDocument, {
+      const add = await execute(ctx, schema, TestAttachDocument, {
         attachment: FAKE_S3_URI,
         node: INSTANCE.id,
       });
       expect(add.errors).toBeFalsy();
       expect(add.data?.attach).toHaveLength(1);
 
-      const task = await execute(schema, TestGetTaskWithAttachmentsDocument, {
-        nodeId: INSTANCE.id,
-      });
+      const task = await execute(
+        ctx,
+        schema,
+        TestGetTaskWithAttachmentsDocument,
+        {
+          nodeId: INSTANCE.id,
+        },
+      );
       expect(task.errors).toBeFalsy();
       if (task.data?.node.__typename === "Task") {
         expect(task.data.node.attachments?.totalCount).toBe(i + 1);
@@ -81,7 +89,7 @@ describe("[app/runtime] attach", () => {
   });
 
   test.skipIf(SKIP)("attach to a field", async () => {
-    const add = await execute(schema, TestAttachDocument, {
+    const add = await execute(ctx, schema, TestAttachDocument, {
       attachment: FAKE_S3_URI,
       node: FIELD.id,
     });
@@ -89,6 +97,7 @@ describe("[app/runtime] attach", () => {
     expect(add.data?.attach).toHaveLength(1);
 
     const result = await execute(
+      ctx,
       schema,
       TestGetTaskWithFieldAttachmentsDocument,
       {
@@ -125,7 +134,7 @@ describe("[app/runtime] attach", () => {
     const seen = new Set<ID>();
     for await (const page of paginateQuery({
       async execute(cursor) {
-        return await execute(schema, TestPaginateAttachmentsDocument, {
+        return await execute(ctx, schema, TestPaginateAttachmentsDocument, {
           nodeId: INSTANCE.id,
           first: 1,
           after: cursor,

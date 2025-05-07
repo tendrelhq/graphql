@@ -20,13 +20,26 @@ exports[`[console] languages list 1`] = `
             "primary": true,
           },
         },
+        {
+          "__typename": "EnabledLanguageEdge",
+          "node": {
+            "__typename": "EnabledLanguage",
+            "active": {
+              "active": true,
+            },
+            "language": {
+              "code": "es",
+            },
+            "primary": false,
+          },
+        },
       ],
       "pageInfo": {
         "__typename": "PageInfo",
         "hasNextPage": false,
         "hasPreviousPage": false,
       },
-      "totalCount": 1,
+      "totalCount": 2,
     },
   },
 }
@@ -44,9 +57,67 @@ exports[`[console] languages add 1`] = `
       },
       "language": {
         "__typename": "Language",
-        "code": "es",
+        "code": "fr",
       },
       "primary": false,
+    },
+  },
+}
+`;
+
+exports[`[console] languages add 2`] = `
+{
+  "node": {
+    "__typename": "Organization",
+    "languages": {
+      "__typename": "EnabledLanguageConnection",
+      "edges": [
+        {
+          "__typename": "EnabledLanguageEdge",
+          "node": {
+            "__typename": "EnabledLanguage",
+            "active": {
+              "active": true,
+            },
+            "language": {
+              "code": "en",
+            },
+            "primary": true,
+          },
+        },
+        {
+          "__typename": "EnabledLanguageEdge",
+          "node": {
+            "__typename": "EnabledLanguage",
+            "active": {
+              "active": true,
+            },
+            "language": {
+              "code": "es",
+            },
+            "primary": false,
+          },
+        },
+        {
+          "__typename": "EnabledLanguageEdge",
+          "node": {
+            "__typename": "EnabledLanguage",
+            "active": {
+              "active": true,
+            },
+            "language": {
+              "code": "fr",
+            },
+            "primary": false,
+          },
+        },
+      ],
+      "pageInfo": {
+        "__typename": "PageInfo",
+        "hasNextPage": false,
+        "hasPreviousPage": false,
+      },
+      "totalCount": 3,
     },
   },
 }

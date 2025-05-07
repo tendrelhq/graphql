@@ -111,13 +111,15 @@ export class Location implements Component, Refetchable, Trackable {
                     where systagparentid = 882 and systagtype in ${sql(types)}
                 )
             )
+          order by wt.worktemplateorder
         ),
 
         -- All instances of the above templates.
         instances as (
-          select distinct
+          select
             t._template,
-            engine1.base64_encode(convert_to('workinstance:' || node.id, 'utf8')) as id
+            engine1.base64_encode(convert_to('workinstance:' || node.id, 'utf8')) as id,
+            task_state.systagtype as state
           from templates as t
           inner join lateral (
             select workinstance.*
@@ -144,25 +146,23 @@ export class Location implements Component, Refetchable, Trackable {
           inner join public.systag as task_state
             on node.workinstancestatusid = task_state.systagid
             and task_state.systagtype in ${sql(statuses)}
+          order by node.workinstanceid
         )
 
-      select coalesce(i.id, t.id) as id
-      from templates as t
-      left join instances as i using (_template)
-      where t.supports_lazy_instantiation = true
-        or (
-          t.supports_lazy_instantiation = false
-          and i.id is not null
-        )
+      select id
+      from instances
+      union all
+      select id
+      from templates
+      where supports_lazy_instantiation = true
+        and 'Open' in ${sql(statuses)}
+        and not exists (select 1 from instances where state = 'Open')
     `;
-    // Note the final WHERE clause. Here we are saying that iff the worktemplate
-    // supports lazy instantiation (i.e. worktemplateallowondemand = true) will
-    // we return it as a stand-in Task if there is no instance. This is the true
-    // meaning on "On Demand" i.e. "always available".
-    //
-    // TODO: I don't think this is strictly correct.
-    // 1. We should probably only return the stand-in if withStatus includes Open
-    // 2. There should always be one Open, caveat (1)
+    // Note the final WHERE clause. Here we are saying that only if a
+    // worktemplate supports lazy instantiation (i.e. worktemplateallowondemand = true)
+    // will we return it as a stand-in Task if there is no instance.
+    // This is the true meaning on "On Demand" i.e. "always available".
+    // Note also
 
     return {
       edges: nodes.map(node => ({

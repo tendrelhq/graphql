@@ -27,7 +27,7 @@ describe.skipIf(!process.env.ATTACHMENT_BUCKET)("attach", () => {
   let FIELD: Field;
 
   test("to an instance", async () => {
-    const result = await execute(schema, TestAttachDocument, {
+    const result = await execute(ctx, schema, TestAttachDocument, {
       entity: INSTANCE.id,
       urls: [FAKE_S3_URI, FAKE_S3_URI],
     });
@@ -61,7 +61,7 @@ describe.skipIf(!process.env.ATTACHMENT_BUCKET)("attach", () => {
 
     const node = assertNonNull(result.data?.attach?.at(0)?.node);
     // Test refetch of a entity-level attachment:
-    const refetch = await execute(schema, TestRefetchAttachmentDocument, {
+    const refetch = await execute(ctx, schema, TestRefetchAttachmentDocument, {
       node: node.id,
     });
     expect(refetch.errors).toBeFalsy();
@@ -77,7 +77,7 @@ describe.skipIf(!process.env.ATTACHMENT_BUCKET)("attach", () => {
   });
 
   test("to a result", async () => {
-    const result = await execute(schema, TestAttachDocument, {
+    const result = await execute(ctx, schema, TestAttachDocument, {
       entity: FIELD.id,
       urls: [FAKE_S3_URI],
     });
@@ -102,7 +102,7 @@ describe.skipIf(!process.env.ATTACHMENT_BUCKET)("attach", () => {
 
     const node = assertNonNull(result.data?.attach?.at(0)?.node);
     // Test refetch of a field-level attachment:
-    const refetch = await execute(schema, TestRefetchAttachmentDocument, {
+    const refetch = await execute(ctx, schema, TestRefetchAttachmentDocument, {
       node: node.id,
     });
     expect(refetch.errors).toBeFalsy();

@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import { schema } from "@/schema/final";
-import { execute } from "@/test/prelude";
+import { createTestContext, execute } from "@/test/prelude";
 import { TestAssignableDocument } from "./assignable.test.generated";
 
 const CHECKLIST =
@@ -10,9 +10,11 @@ const RUGG =
 const NOT_ASSIGNABLE =
   "b3JnYW5pemF0aW9uOmN1c3RvbWVyXzFiMmQ2YzYwLTg2NzgtNDVhZC1iMzBkLWExMDMyM2MyYzQ0MQ==";
 
+const ctx = await createTestContext();
+
 describe.skip("assignable", () => {
   test("workers", async () => {
-    const result = await execute(schema, TestAssignableDocument, {
+    const result = await execute(ctx, schema, TestAssignableDocument, {
       entity: CHECKLIST,
     });
     expect(result).toMatchSnapshot();
@@ -20,7 +22,7 @@ describe.skip("assignable", () => {
 
   describe("not assignable", () => {
     test("entity", async () => {
-      const result = await execute(schema, TestAssignableDocument, {
+      const result = await execute(ctx, schema, TestAssignableDocument, {
         entity: NOT_ASSIGNABLE,
         to: RUGG,
       });

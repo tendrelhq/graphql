@@ -43,70 +43,37 @@ describe("runtime demo", () => {
   test(
     "entrypoint query",
     async () => {
-      const result = await execute(schema, TestRuntimeEntrypointDocument, {
+      const result = await execute(ctx, schema, TestRuntimeEntrypointDocument, {
         parent: CUSTOMER.id,
+        includeTransitionIds: true,
       });
       expect(result.errors).toBeFalsy();
 
-      expect(result.data?.trackables?.edges?.length).toBe(5);
-      expect(result.data?.trackables?.edges).toMatchObject([
-        {
-          node: {
-            name: {
-              value: "Mixing Line",
-            },
-            tracking: {
-              edges: [
-                {
-                  node: {
-                    name: {
-                      value: "Run",
-                    },
-                    state: {
-                      __typename: "Open",
-                    },
+      expect(result.data?.trackables?.edges?.length).toBe(1);
+      expect(result.data?.trackables?.edges?.at(0)).toMatchObject({
+        node: {
+          name: {
+            value: "My First Location",
+          },
+          tracking: {
+            edges: [
+              {
+                node: {
+                  name: {
+                    value: "Run",
+                  },
+                  state: {
+                    __typename: "Open",
                   },
                 },
-              ],
-            },
+              },
+            ],
           },
         },
-        {
-          node: {
-            name: {
-              value: "Fill Line",
-            },
-          },
-        },
-        {
-          node: {
-            name: {
-              value: "Assembly Line",
-            },
-          },
-        },
-        {
-          node: {
-            name: {
-              value: "Cartoning Line",
-            },
-          },
-        },
-        {
-          node: {
-            name: {
-              value: "Packaging Line",
-            },
-          },
-        },
-      ]);
+      });
 
       const mixingLine = assertNonNull(
-        result.data?.trackables?.edges?.find(
-          e =>
-            e.node?.__typename === "Location" &&
-            e.node.name.value === "Mixing Line",
-        ),
+        result.data?.trackables?.edges?.at(0),
         "no mixing line?",
       );
       const runInstance = assertNonNull(
@@ -120,10 +87,10 @@ describe("runtime demo", () => {
             }
             return [];
           })
-          .at(0),
+          .at(0)?.id,
         "no open Run instance?",
       );
-      ROOT = new Task({ id: runInstance.id });
+      ROOT = new Task({ id: runInstance });
     },
     {
       timeout: 10_000,
@@ -140,6 +107,7 @@ describe("runtime demo", () => {
     const ov = await getFieldByName(active, "Override Start Time");
 
     const result = await execute(
+      ctx,
       schema,
       TestRuntimeTransitionMutationDocument,
       {
@@ -184,7 +152,7 @@ describe("runtime demo", () => {
           },
           parent: {
             name: {
-              value: "Mixing Line",
+              value: "My First Location",
             },
           },
           state: {
@@ -206,7 +174,7 @@ describe("runtime demo", () => {
           },
           parent: {
             name: {
-              value: "Mixing Line",
+              value: "My First Location",
             },
           },
           state: {
@@ -219,6 +187,7 @@ describe("runtime demo", () => {
 
   test("stale: start run (should fail)", async () => {
     const result = await execute(
+      ctx,
       schema,
       TestRuntimeTransitionMutationDocument,
       {
@@ -250,6 +219,7 @@ describe("runtime demo", () => {
     );
 
     const result = await execute(
+      ctx,
       schema,
       TestRuntimeTransitionMutationDocument,
       {
@@ -268,7 +238,98 @@ describe("runtime demo", () => {
       },
     );
     expect(result.errors).toBeFalsy();
-    expect(result.data).toMatchSnapshot();
+    const advance = assertNonNull(result.data?.advance);
+    expect(advance.instantiations?.length).toBe(0);
+    expect(advance.diagnostics).toBeFalsy();
+    expect(advance.root?.fsm).toMatchObject({
+      active: {
+        assignees: {
+          edges: [
+            {
+              node: {
+                assignedTo: {
+                  displayName: expect.any(String),
+                },
+              },
+            },
+          ],
+        },
+        description: null,
+        fields: {
+          edges: [
+            {
+              node: {
+                description: null,
+                name: {
+                  value: "Override Start Time",
+                },
+                value: {
+                  __typename: "TimestampValue",
+                  timestamp: null,
+                },
+                valueType: "timestamp",
+              },
+            },
+            {
+              node: {
+                description: null,
+                name: {
+                  value: "Override End Time",
+                },
+                value: {
+                  __typename: "TimestampValue",
+                  timestamp: null,
+                },
+                valueType: "timestamp",
+              },
+            },
+            {
+              node: {
+                description: null,
+                name: {
+                  value: "Description",
+                },
+                value: {
+                  __typename: "StringValue",
+                  string: null,
+                },
+                valueType: "string",
+              },
+            },
+            {
+              node: {
+                description: null,
+                name: {
+                  value: "Reason Code",
+                },
+                value: {
+                  __typename: "StringValue",
+                  string: null,
+                },
+                valueType: "string",
+              },
+            },
+          ],
+        },
+        name: {
+          value: "Idle Time",
+        },
+        parent: {
+          name: {
+            value: "My First Location",
+          },
+        },
+        state: {
+          __typename: "InProgress",
+          inProgressBy: {
+            displayName: expect.any(String),
+          },
+        },
+      },
+      transitions: {
+        edges: [],
+      },
+    });
   });
 
   test("end idle", async () => {
@@ -278,6 +339,7 @@ describe("runtime demo", () => {
 
     const desc = await getFieldByName(active, "Description");
     const result = await execute(
+      ctx,
       schema,
       TestRuntimeTransitionMutationDocument,
       {
@@ -303,7 +365,222 @@ describe("runtime demo", () => {
       },
     );
     expect(result.errors).toBeFalsy();
-    expect(result.data).toMatchSnapshot();
+    const advance = assertNonNull(result.data?.advance);
+    expect(advance.instantiations?.length).toBe(0);
+    expect(advance.diagnostics).toBeFalsy();
+    expect(advance.root?.fsm).toMatchObject({
+      active: {
+        assignees: {
+          edges: [
+            {
+              node: {
+                assignedTo: {
+                  displayName: expect.any(String),
+                },
+              },
+            },
+          ],
+        },
+        description: null,
+        fields: {
+          edges: [
+            {
+              node: {
+                description: null,
+                name: {
+                  value: "Override Start Time",
+                },
+                value: {
+                  __typename: "TimestampValue",
+                  timestamp: "2024-09-08T19:31:45.364+00:00",
+                },
+                valueType: "timestamp",
+              },
+            },
+            {
+              node: {
+                description: null,
+                name: {
+                  value: "Override End Time",
+                },
+                value: {
+                  __typename: "TimestampValue",
+                  timestamp: null,
+                },
+                valueType: "timestamp",
+              },
+            },
+            {
+              node: {
+                description: null,
+                name: {
+                  value: "Run Output",
+                },
+                value: {
+                  __typename: "NumberValue",
+                },
+                valueType: "number",
+              },
+            },
+            {
+              node: {
+                description: null,
+                name: {
+                  value: "Reject Count",
+                },
+                value: {
+                  __typename: "NumberValue",
+                },
+                valueType: "number",
+              },
+            },
+            {
+              node: {
+                description: null,
+                name: {
+                  value: "Comments",
+                },
+                value: {
+                  __typename: "StringValue",
+                  string: null,
+                },
+                valueType: "string",
+              },
+            },
+          ],
+        },
+        name: {
+          value: "Run",
+        },
+        parent: {
+          name: {
+            value: "My First Location",
+          },
+        },
+        state: {
+          __typename: "InProgress",
+          inProgressBy: {
+            displayName: expect.any(String),
+          },
+        },
+      },
+      transitions: {
+        edges: [
+          {
+            node: {
+              fields: {
+                edges: [
+                  {
+                    node: {
+                      name: {
+                        value: "Override Start Time",
+                      },
+                      value: {
+                        __typename: "TimestampValue",
+                      },
+                    },
+                  },
+                  {
+                    node: {
+                      name: {
+                        value: "Override End Time",
+                      },
+                      value: {
+                        __typename: "TimestampValue",
+                      },
+                    },
+                  },
+                  {
+                    node: {
+                      name: {
+                        value: "Description",
+                      },
+                      value: {
+                        __typename: "StringValue",
+                      },
+                    },
+                  },
+                  {
+                    node: {
+                      name: {
+                        value: "Reason Code",
+                      },
+                      value: {
+                        __typename: "StringValue",
+                      },
+                    },
+                  },
+                ],
+              },
+              name: {
+                value: "Downtime",
+              },
+            },
+            target: {
+              name: {
+                value: "My First Location",
+              },
+            },
+          },
+          {
+            node: {
+              fields: {
+                edges: [
+                  {
+                    node: {
+                      name: {
+                        value: "Override Start Time",
+                      },
+                      value: {
+                        __typename: "TimestampValue",
+                      },
+                    },
+                  },
+                  {
+                    node: {
+                      name: {
+                        value: "Override End Time",
+                      },
+                      value: {
+                        __typename: "TimestampValue",
+                      },
+                    },
+                  },
+                  {
+                    node: {
+                      name: {
+                        value: "Description",
+                      },
+                      value: {
+                        __typename: "StringValue",
+                      },
+                    },
+                  },
+                  {
+                    node: {
+                      name: {
+                        value: "Reason Code",
+                      },
+                      value: {
+                        __typename: "StringValue",
+                      },
+                    },
+                  },
+                ],
+              },
+              name: {
+                value: "Idle Time",
+              },
+            },
+            target: {
+              name: {
+                value: "My First Location",
+              },
+            },
+          },
+        ],
+      },
+    });
   });
 
   // test("stale: production -> idle time (should fail)", async () => {
@@ -328,7 +605,7 @@ describe("runtime demo", () => {
   // });
 
   test("in-progress chain/agg", async () => {
-    const result = await execute(schema, TestRuntimeDetailDocument, {
+    const result = await execute(ctx, schema, TestRuntimeDetailDocument, {
       node: ROOT.id,
     });
 
@@ -354,6 +631,9 @@ describe("runtime demo", () => {
                 },
                 state: {
                   __typename: "InProgress",
+                  inProgressBy: {
+                    displayName: expect.any(String),
+                  },
                 },
               },
             },
@@ -364,6 +644,9 @@ describe("runtime demo", () => {
                 },
                 state: {
                   __typename: "Closed",
+                  closedBy: {
+                    displayName: expect.any(String),
+                  },
                 },
               },
             },
@@ -385,6 +668,7 @@ describe("runtime demo", () => {
     );
 
     const result = await execute(
+      ctx,
       schema,
       TestRuntimeTransitionMutationDocument,
       {
@@ -401,7 +685,98 @@ describe("runtime demo", () => {
       },
     );
     expect(result.errors).toBeFalsy();
-    expect(result.data).toMatchSnapshot();
+    const advance = assertNonNull(result.data?.advance);
+    expect(advance.instantiations?.length).toBe(0);
+    expect(advance.diagnostics).toBeFalsy();
+    expect(advance.root?.fsm).toMatchObject({
+      active: {
+        assignees: {
+          edges: [
+            {
+              node: {
+                assignedTo: {
+                  displayName: expect.any(String),
+                },
+              },
+            },
+          ],
+        },
+        description: null,
+        fields: {
+          edges: [
+            {
+              node: {
+                description: null,
+                name: {
+                  value: "Override Start Time",
+                },
+                value: {
+                  __typename: "TimestampValue",
+                  timestamp: null,
+                },
+                valueType: "timestamp",
+              },
+            },
+            {
+              node: {
+                description: null,
+                name: {
+                  value: "Override End Time",
+                },
+                value: {
+                  __typename: "TimestampValue",
+                  timestamp: null,
+                },
+                valueType: "timestamp",
+              },
+            },
+            {
+              node: {
+                description: null,
+                name: {
+                  value: "Description",
+                },
+                value: {
+                  __typename: "StringValue",
+                  string: null,
+                },
+                valueType: "string",
+              },
+            },
+            {
+              node: {
+                description: null,
+                name: {
+                  value: "Reason Code",
+                },
+                value: {
+                  __typename: "StringValue",
+                  string: null,
+                },
+                valueType: "string",
+              },
+            },
+          ],
+        },
+        name: {
+          value: "Downtime",
+        },
+        parent: {
+          name: {
+            value: "My First Location",
+          },
+        },
+        state: {
+          __typename: "InProgress",
+          inProgressBy: {
+            displayName: expect.any(String),
+          },
+        },
+      },
+      transitions: {
+        edges: [],
+      },
+    });
   });
 
   test("end downtime", async () => {
@@ -410,6 +785,7 @@ describe("runtime demo", () => {
     assertTaskIsNamed(active, "Downtime", ctx);
 
     const result = await execute(
+      ctx,
       schema,
       TestRuntimeTransitionMutationDocument,
       {
@@ -426,7 +802,222 @@ describe("runtime demo", () => {
       },
     );
     expect(result.errors).toBeFalsy();
-    expect(result.data).toMatchSnapshot();
+    const advance = assertNonNull(result.data?.advance);
+    expect(advance.instantiations?.length).toBe(0);
+    expect(advance.diagnostics).toBeFalsy();
+    expect(advance.root?.fsm).toMatchObject({
+      active: {
+        assignees: {
+          edges: [
+            {
+              node: {
+                assignedTo: {
+                  displayName: expect.any(String),
+                },
+              },
+            },
+          ],
+        },
+        description: null,
+        fields: {
+          edges: [
+            {
+              node: {
+                description: null,
+                name: {
+                  value: "Override Start Time",
+                },
+                value: {
+                  __typename: "TimestampValue",
+                  timestamp: "2024-09-08T19:31:45.364+00:00",
+                },
+                valueType: "timestamp",
+              },
+            },
+            {
+              node: {
+                description: null,
+                name: {
+                  value: "Override End Time",
+                },
+                value: {
+                  __typename: "TimestampValue",
+                  timestamp: null,
+                },
+                valueType: "timestamp",
+              },
+            },
+            {
+              node: {
+                description: null,
+                name: {
+                  value: "Run Output",
+                },
+                value: {
+                  __typename: "NumberValue",
+                },
+                valueType: "number",
+              },
+            },
+            {
+              node: {
+                description: null,
+                name: {
+                  value: "Reject Count",
+                },
+                value: {
+                  __typename: "NumberValue",
+                },
+                valueType: "number",
+              },
+            },
+            {
+              node: {
+                description: null,
+                name: {
+                  value: "Comments",
+                },
+                value: {
+                  __typename: "StringValue",
+                  string: null,
+                },
+                valueType: "string",
+              },
+            },
+          ],
+        },
+        name: {
+          value: "Run",
+        },
+        parent: {
+          name: {
+            value: "My First Location",
+          },
+        },
+        state: {
+          __typename: "InProgress",
+          inProgressBy: {
+            displayName: expect.any(String),
+          },
+        },
+      },
+      transitions: {
+        edges: [
+          {
+            node: {
+              fields: {
+                edges: [
+                  {
+                    node: {
+                      name: {
+                        value: "Override Start Time",
+                      },
+                      value: {
+                        __typename: "TimestampValue",
+                      },
+                    },
+                  },
+                  {
+                    node: {
+                      name: {
+                        value: "Override End Time",
+                      },
+                      value: {
+                        __typename: "TimestampValue",
+                      },
+                    },
+                  },
+                  {
+                    node: {
+                      name: {
+                        value: "Description",
+                      },
+                      value: {
+                        __typename: "StringValue",
+                      },
+                    },
+                  },
+                  {
+                    node: {
+                      name: {
+                        value: "Reason Code",
+                      },
+                      value: {
+                        __typename: "StringValue",
+                      },
+                    },
+                  },
+                ],
+              },
+              name: {
+                value: "Downtime",
+              },
+            },
+            target: {
+              name: {
+                value: "My First Location",
+              },
+            },
+          },
+          {
+            node: {
+              fields: {
+                edges: [
+                  {
+                    node: {
+                      name: {
+                        value: "Override Start Time",
+                      },
+                      value: {
+                        __typename: "TimestampValue",
+                      },
+                    },
+                  },
+                  {
+                    node: {
+                      name: {
+                        value: "Override End Time",
+                      },
+                      value: {
+                        __typename: "TimestampValue",
+                      },
+                    },
+                  },
+                  {
+                    node: {
+                      name: {
+                        value: "Description",
+                      },
+                      value: {
+                        __typename: "StringValue",
+                      },
+                    },
+                  },
+                  {
+                    node: {
+                      name: {
+                        value: "Reason Code",
+                      },
+                      value: {
+                        __typename: "StringValue",
+                      },
+                    },
+                  },
+                ],
+              },
+              name: {
+                value: "Idle Time",
+              },
+            },
+            target: {
+              name: {
+                value: "My First Location",
+              },
+            },
+          },
+        ],
+      },
+    });
   });
 
   test("end run", async () => {
@@ -437,6 +1028,7 @@ describe("runtime demo", () => {
     const h = await active.hash();
     const ov = await getFieldByName(active, "Override End Time");
     const result0 = await execute(
+      ctx,
       schema,
       TestRuntimeTransitionMutationDocument,
       {
@@ -466,7 +1058,12 @@ describe("runtime demo", () => {
 
     expect(result0.data?.advance?.instantiations?.length).toBe(0);
     expect(result0.data?.advance?.root?.fsm).toBeNull();
-    expect(result0.data?.advance?.root?.state?.__typename).toBe("Closed");
+    expect(result0.data?.advance?.root?.state).toMatchObject({
+      __typename: "Closed",
+      closedBy: {
+        displayName: expect.any(String),
+      },
+    });
     expect(result0.data?.advance?.root?.chain?.edges).toMatchObject([
       {
         node: {
@@ -475,6 +1072,9 @@ describe("runtime demo", () => {
           },
           state: {
             __typename: "Closed",
+            closedBy: {
+              displayName: expect.any(String),
+            },
           },
         },
       },
@@ -485,6 +1085,9 @@ describe("runtime demo", () => {
           },
           state: {
             __typename: "Closed",
+            closedBy: {
+              displayName: expect.any(String),
+            },
           },
         },
       },
@@ -495,6 +1098,9 @@ describe("runtime demo", () => {
           },
           state: {
             __typename: "Closed",
+            closedBy: {
+              displayName: expect.any(String),
+            },
           },
         },
       },
@@ -505,6 +1111,7 @@ describe("runtime demo", () => {
     // is sort of a lie. Really what we want here is a hash_mismatch diagnostic
     // because that is the real root cause here.
     const result1 = await execute(
+      ctx,
       schema,
       TestRuntimeTransitionMutationDocument,
       {
@@ -522,12 +1129,20 @@ describe("runtime demo", () => {
       },
     );
     expect(result1.errors).toBeFalsy();
-    expect(result1.data).toMatchSnapshot();
+    expect(result1.data?.advance).toMatchObject({
+      diagnostics: [
+        {
+          code: "hash_mismatch_precludes_operation",
+        },
+      ],
+      instantiations: [],
+    });
   });
 
   test("apply field edits retroactively", async () => {
     const cs = await getFieldByName(ROOT, "Comments");
     const result = await execute(
+      ctx,
       schema,
       TestRuntimeApplyFieldEditsMutationDocument,
       {
@@ -548,7 +1163,7 @@ describe("runtime demo", () => {
   });
 
   test("history query", async () => {
-    const result = await execute(schema, TestRuntimeDetailDocument, {
+    const result = await execute(ctx, schema, TestRuntimeDetailDocument, {
       node: ROOT.id,
     });
     expect(result.errors).toBeFalsy();
@@ -563,6 +1178,9 @@ describe("runtime demo", () => {
                 },
                 state: {
                   __typename: "Closed",
+                  closedBy: {
+                    displayName: expect.any(String),
+                  },
                 },
               },
             },
@@ -573,6 +1191,9 @@ describe("runtime demo", () => {
                 },
                 state: {
                   __typename: "Closed",
+                  closedBy: {
+                    displayName: expect.any(String),
+                  },
                 },
               },
             },
@@ -583,6 +1204,9 @@ describe("runtime demo", () => {
                 },
                 state: {
                   __typename: "Closed",
+                  closedBy: {
+                    displayName: expect.any(String),
+                  },
                 },
               },
             },
@@ -605,7 +1229,7 @@ describe("runtime demo", () => {
         ],
         parent: {
           name: {
-            value: "Mixing Line",
+            value: "My First Location",
           },
         },
       },
@@ -613,7 +1237,9 @@ describe("runtime demo", () => {
   });
 
   beforeAll(async () => {
-    CUSTOMER = await createCustomer({ faker, seed }, ctx);
+    await sql.begin(async sql => {
+      CUSTOMER = await createCustomer({ faker, seed }, ctx, sql);
+    });
   });
 
   afterAll(async () => {

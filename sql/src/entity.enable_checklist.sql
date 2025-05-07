@@ -577,7 +577,7 @@ BEGIN
         VALUES (tempcustomerid,
                 tempworktemplateid,
                 tempsiteid,
-                811, -- this is the work type for task.
+                692, -- this is the work type for task.
                 706, -- this is the status for Open.
                 CLOCK_TIMESTAMP(),
                 create_timezone,    

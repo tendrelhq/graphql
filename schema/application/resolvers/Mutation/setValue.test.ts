@@ -21,7 +21,7 @@ describe("setValue", () => {
 
   test("set", async () => {
     const field = await getFieldByName(TASK, "Run Output");
-    const result = await execute(schema, TestSetValueDocument, {
+    const result = await execute(ctx, schema, TestSetValueDocument, {
       parent: TASK.id,
       entity: field.id,
       input: {
@@ -37,7 +37,7 @@ describe("setValue", () => {
 
   test("set: dynamic content", async () => {
     const field = await getFieldByName(TASK, "Comments");
-    const result = await execute(schema, TestSetValueDocument, {
+    const result = await execute(ctx, schema, TestSetValueDocument, {
       parent: TASK.id,
       entity: field.id,
       input: {
@@ -79,7 +79,7 @@ describe("setValue", () => {
   });
 
   test("entity is not mutable", async () => {
-    const result = await execute(schema, TestSetValueDocument, {
+    const result = await execute(ctx, schema, TestSetValueDocument, {
       parent: TASK.id,
       entity: encodeGlobalId({
         type: "foo",
@@ -95,7 +95,7 @@ describe("setValue", () => {
   });
 
   test("global id invariant", async () => {
-    const result = await execute(schema, TestSetValueDocument, {
+    const result = await execute(ctx, schema, TestSetValueDocument, {
       parent: TASK.id,
       entity: encodeGlobalId({
         type: "workresultinstance",

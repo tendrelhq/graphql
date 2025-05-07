@@ -1,11 +1,13 @@
 import { describe, expect, test } from "bun:test";
 import { schema } from "@/schema/final";
-import { execute } from "@/test/prelude";
+import { createTestContext, execute } from "@/test/prelude";
 import { TestLanguagesQueryDocument } from "./languages.test.generated";
+
+const ctx = await createTestContext();
 
 describe("languages", () => {
   test("works", async () => {
-    const result = await execute(schema, TestLanguagesQueryDocument);
+    const result = await execute(ctx, schema, TestLanguagesQueryDocument);
     expect(result).toMatchSnapshot();
   });
 });

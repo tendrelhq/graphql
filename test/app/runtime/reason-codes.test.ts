@@ -22,12 +22,14 @@ import {
   ListTemplatesDocument,
 } from "./reason-codes.test.generated";
 
+const ctx = await createTestContext();
+
 describe("runtime + reason codes", () => {
   // See beforeAll for initialization of these variables.
   let CUSTOMER: string;
 
   test("demo has no reason codes set up at first", async () => {
-    const result = await execute(schema, ListReasonCodesDocument, {
+    const result = await execute(ctx, schema, ListReasonCodesDocument, {
       // FIXME: Should not be required:
       owner: CUSTOMER,
       // FIXME: This is not particularly ergonomic :/
@@ -41,7 +43,7 @@ describe("runtime + reason codes", () => {
   let DOWN_TIME: Maybe<Task>;
   let IDLE_TIME: Maybe<Task>;
   test("grab the Downtime and Idle Time templates", async () => {
-    const result = await execute(schema, ListTemplatesDocument, {
+    const result = await execute(ctx, schema, ListTemplatesDocument, {
       owner: CUSTOMER,
       types: ["Downtime", "Idle Time"],
     });
@@ -83,7 +85,7 @@ describe("runtime + reason codes", () => {
       "Waiting for Materials",
       "Masheen Dawn",
     ]) {
-      const result = await execute(schema, CreateReasonCodeDocument, {
+      const result = await execute(ctx, schema, CreateReasonCodeDocument, {
         field: f.id,
         name: code,
         // FIXME: This is not particularly ergonomic :/
@@ -120,7 +122,7 @@ describe("runtime + reason codes", () => {
       });
     }
 
-    const result = await execute(schema, ListReasonCodesDocument, {
+    const result = await execute(ctx, schema, ListReasonCodesDocument, {
       // FIXME: Should not be required:
       owner: CUSTOMER,
       // FIXME: This is not particularly ergonomic :/
@@ -144,7 +146,7 @@ describe("runtime + reason codes", () => {
   });
 
   test("delete a reason code", async () => {
-    const codes = await execute(schema, ListReasonCodes2Document, {
+    const codes = await execute(ctx, schema, ListReasonCodes2Document, {
       // FIXME: Should not be required:
       owner: CUSTOMER,
       // FIXME: This is not particularly ergonomic :/
@@ -160,13 +162,13 @@ describe("runtime + reason codes", () => {
         .at(0),
     );
 
-    const r0 = await execute(schema, DeleteReasonCodeDocument, {
+    const r0 = await execute(ctx, schema, DeleteReasonCodeDocument, {
       node: code,
     });
     expect(r0.errors).toBeFalsy();
     expect(r0.data?.deleteNode).toContain(code);
 
-    const r1 = await execute(schema, ListReasonCodesDocument, {
+    const r1 = await execute(ctx, schema, ListReasonCodesDocument, {
       // FIXME: Should not be required:
       owner: CUSTOMER,
       // FIXME: This is not particularly ergonomic :/
@@ -183,7 +185,7 @@ describe("runtime + reason codes", () => {
 
     let order = 0;
     for (const code of ["Lunch Break", "Nothin to do!"]) {
-      const result = await execute(schema, CreateReasonCodeDocument, {
+      const result = await execute(ctx, schema, CreateReasonCodeDocument, {
         field: f.id,
         name: code,
         // FIXME: This is not particularly ergonomic :/
@@ -224,13 +226,13 @@ describe("runtime + reason codes", () => {
   // FIXME: Deleting an entity instance does not propagate to the custag.
   test("in the app, get completions", async () => {
     // For both Downtime and Idle Time.
-    const r0 = await execute(schema, GetReasonCodeCompletionsDocument, {
+    const r0 = await execute(ctx, schema, GetReasonCodeCompletionsDocument, {
       task: assertNonNull(DOWN_TIME).id,
     });
     expect(r0.errors).toBeFalsy();
     expect(r0.data).toMatchSnapshot();
 
-    const r1 = await execute(schema, GetReasonCodeCompletionsDocument, {
+    const r1 = await execute(ctx, schema, GetReasonCodeCompletionsDocument, {
       task: assertNonNull(IDLE_TIME).id,
     });
     expect(r1.errors).toBeFalsy();
@@ -239,7 +241,6 @@ describe("runtime + reason codes", () => {
 
   beforeAll(async () => {
     // Setup:
-    const ctx = await createTestContext();
     // 1. Create the demo customer
     const logs = await setup(ctx);
     CUSTOMER = findAndEncode("customer", "organization", logs);

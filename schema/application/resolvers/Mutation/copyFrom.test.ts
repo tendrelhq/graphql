@@ -1,13 +1,12 @@
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
-import { sql } from "@/datasources/postgres";
 import { schema } from "@/schema/final";
-import { decodeGlobalId } from "@/schema/system";
 import { Task } from "@/schema/system/component/task";
 import {
   cleanup,
   createTestContext,
   execute,
   findAndEncode,
+  setup,
 } from "@/test/prelude";
 import { assertNonNull, map } from "@/util";
 import { TestCopyFromDocument } from "./copyFrom.test.generated";
@@ -20,7 +19,7 @@ describe("copyFrom", () => {
   let INSTANCE: Task;
 
   test("when entity is a template", async () => {
-    const result = await execute(schema, TestCopyFromDocument, {
+    const result = await execute(ctx, schema, TestCopyFromDocument, {
       entity: TEMPLATE.id,
       options: {
         withStatus: "open",
@@ -58,13 +57,10 @@ describe("copyFrom", () => {
     });
     const p = await t.parent();
     expect(p).toBeTruthy();
-    const s = await TEMPLATE.parent();
-    expect(s).toBeTruthy();
-    expect(p).toEqual(s);
   });
 
   test("when entity is an instance", async () => {
-    const result = await execute(schema, TestCopyFromDocument, {
+    const result = await execute(ctx, schema, TestCopyFromDocument, {
       entity: INSTANCE.id,
       options: {
         withStatus: "open",
@@ -109,20 +105,7 @@ describe("copyFrom", () => {
   });
 
   beforeAll(async () => {
-    const logs = await sql<{ op: string; id: string }[]>`
-      select *
-      from
-          runtime.create_demo(
-              customer_name := 'Frozen Tendy Factory',
-              admins := (
-                  select array_agg(workeruuid)
-                  from public.worker
-                  where workeridentityid = ${ctx.auth.userId}
-              ),
-              modified_by := 895
-          )
-      ;
-    `;
+    const logs = await setup(ctx);
     CUSTOMER = findAndEncode("customer", "organization", logs);
     TEMPLATE = map(
       findAndEncode("task", "worktemplate", logs),

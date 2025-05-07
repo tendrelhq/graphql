@@ -5,11 +5,11 @@ import { decodeGlobalId } from "@/schema/system";
 export const enableLanguage: NonNullable<
   MutationResolvers["enableLanguage"]
 > = async (_, { languageId, ...args }, ctx) => {
-  const { id: orgId } = decodeGlobalId(args.orgId);
+  const { id: customerId } = decodeGlobalId(args.orgId);
 
-  const crlId = await sql.begin(async sql => {
+  const crl = await sql.begin(async sql => {
     const [row] = await sql`
-      select *
+      select t.id
       from
           public.customer as c,
           public.systag as s,
@@ -20,8 +20,8 @@ export const enableLanguage: NonNullable<
                   parent := c.customerid,
                   identity := ${ctx.auth.userId}
               )
-          )
-      where c.customeruuid = ${orgId} and s.systaguuid = ${languageId}
+          ) as t
+      where c.customeruuid = ${customerId} and s.systaguuid = ${languageId}
     `;
 
     // FIXME: This is bad. This scales linearly with the count of
@@ -34,14 +34,14 @@ export const enableLanguage: NonNullable<
             languagemastercustomerid = (
                 SELECT customerid
                 FROM public.customer
-                WHERE customeruuid = ${orgId}
+                WHERE customeruuid = ${customerId}
             );
     `;
 
     return row.id;
   });
 
-  const row = await ctx.orm.crl.load(crlId);
+  const row = await ctx.orm.crl.load(crl);
 
   return {
     cursor: row.id.toString(),

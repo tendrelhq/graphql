@@ -1,12 +1,14 @@
 import { describe, expect, test } from "bun:test";
 import { schema } from "@/schema/final";
 import { encodeGlobalId } from "@/schema/system";
-import { execute, testGlobalId } from "@/test/prelude";
+import { createTestContext, execute, testGlobalId } from "@/test/prelude";
 import { TestSetStatusDocument } from "./setStatus.test.generated";
+
+const ctx = await createTestContext();
 
 describe.skip("setStatus", () => {
   test("workinstance", async () => {
-    const result = await execute(schema, TestSetStatusDocument, {
+    const result = await execute(ctx, schema, TestSetStatusDocument, {
       entity: encodeGlobalId({
         type: "workinstance",
         id: "work-instance_35774847-ba19-4f23-b71e-e4cb7760e415",
@@ -29,7 +31,7 @@ describe.skip("setStatus", () => {
   });
 
   test("workresultinstance", async () => {
-    const result = await execute(schema, TestSetStatusDocument, {
+    const result = await execute(ctx, schema, TestSetStatusDocument, {
       parent: encodeGlobalId({
         type: "workinstance",
         id: "work-instance_35774847-ba19-4f23-b71e-e4cb7760e415",
@@ -53,7 +55,7 @@ describe.skip("setStatus", () => {
   });
 
   test("invalid status change", async () => {
-    const result = await execute(schema, TestSetStatusDocument, {
+    const result = await execute(ctx, schema, TestSetStatusDocument, {
       parent: encodeGlobalId({
         type: "workinstance",
         id: "work-instance_93c61cb5-e5ec-43e1-8777-d9f6e930e6b0",
@@ -76,7 +78,7 @@ describe.skip("setStatus", () => {
   });
 
   test("entity cannot have its status changed", async () => {
-    const result = await execute(schema, TestSetStatusDocument, {
+    const result = await execute(ctx, schema, TestSetStatusDocument, {
       entity: testGlobalId(),
       input: {
         open: {

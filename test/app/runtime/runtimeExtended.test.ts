@@ -26,6 +26,7 @@ describe("extended runtime demo", () => {
 
   test("create a new location", async () => {
     const result = await execute(
+      ctx,
       schema,
       TestRuntimeExtendedCreateLocationDocument,
       {
@@ -45,7 +46,7 @@ describe("extended runtime demo", () => {
   });
 
   test.skip("should be okay without a constraint/instance", async () => {
-    const result = await execute(schema, TestRuntimeEntrypointDocument, {
+    const result = await execute(ctx, schema, TestRuntimeEntrypointDocument, {
       parent: CUSTOMER,
     });
     expect(result.errors).toBeFalsy();
@@ -58,20 +59,25 @@ describe("extended runtime demo", () => {
   });
 
   test.skip("create a template constraint and instantiate", async () => {
-    const result = await execute(schema, TestCreateTemplateConstraintDocument, {
-      template: TEMPLATE.id,
-      location: LOCATION.id,
-      options: {
-        instantiate: {},
+    const result = await execute(
+      ctx,
+      schema,
+      TestCreateTemplateConstraintDocument,
+      {
+        template: TEMPLATE.id,
+        location: LOCATION.id,
+        options: {
+          instantiate: {},
+        },
       },
-    });
+    );
     expect(result.errors).toBeFalsy();
   });
 
   test(
     "it should show up in the app",
     async () => {
-      const result = await execute(schema, TestRuntimeEntrypointDocument, {
+      const result = await execute(ctx, schema, TestRuntimeEntrypointDocument, {
         parent: CUSTOMER,
       });
       expect(result.errors).toBeFalsy();
@@ -90,6 +96,7 @@ describe("extended runtime demo", () => {
   describe.skip("diagnostics", () => {
     test("invalid_type -> template", async () => {
       const result = await execute(
+        ctx,
         schema,
         TestCreateTemplateConstraintDocument,
         {
@@ -102,6 +109,7 @@ describe("extended runtime demo", () => {
 
     test("invalid_type -> entity", async () => {
       const result = await execute(
+        ctx,
         schema,
         TestCreateTemplateConstraintDocument,
         {

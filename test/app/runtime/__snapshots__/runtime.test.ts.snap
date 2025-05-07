@@ -86,7 +86,7 @@ exports[`runtime demo start idle 1`] = `
           },
           "parent": {
             "name": {
-              "value": "Mixing Line",
+              "value": "My First Location",
             },
           },
           "state": {
@@ -203,7 +203,7 @@ exports[`runtime demo end idle 1`] = `
           },
           "parent": {
             "name": {
-              "value": "Mixing Line",
+              "value": "My First Location",
             },
           },
           "state": {
@@ -257,7 +257,7 @@ exports[`runtime demo end idle 1`] = `
               },
               "target": {
                 "name": {
-                  "value": "Mixing Line",
+                  "value": "My First Location",
                 },
               },
             },
@@ -303,7 +303,7 @@ exports[`runtime demo end idle 1`] = `
               },
               "target": {
                 "name": {
-                  "value": "Mixing Line",
+                  "value": "My First Location",
                 },
               },
             },
@@ -389,7 +389,7 @@ exports[`runtime demo start downtime 1`] = `
           },
           "parent": {
             "name": {
-              "value": "Mixing Line",
+              "value": "My First Location",
             },
           },
           "state": {
@@ -506,7 +506,7 @@ exports[`runtime demo end downtime 1`] = `
           },
           "parent": {
             "name": {
-              "value": "Mixing Line",
+              "value": "My First Location",
             },
           },
           "state": {
@@ -560,7 +560,7 @@ exports[`runtime demo end downtime 1`] = `
               },
               "target": {
                 "name": {
-                  "value": "Mixing Line",
+                  "value": "My First Location",
                 },
               },
             },
@@ -606,7 +606,7 @@ exports[`runtime demo end downtime 1`] = `
               },
               "target": {
                 "name": {
-                  "value": "Mixing Line",
+                  "value": "My First Location",
                 },
               },
             },

@@ -8,7 +8,6 @@ import {
   execute,
   findAndEncode,
   paginateQuery,
-  setup,
 } from "@/test/prelude";
 import {
   ListWorkersTestDocument,
@@ -21,7 +20,7 @@ describe("[console] workers", () => {
   let CUSTOMER: string;
 
   test("list", async () => {
-    const result = await execute(schema, ListWorkersTestDocument, {
+    const result = await execute(ctx, schema, ListWorkersTestDocument, {
       account: CUSTOMER,
     });
     expect(result.errors).toBeFalsy();
@@ -32,7 +31,7 @@ describe("[console] workers", () => {
     let i = 0;
     for await (const page of paginateQuery({
       async execute(cursor) {
-        return await execute(schema, PaginateWorkersTestDocument, {
+        return await execute(ctx, schema, PaginateWorkersTestDocument, {
           account: CUSTOMER,
           first: 5,
           after: cursor,
@@ -52,7 +51,7 @@ describe("[console] workers", () => {
   });
 
   test("search", async () => {
-    const result = await execute(schema, ListWorkersTestDocument, {
+    const result = await execute(ctx, schema, ListWorkersTestDocument, {
       account: CUSTOMER,
       search: {
         active: true,

@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import { schema } from "@/schema/final";
 import { encodeGlobalId } from "@/schema/system";
-import { execute } from "@/test/prelude";
+import { createTestContext, execute } from "@/test/prelude";
 import { TestChecklistAggDocument } from "./ChecklistAggregate.test.generated";
 
 const ASSIGNEE = encodeGlobalId({
@@ -18,9 +18,11 @@ const TEMPLATE = encodeGlobalId({
 });
 const DUE_ON_BEFORE = "1733251472196"; // Date.now() circa Tue Dec 03 2024 10:45
 
+const ctx = await createTestContext();
+
 describe.skip("ChecklistAggregate", () => {
   test("when parent is customer", async () => {
-    const result = await execute(schema, TestChecklistAggDocument, {
+    const result = await execute(ctx, schema, TestChecklistAggDocument, {
       parent: CUSTOMER,
       assignedTo: [ASSIGNEE],
       dueOnInput: {
@@ -34,7 +36,7 @@ describe.skip("ChecklistAggregate", () => {
   });
 
   test("when parent is template", async () => {
-    const result = await execute(schema, TestChecklistAggDocument, {
+    const result = await execute(ctx, schema, TestChecklistAggDocument, {
       parent: TEMPLATE,
       assignedTo: [ASSIGNEE],
       dueOnInput: {

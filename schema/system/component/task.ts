@@ -425,6 +425,8 @@ export class Task implements Assignable, Component, Refetchable, Trackable {
     if (!row) return null;
     const t = new Task(row);
 
+    let assignee: ID | null | undefined;
+
     // In Progress and Closed instances *must* have the corresponding start/end dates.
     if (args.state && "inProgress" in args.state) {
       await sql`
@@ -432,6 +434,7 @@ export class Task implements Assignable, Component, Refetchable, Trackable {
         set workinstancestartdate = ${args.state.inProgress.inProgressAt ?? sql`now()`}
         where id = ${t._id}
       `;
+      assignee = args.state.inProgress.inProgressBy;
     }
 
     if (args.state && "closed" in args.state) {
@@ -441,7 +444,11 @@ export class Task implements Assignable, Component, Refetchable, Trackable {
             workinstancecompleteddate = ${args.state.closed.closedAt ?? sql`now()`}
         where id = ${t._id}
       `;
+      assignee = args.state.closed.closedBy;
     }
+
+    // We are creating a new instance so the mergeAction doesn't really apply.
+    await applyAssignments_(sql, ctx, t, "replace", assignee);
 
     if (args.name?.length) {
       const r = await sql`
@@ -946,11 +953,11 @@ export async function chain(
 
   const rows = await sql<{ id: ID }[]>`
     with recursive chain as (
-        select *
+        select 0 as _depth, *
         from public.workinstance
         where workinstance.id = ${t._id}
         union all
-        select child.*
+        select chain._depth + 1 as _depth, child.*
         from chain, public.workinstance as child
         where
             chain.workinstanceoriginatorworkinstanceid = child.workinstanceoriginatorworkinstanceid
@@ -958,7 +965,7 @@ export async function chain(
     )
     select encode(('workinstance:' || id)::bytea, 'base64') as id
     from chain
-    order by workinstanceid asc
+    order by _depth, workinstanceid
     limit ${first ?? null};
   `;
 
@@ -1334,7 +1341,7 @@ export async function advanceTask(
   {
     /** @see {@link applyAssignments_} */
     const ma = "replace";
-    const result = await sql`${applyAssignments_(sql, ctx, task, ma)}`;
+    const result = await applyAssignments_(sql, ctx, task, ma);
     console.debug(
       `advance: applied ${result.count} assignments (mergeAction: ${ma})`,
     );
@@ -1402,41 +1409,47 @@ export function applyAssignments_(
   ctx: Context,
   t: Task,
   mergeAction: "keep" | "replace" = "replace",
+  assignTo?: ID | null,
 ) {
-  const ma: Fragment = match(mergeAction)
-    // When keeping, we only perform the update when the value is null.
-    .with("keep", () => sql`t.workresultinstancevalue is null`)
-    // When replacing, we only perform the update when the value is distinctly
-    // different from the existing value.
-    .with(
-      "replace",
-      () =>
-        sql`t.workresultinstancevalue is distinct from auth.current_identity(cte._parent, ${ctx.auth.userId})::text`,
-    )
-    .exhaustive();
+  const assignee = map(assignTo, a => {
+    const { type, id } = decodeGlobalId(a);
+    assertUnderlyingType("worker", type);
+    return id;
+  });
 
   return sql`
     with cte as (
-        select i.workinstancecustomerid as _parent, field.workresultinstanceid as _id
-        from public.workinstance as i
-        inner join public.workresultinstance as field
-            on i.workinstanceid = field.workresultinstanceworkinstanceid
-        inner join public.workresult as field_t
-            on field.workresultinstanceworkresultid = field_t.workresultid
-        where
-            i.id = ${t._id}
-            and field_t.workresulttypeid = 848
-            and field_t.workresultentitytypeid = 850
-            and field_t.workresultisprimary = true
-        limit 1
+      select
+        workresultinstanceid as _id,
+        coalesce(
+          workerinstanceid,
+          auth.current_identity(workinstancecustomerid, ${ctx.auth.userId})
+        ) as assignee
+      from public.workinstance
+      inner join public.workresult
+        on workinstanceworktemplateid = workresultworktemplateid
+        and workresulttypeid = 848
+        and workresultentitytypeid = 850
+        and workresultisprimary = true
+      inner join public.workresultinstance
+        on workinstanceid = workresultinstanceworkinstanceid
+        and workresultid = workresultinstanceworkresultid
+      left join public.workerinstance
+        on workerinstanceuuid = ${assignee ?? null}
+      where workinstance.id = ${t._id}
+        and (
+          nullif(workresultinstancevalue, '') is null
+          or ${mergeAction === "replace"}
+        )
     )
 
-    update public.workresultinstance as t
-    set workresultinstancevalue = auth.current_identity(cte._parent, ${ctx.auth.userId})::text,
+    update public.workresultinstance
+    set workresultinstancevalue = cte.assignee::text,
         workresultinstancemodifieddate = now(),
-        workresultinstancemodifiedby = auth.current_identity(cte._parent, ${ctx.auth.userId})
+        workresultinstancemodifiedby = auth.current_identity(workresultinstancecustomerid, ${ctx.auth.userId})
     from cte
-    where t.workresultinstanceid = cte._id and ${ma}
+    where workresultinstanceid = cte._id
+      and workresultinstancevalue is distinct from cte.assignee::text
   `;
 }
 
@@ -1770,22 +1783,22 @@ export async function rebase(
   const base = new Task({ id: args.base });
   assertUnderlyingType("workinstance", base._type);
 
-  const node = new Task({ id: args.node });
-  const result = await match(node._type)
-    .with("workinstance", async () => {
-      // TODO: verify hash.
-      // TODO: move to SQL + recursive/full chain update
-      const result = await sql`
+  const result = await sql.begin(async sql => {
+    await setCurrentIdentity(sql, ctx);
+    const node = new Task({ id: args.node });
+    return await match(node._type)
+      .with("workinstance", async () => {
+        // TODO: verify hash.
+        // TODO: move to SQL + recursive/full chain update
+        const result = await sql`
         select 1
         from engine0.rebase(${base._id}, ${node._id})
       `;
-      assert(result.count === 1);
-      return node;
-    })
-    .with("worktemplate", () =>
-      sql.begin(async sql => {
+        assert(result.count === 1);
+        return node;
+      })
+      .with("worktemplate", async () => {
         console.debug("rebase: requires instantiation");
-        await setCurrentIdentity(sql, ctx);
         return await node.instantiate(
           {
             chainPrev: base.id,
@@ -1798,9 +1811,9 @@ export async function rebase(
           ctx,
           sql,
         );
-      }),
-    )
-    .exhaustive();
+      })
+      .exhaustive();
+  });
 
   if (!result) {
     console.error("rebase: failed to instantiate");

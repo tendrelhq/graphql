@@ -19,7 +19,7 @@ describe("[console] locations", () => {
   let CUSTOMER: string;
 
   test("list", async () => {
-    const result = await execute(schema, ListLocationsTestDocument, {
+    const result = await execute(ctx, schema, ListLocationsTestDocument, {
       account: CUSTOMER,
     });
     expect(result.errors).toBeFalsy();
@@ -30,7 +30,7 @@ describe("[console] locations", () => {
     let i = 0;
     for await (const page of paginateQuery({
       async execute(cursor) {
-        return await execute(schema, PaginateLocationsTestDocument, {
+        return await execute(ctx, schema, PaginateLocationsTestDocument, {
           account: CUSTOMER,
           first: 2,
           after: cursor,
@@ -50,7 +50,7 @@ describe("[console] locations", () => {
   });
 
   test("search", async () => {
-    const result = await execute(schema, ListLocationsTestDocument, {
+    const result = await execute(ctx, schema, ListLocationsTestDocument, {
       account: CUSTOMER,
       search: {
         active: true,

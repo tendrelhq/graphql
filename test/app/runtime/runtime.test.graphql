@@ -20,7 +20,6 @@ query TestRuntimeEntrypoint(
           name {
             value
           }
-          timeZone
         }
         ... on Task {
           displayName: name {
@@ -36,6 +35,20 @@ query TestRuntimeEntrypoint(
           }
           state {
             __typename
+            ... on Open {
+              openedBy {
+                ... on Worker {
+                  displayName
+                }
+              }
+            }
+            ... on InProgress {
+              inProgressBy {
+                ... on Worker {
+                  displayName
+                }
+              }
+            }
             ... on Closed {
               closedBy {
                 ... on Worker {
@@ -95,6 +108,20 @@ query TestRuntimeDetail(
             }
             state {
               __typename
+              ... on InProgress {
+                inProgressBy {
+                  ... on Worker {
+                    displayName
+                  }
+                }
+              }
+              ... on Closed {
+                closedBy {
+                  ... on Worker {
+                    displayName
+                  }
+                }
+              }
             }
           }
         }
@@ -131,6 +158,27 @@ mutation TestRuntimeTransitionMutation(
             }
             state {
               __typename
+              ... on Open {
+                openedBy {
+                  ... on Worker {
+                    displayName
+                  }
+                }
+              }
+              ... on InProgress {
+                inProgressBy {
+                  ... on Worker {
+                    displayName
+                  }
+                }
+              }
+              ... on Closed {
+                closedBy {
+                  ... on Worker {
+                    displayName
+                  }
+                }
+              }
             }
           }
         }
@@ -142,6 +190,27 @@ mutation TestRuntimeTransitionMutation(
       }
       state {
         __typename
+        ... on Open {
+          openedBy {
+            ... on Worker {
+              displayName
+            }
+          }
+        }
+        ... on InProgress {
+          inProgressBy {
+            ... on Worker {
+              displayName
+            }
+          }
+        }
+        ... on Closed {
+          closedBy {
+            ... on Worker {
+              displayName
+            }
+          }
+        }
       }
     }
     instantiations {
@@ -200,7 +269,7 @@ fragment Trackables_fragment on Trackable {
       node {
         __typename
         ... on Task {
-          id
+          id @include(if: $includeTransitionIds)
           fsm {
             ...TaskFSM_fragment
           }
@@ -290,8 +359,22 @@ fragment TaskFSM_fragment on TaskStateMachine {
     }
     state {
       __typename
+      ... on Open {
+        openedBy {
+          ... on Worker {
+            displayName
+          }
+        }
+      }
       ... on InProgress {
         inProgressBy {
+          ... on Worker {
+            displayName
+          }
+        }
+      }
+      ... on Closed {
+        closedBy {
           ... on Worker {
             displayName
           }

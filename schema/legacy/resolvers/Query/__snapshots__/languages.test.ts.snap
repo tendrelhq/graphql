@@ -304,6 +304,10 @@ exports[`languages works 1`] = `
         "__typename": "Language",
         "code": "es-MX",
       },
+      {
+        "__typename": "Language",
+        "code": "v4 Test Language",
+      },
     ],
   },
 }

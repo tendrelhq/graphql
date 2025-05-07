@@ -2,13 +2,15 @@ import { describe, expect, test } from "bun:test";
 import { randomUUID } from "node:crypto";
 import { schema } from "@/schema/final";
 import { encodeGlobalId } from "@/schema/system";
-import { execute } from "@/test/prelude";
+import { createTestContext, execute } from "@/test/prelude";
 import { SetupTestUpdateWorkerDocument } from "./updateWorker.setup.test.generated";
 import { TestUpdateWorkerDocument } from "./updateWorker.test.generated";
 
+const ctx = await createTestContext();
+
 describe.skip("updateWorker", () => {
   test("updates worker without conflict", async () => {
-    const { data } = await execute(schema, SetupTestUpdateWorkerDocument, {
+    const { data } = await execute(ctx, schema, SetupTestUpdateWorkerDocument, {
       input: {
         active: true,
         languageId: "7ebd10ee-5018-4e11-9525-80ab5c6aebee",
@@ -22,7 +24,7 @@ describe.skip("updateWorker", () => {
 
     if (!data) throw "failed to setup test";
 
-    const result = await execute(schema, TestUpdateWorkerDocument, {
+    const result = await execute(ctx, schema, TestUpdateWorkerDocument, {
       input: {
         id: data.createWorker.node.id.toString(),
         languageId: "c3f18dd6-bfc5-4ba5-b3c1-bb09e2a749a9",
@@ -37,7 +39,7 @@ describe.skip("updateWorker", () => {
   });
 
   test("worker_not_found", async () => {
-    const result = await execute(schema, TestUpdateWorkerDocument, {
+    const result = await execute(ctx, schema, TestUpdateWorkerDocument, {
       input: {
         id: encodeGlobalId({
           type: "workerinstance", // doesn't matter for this test
@@ -55,7 +57,7 @@ describe.skip("updateWorker", () => {
   });
 
   test("duplicate_scan_code", async () => {
-    const { data } = await execute(schema, SetupTestUpdateWorkerDocument, {
+    const { data } = await execute(ctx, schema, SetupTestUpdateWorkerDocument, {
       input: {
         active: true,
         languageId: "7ebd10ee-5018-4e11-9525-80ab5c6aebee",
@@ -69,7 +71,7 @@ describe.skip("updateWorker", () => {
 
     if (!data) throw "failed to setup test";
 
-    const result = await execute(schema, TestUpdateWorkerDocument, {
+    const result = await execute(ctx, schema, TestUpdateWorkerDocument, {
       input: {
         id: data.createWorker.node.id.toString(),
         scanCode: "rugg", // taken by yours truly :D

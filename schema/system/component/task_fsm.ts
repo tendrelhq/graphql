@@ -18,11 +18,11 @@ export function fsm$fragment(t: Task): Fragment {
   return sql`
     with recursive
         chain as (
-            select *
+            select 0 as _depth, *
             from public.workinstance
             where id = ${t._id}
             union all
-            select wi.*
+            select chain._depth + 1 as _depth, wi.*
             from chain, public.workinstance as wi
             where
                 chain.workinstanceoriginatorworkinstanceid = wi.workinstanceoriginatorworkinstanceid
@@ -34,7 +34,7 @@ export function fsm$fragment(t: Task): Fragment {
             from chain
             inner join public.systag on chain.workinstancestatusid = systag.systagid
             where systag.systagtype in ('Open', 'In Progress')
-            order by chain.workinstancepreviousid desc nulls last
+            order by _depth desc
             limit 1
         ),
 
@@ -146,7 +146,7 @@ export async function advance(
   return await sql.begin(async sql => {
     await setCurrentIdentity(sql, ctx);
 
-    const t = new Task(opts.task);
+    const t = new Task(opts.fsm);
     // The first thing we must do is validate the root hash. We MUST do this
     // before we lazily instantiate else we will get hash mismatches.
     assert(!!opts.fsm.hash);

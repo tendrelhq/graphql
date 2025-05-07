@@ -23,10 +23,15 @@ describe("createTemplateConstraint", () => {
   let LOCATION: Location;
 
   test("create a new constraint", async () => {
-    const result = await execute(schema, TestCreateTemplateConstraintDocument, {
-      template: TEMPLATE.id,
-      location: LOCATION.id,
-    });
+    const result = await execute(
+      ctx,
+      schema,
+      TestCreateTemplateConstraintDocument,
+      {
+        template: TEMPLATE.id,
+        location: LOCATION.id,
+      },
+    );
     expect(result.errors).toBeFalsy();
     expect(result.data?.createTemplateConstraint).toMatchObject({
       constraint: {
@@ -45,10 +50,15 @@ describe("createTemplateConstraint", () => {
   });
 
   test("operation is idempotent", async () => {
-    const result = await execute(schema, TestCreateTemplateConstraintDocument, {
-      template: TEMPLATE.id,
-      location: LOCATION.id,
-    });
+    const result = await execute(
+      ctx,
+      schema,
+      TestCreateTemplateConstraintDocument,
+      {
+        template: TEMPLATE.id,
+        location: LOCATION.id,
+      },
+    );
     expect(result.errors).toBeFalsy();
     expect(result.data?.createTemplateConstraint).toMatchObject({
       constraint: {
@@ -67,13 +77,18 @@ describe("createTemplateConstraint", () => {
   });
 
   test("request eager instantiation", async () => {
-    const result = await execute(schema, TestCreateTemplateConstraintDocument, {
-      template: TEMPLATE.id,
-      location: LOCATION.id,
-      options: {
-        instantiate: {},
+    const result = await execute(
+      ctx,
+      schema,
+      TestCreateTemplateConstraintDocument,
+      {
+        template: TEMPLATE.id,
+        location: LOCATION.id,
+        options: {
+          instantiate: {},
+        },
       },
-    });
+    );
     expect(
       result.data?.createTemplateConstraint?.instantiations,
     ).toMatchSnapshot();
@@ -81,23 +96,28 @@ describe("createTemplateConstraint", () => {
 
   test("request eager instantiation with field-level edits", async () => {
     const field = await getFieldByName(TEMPLATE, "Description");
-    const result = await execute(schema, TestCreateTemplateConstraintDocument, {
-      template: TEMPLATE.id,
-      location: LOCATION.id,
-      options: {
-        instantiate: {
-          fields: [
-            {
-              field: field.id,
-              value: {
-                string: "First try?",
+    const result = await execute(
+      ctx,
+      schema,
+      TestCreateTemplateConstraintDocument,
+      {
+        template: TEMPLATE.id,
+        location: LOCATION.id,
+        options: {
+          instantiate: {
+            fields: [
+              {
+                field: field.id,
+                value: {
+                  string: "First try?",
+                },
+                valueType: field.valueType,
               },
-              valueType: field.valueType,
-            },
-          ],
+            ],
+          },
         },
       },
-    });
+    );
     expect(
       result.data?.createTemplateConstraint?.instantiations,
     ).toMatchSnapshot();
