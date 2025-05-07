@@ -166,6 +166,12 @@ input AdvanceTaskOptions {
   """
   hash: String!
   id: ID!
+  """
+  When advancing a Task necessitates instantiation, you may use the `name`
+  argument to name the new instance. If not given, the new instance will
+  inherit its name from its template.
+  """
+  name: String
   overrides: [FieldInput!]
   """
   When advancing a Task necessitates instantiation, you may use the `parent`
@@ -612,8 +618,9 @@ type Mutation {
   ): EntityInstanceEdge @semanticNonNull
   createInstance(
     fields: [FieldInput!]
-    location: ID!
+    location: ID @deprecated(reason: "use `parent` instead")
     name: String
+    parent: ID
     template: ID!
   ): CreateInstancePayload @semanticNonNull
   createLocation(input: CreateLocationInput!): Location @semanticNonNull

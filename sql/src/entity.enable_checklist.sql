@@ -280,7 +280,7 @@ BEGIN
                 TRUE,
                 707,
                 tempsiteid,
-                811,
+                692,
                 create_modifiedby);
 
 -- set tiny tendies types

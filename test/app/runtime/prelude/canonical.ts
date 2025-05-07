@@ -106,7 +106,7 @@ export async function createCustomer(
       sql,
     );
     for (const line of lines) {
-      await run.instantiate({ location: line.id }, ctx, sql);
+      await run.instantiate({ parent: line.id }, ctx, sql);
     }
 
     const down = await createDefaultDowntimeTemplate(

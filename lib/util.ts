@@ -64,6 +64,15 @@ export function assertUnderlyingType<T extends string>(
   return received as T;
 }
 
+export function assertUnderlyingType2<
+  Ts extends string,
+  O extends { __typename: Ts },
+  T extends Ts,
+>(obj: O, type: T) {
+  assertUnderlyingType(type, obj.__typename);
+  return obj as typeof obj & { __typename: T };
+}
+
 export type WithKey<T> = T & { _key: string };
 
 export type PaginationArgs = {

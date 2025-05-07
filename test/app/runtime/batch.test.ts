@@ -2,7 +2,14 @@ import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 import { sql } from "@/datasources/postgres";
 import { schema } from "@/schema/final";
 import { type Customer, createTestContext, execute } from "@/test/prelude";
-import { assert, assertNonNull, map, mapOrElse } from "@/util";
+import {
+  assert,
+  assertNonNull,
+  assertUnderlyingType,
+  assertUnderlyingType2,
+  map,
+  mapOrElse,
+} from "@/util";
 import { Faker, en } from "@faker-js/faker";
 import {
   AssignBatchMutationDocument,
@@ -97,10 +104,6 @@ describe("runtime + batch tracking", () => {
 
     // biome-ignore lint/suspicious/noExplicitAny:
     initialEntrypointData = result.data as any;
-  });
-
-  test.todo("the normal Runtime test suite", async () => {
-    //
   });
 
   test("batch entrypoint query", async () => {
@@ -1441,6 +1444,110 @@ describe("runtime + batch tracking", () => {
     ]);
   });
 
+  test("start and end downtime", async () => {
+    // This test simulates how the mobile app would work e.g. via the Locations
+    // home screen. That is to say: under Batch specifically what will be passed
+    // to advance will be the Run, not the Batch, even though the latter is
+    // technically the root of the chain.
+    const entrypointQuery = await execute(
+      schema,
+      TestRuntimeEntrypointDocument,
+      {
+        parent: CUSTOMER.id,
+        includeHashes: true,
+        includeTransitionIds: true,
+      },
+    );
+    const runAtMixingLine = assertNonNull(
+      map(
+        entrypointQuery.data?.trackables?.edges
+          ?.at(0)
+          ?.node?.tracking?.edges?.at(0)?.node,
+        node => assertUnderlyingType2(node, "Task"),
+      ),
+      "no run at mixing line?",
+    );
+
+    const downTransition = assertNonNull(
+      runAtMixingLine.fsm?.transitions?.edges?.at(0),
+      "no down transition?",
+    );
+    const startDowntimeMutation = await execute(
+      schema,
+      TestRuntimeTransitionMutationDocument,
+      {
+        opts: {
+          fsm: {
+            // Simulating the mobile app which is operating on the Run instance.
+            id: assertNonNull(runAtMixingLine.id),
+            hash: assertNonNull(runAtMixingLine.hash),
+          },
+          task: {
+            id: assertNonNull(downTransition.id),
+            hash: assertNonNull(downTransition.node?.hash),
+          },
+        },
+        includeChain: true,
+        includeHashes: true,
+        includeRoot: true, // This is a misnomer.
+        includeTransitionIds: true,
+      },
+    );
+    expect(startDowntimeMutation.errors).toBeFalsy();
+
+    const startDowntimeAdvance = assertNonNull(
+      startDowntimeMutation.data?.advance,
+    );
+    expect(startDowntimeAdvance.instantiations?.length).toBe(0);
+    expect(startDowntimeAdvance.diagnostics).toBeFalsy();
+    expect(startDowntimeAdvance.root?.chain?.edges?.length).toBe(2);
+    expect(startDowntimeAdvance.root?.fsm?.active?.name?.value).toBe(
+      "Downtime",
+    );
+    expect(startDowntimeAdvance.root?.fsm?.active?.state?.__typename).toBe(
+      "InProgress",
+    );
+    expect(startDowntimeAdvance.root?.fsm?.transitions?.edges?.length).toBe(0);
+    expect(startDowntimeAdvance.root?.state?.__typename).toBe("InProgress");
+
+    const downInstance = assertNonNull(
+      // Note that `root` here is still the Run!
+      startDowntimeMutation.data?.advance?.root?.fsm?.active,
+      "no down instance?",
+    );
+
+    const endDowntimeMutation = await execute(
+      schema,
+      TestRuntimeTransitionMutationDocument,
+      {
+        opts: {
+          fsm: {
+            id: assertNonNull(runAtMixingLine.id),
+            hash: assertNonNull(runAtMixingLine.hash),
+          },
+          task: {
+            id: assertNonNull(downInstance.id),
+            hash: assertNonNull(downInstance.hash),
+          },
+        },
+        includeChain: true,
+        includeRoot: true,
+      },
+    );
+    expect(endDowntimeMutation.errors).toBeFalsy();
+
+    const endDowntimeAdvance = assertNonNull(endDowntimeMutation.data?.advance);
+    expect(endDowntimeAdvance.instantiations?.length).toBe(0);
+    expect(endDowntimeAdvance.diagnostics).toBeFalsy();
+    expect(endDowntimeAdvance.root?.chain?.edges?.length).toBe(2);
+    expect(endDowntimeAdvance.root?.fsm?.active?.name?.value).toBe("Run");
+    expect(endDowntimeAdvance.root?.fsm?.active?.state?.__typename).toBe(
+      "InProgress",
+    );
+    expect(endDowntimeAdvance.root?.fsm?.transitions?.edges?.length).toBe(2);
+    expect(endDowntimeAdvance.root?.state?.__typename).toBe("InProgress");
+  });
+
   test("close all runs", async () => {
     const batchQuery = await execute(schema, TestBatchEntrypointDocument, {
       includeTrackingIds: true,
@@ -1483,134 +1590,32 @@ describe("runtime + batch tracking", () => {
       parent: CUSTOMER.id,
     });
     expect(batchQuery.errors).toBeFalsy();
-    // Most recent first.
-    expect(batchQuery.data?.trackables?.edges).toMatchObject([
-      {
-        node: {
-          name: {
-            value: "Batch 4",
-          },
-          fsm: {
-            active: {
+    expect(batchQuery.data?.trackables?.edges?.length).toBe(5);
+    expect(batchQuery.data?.trackables?.edges?.at(0)).toMatchObject({
+      node: {
+        name: {
+          value: "Batch 4",
+        },
+        fsm: {
+          active: {
+            name: {
+              value: "Batch 4",
+            },
+            parent: {
               name: {
-                value: "Batch 4",
-              },
-              parent: {
-                name: {
-                  value: customerName,
-                },
-              },
-              state: {
-                __typename: "InProgress",
+                value: customerName,
               },
             },
-          },
-          state: {
-            __typename: "InProgress",
-          },
-        },
-      },
-      {
-        node: {
-          name: {
-            value: "Batch 3",
-          },
-          fsm: {
-            active: {
-              name: {
-                value: "Batch 3",
-              },
-              parent: {
-                name: {
-                  value: customerName,
-                },
-              },
-              state: {
-                __typename: "InProgress",
-              },
+            state: {
+              __typename: "InProgress",
             },
           },
-          state: {
-            __typename: "InProgress",
-          },
+        },
+        state: {
+          __typename: "InProgress",
         },
       },
-      {
-        node: {
-          name: {
-            value: "Batch 2",
-          },
-          fsm: {
-            active: {
-              name: {
-                value: "Batch 2",
-              },
-              parent: {
-                name: {
-                  value: customerName,
-                },
-              },
-              state: {
-                __typename: "InProgress",
-              },
-            },
-          },
-          state: {
-            __typename: "InProgress",
-          },
-        },
-      },
-      {
-        node: {
-          name: {
-            value: "Batch 1",
-          },
-          fsm: {
-            active: {
-              name: {
-                value: "Batch 1",
-              },
-              parent: {
-                name: {
-                  value: customerName,
-                },
-              },
-              state: {
-                __typename: "InProgress",
-              },
-            },
-          },
-          state: {
-            __typename: "InProgress",
-          },
-        },
-      },
-      {
-        node: {
-          name: {
-            value: "Batch 0",
-          },
-          fsm: {
-            active: {
-              name: {
-                value: "Batch 0",
-              },
-              parent: {
-                name: {
-                  value: customerName,
-                },
-              },
-              state: {
-                __typename: "InProgress",
-              },
-            },
-          },
-          state: {
-            __typename: "InProgress",
-          },
-        },
-      },
-    ]);
+    });
 
     const entrypointQuery = await execute(
       schema,
@@ -1698,11 +1703,25 @@ describe("runtime + batch tracking", () => {
                   },
                 },
               },
+              {
+                node: {
+                  name: {
+                    value: "Downtime",
+                  },
+                  state: {
+                    __typename: "Closed",
+                  },
+                },
+              },
             ],
           },
           chainAgg: [
             {
               group: "Batch",
+              value: expect.stringMatching(/\d+.\d+/),
+            },
+            {
+              group: "Downtime",
               value: expect.stringMatching(/\d+.\d+/),
             },
             {

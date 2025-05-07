@@ -11,13 +11,7 @@ import { P, match } from "ts-pattern";
 import { decodeGlobalId } from "..";
 import type { StateMachine } from "../fsm";
 import type { Edge } from "../pagination";
-import {
-  type AdvanceTaskOptions,
-  Task,
-  advanceTask,
-  applyAssignments_,
-  applyFieldEdits_,
-} from "./task";
+import { type AdvanceTaskOptions, Task, advanceTask } from "./task";
 
 export function fsm$fragment(t: Task): Fragment {
   assert(t._type === "workinstance");
@@ -149,55 +143,16 @@ export async function advance(
   ctx: Context,
   opts: AdvanceFsmOptions,
 ): Promise<AdvanceTaskStateMachineResult> {
-  const root = await map(opts.fsm.id, id => {
-    const t = new Task({ id });
-    return match(t._type)
-      .with("workinstance", () => t)
-      .with("worktemplate", () => {
-        // If our FSM is underlied by a worktemplate (e.g. in the lazy
-        // instantiation case) then we need to instantiate it here and now. Note
-        // that this also implies that the `fsm.parent` argument is required.
-        return sql.begin(sql =>
-          t.instantiate(
-            {
-              location: assertNonNull(
-                opts.fsm.parent,
-                "opts.fsm.parent is required when advancement necessitates instantiation",
-              ),
-              fields: opts.fsm.overrides,
-              // We can't have a `chainRoot` nor a `chainPrev` here.
-            },
-            ctx,
-            sql,
-          ),
-        );
-      })
-      .exhaustive();
-  });
-  console.debug(`fsm: ${root.id}`);
-
-  assert(root._type === "workinstance");
-
   return await sql.begin(async sql => {
     await setCurrentIdentity(sql, ctx);
-    const fsm = await fsm_(sql, root);
-    if (!fsm) {
-      return {
-        root,
-        diagnostics: [
-          {
-            __typename: "Diagnostic",
-            code: DiagnosticKind.no_associated_fsm,
-          },
-        ],
-        instantiations: [],
-      } satisfies AdvanceTaskStateMachineResult;
-    }
 
+    const t = new Task(opts.task);
+    // The first thing we must do is validate the root hash. We MUST do this
+    // before we lazily instantiate else we will get hash mismatches.
     assert(!!opts.fsm.hash);
     if (!opts.fsm.hash) {
       return {
-        root,
+        root: t,
         diagnostics: [
           {
             __typename: "Diagnostic",
@@ -208,14 +163,14 @@ export async function advance(
       } satisfies AdvanceTaskStateMachineResult;
     }
 
-    const rootHash = assertNonNull(await root.hash());
+    const rootHash = await t.hash();
     if (rootHash !== opts.fsm.hash) {
       console.warn("WARNING: Root hash mismatch precludes advancement");
-      console.debug(`| root: ${root.id}`);
+      console.debug(`| root: ${t.id}`);
       console.debug(`| ours: ${rootHash}`);
       console.debug(`| theirs: ${opts.fsm.hash}`);
       return {
-        root,
+        root: t,
         diagnostics: [
           {
             __typename: "Diagnostic",
@@ -226,34 +181,88 @@ export async function advance(
       } satisfies AdvanceTaskStateMachineResult;
     }
 
+    const task = await match(t._type)
+      .with("workinstance", () => t)
+      .with("worktemplate", async () => {
+        // If `task` is underlied by a worktemplate (as is the case under lazy
+        // instantiation) then `args.parent` is required. We cannot possible
+        // derive the correct parent (location) in this case, since there
+        // cannot yet be a chain.
+        return assertNonNull(
+          await t.instantiate(
+            {
+              fields: opts.fsm.overrides,
+              name: opts.fsm.name,
+              parent: assertNonNull(
+                opts.fsm.parent,
+                "opts.fsm.parent is required when advancement necessitates instantiation",
+              ),
+            },
+            ctx,
+            sql,
+          ),
+        );
+      })
+      .exhaustive();
+
+    console.debug(`fsm: ${task.id}`);
+    // Of course now this must be the case:
+    assert(task._type === "workinstance");
+
+    // FIXME: broken under lazy instantiation unless we immediately instantiate
+    // (which we do) above, although we'll still break in a different way below.
+    // Note that this may not be the full fsm if `task` is not the root of the
+    // chain, e.g. as is the case under Batch.
+    const taskFsm = await fsm_(sql, task);
+    if (!taskFsm) {
+      return {
+        root: task,
+        diagnostics: [
+          {
+            __typename: "Diagnostic",
+            code: DiagnosticKind.no_associated_fsm,
+          },
+        ],
+        instantiations: [],
+      } satisfies AdvanceTaskStateMachineResult;
+    }
+
+    // We need to resolve the choice. The choice is either a transition (i.e.
+    // worktemplatenexttemplate) or a Task (i.e. worktemplate). The former is
+    // the newer model which allows for cross-location instantiation.
     const { choice, target } = await match(decodeGlobalId(opts.task.id))
       .with({ type: "worktemplatenexttemplate", id: P.select() }, async id => {
         // When the choice is a next-template rule, we must resolve the rule to
-        // ascertain the next template.
-        const [row] = await sql<[{ task: ID; location?: ID | null }]>`
+        // ascertain the next template, and parent (location). If the rule does
+        // not specify a location (which coloquially means "continue at the same
+        // location") then we allow for the user to specify the next location
+        // via `opts.task.parent`. Of course if neither the rule nor the user
+        // provide a next parent (location) then the engine will fallback to the
+        // previous's parent (location).
+        const [row] = await sql<[{ id: ID; parent?: ID | null }]>`
           select
-            encode(('worktemplate:' || wt.id)::bytea, 'base64') as task,
-            encode(('location:' || worktemplatenexttemplatenextlocationid)::bytea, 'base64') as location
+            encode(('worktemplate:' || wt.id)::bytea, 'base64') as id,
+            encode(('location:' || coalesce(worktemplatenexttemplatenextlocationid, locationuuid))::bytea, 'base64') as parent
           from public.worktemplatenexttemplate
-          inner join public.worktemplate as wt
-            on worktemplatenexttemplatenexttemplateid = wt.worktemplateid
+          inner join public.worktemplate as wt on worktemplatenexttemplatenexttemplateid = wt.worktemplateid
+          left join public.location on locationuuid = ${opts.task.parent ?? null}
           where worktemplatenexttemplateuuid = ${id}
         `;
         assert(!!row, "no such choice");
         return {
-          choice: new Task({ id: row.task }),
-          target: row.location ? new Location({ id: row.location }) : null,
+          choice: new Task({ id: row.id }),
+          target: row.parent ? new Location({ id: row.parent }) : null,
         };
       })
       .otherwise(() => ({ choice: new Task(opts.task), target: null }));
     console.debug(`choice: ${choice.id}`);
 
-    if (isValidAdvancement(root, fsm, choice) === false) {
+    if (isValidAdvancement(task, taskFsm, choice) === false) {
       console.warn("WARNING: Task is not a valid choice");
-      console.debug(`| root: ${root.id}`);
+      console.debug(`| root: ${task.id}`);
       console.debug(`| choice: ${choice.id}`);
       return {
-        root,
+        root: task,
         diagnostics: [
           {
             __typename: "Diagnostic",
@@ -264,22 +273,22 @@ export async function advance(
       } satisfies AdvanceTaskStateMachineResult;
     }
 
-    if (compareBase64(root.id, choice.id)) {
+    if (compareBase64(task.id, choice.id)) {
       console.debug("advance: operating on the root");
       const r = await advanceTask({ task: choice, opts: opts.task }, sql, ctx);
       return {
-        root,
+        root: task,
         ...r,
       };
     }
 
-    if (fsm.active && compareBase64(choice.id, fsm.active.id)) {
+    if (taskFsm.active && compareBase64(choice.id, taskFsm.active.id)) {
       console.debug("advance: operating on the active task");
       // When the "choice" is the active task, we advance that task's internal
       // state machine as defined by its own `advance` implementation.
       const r = await advanceTask({ task: choice, opts: opts.task }, sql, ctx);
       return {
-        root,
+        root: task,
         ...r,
       };
     }
@@ -287,7 +296,15 @@ export async function advance(
     // Otherwise, the "choice" identifies a transition in the fsm.
     console.debug("advance: operating on the fsm");
     return await advanceFsm(
-      { choice, fsm, location: target?._id, opts, root },
+      {
+        choice,
+        fsm: taskFsm,
+        opts: {
+          ...opts.task,
+          parent: target?.id,
+        },
+        root: task,
+      },
       ctx,
       sql,
     );
@@ -298,8 +315,7 @@ async function advanceFsm(
   args: {
     choice: Task;
     fsm: StateMachine<Task>;
-    location?: string | null;
-    opts: Omit<AdvanceFsmOptions, "fsm">;
+    opts: AdvanceTaskOptions;
     root: Task;
   },
   ctx: Context,
@@ -310,6 +326,10 @@ async function advanceFsm(
   // such cases, we would have taken the `advanceTask` branch above wherein we
   // "operate on the root". Thus, the following assertion is safe:
   const active = assertNonNull(args.fsm.active, "fsm is not active");
+  // This one is a bit redundant considering the active Task can only be an
+  // instance (in the Open or InProgress states).
+  assert(active._type === "workinstance");
+
   return await match(args.choice._type)
     .with("workinstance", () => {
       // This path is not currently possible: transitions are guaranteed to be
@@ -327,66 +347,39 @@ async function advanceFsm(
       } satisfies AdvanceTaskStateMachineResult;
     })
     .with("worktemplate", async () => {
-      assert(active._type === "workinstance");
-      const result = await sql<[{ instance: ID }]>`
-        with options as (
-            select
-                w.id as previous_id,
-                auth.current_identity(w.workinstancecustomerid, ${ctx.auth.userId}) as modified_by,
-                (select l.id from legacy0.primary_location_for_instance(w.id) as l) as location_id
-            from public.workinstance as w
-            where w.id = ${active._id}
-        )
-
-        select encode(('workinstance:' || t.instance)::bytea, 'base64') as instance
-        from
-            options,
-            engine0.instantiate(
-                template_id := ${args.choice._id},
-                location_id := coalesce(${args.location ?? null}, options.location_id),
-                target_state := 'In Progress',
-                target_type := 'Task',
-                modified_by := options.modified_by,
-                chain_root_id := ${args.root._id},
-                chain_prev_id := options.previous_id
-            ) as t
-        group by t.instance;
-      `;
-      console.debug(`advance: engine.instantiate.count: ${result.length}`);
-
-      // The only instantiation should be the choice, although the engine might
-      // cut us off, hence:
-      assert(result.length < 2);
-
-      const ins = result.at(0)?.instance;
-      if (ins) {
-        const t = new Task({ id: ins });
-
-        // In Progress must have a start date.
-        await sql`
-          update public.workinstance
-          set workinstancestartdate = now()
-          where id = ${t._id} and workinstancestartdate is null
-        `;
-
-        // Auto-assign.
+      // Note that `args.root` is a misnomer in that it is not necessarily a
+      // *chain* root, but rather the root of the fsm on which we are currently
+      // operating. In order for instantiation to correctly "continue" the
+      // chain, we must resolve the actual root and pass that along.
+      const chainRoot = await args.root.root();
+      const choice = await args.choice.instantiate(
         {
-          const ma = "replace";
-          const result = await applyAssignments_(sql, ctx, t, ma);
-          console.debug(
-            `advance: applied ${result.count} assignments (mergeAction: ${ma})`,
-          );
-        }
+          chainPrev: args.root.id,
+          chainRoot: assertNonNull(
+            chainRoot?.id,
+            "Failed to resolve chain root",
+          ),
+          parent: assertNonNull(
+            args.opts.parent ??
+              // FIXME: kinda hacky lmao
+              (await active.parent().then(p => (p as Location)?.id)),
+            "Failed to resolve parent",
+          ),
+          fields: args.opts.overrides,
+          name: args.opts.name,
+          state: {
+            inProgress: {
+              inProgressAt: new Date().toISOString(), // FIXME: let client decide
+            },
+          },
+        },
+        ctx,
+        sql,
+      );
 
-        if (args.opts.task.overrides?.length) {
-          const result = await applyFieldEdits_(
-            sql,
-            ctx,
-            t,
-            args.opts.task.overrides,
-          );
-          console.debug(`advance: applied ${result.count} field-level edits`);
-        }
+      if (!choice) {
+        console.error("advance: tried and failed to instantiate the choice");
+        throw new Error("advance failed to instantiate");
       }
 
       return {

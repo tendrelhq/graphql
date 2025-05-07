@@ -1931,6 +1931,12 @@ export function getSchema(): GraphQLSchema {
             name: "id",
             type: new GraphQLNonNull(GraphQLID),
           },
+          name: {
+            description:
+              "When advancing a Task necessitates instantiation, you may use the `name`\nargument to name the new instance. If not given, the new instance will\ninherit its name from its template.",
+            name: "name",
+            type: GraphQLString,
+          },
           overrides: {
             name: "overrides",
             type: new GraphQLList(new GraphQLNonNull(FieldInputType)),
@@ -2271,12 +2277,17 @@ export function getSchema(): GraphQLSchema {
               type: new GraphQLList(new GraphQLNonNull(FieldInputType)),
             },
             location: {
+              deprecationReason: "use `parent` instead",
               name: "location",
-              type: new GraphQLNonNull(GraphQLID),
+              type: GraphQLID,
             },
             name: {
               name: "name",
               type: GraphQLString,
+            },
+            parent: {
+              name: "parent",
+              type: GraphQLID,
             },
             template: {
               name: "template",

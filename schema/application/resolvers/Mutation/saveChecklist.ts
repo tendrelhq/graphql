@@ -510,7 +510,7 @@ export const saveChecklist: NonNullable<
             prev_template_id := ${template},
             next_template_id := ${template},
             state_condition := 'In Progress',
-            type_tag := 'On Demand',
+            type_tag := 'Task', -- Eager := driven by the engine
             modified_by := ${actor}
         );
       `;

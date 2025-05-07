@@ -2,7 +2,8 @@ query TestRuntimeEntrypoint(
   $count: Int
   $parent: ID!
   $impl: String
-  $includeInactive: Boolean
+  $includeHashes: Boolean! = false
+  $includeInactive: Boolean! = false
   $includeTrackingIds: Boolean! = false
   $includeTransitionIds: Boolean! = false
 ) {
@@ -113,6 +114,7 @@ query TestRuntimeDetail(
 mutation TestRuntimeTransitionMutation(
   $opts: AdvanceFsmOptions!
   $includeChain: Boolean! = false
+  $includeHashes: Boolean! = false
   $includeRoot: Boolean! = true
   $includeTransitionIds: Boolean! = false
 ) {
@@ -133,6 +135,8 @@ mutation TestRuntimeTransitionMutation(
           }
         }
       }
+      id @include(if: $includeTransitionIds)
+      hash @include(if: $includeHashes)
       fsm {
         ...TaskFSM_fragment
       }
@@ -200,6 +204,7 @@ fragment Trackables_fragment on Trackable {
           fsm {
             ...TaskFSM_fragment
           }
+          hash @include(if: $includeHashes)
           name {
             value
           }
@@ -211,6 +216,8 @@ fragment Trackables_fragment on Trackable {
             }
           }
           root {
+            id @include(if: $includeTransitionIds)
+            hash @include(if: $includeHashes)
             name {
               value
             }
@@ -247,6 +254,8 @@ fragment TaskFSM_fragment on TaskStateMachine {
     description {
       value
     }
+    hash @include(if: $includeHashes)
+    id @include(if: $includeTransitionIds)
     name {
       value
     }
@@ -294,6 +303,8 @@ fragment TaskFSM_fragment on TaskStateMachine {
     edges {
       id @include(if: $includeTransitionIds)
       node {
+        id @include(if: $includeTransitionIds)
+        hash @include(if: $includeHashes)
         name {
           value
         }

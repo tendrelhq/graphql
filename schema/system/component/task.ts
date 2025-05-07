@@ -390,23 +390,25 @@ export class Task implements Assignable, Component, Refetchable, Trackable {
       chainPrev?: ID | null;
       chainRoot?: ID | null;
       name?: string | null;
+      parent: ID;
       fields?: FieldInput[] | null;
-      location: ID;
       state?: TaskStateInput | null;
     },
     ctx: Context,
     sql: TxSql,
-  ): Promise<Task> {
+  ): Promise<Task | null> {
     assertUnderlyingType("worktemplate", this._type);
+
     const chainPrev = map(args.chainPrev, id => new Task({ id }));
     const chainRoot = map(args.chainRoot, id => new Task({ id }));
-    const location = new Location({ id: args.location });
+    const location = new Location({ id: args.parent });
     const targetState = match(args.state)
       .with({ open: P._ }, () => "Open")
       .with({ inProgress: P._ }, () => "In Progress")
       .with({ closed: P._ }, () => "Completed")
       .otherwise(() => "Open");
-    const [row] = await sql<[ConstructorArgs]>`
+
+    const [row] = await sql<[ConstructorArgs?]>`
       select encode(('workinstance:' || t.instance)::bytea, 'base64') as id
       from engine0.instantiate(
           template_id := ${this._id},
@@ -419,7 +421,27 @@ export class Task implements Assignable, Component, Refetchable, Trackable {
       ) as t
       group by t.instance
     `;
+
+    if (!row) return null;
     const t = new Task(row);
+
+    // In Progress and Closed instances *must* have the corresponding start/end dates.
+    if (args.state && "inProgress" in args.state) {
+      await sql`
+        update public.workinstance
+        set workinstancestartdate = ${args.state.inProgress.inProgressAt ?? sql`now()`}
+        where id = ${t._id}
+      `;
+    }
+
+    if (args.state && "closed" in args.state) {
+      await sql`
+        update public.workinstance
+        set workinstancestartdate = ${args.state.closed.inProgressAt ?? sql`now()`},
+            workinstancecompleteddate = ${args.state.closed.closedAt ?? sql`now()`}
+        where id = ${t._id}
+      `;
+    }
 
     if (args.name?.length) {
       const r = await sql`
@@ -444,6 +466,7 @@ export class Task implements Assignable, Component, Refetchable, Trackable {
       await applyFieldEdits_(sql, ctx, t, args.fields);
     }
 
+    console.debug("Task.instantiate: engine0.execute.count: 1");
     return t;
   }
 
@@ -536,7 +559,6 @@ export class Task implements Assignable, Component, Refetchable, Trackable {
       inner join public.workinstance as root
         on node.workinstanceoriginatorworkinstanceid = root.workinstanceid
       where node.id = ${this._id}
-        and node.workinstanceid is distinct from node.workinstanceoriginatorworkinstanceid
     `;
     if (!row) return null;
     return new Task(row);
@@ -1134,6 +1156,12 @@ export type AdvanceTaskOptions = {
    * returned to you when first querying for the Task in question.
    */
   hash: string;
+  /**
+   * When advancing a Task necessitates instantiation, you may use the `name`
+   * argument to name the new instance. If not given, the new instance will
+   * inherit its name from its template.
+   */
+  name?: string | null;
   overrides?: FieldInput[] | null;
   /**
    * When advancing a Task necessitates instantiation, you may use the `parent`
@@ -1741,8 +1769,9 @@ export async function rebase(
 ): Promise<Task> {
   const base = new Task({ id: args.base });
   assertUnderlyingType("workinstance", base._type);
+
   const node = new Task({ id: args.node });
-  return await match(node._type)
+  const result = await match(node._type)
     .with("workinstance", async () => {
       // TODO: verify hash.
       // TODO: move to SQL + recursive/full chain update
@@ -1759,12 +1788,12 @@ export async function rebase(
         await setCurrentIdentity(sql, ctx);
         return await node.instantiate(
           {
-            location: assertNonNull(
+            chainPrev: base.id,
+            chainRoot: base.id,
+            parent: assertNonNull(
               args.parent,
               "instantiation requires an explicit parent",
             ),
-            chainPrev: base.id,
-            chainRoot: base.id,
           },
           ctx,
           sql,
@@ -1772,4 +1801,11 @@ export async function rebase(
       }),
     )
     .exhaustive();
+
+  if (!result) {
+    console.error("rebase: failed to instantiate");
+    throw new Error("Rebase failed to instantiate");
+  }
+
+  return result;
 }

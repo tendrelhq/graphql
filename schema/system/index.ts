@@ -30,7 +30,9 @@ export function decodeGlobalId(id: unknown): GlobalId {
 
 export function decodeGlobalIdRaw(id: unknown): string {
   if (typeof id !== "string") {
-    throw `invariant violated: global ids should be string but got ${typeof id}`;
+    throw new Error(
+      `invariant violated: global ids should be string but got ${typeof id}`,
+    );
   }
   return Buffer.from(decodeURIComponent(id), "base64").toString();
 }

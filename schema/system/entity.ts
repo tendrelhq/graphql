@@ -1,7 +1,7 @@
 import { constructHeadersFromArgs, extractPageInfo } from "@/api";
 import { getAccessToken, setCurrentIdentity } from "@/auth";
 import { sql } from "@/datasources/postgres";
-import { assert, assertUnderlyingType } from "@/util";
+import { assert, assertNonNull, assertUnderlyingType } from "@/util";
 import { GraphQLError } from "graphql";
 import type { ID, Int } from "grats";
 import { decodeGlobalId, encodeGlobalId } from ".";
@@ -286,7 +286,9 @@ export type CreateInstancePayload = {
 /** @gqlMutationField */
 export async function createInstance(
   args: {
-    location: ID;
+    /** @deprecated use `parent` instead */
+    location?: ID | null;
+    parent?: ID | null;
     template: ID;
     fields?: FieldInput[] | null;
     name?: string | null;
@@ -296,7 +298,18 @@ export async function createInstance(
   const t = new Task({ id: args.template });
   const i = await sql.begin(async sql => {
     await setCurrentIdentity(sql, ctx);
-    return await t.instantiate(args, ctx, sql);
+    const i = await t.instantiate(
+      {
+        ...args,
+        parent: assertNonNull(
+          args.parent ?? args.location,
+          "args.parent is required",
+        ),
+      },
+      ctx,
+      sql,
+    );
+    return assertNonNull(i);
   });
   return {
     edge: {
