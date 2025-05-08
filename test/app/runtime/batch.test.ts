@@ -68,6 +68,7 @@ describe("runtime + batch tracking", () => {
                         value: "My First Location",
                       },
                     },
+                    types: ["Trackable", "Runtime"],
                   },
                 },
                 name: {
@@ -165,6 +166,9 @@ describe("runtime + batch tracking", () => {
           },
           fsm: {
             active: {
+              name: {
+                value: "Batch 4",
+              },
               // Batches are instantiated at the site-level, which have the same
               // name as the customer (in this test).
               parent: {
@@ -175,6 +179,7 @@ describe("runtime + batch tracking", () => {
               state: {
                 __typename: "Open",
               },
+              types: ["Batch"],
             },
             transitions: {
               edges: [],

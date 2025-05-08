@@ -1286,6 +1286,15 @@ export function getSchema(): GraphQLSchema {
             },
           },
         },
+        types: {
+          name: "types",
+          type: new GraphQLList(new GraphQLNonNull(GraphQLString)),
+          resolve(source, args, context, info) {
+            return assertNonNull(
+              defaultFieldResolver(source, args, context, info),
+            );
+          },
+        },
       };
     },
     interfaces() {

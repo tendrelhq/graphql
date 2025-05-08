@@ -779,6 +779,44 @@ export class Task implements Assignable, Component, Refetchable, Trackable {
     return null;
   }
 
+  /**
+   * @gqlField
+   */
+  async types(): Promise<string[]> {
+    const cte = match(this._type)
+      .with(
+        "workinstance",
+        () => sql`
+          select workinstanceworktemplateid as template
+          from public.workinstance
+          where id = ${this._id}
+        `,
+      )
+      .with(
+        "worktemplate",
+        () => sql`
+          select worktemplateid as template
+          from public.worktemplate
+          where id = ${this._id}
+        `,
+      )
+      .exhaustive();
+
+    const rows = await sql<{ type: string }[]>`
+      with cte as (${cte})
+      select systagtype as type
+      from cte, public.worktemplatetype
+      inner join public.systag on worktemplatetypesystagid = systagid
+      where worktemplatetypeworktemplateid = cte.template
+        and (
+          worktemplatetypeenddate is null
+          or worktemplatetypeenddate > now()
+        )
+      order by systagorder, systagid
+    `;
+    return rows.map(r => r.type);
+  }
+
   toString() {
     return `${this.id} (${this._type}:${this._id})`;
   }

@@ -869,6 +869,7 @@ type Task implements Assignable & Component & Node & Trackable {
   always be returned for this field.
   """
   tracking(after: ID, first: Int): TrackableConnection
+  types: [String!] @semanticNonNull
 }
 
 type TaskConnection {

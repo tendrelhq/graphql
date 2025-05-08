@@ -105,6 +105,10 @@ exports[`extended runtime demo it should show up in the app 1`] = `
                   "__typename": "Open",
                   "openedBy": null,
                 },
+                "types": [
+                  "Trackable",
+                  "Runtime",
+                ],
               },
               "transitions": {
                 "edges": [],
@@ -131,6 +135,10 @@ exports[`extended runtime demo it should show up in the app 1`] = `
             "state": {
               "__typename": "Open",
             },
+            "types": [
+              "Trackable",
+              "Runtime",
+            ],
           },
         },
       ],

@@ -50,6 +50,7 @@ query TestBatchEntrypoint($parent: ID!, $includeTrackingIds: Boolean! = false) {
               state {
                 __typename
               }
+              types
             }
             transitions {
               edges {

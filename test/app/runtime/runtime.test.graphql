@@ -301,6 +301,7 @@ fragment Trackables_fragment on Trackable {
           state {
             __typename
           }
+          types
         }
       }
     }
@@ -381,6 +382,7 @@ fragment TaskFSM_fragment on TaskStateMachine {
         }
       }
     }
+    types
   }
   transitions {
     edges {
