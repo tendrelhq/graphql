@@ -180,7 +180,7 @@ export async function asFieldTemplateValueType(
 export async function castEntityInstanceToTask(
   i: EntityInstance,
 ): Promise<Task> {
-  return new Task(i);
+  return Task.fromTypeId(i._type, i._id);
 }
 
 /** @gqlMutationField */
@@ -311,13 +311,19 @@ export async function createInstance(
     );
     return assertNonNull(i);
   });
+  // NOTE: this is kinda hacky at the moment. We want everything to be an
+  // EntityInstance but those guys actually map to Keller's entity model whereas
+  // there is no place in the entity model at the moment for work instances. So,
+  // for now, we will just fake it. Note that "entity_instance" is already taken
+  // (and maps to the entity model) so we need a new type name here.
+  const entityInstanceId = encodeGlobalId({ type: "instance", id: i._id });
   return {
     edge: {
-      cursor: i.id,
+      cursor: entityInstanceId,
       node: {
         _type: i._type,
         _id: i._id,
-        id: i.id,
+        id: entityInstanceId,
       },
     },
   };
