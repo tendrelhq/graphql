@@ -1,9 +1,10 @@
-import { sql } from "@/datasources/postgres";
+import { join, sql } from "@/datasources/postgres";
+import { map, mapOrElse } from "@/util";
 import type { ID, Int } from "grats";
 import { match } from "ts-pattern";
 import { decodeGlobalId } from "../system";
 import type { Component } from "../system/component";
-import { Task } from "../system/component/task";
+import { Task, type TaskStateName } from "../system/component/task";
 import type { Connection } from "../system/pagination";
 import type { Context } from "../types";
 import { Location } from "./archetype/location";
@@ -80,6 +81,36 @@ export async function trackables(
      * only give you *closed* chains, i.e. `workinstancecompleteddate is not null`.
      */
     withImplementation?: string | null;
+    /**
+     * Whether to return only chain roots, or all Tasks that satisfy the given
+     * criteria.
+     *
+     * **Only applies when `withImplemention === "Task"`**
+     */
+    onlyRoots?: boolean | null;
+    /**
+     * Filter by state(s).
+     * This maps (currently) to workinstancestatusid.
+     *
+     * **Only applies when `withImplemention === "Task"`**
+     */
+    state?: TaskStateName[] | null;
+    /**
+     * Filter by type(s).
+     * This maps (currently) to worktemplatetype.
+     *
+     * For example, in Runtime the folowing types exist:
+     * - Run
+     * - Downtime
+     * - Idle Time
+     *
+     * Any of these are suitable for this API.
+     *
+     * Also see `Task.chainAgg`, as that API takes a similar parameter `overType`.
+     *
+     * **Only applies when `withImplemention === "Task"`**
+     */
+    type?: string[] | null;
   },
   ctx: Context,
 ): Promise<Connection<Trackable>> {
@@ -151,47 +182,76 @@ export async function trackables(
       }
 
       if (args.withImplementation === "Task") {
+        const onlyRoots = args.onlyRoots ?? true; // For backwards compatibility.
+        const states = mapOrElse(
+          args.state,
+          states =>
+            states.map(s => {
+              switch (s) {
+                case "Open":
+                  return "Open" as const;
+                case "InProgress":
+                  return "In Progress" as const;
+                case "Closed":
+                  return "Complete" as const;
+              }
+            }),
+          ["Complete" as const],
+        );
+        const types = args.type?.length ? args.type : ["Trackable"]; // For backwards compatibility.
         return sql<Trackable[]>`
           select
-              'Task' as "__typename",
-              encode(('workinstance:' || chain.id)::bytea, 'base64') as id
+            'Task' as "__typename",
+            encode(('workinstance:' || chain.id)::bytea, 'base64') as id
           from public.worktemplate as parent
           inner join public.worktemplatetype as wtt
-              on parent.id = wtt.worktemplatetypeworktemplateuuid
-              ${
-                !args.includeInactive
-                  ? sql`
-              and (
-                  wtt.worktemplatetypeenddate is null
-                  or wtt.worktemplatetypeenddate > now()
-              )
-                  `
-                  : sql``
-              }
-          inner join public.systag as tag on wtt.worktemplatetypesystaguuid = tag.systaguuid
-          inner join
-              public.workinstance as chain
-              on parent.worktemplateid = chain.workinstanceworktemplateid
-              and chain.workinstanceid = chain.workinstanceoriginatorworkinstanceid
+            on parent.id = wtt.worktemplatetypeworktemplateuuid
+            ${
+              !args.includeInactive
+                ? sql`
+            and (
+              wtt.worktemplatetypeenddate is null
+              or wtt.worktemplatetypeenddate > now()
+            )`
+                : sql``
+            }
+          inner join public.systag as tag
+            on wtt.worktemplatetypesystaguuid = tag.systaguuid
+            and tag.systagtype in ${sql(types)}
+          inner join public.workinstance as chain
+            on ${join(
+              [
+                sql`parent.worktemplateid = chain.workinstanceworktemplateid`,
+                ...(onlyRoots
+                  ? [
+                      sql`chain.workinstanceid = chain.workinstanceoriginatorworkinstanceid`,
+                    ]
+                  : []),
+              ],
+              sql`and`,
+            )}
+          inner join public.systag as state
+            on chain.workinstancestatusid = state.systagid
+            and state.systagtype in ${sql(states)}
           where
-              parent.worktemplatecustomerid = (
-                  select customerid
-                  from public.customer
-                  where customeruuid = ${id}
-              )
-              ${
-                !args.includeInactive
-                  ? sql`
-              and (
-                  parent.worktemplateenddate is null
-                  or parent.worktemplateenddate > now()
-              )
-                  `
-                  : sql``
-              }
-              and tag.systagtype in ('Trackable')
-              and chain.workinstancecompleteddate is not null
-          order by chain.workinstancecompleteddate desc
+            parent.worktemplatecustomerid = (
+              select customerid
+              from public.customer
+              where customeruuid = ${id}
+            )
+            ${
+              !args.includeInactive
+                ? sql`
+            and (
+              parent.worktemplateenddate is null
+              or parent.worktemplateenddate > now()
+            )`
+                : sql``
+            }
+          order by
+            chain.workinstancecompleteddate desc nulls first,
+            chain.workinstancestartdate desc nulls first,
+            chain.workinstanceid desc
           limit ${args.first ?? null}
         `;
       }

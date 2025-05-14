@@ -15,20 +15,12 @@ export async function createCustomer(
 ): Promise<Customer> {
   await setCurrentIdentity(sql, ctx);
 
-  const customerName = args.seed.toString();
-  const admin = {
-    firstName: args.faker.person.firstName(),
-    lastName: args.faker.person.lastName(),
-    provider: customerName,
-  };
-  const adminIdentity = args.faker.string.uuid();
-
   // The procedure below logs so much shit.
   await sql`set local client_min_messages to warning`;
   const rows = await sql`
     call public.crud_customer_create(
-      create_customername := ${customerName},
-      create_sitename := ${customerName},
+      create_customername := ${args.seed.toString()},
+      create_sitename := '',
       create_customeruuid := null,
       create_customerbillingid := ${args.faker.string.uuid()},
       create_customerbillingsystemid := '0033c894-fb1b-4994-be36-4792090f260b',
@@ -37,16 +29,16 @@ export async function createCustomer(
       --     from public.systag
       --     where systagparentid = 959 and systagtype = 'Test'
       -- ),
-      create_adminfirstname := ${admin.firstName},
-      create_adminlastname := ${admin.lastName},
-      create_adminemailaddress := ${args.faker.internet.email(admin)},
+      create_adminfirstname := '',
+      create_adminlastname := '',
+      create_adminemailaddress := '',
       create_adminphonenumber := '',
-      create_adminidentityid := ${adminIdentity},
-      create_adminidentitysystemuuid := '829824cd-a7d4-4e9e-b75d-eab099812d8d',
+      create_adminidentityid := ${ctx.auth.userId},
+      create_adminidentitysystemuuid := '0c1e3a50-ed4c-4469-95bd-e091104ae9d5',
       -- create_adminidentitysystemuuid := (
       --     select systaguuid
       --     from public.systag
-      --     where systagparentid = 914 and systagtype = 'Tendrel'
+      --     where systagparentid = 914 and systagtype = 'Clerk'
       -- ),
       create_adminuuid := null,
       create_siteuuid := null,
@@ -60,8 +52,6 @@ export async function createCustomer(
       create_modifiedby := 895
     );
   `;
-
-  ctx.auth.userId = adminIdentity;
 
   const customerId = assertNonNull(rows.at(0)?.create_customeruuid);
   return Customer.fromTypeId("organization", customerId);

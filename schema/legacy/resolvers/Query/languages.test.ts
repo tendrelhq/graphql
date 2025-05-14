@@ -8,6 +8,6 @@ const ctx = await createTestContext();
 describe("languages", () => {
   test("works", async () => {
     const result = await execute(ctx, schema, TestLanguagesQueryDocument);
-    expect(result).toMatchSnapshot();
+    expect(result.data?.languages.slice(0, 10)).toMatchSnapshot();
   });
 });

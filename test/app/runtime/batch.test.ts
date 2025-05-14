@@ -14,6 +14,7 @@ import {
   AssignBatchMutationDocument,
   CreateBatchMutationDocument,
   TestBatchEntrypointDocument,
+  TestHistoryQueryDocument,
   TestListBatchTemplatesDocument,
 } from "./batch.test.generated";
 import { createCustomer } from "./prelude/canonical";
@@ -1771,6 +1772,38 @@ describe("runtime + batch tracking", () => {
 
     expect(entrypointQuery.data?.trackables?.edges?.length).toBe(1);
     // expect(entrypointQuery.data).toEqual(initialEntrypointData);
+  });
+
+  test("history view", async () => {
+    const query = await execute(ctx, schema, TestHistoryQueryDocument, {
+      parent: CUSTOMER.id,
+    });
+    expect(query.errors).toBeFalsy();
+    expect(query.data?.trackables?.edges).toMatchObject([
+      {
+        node: {
+          name: {
+            value: "Run",
+          },
+          parent: {
+            name: {
+              value: "My First Location",
+            },
+          },
+          root: {
+            name: {
+              value: "Batch 4",
+            },
+            state: {
+              __typename: "Closed",
+            },
+          },
+          state: {
+            __typename: "Closed",
+          },
+        },
+      },
+    ]);
   });
 
   beforeAll(async () => {

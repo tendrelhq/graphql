@@ -1481,6 +1481,13 @@ type Query {
     """
     includeInactive: Boolean
     """
+    Whether to return only chain roots, or all Tasks that satisfy the given
+    criteria.
+
+    **Only applies when `withImplemention === "Task"`**
+    """
+    onlyRoots: Boolean
+    """
     Identifies the root of the hierarchy in which to search for Trackable
     entities.
 
@@ -1490,6 +1497,29 @@ type Query {
     All other parent types will be gracefully ignored.
     """
     parent: ID!
+    """
+    Filter by state(s).
+    This maps (currently) to workinstancestatusid.
+
+    **Only applies when `withImplemention === "Task"`**
+    """
+    state: [TaskStateName!]
+    """
+    Filter by type(s).
+    This maps (currently) to worktemplatetype.
+
+    For example, in Runtime the folowing types exist:
+    - Run
+    - Downtime
+    - Idle Time
+
+    Any of these are suitable for this API.
+
+    Also see `Task.chainAgg`, as that API takes a similar parameter `overType`.
+
+    **Only applies when `withImplemention === "Task"`**
+    """
+    type: [String!]
     """
     Allows filtering the returned set of Trackables by the *implementing* type.
 

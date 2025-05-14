@@ -171,3 +171,40 @@ mutation AssignBatchMutation($node: ID!, $base: ID!, $parent: ID) {
     }
   }
 }
+
+query TestHistoryQuery($parent: ID!) {
+  trackables(
+    parent: $parent
+    withImplementation: "Task"
+    onlyRoots: false
+    type: ["Runtime"]
+  ) {
+    edges {
+      node {
+        ... on Task {
+          name {
+            value
+          }
+          parent {
+            ... on Location {
+              name {
+                value
+              }
+            }
+          }
+          root {
+            name {
+              value
+            }
+            state {
+              __typename
+            }
+          }
+          state {
+            __typename
+          }
+        }
+      }
+    }
+  }
+}

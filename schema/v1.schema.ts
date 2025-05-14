@@ -1761,11 +1761,29 @@ export function getSchema(): GraphQLSchema {
               name: "includeInactive",
               type: GraphQLBoolean,
             },
+            onlyRoots: {
+              description:
+                'Whether to return only chain roots, or all Tasks that satisfy the given\ncriteria.\n\n**Only applies when `withImplemention === "Task"`**',
+              name: "onlyRoots",
+              type: GraphQLBoolean,
+            },
             parent: {
               description:
                 "Identifies the root of the hierarchy in which to search for Trackable\nentities.\n\nValid parent types are currently:\n- Customer\n\nAll other parent types will be gracefully ignored.",
               name: "parent",
               type: new GraphQLNonNull(GraphQLID),
+            },
+            state: {
+              description:
+                'Filter by state(s).\nThis maps (currently) to workinstancestatusid.\n\n**Only applies when `withImplemention === "Task"`**',
+              name: "state",
+              type: new GraphQLList(new GraphQLNonNull(TaskStateNameType)),
+            },
+            type: {
+              description:
+                'Filter by type(s).\nThis maps (currently) to worktemplatetype.\n\nFor example, in Runtime the folowing types exist:\n- Run\n- Downtime\n- Idle Time\n\nAny of these are suitable for this API.\n\nAlso see `Task.chainAgg`, as that API takes a similar parameter `overType`.\n\n**Only applies when `withImplemention === "Task"`**',
+              name: "type",
+              type: new GraphQLList(new GraphQLNonNull(GraphQLString)),
             },
             withImplementation: {
               description:
