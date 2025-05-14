@@ -1,18 +1,17 @@
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
-import { setCurrentIdentity } from "@/auth";
 import { sql } from "@/datasources/postgres";
 import { schema } from "@/schema/final";
 import { Task } from "@/schema/system/component/task";
 import {
-  assertTaskIsNamed,
+  type Customer,
   createTestContext,
   execute,
-  findAndEncode,
   getFieldByName,
-  setup,
 } from "@/test/prelude";
-import { assertNonNull, map } from "@/util";
+import { assert, assertNonNull, map, mapOrElse } from "@/util";
+import { Faker, base, en } from "@faker-js/faker";
 import type { Maybe } from "graphql/jsutils/Maybe";
+import { createCustomer } from "./prelude/canonical";
 import {
   CreateReasonCodeDocument,
   DeleteReasonCodeDocument,
@@ -24,14 +23,25 @@ import {
 
 const ctx = await createTestContext();
 
+const seed = mapOrElse(
+  process.env.SEED,
+  seed => {
+    const s = Number.parseInt(seed);
+    assert(Number.isFinite(s), "invalid seed");
+    return s;
+  },
+  Date.now(),
+);
+const faker = new Faker({ locale: [en, base], seed });
+
 describe("runtime + reason codes", () => {
   // See beforeAll for initialization of these variables.
-  let CUSTOMER: string;
+  let CUSTOMER: Customer;
 
   test("demo has no reason codes set up at first", async () => {
     const result = await execute(ctx, schema, ListReasonCodesDocument, {
       // FIXME: Should not be required:
-      owner: CUSTOMER,
+      owner: CUSTOMER.id,
       // FIXME: This is not particularly ergonomic :/
       // Note that this is the entityinstanceuuid for the "Reason Code" systag:
       parent: ["f875b28c-ccc9-4c69-b5b4-9f10ad89d23b"],
@@ -44,7 +54,7 @@ describe("runtime + reason codes", () => {
   let IDLE_TIME: Maybe<Task>;
   test("grab the Downtime and Idle Time templates", async () => {
     const result = await execute(ctx, schema, ListTemplatesDocument, {
-      owner: CUSTOMER,
+      owner: CUSTOMER.id,
       types: ["Downtime", "Idle Time"],
     });
     expect(result.errors).toBeFalsy();
@@ -124,7 +134,7 @@ describe("runtime + reason codes", () => {
 
     const result = await execute(ctx, schema, ListReasonCodesDocument, {
       // FIXME: Should not be required:
-      owner: CUSTOMER,
+      owner: CUSTOMER.id,
       // FIXME: This is not particularly ergonomic :/
       // Note that this is the entityinstanceuuid for the "Reason Code" systag:
       parent: ["f875b28c-ccc9-4c69-b5b4-9f10ad89d23b"],
@@ -148,7 +158,7 @@ describe("runtime + reason codes", () => {
   test("delete a reason code", async () => {
     const codes = await execute(ctx, schema, ListReasonCodes2Document, {
       // FIXME: Should not be required:
-      owner: CUSTOMER,
+      owner: CUSTOMER.id,
       // FIXME: This is not particularly ergonomic :/
       // Note that this is the entityinstanceuuid for the "Reason Code" systag:
       parent: ["f875b28c-ccc9-4c69-b5b4-9f10ad89d23b"],
@@ -170,7 +180,7 @@ describe("runtime + reason codes", () => {
 
     const r1 = await execute(ctx, schema, ListReasonCodesDocument, {
       // FIXME: Should not be required:
-      owner: CUSTOMER,
+      owner: CUSTOMER.id,
       // FIXME: This is not particularly ergonomic :/
       // Note that this is the entityinstanceuuid for the "Reason Code" systag:
       parent: ["f875b28c-ccc9-4c69-b5b4-9f10ad89d23b"],
@@ -240,34 +250,8 @@ describe("runtime + reason codes", () => {
   });
 
   beforeAll(async () => {
-    // Setup:
-    // 1. Create the demo customer
-    const logs = await setup(ctx);
-    CUSTOMER = findAndEncode("customer", "organization", logs);
-    const downTemplate = map(
-      findAndEncode("next", "worktemplate", logs, { skip: 1 }),
-      id => new Task({ id }),
-    );
-    assertTaskIsNamed(downTemplate, "Downtime", ctx);
-    const idleTemplate = map(
-      findAndEncode("next", "worktemplate", logs),
-      id => new Task({ id }),
-    );
-    assertTaskIsNamed(idleTemplate, "Idle Time", ctx);
-
     await sql.begin(async sql => {
-      await setCurrentIdentity(sql, ctx);
-      // FIXME: use Keller's API for customer create through the entity model.
-      await sql`call entity.import_entity(null)`;
-      // Patch our templates to have 'Reason Code' fields:
-      await downTemplate.addField(ctx, {
-        name: "Reason Code",
-        type: "string",
-      });
-      await idleTemplate.addField(ctx, {
-        name: "Reason Code",
-        type: "string",
-      });
+      CUSTOMER = await createCustomer({ faker, seed }, ctx, sql);
     });
   });
 

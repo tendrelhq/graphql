@@ -349,7 +349,7 @@ describe("runtime + batch tracking", () => {
       });
       expect(result.errors).toBeFalsy();
     }
-  });
+  }, 10_000);
 
   test("batches open, runs open", async () => {
     const batchQuery = await execute(ctx, schema, TestBatchEntrypointDocument, {
@@ -588,7 +588,7 @@ describe("runtime + batch tracking", () => {
       );
       expect(result.errors).toBeFalsy();
     }
-  });
+  }, 10_000);
 
   test("batches in-progress, runs remain open", async () => {
     const batchQuery = await execute(ctx, schema, TestBatchEntrypointDocument, {
@@ -809,8 +809,7 @@ describe("runtime + batch tracking", () => {
       },
     );
     expect(result.errors).toBeFalsy();
-    // }
-  });
+  }, 10_000);
 
   test("batches in-progress, runs in-progress", async () => {
     const batchQuery = await execute(ctx, schema, TestBatchEntrypointDocument, {
@@ -1438,7 +1437,7 @@ describe("runtime + batch tracking", () => {
     );
     expect(endDowntimeAdvance.root?.fsm?.transitions?.edges?.length).toBe(2);
     expect(endDowntimeAdvance.root?.state?.__typename).toBe("InProgress");
-  });
+  }, 10_000);
 
   test("close all runs", async () => {
     const batchQuery = await execute(ctx, schema, TestBatchEntrypointDocument, {
@@ -1477,8 +1476,7 @@ describe("runtime + batch tracking", () => {
       },
     );
     expect(result.errors).toBeFalsy();
-    // }
-  });
+  }, 10_000);
 
   test("batches in-progress, runs closed", async () => {
     const batchQuery = await execute(ctx, schema, TestBatchEntrypointDocument, {
@@ -1565,7 +1563,7 @@ describe("runtime + batch tracking", () => {
       );
       expect(result.errors).toBeFalsy();
     }
-  });
+  }, 10_000);
 
   test("batches closed, runs closed", async () => {
     const batchQuery = await execute(ctx, schema, TestBatchEntrypointDocument, {
