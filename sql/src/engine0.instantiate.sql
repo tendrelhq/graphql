@@ -1,6 +1,8 @@
 
 -- Type: FUNCTION ; Name: engine0.instantiate(text,text,text,text,bigint,text,text); Owner: tendreladmin
 
+DROP FUNCTION engine0.instantiate;
+
 CREATE OR REPLACE FUNCTION engine0.instantiate(template_id text, location_id text, target_state text, target_type text, modified_by bigint, chain_root_id text DEFAULT NULL::text, chain_prev_id text DEFAULT NULL::text)
  RETURNS TABLE(instance text, field text, value text)
  LANGUAGE plpgsql

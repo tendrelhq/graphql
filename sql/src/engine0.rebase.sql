@@ -1,6 +1,8 @@
 
 -- Type: FUNCTION ; Name: engine0.rebase(text,text); Owner: tendreladmin
 
+drop function if exists engine0.rebase;
+
 -- Rebase a chain onto another chain.
 -- Note that `node` can only be a chain root at the moment.
 --

@@ -587,36 +587,6 @@ begin
   if ins_template_type_n != 1 then
     raise exception 'failed to create Batch template type';
   end if;
-  --
-  perform *
-  from
-    (
-      values
-        ('Customer'::text, 'String'::text, false::boolean, 0::integer),
-        ('Product Name', 'String', false, 1),
-        ('SKU', 'String', false, 2)
-    ) as field (f_name, f_type, f_is_primary, f_order),
-    legacy0.create_field_t(
-        customer_id := create_original_customer_uuid,
-        language_type := temp_language_type,
-        template_id := ins_template,
-        field_description := null,
-        field_is_draft := false,
-        field_is_primary := field.f_is_primary,
-        field_is_required := false,
-        field_name := field.f_name,
-        field_order := field.f_order,
-        field_reference_type := null,
-        field_type := field.f_type,
-        field_value := null,
-        field_widget := null,
-        modified_by := modified_by
-    ) as t
-  ;
-  --
-  if not found then -- TODO: better validation here.
-    raise exception 'failed to create Batch template fields';
-  end if;
 
   select uuid
   into runtime_config_template_uuid

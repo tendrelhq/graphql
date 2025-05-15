@@ -130,39 +130,39 @@ call entity.crud_location_create(
 	);
 
 -- enable timeclock
-call entity.enable_timesheet(
-				create_customer_uuid := create_customerentityuuid,
-				create_original_customer_uuid := null,
-				create_site_uuid :=create_siteentityuuid,
-				create_original_site_uuid := null,
-				create_language_type_uuid := create_languagetypeuuids[1],
-				create_original_language_type_uuid := null,
-				create_timezone := create_timezone,
-				create_modifiedby := create_modifiedby);
+-- call entity.enable_timesheet(
+-- 				create_customer_uuid := create_customerentityuuid,
+-- 				create_original_customer_uuid := null,
+-- 				create_site_uuid :=create_siteentityuuid,
+-- 				create_original_site_uuid := null,
+-- 				create_language_type_uuid := create_languagetypeuuids[1],
+-- 				create_original_language_type_uuid := null,
+-- 				create_timezone := create_timezone,
+-- 				create_modifiedby := create_modifiedby);
 
 -- enable pinpoint
 
-call entity.enable_pinpoint(
-				create_customer_uuid := create_customerentityuuid,
-				create_original_customer_uuid := null,
-				create_site_uuid :=create_siteentityuuid,
-				create_original_site_uuid := null,
-				create_language_type_uuid := create_languagetypeuuids[1],
-				create_original_language_type_uuid := null,
-				create_timezone := create_timezone,
-				create_modifiedby := create_modifiedby);
+-- call entity.enable_pinpoint(
+-- 				create_customer_uuid := create_customerentityuuid,
+-- 				create_original_customer_uuid := null,
+-- 				create_site_uuid :=create_siteentityuuid,
+-- 				create_original_site_uuid := null,
+-- 				create_language_type_uuid := create_languagetypeuuids[1],
+-- 				create_original_language_type_uuid := null,
+-- 				create_timezone := create_timezone,
+-- 				create_modifiedby := create_modifiedby);
 
 -- enable checklist
 
-call entity.enable_checklist(
-				create_customer_uuid := create_customerentityuuid,
-				create_original_customer_uuid := null,
-				create_site_uuid :=create_siteentityuuid,
-				create_original_site_uuid := null,
-				create_language_type_uuid := create_languagetypeuuids[1],
-				create_original_language_type_uuid := null,
-				create_timezone := create_timezone,
-				create_modifiedby := create_modifiedby);
+-- call entity.enable_checklist(
+-- 				create_customer_uuid := create_customerentityuuid,
+-- 				create_original_customer_uuid := null,
+-- 				create_site_uuid :=create_siteentityuuid,
+-- 				create_original_site_uuid := null,
+-- 				create_language_type_uuid := create_languagetypeuuids[1],
+-- 				create_original_language_type_uuid := null,
+-- 				create_timezone := create_timezone,
+-- 				create_modifiedby := create_modifiedby);
 
 -- enable runtime
 call entity.enable_runtime(
