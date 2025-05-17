@@ -24,19 +24,20 @@ import makeTagLoader from "./tag";
 import makeUserLoader from "./user";
 import makeWorkerLoader from "./worker";
 
-const { DB_MAX_CONNECTIONS, DB_STATEMENT_TIMEOUT } = z
+const { DB_MAX_CONNECTIONS, DB_STATEMENT_TIMEOUT_MS } = z
   .object({
     DB_MAX_CONNECTIONS: z.number({ coerce: true }).default(3),
-    DB_STATEMENT_TIMEOUT: z.number({ coerce: true }).default(10),
+    DB_STATEMENT_TIMEOUT_MS: z.number({ coerce: true }).default(10_000),
   })
   .parse(process.env, { allowUnknown: true });
 
 export const sql = postgres({
   max: DB_MAX_CONNECTIONS,
-  // TODO: this is probably a good idea...
-  // connection: {
-  //   statement_timeout: DB_STATEMENT_TIMEOUT * 1000, // milliseconds
-  // },
+  connection: {
+    // We do some recursive queries and are, in general, not particularly
+    // optimized so this is just a last resort to avoid bricking the backend.
+    statement_timeout: DB_STATEMENT_TIMEOUT_MS,
+  },
   types: {
     bigint: postgres.BigInt,
   },

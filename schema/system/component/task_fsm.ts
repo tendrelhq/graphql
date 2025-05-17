@@ -17,24 +17,36 @@ export function fsm$fragment(t: Task): Fragment {
   assert(t._type === "workinstance");
   return sql`
     with recursive
-        chain as (
-            select 0 as _depth, *
+        chain(uuid, id, root, previous, status, depth) as (
+            select
+              id,
+              workinstanceid,
+              workinstanceoriginatorworkinstanceid,
+              workinstancepreviousid,
+              workinstancestatusid,
+              0
             from public.workinstance
             where id = ${t._id}
             union all
-            select chain._depth + 1 as _depth, wi.*
+            select
+              wi.id,
+              wi.workinstanceid,
+              wi.workinstanceoriginatorworkinstanceid,
+              wi.workinstancepreviousid,
+              wi.workinstancestatusid,
+              depth + 1
             from chain, public.workinstance as wi
             where
-                chain.workinstanceoriginatorworkinstanceid = wi.workinstanceoriginatorworkinstanceid
-                and chain.workinstanceid = wi.workinstancepreviousid
-        ),
+                chain.root = wi.workinstanceoriginatorworkinstanceid
+                and chain.id = wi.workinstancepreviousid
+        ) cycle id set is_cycle using path,
 
-        active as (
-            select chain.id
+        active(id) as (
+            select chain.uuid
             from chain
-            inner join public.systag on chain.workinstancestatusid = systag.systagid
-            where systag.systagtype in ('Open', 'In Progress')
-            order by _depth desc
+            inner join public.systag on chain.status = systag.systagid
+            where not is_cycle and systag.systagtype in ('Open', 'In Progress')
+            order by path desc
             limit 1
         ),
 

@@ -1000,9 +1000,10 @@ export async function chain(
         where
             chain.workinstanceoriginatorworkinstanceid = child.workinstanceoriginatorworkinstanceid
             and chain.workinstanceid = child.workinstancepreviousid
-    )
+    ) cycle id set is_cycle using path
     select encode(('workinstance:' || id)::bytea, 'base64') as id
     from chain
+    where not is_cycle
     order by _depth, workinstanceid
     limit ${first ?? null};
   `;
@@ -1081,7 +1082,7 @@ export async function chainAgg(
             where
                 chain.workinstanceoriginatorworkinstanceid = child.workinstanceoriginatorworkinstanceid
                 and chain.workinstanceid = child.workinstancepreviousid
-        )
+        ) cycle id set is_cycle using path
         select
             tt.systagtype as "group",
             sum(extract(epoch from (legacy0.compute_time_at_task(chain.workinstanceid)))) as value
@@ -1090,7 +1091,7 @@ export async function chainAgg(
             on chain.workinstanceworktemplateid = t.worktemplatetypeworktemplateid
         inner join public.systag as tt
             on t.worktemplatetypesystaguuid = tt.systaguuid
-        where tt.systagtype in ${sql(overType)}
+        where tt.systagtype in ${sql(overType)} and not is_cycle
         group by tt.systagtype
       `,
     )

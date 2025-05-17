@@ -48,14 +48,14 @@ as $$
       from to_update, public.workinstance as child
       where to_update.workinstanceid = child.workinstancepreviousid
         and to_update.workinstanceoriginatorworkinstanceid = child.workinstanceoriginatorworkinstanceid
-    ),
+    ) cycle id set is_cycle using path,
     updated_children as (
       update public.workinstance as t
       set workinstanceoriginatorworkinstanceid = base.workinstanceid,
           workinstancemodifiedby = auth.current_identity(t.workinstancecustomerid, current_setting('user.id')),
           workinstancemodifieddate = now()
       from base, to_update
-      where t.id = to_update.id
+      where t.id = to_update.id and not is_cycle
       returning t.id
     ),
     updated_node as (
