@@ -3,13 +3,13 @@ import { sql } from "@/datasources/postgres";
 import { schema } from "@/schema/final";
 import {
   type Customer,
+  createDefaultCustomer,
   createTestContext,
   execute,
   paginateQuery,
 } from "@/test/prelude";
 import { assert, mapOrElse } from "@/util";
 import { Faker, base, en } from "@faker-js/faker";
-import { createCustomer } from "../app/runtime/prelude/canonical";
 import {
   AddLanguageTestDocument,
   ListLanguagesTestDocument,
@@ -37,7 +37,50 @@ describe("[console] languages", () => {
       customerId: CUSTOMER.id,
     });
     expect(listQuery.errors).toBeFalsy();
-    expect(listQuery.data).toMatchSnapshot();
+    expect(listQuery.data).toMatchInlineSnapshot(`
+      {
+        "node": {
+          "__typename": "Organization",
+          "languages": {
+            "__typename": "EnabledLanguageConnection",
+            "edges": [
+              {
+                "__typename": "EnabledLanguageEdge",
+                "node": {
+                  "__typename": "EnabledLanguage",
+                  "active": {
+                    "active": true,
+                  },
+                  "language": {
+                    "code": "en",
+                  },
+                  "primary": true,
+                },
+              },
+              {
+                "__typename": "EnabledLanguageEdge",
+                "node": {
+                  "__typename": "EnabledLanguage",
+                  "active": {
+                    "active": true,
+                  },
+                  "language": {
+                    "code": "es",
+                  },
+                  "primary": false,
+                },
+              },
+            ],
+            "pageInfo": {
+              "__typename": "PageInfo",
+              "hasNextPage": false,
+              "hasPreviousPage": false,
+            },
+            "totalCount": 2,
+          },
+        },
+      }
+    `);
   });
 
   test("search", async () => {
@@ -66,13 +109,87 @@ describe("[console] languages", () => {
       languageId: languageId,
     });
     expect(addMutation.errors).toBeFalsy();
-    expect(addMutation.data).toMatchSnapshot();
+    expect(addMutation.data).toMatchInlineSnapshot(`
+      {
+        "enableLanguage": {
+          "__typename": "EnabledLanguageEdge",
+          "node": {
+            "__typename": "EnabledLanguage",
+            "active": {
+              "__typename": "ActivationStatus",
+              "active": true,
+            },
+            "language": {
+              "__typename": "Language",
+              "code": "fr",
+            },
+            "primary": false,
+          },
+        },
+      }
+    `);
 
     const listQuery = await execute(ctx, schema, ListLanguagesTestDocument, {
       customerId: CUSTOMER.id,
     });
     expect(listQuery.errors).toBeFalsy();
-    expect(listQuery.data).toMatchSnapshot();
+    expect(listQuery.data).toMatchInlineSnapshot(`
+      {
+        "node": {
+          "__typename": "Organization",
+          "languages": {
+            "__typename": "EnabledLanguageConnection",
+            "edges": [
+              {
+                "__typename": "EnabledLanguageEdge",
+                "node": {
+                  "__typename": "EnabledLanguage",
+                  "active": {
+                    "active": true,
+                  },
+                  "language": {
+                    "code": "en",
+                  },
+                  "primary": true,
+                },
+              },
+              {
+                "__typename": "EnabledLanguageEdge",
+                "node": {
+                  "__typename": "EnabledLanguage",
+                  "active": {
+                    "active": true,
+                  },
+                  "language": {
+                    "code": "es",
+                  },
+                  "primary": false,
+                },
+              },
+              {
+                "__typename": "EnabledLanguageEdge",
+                "node": {
+                  "__typename": "EnabledLanguage",
+                  "active": {
+                    "active": true,
+                  },
+                  "language": {
+                    "code": "fr",
+                  },
+                  "primary": false,
+                },
+              },
+            ],
+            "pageInfo": {
+              "__typename": "PageInfo",
+              "hasNextPage": false,
+              "hasPreviousPage": false,
+            },
+            "totalCount": 3,
+          },
+        },
+      }
+    `);
   });
 
   test("paginate", async () => {
@@ -100,7 +217,7 @@ describe("[console] languages", () => {
 
   beforeAll(async () => {
     await sql.begin(async sql => {
-      CUSTOMER = await createCustomer({ faker, seed }, ctx, sql);
+      CUSTOMER = await createDefaultCustomer({ faker, seed }, ctx, sql);
     });
   });
 

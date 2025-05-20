@@ -61,11 +61,11 @@ export function App() {
 
   const ParseArguments = useCallback(() => {
     if (owner === "") {
-      if (config.skip_owner_prompt) {
-        return <GenerateCustomer onComplete={c => onSelectOwner(c.id)} />;
-      }
       return (
-        <SelectOwner items={data.user.organizations} onSelect={onSelectOwner} />
+        <SelectOwner
+          owners={data.user.organizations}
+          onSelect={onSelectOwner}
+        />
       );
     }
     if (template === "") {
@@ -161,12 +161,23 @@ function Selected(data: { id: string; name: { value: string } }) {
 // FIXME: shouldn't need this!
 const ctx = await createTestContext();
 
-function SelectOwner(props: {
+function SelectOwner({
+  onSelect,
+  ...props
+}: {
   onSelect: (owner: string) => void;
-  items: AppSelectOwner_fragment$key;
+  owners: AppSelectOwner_fragment$key;
 }) {
-  const owners = useFragment(SelectOwnerFragment, props.items);
+  const owners = useFragment(SelectOwnerFragment, props.owners);
   const [isGenerating, setGenerating] = useState(false);
+
+  const trie = useMemo(() => {
+    const trie = new Trie<(typeof owners.edges)[number]["node"]>();
+    for (const { node } of owners.edges) {
+      trie.insert(node.name.value, node);
+    }
+    return trie;
+  }, [owners]);
 
   useInput(
     (input, key) => {
@@ -177,21 +188,23 @@ function SelectOwner(props: {
     { isActive: !isGenerating },
   );
 
-  const trie = useMemo(() => {
-    const trie = new Trie<(typeof owners.edges)[number]["node"]>();
-    for (const { node } of owners.edges) {
-      trie.insert(node.name.value, node);
-    }
-    return trie;
-  }, [owners]);
+  if (config.auto_select_owner) {
+    return (
+      <AutoSelect
+        query={config.auto_select_owner}
+        items={owners.edges.map(e => e.node)}
+        onSelect={onSelect}
+      />
+    );
+  }
 
-  if (isGenerating) {
-    return <GenerateCustomer onComplete={c => props.onSelect(c.id)} />;
+  if (config.skip_owner_prompt || isGenerating) {
+    return <GenerateCustomer onComplete={c => onSelect(c.id)} />;
   }
 
   return (
     <Select
-      onSelect={props.onSelect}
+      onSelect={onSelect}
       placeholder="  < Search for a customer (<C-g> generates a brand new one)"
       trie={trie}
     />
@@ -212,7 +225,18 @@ function SelectTemplate(props: {
     return trie;
   }, [templates]);
 
-  return <Select onSelect={props.onSelect} trie={trie} />;
+  switch (true) {
+    case !!config.auto_select_template:
+      return (
+        <AutoSelect
+          query={config.auto_select_template}
+          items={templates.edges.map(e => e.node.asTask)}
+          onSelect={props.onSelect}
+        />
+      );
+    default:
+      return <Select onSelect={props.onSelect} placeholder="" trie={trie} />;
+  }
 }
 
 type SelectItem = {
@@ -226,6 +250,28 @@ type SelectProps = {
   placeholder?: string;
   trie: Trie<{ id: string; name: { value: string } }>;
 };
+
+type AutoSelectProps = Pick<SelectProps, "onSelect"> & {
+  query: string;
+  items: readonly Readonly<SelectItem["value"]>[];
+};
+
+function AutoSelect(props: AutoSelectProps) {
+  useEffect(() => {
+    for (const node of props.items) {
+      if (node.id === props.query || node.name.value === props.query) {
+        props.onSelect(node.id);
+        return;
+      }
+    }
+
+    throw new Error(
+      `auto selection failed: query: ${props.query}, items: ${props.items}`,
+    );
+  }, [props]);
+
+  return null;
+}
 
 function Select({ onSelect, placeholder, trie }: SelectProps) {
   const [page, setPage] = useState(0);

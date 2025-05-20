@@ -1,3 +1,5 @@
+import assert from "node:assert";
+import { decodeGlobalId, tryDecodeGlobalId } from "@/schema/system";
 import z from "zod";
 import { faker } from "./rng";
 
@@ -40,10 +42,32 @@ function makeProbability(name: string) {
 //============================================================================//
 
 /**
+ * Auto select an existing customer by name or id.
+ * If it no such customer is found, an error will be thrown.
+ * If you intend to select by name, keep in mind that the *first* matching owner
+ * will be the one chosen when/if multiple of the same name exist.
+ */
+export const auto_select_owner = z
+  .string()
+  .optional()
+  .parse(e.AUTO_SELECT_OWNER);
+
+/**
  * Skip the owner prompt.
  * This will cause a new customer to be generated every time you run the cli!
  */
 export const skip_owner_prompt = b().default(false).parse(e.SKIP_OWNER_PROMPT);
+
+/**
+ * Auto select a template by name or id.
+ * If it no such template is found, an error will be thrown.
+ * If you intend to select by name, keep in mind that the *first* matching
+ * template will be the one chosen when/if multiple of the same name exist.
+ */
+export const auto_select_template = z
+  .string()
+  .optional()
+  .parse(e.AUTO_SELECT_TEMPLATE);
 
 /**
  * How many instances of the simulation should be started.
@@ -95,7 +119,9 @@ export default {
   // Rex
   ms_per_tick,
   // simulation internals
+  auto_select_owner,
   skip_owner_prompt,
+  auto_select_template,
   multiplicity,
   active_probability,
   root_probability,

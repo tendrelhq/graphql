@@ -5,6 +5,7 @@ graphql`
     user {
       ...User_fragment
       organizations {
+        ...AppSelectOwner_fragment @relay(mask: false)
         ...AppSelectOwner_fragment
       }
     }
@@ -12,7 +13,7 @@ graphql`
 `;
 
 graphql`
-  fragment AppSelectOwner_fragment on OrganizationConnection @throwOnFieldError {
+  fragment AppSelectOwner_fragment on OrganizationConnection {
     edges {
       node {
         id

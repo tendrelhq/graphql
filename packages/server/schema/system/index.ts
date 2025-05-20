@@ -28,6 +28,22 @@ export function decodeGlobalId(id: unknown): GlobalId {
   return GlobalId.parse(decodeGlobalIdRaw(id));
 }
 
+export function tryDecodeGlobalId(
+  id: unknown,
+): { ok: true; value: GlobalId } | { ok: false; error: unknown } {
+  try {
+    return {
+      ok: true as const,
+      value: decodeGlobalId(id),
+    };
+  } catch (e) {
+    return {
+      ok: false as const,
+      error: e,
+    };
+  }
+}
+
 export function decodeGlobalIdRaw(id: unknown): string {
   if (typeof id !== "string") {
     throw new Error(

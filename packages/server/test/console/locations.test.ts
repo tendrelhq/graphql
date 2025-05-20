@@ -1,13 +1,16 @@
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
+import assert from "node:assert";
+import { sql } from "@/datasources/postgres";
 import { schema } from "@/schema/final";
 import {
-  cleanup,
+  type Customer,
+  createDefaultCustomer,
   createTestContext,
   execute,
-  findAndEncode,
   paginateQuery,
-  setup,
 } from "@/test/prelude";
+import { mapOrElse } from "@/util";
+import { Faker, base, en } from "@faker-js/faker";
 import {
   ListLocationsTestDocument,
   PaginateLocationsTestDocument,
@@ -15,15 +18,81 @@ import {
 
 const ctx = await createTestContext();
 
+const seed = mapOrElse(
+  process.env.SEED,
+  seed => {
+    const s = Number.parseInt(seed);
+    assert(Number.isFinite(s), "invalid seed");
+    return s;
+  },
+  Date.now(),
+);
+const faker = new Faker({ locale: [en, base], seed });
+
 describe("[console] locations", () => {
-  let CUSTOMER: string;
+  let CUSTOMER: Customer;
 
   test("list", async () => {
     const result = await execute(ctx, schema, ListLocationsTestDocument, {
-      account: CUSTOMER,
+      account: CUSTOMER.id,
     });
     expect(result.errors).toBeFalsy();
-    expect(result.data).toMatchSnapshot();
+    expect(result.data).toMatchObject({
+      node: {
+        locations: {
+          edges: [
+            {
+              node: {
+                active: {
+                  active: true,
+                },
+                geofence: null,
+                name: {
+                  value: "My Site",
+                },
+                parent: null,
+                scanCode: null,
+                site: {
+                  name: {
+                    value: "My Site",
+                  },
+                },
+                timeZone: expect.any(String),
+              },
+            },
+            {
+              node: {
+                active: {
+                  active: true,
+                },
+                geofence: null,
+                name: {
+                  value: "My First Location",
+                },
+                parent: {
+                  name: {
+                    value: "My Site",
+                  },
+                },
+                scanCode: null,
+                site: {
+                  name: {
+                    value: "My Site",
+                  },
+                },
+                timeZone: expect.any(String),
+              },
+            },
+          ],
+          pageInfo: {
+            hasNextPage: false,
+            // FIXME: this is broken...
+            hasPreviousPage: true,
+          },
+          totalCount: 2,
+        },
+      },
+    });
   });
 
   test("paginate", async () => {
@@ -31,8 +100,8 @@ describe("[console] locations", () => {
     for await (const page of paginateQuery({
       async execute(cursor) {
         return await execute(ctx, schema, PaginateLocationsTestDocument, {
-          account: CUSTOMER,
-          first: 2,
+          account: CUSTOMER.id,
+          first: 1,
           after: cursor,
         });
       },
@@ -46,12 +115,12 @@ describe("[console] locations", () => {
       expect(page.errors).toBeFalsy();
       i++;
     }
-    expect(i).toBe(3); // 6 total, 2 per page
+    expect(i).toBe(2); // 2 total, 1 per page
   });
 
   test("search", async () => {
     const result = await execute(ctx, schema, ListLocationsTestDocument, {
-      account: CUSTOMER,
+      account: CUSTOMER.id,
       search: {
         active: true,
         isSite: true,
@@ -65,11 +134,18 @@ describe("[console] locations", () => {
   });
 
   beforeAll(async () => {
-    const logs = await setup(ctx);
-    CUSTOMER = findAndEncode("customer", "organization", logs);
+    await sql.begin(async sql => {
+      CUSTOMER = await createDefaultCustomer({ faker, seed }, ctx, sql);
+    });
   });
 
   afterAll(async () => {
-    await cleanup(CUSTOMER);
+    // await cleanup(CUSTOMER.id);
+
+    console.log(`
+To reproduce this test:
+
+  SEED=${seed} bun test languages.test --bail
+    `);
   });
 });

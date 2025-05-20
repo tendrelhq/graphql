@@ -6,57 +6,66 @@ import {
   expect,
   test,
 } from "bun:test";
-import { decodeGlobalId } from "@/schema/system";
+import assert from "node:assert";
 import {
-  cleanup,
+  type Customer,
+  createDefaultCustomer,
   createTestContext,
-  findAndEncode,
-  setup,
 } from "@/test/prelude";
+import { mapOrElse } from "@/util";
+import { Faker, base, en } from "@faker-js/faker";
 import { sql } from "./postgres";
 
 const ctx = await createTestContext();
 
+const seed = mapOrElse(
+  process.env.SEED,
+  seed => {
+    const s = Number.parseInt(seed);
+    assert(Number.isFinite(s), "invalid seed");
+    return s;
+  },
+  Date.now(),
+);
+const faker = new Faker({ locale: [en, base], seed });
+
 describe("organization loader", () => {
   // See beforeAll for initialization of these variables.
-  let CUSTOMER: string;
+  let CUSTOMER: Customer;
 
   test("not paying", async () => {
-    const { id } = decodeGlobalId(CUSTOMER);
-    const data = await ctx.orm.organization.load(id);
+    const data = await ctx.orm.organization.load(CUSTOMER._id);
     expect(data).toMatchObject({
-      billingId: null,
-      billingType: null, // FIXME: use Keller's customer create.
+      billingId: expect.any(String),
+      billingType: "Test", // FIXME: use Keller's customer create.
       isPaying: false,
     });
   });
 
   test("still not paying - null billing id", async () => {
-    const { id } = decodeGlobalId(CUSTOMER);
     await sql`
       update public.customer
       set customerexternalsystemid = systagid
       from public.systag
-      where customeruuid = ${id} and systagtype = 'Tendrel';
+      where customeruuid = ${CUSTOMER._id} and systagtype = 'Tendrel';
     `;
 
-    const data = await ctx.orm.organization.load(id);
+    const data = await ctx.orm.organization.load(CUSTOMER._id);
     expect(data).toMatchObject({
-      billingId: null,
+      billingId: expect.any(String),
       billingType: "Tendrel",
       isPaying: false,
     });
   });
 
   test("still not paying - not stripe", async () => {
-    const { id } = decodeGlobalId(CUSTOMER);
     await sql`
       update public.customer
       set customerexternalid = 'fake-for-testing'
-      where customeruuid = ${id};
+      where customeruuid = ${CUSTOMER._id};
     `;
 
-    const data = await ctx.orm.organization.load(id);
+    const data = await ctx.orm.organization.load(CUSTOMER._id);
     expect(data).toMatchObject({
       billingId: "fake-for-testing",
       billingType: "Tendrel",
@@ -65,15 +74,14 @@ describe("organization loader", () => {
   });
 
   test("$$$", async () => {
-    const { id } = decodeGlobalId(CUSTOMER);
     await sql`
       update public.customer
       set customerexternalsystemid = systagid
       from public.systag
-      where customeruuid = ${id} and systagtype = 'Stripe';
+      where customeruuid = ${CUSTOMER._id} and systagtype = 'Stripe';
     `;
 
-    const data = await ctx.orm.organization.load(id);
+    const data = await ctx.orm.organization.load(CUSTOMER._id);
     expect(data).toMatchObject({
       billingId: "fake-for-testing",
       billingType: "Stripe",
@@ -84,11 +92,18 @@ describe("organization loader", () => {
   afterEach(() => ctx.orm.organization.clearAll());
 
   beforeAll(async () => {
-    const logs = await setup(ctx);
-    CUSTOMER = findAndEncode("customer", "organization", logs);
+    await sql.begin(async sql => {
+      CUSTOMER = await createDefaultCustomer({ faker, seed }, ctx, sql);
+    });
   });
 
   afterAll(async () => {
-    await cleanup(CUSTOMER);
+    // await cleanup(CUSTOMER.id);
+
+    console.log(`
+To reproduce this test:
+
+  SEED=${seed} bun test languages.test --bail
+    `);
   });
 });

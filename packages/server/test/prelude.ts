@@ -1,5 +1,5 @@
 import { getAccessToken, setCurrentIdentity } from "@/auth";
-import { type TxSql, sql } from "@/datasources/postgres";
+import type { TxSql } from "@/datasources/postgres";
 import { Limits } from "@/limits";
 import { makeRequestLoaders } from "@/orm";
 import type { Context, InputMaybe } from "@/schema";
@@ -17,6 +17,7 @@ import {
   map,
   normalizeBase64,
 } from "@/util";
+import type { Faker } from "@faker-js/faker";
 import type { TypedDocumentNode as DocumentNode } from "@graphql-typed-document-node/core";
 import { PostgrestClient } from "@supabase/postgrest-js";
 import {
@@ -187,73 +188,6 @@ export function env(name: string, value?: { toString(): string }) {
   };
 }
 
-export async function setup(ctx: Context) {
-  return await sql.begin(async sql => {
-    await setCurrentIdentity(sql, ctx);
-    return await sql<{ op: string; id: string }[]>`
-      select *
-      from
-          runtime.create_demo(
-              customer_name := 'Frozen Tendy Factory',
-              admins := (
-                  select array_agg(workeruuid)
-                  from public.worker
-                  where workeridentityid = current_setting('user.id')
-              ),
-              modified_by := 895
-          )
-      ;
-    `;
-  });
-}
-
-export async function cleanup(id: string) {
-  if (process.env.CI || process.env.SKIP_CLEANUP) {
-    console.warn("Skipping cleanup for", id);
-    return;
-  }
-  process.stdout.write("Cleaning up...");
-
-  const decoded = decodeGlobalId(id);
-  assertUnderlyingType("organization", decoded.type);
-
-  // HACK: need to add this to the cleanup procedure.
-  await sql`
-    delete from public.workdescription
-    where workdescriptioncustomerid = (
-        select customerid
-        from public.customer
-        where customeruuid = ${decoded.id}
-    )
-  `;
-  const [row] = await sql<[{ ok: string }]>`
-    select runtime.destroy_demo(${decoded.id}) as ok;
-  `;
-  process.stdout.write(row.ok);
-}
-
-export async function createEmptyCustomer(
-  args: {
-    name: string;
-  },
-  ctx: Context,
-  sql: TxSql,
-): Promise<Customer> {
-  // FIXME: Use Keller's API.
-  // Also, don't be fooled. This does NOT create a "runtime" customer. The
-  // function just happens to be in the `runtime` schema :/
-  // TODO: What is wrong with engine1.base64_encode??
-  const [row] = await sql<[{ id: string }]>`
-    select encode(('organization:' || t.id)::bytea, 'base64') as id
-    from runtime.create_customer(
-      customer_name := ${args.name},
-      language_type := ${ctx.req.i18n.language},
-      modified_by := 895
-    ) as t;
-  `;
-  return new Customer(row);
-}
-
 // TODO: Convert to grats.
 export class Customer {
   readonly _id: string;
@@ -315,4 +249,60 @@ export class Customer {
       where w.workeridentityid = ${args.identityId};
     `;
   }
+}
+
+export async function createDefaultCustomer(
+  args: {
+    faker: Faker;
+    seed: number;
+  },
+  ctx: Context,
+  sql: TxSql,
+): Promise<Customer> {
+  await setCurrentIdentity(sql, ctx);
+
+  // The procedure below logs so much shit.
+  await sql`set local client_min_messages to warning`;
+  const rows = await sql`
+    call public.crud_customer_create(
+      create_customername := ${args.seed.toString()},
+      create_sitename := '',
+      create_customeruuid := null,
+      create_customerbillingid := ${args.faker.string.uuid()},
+      create_customerbillingsystemid := '0033c894-fb1b-4994-be36-4792090f260b',
+      -- create_customerbillingsystemid := (
+      --     select systaguuid
+      --     from public.systag
+      --     where systagparentid = 959 and systagtype = 'Test'
+      -- ),
+      create_adminfirstname := '',
+      create_adminlastname := '',
+      create_adminemailaddress := '',
+      create_adminphonenumber := '',
+      create_adminidentityid := ${ctx.auth.userId},
+      create_adminidentitysystemuuid := '0c1e3a50-ed4c-4469-95bd-e091104ae9d5',
+      -- create_adminidentitysystemuuid := (
+      --     select systaguuid
+      --     from public.systag
+      --     where systagparentid = 914 and systagtype = 'Clerk'
+      -- ),
+      create_adminuuid := null,
+      create_siteuuid := null,
+      create_timezone := ${args.faker.location.timeZone()},
+      create_languagetypeuuids := array['7ebd10ee-5018-4e11-9525-80ab5c6aebee','c3f18dd6-bfc5-4ba5-b3c1-bb09e2a749a9'],
+      -- create_languagetypeuuids := (
+      --     select array_agg(systaguuid)
+      --     from public.systag
+      --     where systagparentid = 2 and systagtype in ('en', 'es')
+      -- ),
+      create_modifiedby := 895 -- cheers! -rugg
+    );
+  `;
+
+  const customerId = assertNonNull(
+    rows.at(0)?.create_customeruuid,
+    "customer create failed 😠",
+  );
+
+  return Customer.fromTypeId("organization", customerId);
 }

@@ -45,7 +45,8 @@ jobs:
         with:
           path: db.dump
           key: ${{ runner.os }}-db-dump-2025-05-19
-      - if: steps.check-cache.outputs.cache-hit != 'true'
+      - name: dump
+        if: steps.check-cache.outputs.cache-hit != 'true'
         run: nix develop -c just dump
         env:
           PGDATABASE: ${{ secrets.TEST_PGDATABASE }}
@@ -57,24 +58,28 @@ jobs:
         with:
           path: db.dump
           key: ${{ steps.check-cache.outputs.cache-primary-key }}
-      - run: nix develop -c just restore
+      - name: restore
+        run: nix develop -c just restore
         env:
           PGHOST: localhost
           PGDATABASE: ci
           PGUSER: postgres
           PGPASSWORD: postgres
-      - run: nix develop -c just target=ci migrate
+      - name: migrate
+        run: nix develop -c just target=ci migrate
         env:
           PGPASSWORD: postgres
           PGUSER: postgres
-      - run: nix develop -c psql -c 'analyze;'
+      - name: analyze
+        run: nix develop -c psql -c 'analyze;'
         env:
           PGHOST: localhost
           PGDATABASE: ci
           PGUSER: postgres
           PGPASSWORD: postgres
-      - run: nix develop -c just install
-      - name: nix develop -c docker compose up
+      - name: install
+        run: nix develop -c just install
+      - name: up
         run: |
           touch .env.local
           echo "CLERK_PUBLISHABLE_KEY=${{ secrets.CLERK_PUBLISHABLE_KEY }}" >> .env.local
@@ -86,10 +91,27 @@ jobs:
           echo "STAGE=dev" >> .env.local
           nix develop -c docker compose up --build --wait
       # - run: nix develop -c just test # pgTAP is not installed :(
-      - run: nix develop -c bun test
+      - name: test
+        run: nix develop -c bun test
+        id: unit-tests
         env:
           PGHOST: localhost
           PGDATABASE: ci
           PGUSER: graphql
           PGPASSWORD: graphql
           X_TENDREL_USER: user_2jJ7Xl0LFewQGKKNYwfFWAM0Lmc
+      - name: simulator
+        if: always()
+        run: |
+          nix develop -c bun simulator:generate &&
+          nix develop -c bun simulator:start
+        env:
+          # The simulator doesn't quite have full api support yet :/
+          PGHOST: localhost
+          PGDATABASE: ci
+          PGUSER: postgres
+          PGPASSWORD: postgres
+          # TODO: move this to a matrix and run multiple simulations
+          # Simulation configuration
+          SKIP_OWNER_PROMPT: true
+          AUTO_SELECT_TEMPLATE: Run
