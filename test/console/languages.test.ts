@@ -101,7 +101,6 @@ describe("[console] languages", () => {
   beforeAll(async () => {
     await sql.begin(async sql => {
       CUSTOMER = await createCustomer({ faker, seed }, ctx, sql);
-      console.log("identity", ctx.auth.userId);
     });
   });
 

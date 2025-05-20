@@ -17,7 +17,7 @@ exports[`[console] languages list 1`] = `
             "language": {
               "code": "en",
             },
-            "primary": true,
+            "primary": false,
           },
         },
         {
@@ -30,7 +30,7 @@ exports[`[console] languages list 1`] = `
             "language": {
               "code": "es",
             },
-            "primary": false,
+            "primary": true,
           },
         },
       ],
@@ -80,9 +80,9 @@ exports[`[console] languages add 2`] = `
               "active": true,
             },
             "language": {
-              "code": "es",
+              "code": "en",
             },
-            "primary": true,
+            "primary": false,
           },
         },
         {
@@ -93,9 +93,9 @@ exports[`[console] languages add 2`] = `
               "active": true,
             },
             "language": {
-              "code": "en",
+              "code": "es",
             },
-            "primary": false,
+            "primary": true,
           },
         },
         {

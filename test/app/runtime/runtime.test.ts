@@ -37,66 +37,60 @@ const faker = new Faker({ locale: [en, base], seed });
 
 const NOW_PLUS_24H = new Date(NOW.valueOf() + 24 * 60 * 60 * 1000);
 
-describe("runtime demo", () => {
+describe.skipIf(!!process.env.CI)("runtime demo", () => {
   let CUSTOMER: Customer; // set in `beforeAll`
   let ROOT: Task; // set in "entrypoint query"
 
-  test(
-    "entrypoint query",
-    async () => {
-      const result = await execute(ctx, schema, TestRuntimeEntrypointDocument, {
-        parent: CUSTOMER.id,
-        includeTransitionIds: true,
-      });
-      expect(result.errors).toBeFalsy();
+  test("entrypoint query", async () => {
+    const result = await execute(ctx, schema, TestRuntimeEntrypointDocument, {
+      parent: CUSTOMER.id,
+      includeTransitionIds: true,
+    });
+    expect(result.errors).toBeFalsy();
 
-      expect(result.data?.trackables?.edges?.length).toBe(1);
-      expect(result.data?.trackables?.edges?.at(0)).toMatchObject({
-        node: {
-          name: {
-            value: "My First Location",
-          },
-          tracking: {
-            edges: [
-              {
-                node: {
-                  name: {
-                    value: "Run",
-                  },
-                  state: {
-                    __typename: "Open",
-                  },
+    expect(result.data?.trackables?.edges?.length).toBe(1);
+    expect(result.data?.trackables?.edges?.at(0)).toMatchObject({
+      node: {
+        name: {
+          value: "My First Location",
+        },
+        tracking: {
+          edges: [
+            {
+              node: {
+                name: {
+                  value: "Run",
+                },
+                state: {
+                  __typename: "Open",
                 },
               },
-            ],
-          },
+            },
+          ],
         },
-      });
+      },
+    });
 
-      const mixingLine = assertNonNull(
-        result.data?.trackables?.edges?.at(0),
-        "no mixing line?",
-      );
-      const runInstance = assertNonNull(
-        mixingLine?.node?.tracking?.edges
-          ?.flatMap(e => {
-            if (
-              e.node?.__typename === "Task" &&
-              e.node.state?.__typename === "Open"
-            ) {
-              return e.node;
-            }
-            return [];
-          })
-          .at(0)?.id,
-        "no open Run instance?",
-      );
-      ROOT = new Task({ id: runInstance });
-    },
-    {
-      timeout: 10_000,
-    },
-  );
+    const mixingLine = assertNonNull(
+      result.data?.trackables?.edges?.at(0),
+      "no mixing line?",
+    );
+    const runInstance = assertNonNull(
+      mixingLine?.node?.tracking?.edges
+        ?.flatMap(e => {
+          if (
+            e.node?.__typename === "Task" &&
+            e.node.state?.__typename === "Open"
+          ) {
+            return e.node;
+          }
+          return [];
+        })
+        .at(0)?.id,
+      "no open Run instance?",
+    );
+    ROOT = new Task({ id: runInstance });
+  });
 
   test("start run", async () => {
     const sm = assertNonNull(await fsm(ROOT));

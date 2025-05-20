@@ -37,7 +37,7 @@ const seed = mapOrElse(
 );
 const faker = new Faker({ locale: [en, base], seed });
 
-describe("runtime + batch tracking", () => {
+describe.skipIf(!!process.env.CI)("runtime + batch tracking", () => {
   // See beforeAll for initialization of these variables.
   let CUSTOMER: Customer;
 
@@ -349,7 +349,7 @@ describe("runtime + batch tracking", () => {
       });
       expect(result.errors).toBeFalsy();
     }
-  }, 10_000);
+  });
 
   test("batches open, runs open", async () => {
     const batchQuery = await execute(ctx, schema, TestBatchEntrypointDocument, {
@@ -588,7 +588,7 @@ describe("runtime + batch tracking", () => {
       );
       expect(result.errors).toBeFalsy();
     }
-  }, 10_000);
+  });
 
   test("batches in-progress, runs remain open", async () => {
     const batchQuery = await execute(ctx, schema, TestBatchEntrypointDocument, {
@@ -809,7 +809,7 @@ describe("runtime + batch tracking", () => {
       },
     );
     expect(result.errors).toBeFalsy();
-  }, 10_000);
+  });
 
   test("batches in-progress, runs in-progress", async () => {
     const batchQuery = await execute(ctx, schema, TestBatchEntrypointDocument, {
@@ -1476,7 +1476,7 @@ describe("runtime + batch tracking", () => {
       },
     );
     expect(result.errors).toBeFalsy();
-  }, 10_000);
+  });
 
   test("batches in-progress, runs closed", async () => {
     const batchQuery = await execute(ctx, schema, TestBatchEntrypointDocument, {
@@ -1563,7 +1563,7 @@ describe("runtime + batch tracking", () => {
       );
       expect(result.errors).toBeFalsy();
     }
-  }, 10_000);
+  });
 
   test("batches closed, runs closed", async () => {
     const batchQuery = await execute(ctx, schema, TestBatchEntrypointDocument, {

@@ -37,9 +37,7 @@ export const Organization: OrganizationResolvers = {
     // biome-ignore lint/complexity/noBannedTypes:
     const keys = await sql<WithKey<{}>[]>`
       WITH cursor AS (
-          SELECT
-              systagorder,
-              customerrequestedlanguageid
+          SELECT systagorder, systagid
           FROM public.customerrequestedlanguage
           INNER JOIN public.systag
               ON customerrequestedlanguagelanguageid = systagid
@@ -54,8 +52,8 @@ export const Organization: OrganizationResolvers = {
           ON customerrequestedlanguagelanguageid = systagid
       WHERE
           customeruuid = ${parentId}
-          AND ${after ? sql`(systagorder, customerrequestedlanguageid) > (SELECT * FROM cursor)` : sql`TRUE`}
-          AND ${before ? sql`(systagorder, customerrequestedlanguageid) < (SELECT * FROM cursor)` : sql`TRUE`}
+          AND ${after ? sql`(systagorder, systagid) > (SELECT * FROM cursor)` : sql`TRUE`}
+          AND ${before ? sql`(systagorder, systagid) < (SELECT * FROM cursor)` : sql`TRUE`}
           AND ${match(args.search?.primary)
             .with(
               true,
@@ -82,7 +80,7 @@ export const Organization: OrganizationResolvers = {
             .otherwise(() => sql`TRUE`)}
       ORDER BY
           systagorder ${last ? sql`DESC` : sql`ASC`},
-          customerrequestedlanguageid ${last ? sql`DESC` : sql`ASC`}
+          systagid ${last ? sql`DESC` : sql`ASC`}
       LIMIT ${first ?? last ?? null};
     `;
 
@@ -93,9 +91,7 @@ export const Organization: OrganizationResolvers = {
           (
               EXISTS (
                   WITH cursor AS (
-                      SELECT
-                          systagorder,
-                          customerrequestedlanguageid
+                      SELECT systagorder, systagid
                       FROM public.customerrequestedlanguage
                       INNER JOIN public.systag
                           ON customerrequestedlanguagelanguageid = systagid
@@ -110,7 +106,7 @@ export const Organization: OrganizationResolvers = {
                       ON customerrequestedlanguagelanguageid = systagid
                   WHERE
                       customeruuid = ${parentId}
-                      AND (systagorder, customerrequestedlanguageid) > (SELECT * FROM cursor)
+                      AND (systagorder, systagid) > (SELECT * FROM cursor)
                       AND ${match(args.search?.primary)
                         .with(
                           true,
@@ -137,16 +133,14 @@ export const Organization: OrganizationResolvers = {
                         .otherwise(() => sql`TRUE`)}
                   ORDER BY
                       systagorder ${last ? sql`DESC` : sql`ASC`},
-                      customerrequestedlanguageid ${last ? sql`DESC` : sql`ASC`}
+                      systagid ${last ? sql`DESC` : sql`ASC`}
 
               )
           ) AS "hasNextPage",
           (
               EXISTS (
                   WITH cursor AS (
-                      SELECT
-                          systagorder,
-                          customerrequestedlanguageid
+                      SELECT systagorder, systagid
                       FROM public.customerrequestedlanguage
                       INNER JOIN public.systag
                           ON customerrequestedlanguagelanguageid = systagid
@@ -161,7 +155,7 @@ export const Organization: OrganizationResolvers = {
                       ON customerrequestedlanguagelanguageid = systagid
                   WHERE
                       customeruuid = ${parentId}
-                      AND (systagorder, customerrequestedlanguageid) < (SELECT * FROM cursor)
+                      AND (systagorder, systagid) < (SELECT * FROM cursor)
                       AND ${match(args.search?.primary)
                         .with(
                           true,
@@ -188,7 +182,7 @@ export const Organization: OrganizationResolvers = {
                         .otherwise(() => sql`TRUE`)}
                   ORDER BY
                       systagorder ${last ? sql`DESC` : sql`ASC`},
-                      customerrequestedlanguageid ${last ? sql`DESC` : sql`ASC`}
+                      systagid ${last ? sql`DESC` : sql`ASC`}
 
               )
           ) AS "hasPreviousPage"

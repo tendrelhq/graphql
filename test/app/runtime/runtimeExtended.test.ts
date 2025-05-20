@@ -74,24 +74,18 @@ describe("extended runtime demo", () => {
     expect(result.errors).toBeFalsy();
   });
 
-  test(
-    "it should show up in the app",
-    async () => {
-      const result = await execute(ctx, schema, TestRuntimeEntrypointDocument, {
-        parent: CUSTOMER,
-      });
-      expect(result.errors).toBeFalsy();
-      const t = result.data?.trackables?.edges?.find(
-        e =>
-          e.node?.__typename === "Location" &&
-          e.node.name.value === "Super Fast Assembly Line",
-      );
-      expect(t).toMatchSnapshot();
-    },
-    {
-      timeout: 10_000,
-    },
-  );
+  test("it should show up in the app", async () => {
+    const result = await execute(ctx, schema, TestRuntimeEntrypointDocument, {
+      parent: CUSTOMER,
+    });
+    expect(result.errors).toBeFalsy();
+    const t = result.data?.trackables?.edges?.find(
+      e =>
+        e.node?.__typename === "Location" &&
+        e.node.name.value === "Super Fast Assembly Line",
+    );
+    expect(t).toMatchSnapshot();
+  });
 
   describe.skip("diagnostics", () => {
     test("invalid_type -> template", async () => {

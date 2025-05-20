@@ -67,6 +67,12 @@ jobs:
         env:
           PGPASSWORD: postgres
           PGUSER: postgres
+      - run: nix develop -c psql -c 'analyze;'
+        env:
+          PGHOST: localhost
+          PGDATABASE: ci
+          PGUSER: postgres
+          PGPASSWORD: postgres
       - run: nix develop -c just install
       - name: nix develop -c docker compose up
         run: |
