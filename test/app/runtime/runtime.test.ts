@@ -1,4 +1,5 @@
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
+import assert from "node:assert";
 import { sql } from "@/datasources/postgres";
 import { schema } from "@/schema/final";
 import { Task } from "@/schema/system/component/task";
@@ -11,7 +12,7 @@ import {
   execute,
   getFieldByName,
 } from "@/test/prelude";
-import { assert, assertNonNull, mapOrElse } from "@/util";
+import { assertNonNull, mapOrElse } from "@/util";
 import { Faker, base, en } from "@faker-js/faker";
 import { createCustomer } from "./prelude/canonical";
 import {
@@ -1026,6 +1027,8 @@ describe("runtime demo", () => {
     expect(active.id).toBe(ROOT.id);
 
     const h = await active.hash();
+    const ro = await getFieldByName(active, "Run Output");
+    const rc = await getFieldByName(active, "Reject Count");
     const ov = await getFieldByName(active, "Override End Time");
     const result0 = await execute(
       ctx,
@@ -1048,6 +1051,20 @@ describe("runtime demo", () => {
                   timestamp: NOW_PLUS_24H.toISOString(),
                 },
                 valueType: "timestamp",
+              },
+              {
+                field: ro.id,
+                value: {
+                  number: 420,
+                },
+                valueType: "number",
+              },
+              {
+                field: rc.id,
+                value: {
+                  number: 69,
+                },
+                valueType: "number",
               },
             ],
           },
@@ -1167,6 +1184,7 @@ describe("runtime demo", () => {
       node: ROOT.id,
     });
     expect(result.errors).toBeFalsy();
+    assert(result.data?.node.__typename === "Task");
     expect(result.data).toMatchObject({
       node: {
         chain: {
@@ -1227,6 +1245,22 @@ describe("runtime demo", () => {
             value: "86400.000000", // overrides are taken into account
           },
         ],
+        outputs: {
+          name: {
+            value: "Run Output",
+          },
+          value: {
+            number: 420,
+          },
+        },
+        rejects: {
+          name: {
+            value: "Reject Count",
+          },
+          value: {
+            number: 69,
+          },
+        },
         parent: {
           name: {
             value: "My First Location",
@@ -1234,6 +1268,12 @@ describe("runtime demo", () => {
         },
       },
     });
+    // These two methods - in this specific context - should be identical except
+    // in that the children will include an instantiation (i.e. respawn).
+    expect(result.data.node.children?.edges?.slice(0, -1)).toMatchObject(
+      // @ts-expect-error
+      result.data.node.chain?.edges,
+    );
   });
 
   beforeAll(async () => {

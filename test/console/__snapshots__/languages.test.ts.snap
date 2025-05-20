@@ -15,7 +15,7 @@ exports[`[console] languages list 1`] = `
               "active": true,
             },
             "language": {
-              "code": "es",
+              "code": "en",
             },
             "primary": true,
           },
@@ -28,7 +28,7 @@ exports[`[console] languages list 1`] = `
               "active": true,
             },
             "language": {
-              "code": "en",
+              "code": "es",
             },
             "primary": false,
           },

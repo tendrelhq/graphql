@@ -962,15 +962,16 @@ export async function attachments(
 /**
  * Inspect the chain (if any) in which the given Task exists.
  *
- * This Task will be used at the *root* of the chain, i.e. the chain will not
+ * This Task will be used as the *root* of the chain, i.e. the chain will not
  * include any nodes [in the same chain] prior to this one.
  *
  * The returned chain will be in ascending chronological order by each Task's
- * `inProgressAt` date.
+ * `inProgressAt` date. Task's without such dates (e.g. because they are Open)
+ * will be *ordered after* Task's with them, i.e. `ASC NULLS LAST`.
  *
- * Note that "chains" are defined by series of Tasks all of which share a common
- * `root` node. There exists also the `Task.children` field which is similar to
- * `Task.chain` however without the restriction that all nodes share a `root`.
+ * Note that a "chain" is defined as a series of Tasks all of which share a
+ * common `root`. There exists also the `Task.children` field which is similar
+ * to `Task.chain` however without this common `root` restriction.
  *
  * @gqlField
  */
@@ -979,14 +980,14 @@ export async function chain(
   args: {
     /**
      * For use in pagination. Specifies the limit for "forward pagination".
-     * Note that pagination is not currently supported. This particular
+     * Note that pagination is not currently implemented. This particular
      * pagination argument *is respected*, but only to enable certain tests and
      * is otherwise ill suited for production use.
      */
     first?: Int | null;
     /**
      * For use in pagination. Specifies the cursor for "forward pagination".
-     * Note that pagination is not currently supported. In particular this
+     * Note that pagination is not currently implemented. In particular this
      * pagination arguments *will be completely ignored*. It is here in order to
      * comply with the Connection Specification as required by Relay.
      */
@@ -1025,6 +1026,7 @@ export async function chain(
 }
 
 /**
+ * Like `Task.chain` but without the restriction that all Tasks share a `root`.
  *
  * @gqlField
  */
@@ -1033,10 +1035,16 @@ export async function children(
   args: {
     /**
      * For use in pagination. Specifies the limit for "forward pagination".
+     * Note that pagination is not currently implemented. This particular
+     * pagination argument *is respected*, but only to enable certain tests and
+     * is otherwise ill suited for production use.
      */
     first?: Int | null;
     /**
      * For use in pagination. Specifies the cursor for "forward pagination".
+     * Note that pagination is not currently implemented. In particular this
+     * pagination arguments *will be completely ignored*. It is here in order to
+     * comply with the Connection Specification as required by Relay.
      */
     after?: string | null;
   },

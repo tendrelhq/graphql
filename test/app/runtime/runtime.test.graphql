@@ -78,54 +78,32 @@ query TestRuntimeDetail(
         value
       }
       # "run output" and "reject count" components
-      # fields {
-      #   edges {
-      #     node {
-      #       name {
-      #         name {
-      #           value
-      #         }
-      #       }
-      #       value {
-      #         __typename
-      #       }
-      #     }
-      #   }
-      # }
-      # "timeline" component
-      chain {
-        edges {
-          node {
-            name {
-              value
-            }
-            parent @include(if: $includeChainParents) {
-              ... on Location {
-                name {
-                  value
-                }
-              }
-            }
-            state {
-              __typename
-              ... on InProgress {
-                inProgressBy {
-                  ... on Worker {
-                    displayName
-                  }
-                }
-              }
-              ... on Closed {
-                closedBy {
-                  ... on Worker {
-                    displayName
-                  }
-                }
-              }
-            }
+      outputs: field(byName: "Run Output") {
+        name {
+          value
+        }
+        value {
+          ... on NumberValue {
+            number
           }
         }
-        totalCount
+      }
+      rejects: field(byName: "Reject Count") {
+        name {
+          value
+        }
+        value {
+          ... on NumberValue {
+            number
+          }
+        }
+      }
+      # "timeline" component
+      chain {
+        ...TaskChain_fragment
+      }
+      children {
+        ...TaskChain_fragment
       }
       parent {
         ... on Location {
@@ -413,4 +391,39 @@ fragment TaskFSM_fragment on TaskStateMachine {
       }
     }
   }
+}
+
+fragment TaskChain_fragment on TaskConnection {
+  edges {
+    node {
+      name {
+        value
+      }
+      parent @include(if: $includeChainParents) {
+        ... on Location {
+          name {
+            value
+          }
+        }
+      }
+      state {
+        __typename
+        ... on InProgress {
+          inProgressBy {
+            ... on Worker {
+              displayName
+            }
+          }
+        }
+        ... on Closed {
+          closedBy {
+            ... on Worker {
+              displayName
+            }
+          }
+        }
+      }
+    }
+  }
+  totalCount
 }

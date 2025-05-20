@@ -1144,19 +1144,19 @@ export function getSchema(): GraphQLSchema {
         },
         chain: {
           description:
-            'Inspect the chain (if any) in which the given Task exists.\n\nThis Task will be used at the *root* of the chain, i.e. the chain will not\ninclude any nodes [in the same chain] prior to this one.\n\nThe returned chain will be in ascending chronological order by each Task\'s\n`inProgressAt` date.\n\nNote that "chains" are defined by series of Tasks all of which share a common\n`root` node. There exists also the `Task.children` field which is similar to\n`Task.chain` however without the restriction that all nodes share a `root`.',
+            "Inspect the chain (if any) in which the given Task exists.\n\nThis Task will be used as the *root* of the chain, i.e. the chain will not\ninclude any nodes [in the same chain] prior to this one.\n\nThe returned chain will be in ascending chronological order by each Task's\n`inProgressAt` date. Task's without such dates (e.g. because they are Open)\nwill be *ordered after* Task's with them, i.e. `ASC NULLS LAST`.\n\nNote that a \"chain\" is defined as a series of Tasks all of which share a\ncommon `root`. There exists also the `Task.children` field which is similar\nto `Task.chain` however without this common `root` restriction.",
           name: "chain",
           type: TaskConnectionType,
           args: {
             after: {
               description:
-                'For use in pagination. Specifies the cursor for "forward pagination".\nNote that pagination is not currently supported. In particular this\npagination arguments *will be completely ignored*. It is here in order to\ncomply with the Connection Specification as required by Relay.',
+                'For use in pagination. Specifies the cursor for "forward pagination".\nNote that pagination is not currently implemented. In particular this\npagination arguments *will be completely ignored*. It is here in order to\ncomply with the Connection Specification as required by Relay.',
               name: "after",
               type: GraphQLString,
             },
             first: {
               description:
-                'For use in pagination. Specifies the limit for "forward pagination".\nNote that pagination is not currently supported. This particular\npagination argument *is respected*, but only to enable certain tests and\nis otherwise ill suited for production use.',
+                'For use in pagination. Specifies the limit for "forward pagination".\nNote that pagination is not currently implemented. This particular\npagination argument *is respected*, but only to enable certain tests and\nis otherwise ill suited for production use.',
               name: "first",
               type: GraphQLInt,
             },
@@ -1187,18 +1187,20 @@ export function getSchema(): GraphQLSchema {
           },
         },
         children: {
+          description:
+            "Like `Task.chain` but without the restriction that all Tasks share a `root`.",
           name: "children",
           type: TaskConnectionType,
           args: {
             after: {
               description:
-                'For use in pagination. Specifies the cursor for "forward pagination".',
+                'For use in pagination. Specifies the cursor for "forward pagination".\nNote that pagination is not currently implemented. In particular this\npagination arguments *will be completely ignored*. It is here in order to\ncomply with the Connection Specification as required by Relay.',
               name: "after",
               type: GraphQLString,
             },
             first: {
               description:
-                'For use in pagination. Specifies the limit for "forward pagination".',
+                'For use in pagination. Specifies the limit for "forward pagination".\nNote that pagination is not currently implemented. This particular\npagination argument *is respected*, but only to enable certain tests and\nis otherwise ill suited for production use.',
               name: "first",
               type: GraphQLInt,
             },

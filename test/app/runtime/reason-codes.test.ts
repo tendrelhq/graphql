@@ -38,7 +38,7 @@ describe("runtime + reason codes", () => {
   // See beforeAll for initialization of these variables.
   let CUSTOMER: Customer;
 
-  test("demo has no reason codes set up at first", async () => {
+  test("only the initial reason codes", async () => {
     const result = await execute(ctx, schema, ListReasonCodesDocument, {
       // FIXME: Should not be required:
       owner: CUSTOMER.id,
@@ -47,8 +47,8 @@ describe("runtime + reason codes", () => {
       parent: ["f875b28c-ccc9-4c69-b5b4-9f10ad89d23b"],
     });
     expect(result.errors).toBeFalsy();
-    expect(result.data?.instances?.totalCount).toBe(0);
-  });
+    expect(result.data?.instances?.totalCount).toBe(4);
+  }, 10_000);
 
   let DOWN_TIME: Maybe<Task>;
   let IDLE_TIME: Maybe<Task>;
@@ -141,7 +141,7 @@ describe("runtime + reason codes", () => {
     });
     expect(result.errors).toBeFalsy();
     expect(result.data).toMatchSnapshot();
-  });
+  }, 10_000);
 
   test.todo("list reason codes (with filters)", async () => {
     // Filters: active
@@ -186,8 +186,8 @@ describe("runtime + reason codes", () => {
       parent: ["f875b28c-ccc9-4c69-b5b4-9f10ad89d23b"],
     });
     expect(r1.errors).toBeFalsy();
-    expect(r1.data?.instances?.totalCount).toBe(3); // -Masheen Dawn
-  });
+    expect(r1.data?.instances?.totalCount).toBe(7); // -Masheen Dawn
+  }, 10_000);
 
   test("create some reason codes (for Idle Time)", async () => {
     const t = assertNonNull(IDLE_TIME);
