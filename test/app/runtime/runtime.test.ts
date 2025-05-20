@@ -37,7 +37,7 @@ const faker = new Faker({ locale: [en, base], seed });
 
 const NOW_PLUS_24H = new Date(NOW.valueOf() + 24 * 60 * 60 * 1000);
 
-describe.skipIf(!!process.env.CI)("runtime demo", () => {
+describe("runtime demo", () => {
   let CUSTOMER: Customer; // set in `beforeAll`
   let ROOT: Task; // set in "entrypoint query"
 
