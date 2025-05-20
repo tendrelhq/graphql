@@ -1,28 +1,5 @@
-import { mapOrElse } from "@/util";
-import type { Request } from "express";
 import z from "myzod";
 import postgres, { type Fragment } from "postgres";
-import { makeActiveLoader } from "./activatable";
-import { makeAuditableLoader } from "./auditable";
-import makeCustomerRequestedLanguageLoader from "./crl";
-import { makeDescriptionLoader } from "./description";
-import { makeDynamicStringLoader } from "./dynamicString";
-import makeInvitationLoader from "./invitation";
-import makeLanguageLoader from "./language";
-import makeLocationLoader from "./location";
-import {
-  makeDisplayNameLoader,
-  makeNameLoader,
-  makeNameMetadataLoader,
-} from "./name";
-import makeOrganizationLoader from "./organization";
-import { makeRequirementLoader } from "./requirement";
-import makePresignedUrlLoader from "./s3";
-import { makeSopLoader } from "./sop";
-import { makeStatusLoader } from "./status";
-import makeTagLoader from "./tag";
-import makeUserLoader from "./user";
-import makeWorkerLoader from "./worker";
 
 const { DB_MAX_CONNECTIONS, DB_STATEMENT_TIMEOUT_MS } = z
   .object({
@@ -66,38 +43,3 @@ export function shouldUpdate<T>(input?: T, existing?: T): input is T {
 export function unionAll(xs: readonly Fragment[]) {
   return join(xs, sql`UNION ALL`);
 }
-
-const DEFAULT_PRESIGNED_URL_EXPIRES_IN = 60 * 60 * 24; // 24 hours
-
-export function orm(req: Request) {
-  return {
-    active: makeActiveLoader(req),
-    auditable: makeAuditableLoader(req),
-    crl: makeCustomerRequestedLanguageLoader(req),
-    description: makeDescriptionLoader(req),
-    displayName: makeDisplayNameLoader(req),
-    dynamicString: makeDynamicStringLoader(req),
-    invitation: makeInvitationLoader(req),
-    language: makeLanguageLoader(req),
-    location: makeLocationLoader(req),
-    name: makeNameLoader(req),
-    nameMetadata: makeNameMetadataLoader(req),
-    organization: makeOrganizationLoader(req),
-    requirement: makeRequirementLoader(req),
-    sop: makeSopLoader(req),
-    status: makeStatusLoader(req),
-    tag: makeTagLoader(req),
-    user: makeUserLoader(req),
-    worker: makeWorkerLoader(req),
-    // out of place but whatever
-    s3: makePresignedUrlLoader(req, {
-      expiresIn: mapOrElse(
-        process.env.PRESIGNED_URL_EXPIRES_IN,
-        Number.parseInt,
-        DEFAULT_PRESIGNED_URL_EXPIRES_IN,
-      ),
-    }),
-  };
-}
-
-export type ORM = ReturnType<typeof orm>;

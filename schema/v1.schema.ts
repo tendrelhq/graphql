@@ -37,6 +37,7 @@ import {
   attachments as taskAttachmentsResolver,
   chainAgg as taskChainAggResolver,
   chain as taskChainResolver,
+  children as taskChildrenResolver,
   fields as taskFieldsResolver,
 } from "./system/component/task";
 import {
@@ -1143,19 +1144,25 @@ export function getSchema(): GraphQLSchema {
         },
         chain: {
           description:
-            'Inspect the chain (if any) in which the given Task exists.\nAs it stands, this can only be used to perform a downwards search of the\nchain, i.e. the given Task is used as the "root" of the search tree.',
+            'Inspect the chain (if any) in which the given Task exists.\n\nThis Task will be used at the *root* of the chain, i.e. the chain will not\ninclude any nodes [in the same chain] prior to this one.\n\nThe returned chain will be in ascending chronological order by each Task\'s\n`inProgressAt` date.\n\nNote that "chains" are defined by series of Tasks all of which share a common\n`root` node. There exists also the `Task.children` field which is similar to\n`Task.chain` however without the restriction that all nodes share a `root`.',
           name: "chain",
           type: TaskConnectionType,
           args: {
+            after: {
+              description:
+                'For use in pagination. Specifies the cursor for "forward pagination".\nNote that pagination is not currently supported. In particular this\npagination arguments *will be completely ignored*. It is here in order to\ncomply with the Connection Specification as required by Relay.',
+              name: "after",
+              type: GraphQLString,
+            },
             first: {
               description:
-                'For use in pagination. Specifies the limit for "forward pagination".',
+                'For use in pagination. Specifies the limit for "forward pagination".\nNote that pagination is not currently supported. This particular\npagination argument *is respected*, but only to enable certain tests and\nis otherwise ill suited for production use.',
               name: "first",
               type: GraphQLInt,
             },
           },
           resolve(source, args) {
-            return assertNonNull(taskChainResolver(source, args.first));
+            return assertNonNull(taskChainResolver(source, args));
           },
         },
         chainAgg: {
@@ -1177,6 +1184,27 @@ export function getSchema(): GraphQLSchema {
             return assertNonNull(
               taskChainAggResolver(source, context, args.overType),
             );
+          },
+        },
+        children: {
+          name: "children",
+          type: TaskConnectionType,
+          args: {
+            after: {
+              description:
+                'For use in pagination. Specifies the cursor for "forward pagination".',
+              name: "after",
+              type: GraphQLString,
+            },
+            first: {
+              description:
+                'For use in pagination. Specifies the limit for "forward pagination".',
+              name: "first",
+              type: GraphQLInt,
+            },
+          },
+          resolve(source, args) {
+            return assertNonNull(taskChildrenResolver(source, args));
           },
         },
         description: {

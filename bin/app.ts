@@ -2,9 +2,9 @@ import "dotenv/config";
 
 import http from "node:http";
 import * as auth from "@/auth";
-import { orm } from "@/datasources/postgres";
 import i18n from "@/i18n";
 import { Limits } from "@/limits";
+import { makeRequestLoaders } from "@/orm";
 import type { Context } from "@/schema";
 import { schema } from "@/schema/final";
 import upload from "@/upload";
@@ -130,7 +130,7 @@ app.use(
             return fetch(args[0], init);
           },
         }),
-        orm: orm(req),
+        orm: makeRequestLoaders(req),
         req,
       } satisfies Context;
     },

@@ -24,7 +24,6 @@ import {
 import { Temporal } from "@js-temporal/polyfill";
 import { GraphQLError } from "graphql/error";
 import type { ID, Int } from "grats";
-import type { Fragment } from "postgres";
 import { P, match } from "ts-pattern";
 import { decodeGlobalId, encodeGlobalId } from "..";
 import type { Aggregate } from "../aggregation";
@@ -962,17 +961,37 @@ export async function attachments(
 
 /**
  * Inspect the chain (if any) in which the given Task exists.
- * As it stands, this can only be used to perform a downwards search of the
- * chain, i.e. the given Task is used as the "root" of the search tree.
+ *
+ * This Task will be used at the *root* of the chain, i.e. the chain will not
+ * include any nodes [in the same chain] prior to this one.
+ *
+ * The returned chain will be in ascending chronological order by each Task's
+ * `inProgressAt` date.
+ *
+ * Note that "chains" are defined by series of Tasks all of which share a common
+ * `root` node. There exists also the `Task.children` field which is similar to
+ * `Task.chain` however without the restriction that all nodes share a `root`.
  *
  * @gqlField
  */
 export async function chain(
   t: Task,
-  /**
-   * For use in pagination. Specifies the limit for "forward pagination".
-   */
-  first?: Int | null,
+  args: {
+    /**
+     * For use in pagination. Specifies the limit for "forward pagination".
+     * Note that pagination is not currently supported. This particular
+     * pagination argument *is respected*, but only to enable certain tests and
+     * is otherwise ill suited for production use.
+     */
+    first?: Int | null;
+    /**
+     * For use in pagination. Specifies the cursor for "forward pagination".
+     * Note that pagination is not currently supported. In particular this
+     * pagination arguments *will be completely ignored*. It is here in order to
+     * comply with the Connection Specification as required by Relay.
+     */
+    after?: string | null;
+  },
 ): Promise<Connection<Task>> {
   // Only workinstances can participate in chains.
   if (t._type !== "workinstance") {
@@ -990,29 +1009,61 @@ export async function chain(
   }
 
   const rows = await sql<{ id: ID }[]>`
-    with recursive chain as (
-        select 0 as _depth, *
-        from public.workinstance
-        where workinstance.id = ${t._id}
-        union all
-        select chain._depth + 1 as _depth, child.*
-        from chain, public.workinstance as child
-        where
-            chain.workinstanceoriginatorworkinstanceid = child.workinstanceoriginatorworkinstanceid
-            and chain.workinstanceid = child.workinstancepreviousid
-    ) cycle id set is_cycle using path
-    select encode(('workinstance:' || id)::bytea, 'base64') as id
-    from chain
-    where not is_cycle
-    order by _depth, workinstanceid
-    limit ${first ?? null};
+    select engine1.base64_encode(convert_to('workinstance:' || id, 'utf8')) as id
+    from engine0.task_chain(${t._id})
+    limit ${args.first ?? null}
   `;
 
   return {
-    edges: rows.map(row => ({
-      cursor: row.id,
-      node: new Task(row),
-    })),
+    edges: rows.map(row => ({ cursor: row.id, node: new Task(row) })),
+    pageInfo: {
+      hasNextPage: false,
+      hasPreviousPage: false,
+    },
+    totalCount: rows.length,
+  };
+}
+
+/**
+ *
+ * @gqlField
+ */
+export async function children(
+  t: Task,
+  args: {
+    /**
+     * For use in pagination. Specifies the limit for "forward pagination".
+     */
+    first?: Int | null;
+    /**
+     * For use in pagination. Specifies the cursor for "forward pagination".
+     */
+    after?: string | null;
+  },
+): Promise<Connection<Task>> {
+  // Only workinstances can have children.
+  if (t._type !== "workinstance") {
+    console.warn(
+      `Task.children is not supported for underlying type '${t._type}'.`,
+    );
+    return {
+      edges: [],
+      pageInfo: {
+        hasNextPage: false,
+        hasPreviousPage: false,
+      },
+      totalCount: 0,
+    };
+  }
+
+  const rows = await sql<{ id: ID }[]>`
+    select engine1.base64_encode(convert_to('workinstance:' || id, 'utf8')) as id
+    from engine0.task_children(${t._id})
+    limit ${args.first ?? null}
+  `;
+
+  return {
+    edges: rows.map(row => ({ cursor: row.id, node: new Task(row) })),
     pageInfo: {
       hasNextPage: false,
       hasPreviousPage: false,

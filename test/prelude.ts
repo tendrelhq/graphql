@@ -1,6 +1,7 @@
 import { getAccessToken, setCurrentIdentity } from "@/auth";
-import { type TxSql, orm, sql } from "@/datasources/postgres";
+import { type TxSql, sql } from "@/datasources/postgres";
 import { Limits } from "@/limits";
+import { makeRequestLoaders } from "@/orm";
 import type { Context, InputMaybe } from "@/schema";
 import {
   Location,
@@ -74,7 +75,7 @@ export async function createTestContext(): Promise<Context> {
       },
     }),
     // biome-ignore lint/suspicious/noExplicitAny: ...room for improvement...
-    orm: orm(DEFAULT_REQUEST as any),
+    orm: makeRequestLoaders(DEFAULT_REQUEST as any),
     // biome-ignore lint/suspicious/noExplicitAny: ...but whatever.
     req: DEFAULT_REQUEST as any,
   };
