@@ -7,9 +7,8 @@ import {
 import type e from "express";
 import type { RequestHandler } from "express";
 import { GraphQLError } from "graphql";
-import * as jose from "jose";
+import config from "./config";
 import { type TxSql, sql } from "./datasources/postgres";
-import { assert } from "./util";
 
 declare global {
   namespace Express {
@@ -84,17 +83,18 @@ export const login: RequestHandler = async (req, res) => {
   }
 };
 
+const ACCESS_TOKEN_ENDPOINT = new URL("/api/v1/rpc/token", config.base_url);
+
 /**
  * Get an access token for the given `sub`ject. This is always a Clerk user ID
  * at the moment.
  */
 export async function getAccessToken(sub: string) {
-  const iss = `urn:tendrel:${process.env.STAGE}`;
   const [{ jwt }] = await sql`
     select auth.jwt_sign(
       json_build_object(
         'role', 'anonymous',
-        'iss', ${iss}::text,
+        'iss', ${config.jwt_iss}::text,
         'iat', extract(epoch from now()),
         'nbf', extract(epoch from now()) - 30 /* seconds */,
         'exp', extract(epoch from now()) + 30 /* seconds */,
@@ -106,7 +106,7 @@ export async function getAccessToken(sub: string) {
   // Same URL in both development and production. In development this assumes
   // that Postgrest is running locally on port 4001, which it will be if you
   // use the docker-compose file.
-  return await fetch("http://localhost:4001/rpc/token", {
+  return await fetch(ACCESS_TOKEN_ENDPOINT, {
     method: "POST",
     body: JSON.stringify({
       grant_type: "urn:ietf:params:oauth:grant-type:token-exchange",

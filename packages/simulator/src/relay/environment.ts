@@ -1,3 +1,4 @@
+import { base_url } from "@/config";
 import { assertNonNull, map } from "@/util";
 import {
   Environment,
@@ -30,7 +31,7 @@ const injectLatency = map(process.env.INJECT_LATENCY, s => {
 });
 
 const fetchFn: FetchFunction = async (request, variables) => {
-  const res = await fetch("http://localhost:4000", {
+  const res = await fetch(new URL("/api/v1/query", base_url), {
     method: "POST",
     headers: {
       "Content-Type": "application/json",

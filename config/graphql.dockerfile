@@ -16,5 +16,5 @@ WORKDIR /app
 COPY --from=builder /tmp/nix-store-closure /nix/store
 COPY --from=builder /tmp/build/result /app
 
-HEALTHCHECK CMD ["/app/bin/entrypoint", "--healthcheck"]
+HEALTHCHECK --start-period=30s --start-interval=1s CMD ["/app/bin/entrypoint", "--healthcheck"]
 ENTRYPOINT ["/app/bin/entrypoint"]

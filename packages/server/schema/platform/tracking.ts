@@ -305,6 +305,8 @@ export async function trackables(
         throw "not yet implemented";
       }
 
+      // FIXME: This is fucked. In reality we should do the whole sql.Fragment
+      // cte thing that we've been elsewhere...
       return sql<Trackable[]>`
         select
           'Task' as "__typename",

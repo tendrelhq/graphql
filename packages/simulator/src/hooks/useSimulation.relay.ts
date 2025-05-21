@@ -10,8 +10,8 @@ graphql`
 `;
 
 graphql`
-  query useSimulationActiveQuery($template: ID!) @throwOnFieldError {
-    instances: trackables(parent: $template, withImplementation: "Task") {
+  query useSimulationActiveQuery($template: ID!, $withTaskState: [TaskStateName!]) @throwOnFieldError {
+    instances: trackables(parent: $template, withImplementation: "Task", state: $withTaskState) {
       edges {
         node {
           id

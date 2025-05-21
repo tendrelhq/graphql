@@ -2,6 +2,7 @@ import "dotenv/config";
 
 import http from "node:http";
 import * as auth from "@/auth";
+import config from "@/config";
 import i18n from "@/i18n";
 import { Limits } from "@/limits";
 import { makeRequestLoaders } from "@/orm";
@@ -19,7 +20,8 @@ import { GraphQLError } from "graphql";
 import morgan from "morgan";
 
 if (process.argv.some(arg => arg === "--healthcheck")) {
-  const r = await fetch("http://localhost:4000/live");
+  // We are calling our own healthcheck here! The one ~25 lines below.
+  const r = await fetch(new URL("/api/v1/query/live", config.base_url));
   process.exit(r.ok ? 0 : 1);
 }
 
@@ -37,6 +39,10 @@ if (process.env.NODE_ENV === "development") {
       return lines.sort((a, b) => a.localeCompare(b)).join("\n");
     }),
   );
+  console.debug("--------------------");
+  for (const [key, value] of Object.entries(config)) {
+    console.debug(`${key.toUpperCase()}:`, value.toString());
+  }
 }
 
 const app = express();
@@ -69,19 +75,6 @@ app.use((req, _, next) => {
   }
   next();
 });
-
-if (process.env.NODE_ENV === "development") {
-  const swaggerUi = await import("swagger-ui-express");
-  app.use(
-    "/docs",
-    swaggerUi.serve,
-    swaggerUi.setup(null, {
-      swaggerOptions: {
-        url: "http://localhost/api/v1",
-      },
-    }),
-  );
-}
 
 app.get("/live", (_, res) => res.send());
 
@@ -116,7 +109,8 @@ app.use(
         // PostgREST runs alongside graphql, i.e. in the same ECS cluster. We
         // can hit it over localhost to avoid nginx. This also works in the
         // default developer setup since *everything* is localhost.
-        pgrst: new PostgrestClient("http://localhost:4001", {
+        pgrst: new PostgrestClient(config.pgrst_url.toString(), {
+          // @ts-expect-error - idk man
           async fetch(...args) {
             const token = await auth
               .getAccessToken(req.auth.userId)
@@ -139,7 +133,8 @@ app.use(
   }),
 );
 
-const port = Number(process.env.PORT ?? 4000);
-await new Promise<void>(resolve => httpServer.listen({ port }, resolve));
+await new Promise<void>(resolve => {
+  httpServer.listen({ port: config.port }, resolve);
+});
 
-console.log(`Server ready at 0.0.0.0:${port}`);
+console.log(`Server listening on port ${config.port}`);

@@ -69,7 +69,7 @@
         buildPhase = ''
           runHook preBuild
           export HOME=$TMPDIR
-          bun install --filter=./packages/server --frozen-lockfile --ignore-scripts --no-cache --no-progress
+          bun install --filter=./packages/core --filter=./packages/server --frozen-lockfile --ignore-scripts --no-cache --no-progress
           runHook postBuild
         '';
 
@@ -80,7 +80,10 @@
           runHook postInstall
         '';
 
-        outputHash = "sha256-PrRd0NXxsSh5CcLFYU8b8ECt7fIZYpWp+GmuE4g4RBU=";
+        outputHash =
+          if pkgs.system == "aarch64-linux"
+          then "sha256-9bqtQyjkmSgviOeYta5YIIx3SSdqpGY0t0LMP4mMjwY="
+          else "sha256-XI3H+skTDjolxqtnkxxn516Rjv7T/MaV0neJjXBp8FU=";
         outputHashAlgo = "sha256";
         outputHashMode = "recursive";
       };

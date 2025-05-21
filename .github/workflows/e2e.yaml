@@ -112,6 +112,5 @@ jobs:
           PGUSER: postgres
           PGPASSWORD: postgres
           # TODO: move this to a matrix and run multiple simulations
-          # Simulation configuration
           SKIP_OWNER_PROMPT: true
           AUTO_SELECT_TEMPLATE: Run

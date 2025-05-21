@@ -1,5 +1,4 @@
 !.env.local.template
-!.envrc.template
 *.dump
 *.generated.ts
 /.*

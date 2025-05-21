@@ -2,13 +2,14 @@
 
 To get started:
 
-0. Set up PostgreSQL. If you use [nix], you can use the devenv via `devenv up`.
-   - If this is your first time, run the [./sql/deploy](./sql/deploy) scripts in the order specified by [./sql/sqitch.plan](./sql/sqitch.plan).
-   - e.g. `psql -f ./sql/deploy/graphql-service-role.sql`
-   - You can use [sqitch] if you feel like it. I use it during development.
-1. `cp .env.local.template .env.local` and fill in the blanks.
-2. `cp .envrc.template .envrc` and fill in the blanks.
-3. `docker compose up`
+0. Set up PostgreSQL
+   - Run the scripts in [./sql/deploy/](./sql/deploy),
+     e.g. `psql -f ./sql/deploy/graphql-service-role.sql`
+   - You can use [sqitch] if you feel like it. I use it during development.[^1]
+   - If you get errors about things already existing, run the corresponding
+     revert script and then re-run the deploy script.
+1. `cp .env.local.template .env.local` and fill in the blanks, everything is required.
+2. `docker compose up --build --wait` (n.b. `--wait` implies `--detach`)
 
 ### formatting
 
@@ -55,6 +56,8 @@ copilot/graphql/manifest.yml 6ms (unchanged)
 copilot/pipelines/graphql-workloads/buildspec.yml 4ms (unchanged)
 copilot/pipelines/graphql-workloads/manifest.yml 1ms (unchanged)
 ```
+
+[^1]: `sqitch deploy`, `sqitch revert -y`, `sqitch rebase -y`
 
 [nix]: https://nixos.org/download/
 [sqitch]: https://sqitch.org/

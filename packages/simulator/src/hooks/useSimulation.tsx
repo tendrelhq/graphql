@@ -9,6 +9,7 @@ import {
 import { match } from "ts-pattern";
 import ActiveQueryNode, {
   type useSimulationActiveQuery as ActiveQuery,
+  type TaskStateName,
 } from "../__generated__/useSimulationActiveQuery.graphql";
 import SimulationQueryNode, {
   type SimulationState,
@@ -109,6 +110,7 @@ function Running(props: SimulatorProps) {
         <InstancesOf
           chainLagN={chainLagN}
           showFullChain={showFullChain}
+          withState={["InProgress"]}
           {...props}
         />
         <Box height={1} />
@@ -151,12 +153,12 @@ const startSimulation: System<ActiveQuery> = function (query) {
 
       // Finally, we add the actual simulation logic.
       for (const instance of query.instances.edges) {
-        this.rex.addSystem(taskChainSimulation, {
-          request: TaskChainSimulationQuery,
-          variables: {
-            root: instance.node.id,
-          },
-        });
+        // this.rex.addSystem(taskChainSimulation, {
+        //   request: TaskChainSimulationQuery,
+        //   variables: {
+        //     root: instance.node.id,
+        //   },
+        // });
       }
     },
   ];
@@ -178,7 +180,11 @@ const syncTime: System<SimulationQuery> = function (query) {
 };
 
 function InstancesOf(
-  props: SimulatorProps & { chainLagN: number; showFullChain: boolean },
+  props: SimulatorProps & {
+    chainLagN: number;
+    showFullChain: boolean;
+    withState?: TaskStateName[];
+  },
 ) {
   const data = useLazyLoadQuery<ActiveQuery>(ActiveQueryNode, props);
 

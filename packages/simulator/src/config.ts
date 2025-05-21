@@ -1,5 +1,3 @@
-import assert from "node:assert";
-import { decodeGlobalId, tryDecodeGlobalId } from "@/schema/system";
 import z from "zod";
 import { faker } from "./rng";
 

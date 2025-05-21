@@ -1,6 +1,6 @@
-import z from "myzod";
+import z from "zod";
 
-const GlobalId = z.string().map(id => {
+const GlobalId = z.string().transform(id => {
   const parts = id.split(":");
   if (parts.length < 2) {
     throw "invariant violated: invalid global identifier";

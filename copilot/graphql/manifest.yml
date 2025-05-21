@@ -50,27 +50,13 @@ secrets:
     secretsmanager: "/database/service/graphql:dbname::"
 
 variables:
+  BASE_URL: ${COPILOT_SERVICE_DISCOVERY_ENDPOINT}
   CLERK_PUBLISHABLE_KEY: pk_live_Y2xlcmsudGVuZHJlbC5pbyQ
   NODE_ENV: production
   STAGE: ${COPILOT_ENVIRONMENT_NAME}
 
 # You can override any of the values defined above by environment.
 environments:
-  dev:
-    secrets:
-      PGUSERNAME:
-        secretsmanager: "/database/role/admin:username::"
-      PGPASSWORD:
-        secretsmanager: "/database/role/admin:password::"
-      PGHOST:
-        secretsmanager: "/database/role/admin:host::"
-      PGPORT:
-        secretsmanager: "/database/role/admin:port::"
-      PGDATABASE:
-        secretsmanager: "/database/role/admin:dbname::"
-    variables:
-      LOG_LEVEL: debug
-      NODE_ENV: development
   test:
     variables:
       ATTACHMENT_BUCKET: test-lambdastack-photostoragebucketcc7aea4f-1cnysolqfj44u

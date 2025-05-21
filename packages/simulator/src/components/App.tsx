@@ -1,5 +1,5 @@
 import assert from "node:assert";
-import { createTestContext, type Customer } from "@/test/prelude";
+import { type Customer, createTestContext } from "@/test/prelude";
 import { map } from "@/util";
 import { Box, Spacer, Text, useInput } from "ink";
 import SelectInput from "ink-select-input";
@@ -25,6 +25,7 @@ import SelectedTemplateQuery, {
 import UserFragment, {
   type User_fragment$key,
 } from "../__generated__/User_fragment.graphql";
+import config from "../config";
 import { Simulator } from "../hooks/useSimulation";
 import { createCustomer } from "../lib";
 import { Trie } from "../lib/Trie";
@@ -33,7 +34,6 @@ import { faker, seed } from "../rng";
 import { Id } from "./Id";
 import { Input } from "./Input";
 import { Loading } from "./Loading";
-import config from "../config";
 
 export function App() {
   const [owner, setOwner] = useState("");

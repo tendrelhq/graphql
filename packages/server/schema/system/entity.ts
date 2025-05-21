@@ -1,5 +1,6 @@
 import { constructHeadersFromArgs, extractPageInfo } from "@/api";
 import { getAccessToken, setCurrentIdentity } from "@/auth";
+import { base_url } from "@/config";
 import { sql } from "@/datasources/postgres";
 import { assert, assertNonNull, assertUnderlyingType } from "@/util";
 import { GraphQLError } from "graphql";
@@ -91,7 +92,7 @@ export async function instances(
   }
 
   const res = await fetch(
-    `http://localhost:4001/entity_instance?${q.toString()}`,
+    new URL(`/entity_instance?${q.toString()}`, base_url),
     {
       method: "GET",
       headers: headers,

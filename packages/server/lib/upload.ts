@@ -2,7 +2,7 @@ import { randomUUID } from "node:crypto";
 import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import type express from "express";
-import z from "myzod";
+import z from "zod";
 
 const parser = z.object({
   filename: z.string(),
@@ -12,15 +12,13 @@ const parser = z.object({
 
 const s3 = new S3Client();
 
-const POST: express.RequestHandler = async (req, res, next) => {
-  const input = parser.try(req.body);
-  if (input instanceof z.ValidationError) {
-    // @ts-ignore
-    input.statusCode = 400;
-    return next(input);
+const POST: express.RequestHandler = async (req, res) => {
+  const result = parser.safeParse(req.body);
+  if (!result.success) {
+    return res.status(400).json({ message: result.error.message });
   }
 
-  const { filename, mimetype, size } = input;
+  const { filename, mimetype, size } = result.data;
   console.debug(
     `Requesting presigned upload url for ${filename} (${mimetype} ${size}B)`,
   );
@@ -34,7 +32,7 @@ const POST: express.RequestHandler = async (req, res, next) => {
     res.json({ uri: `s3://${Bucket}/${Key}`, url: url });
   } catch (e) {
     console.error("Error while generating presigned url", e);
-    return next(e);
+    res.status(500).json({ message: "Upload failed" });
   }
 };
 

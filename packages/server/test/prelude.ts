@@ -1,4 +1,5 @@
 import { getAccessToken, setCurrentIdentity } from "@/auth";
+import { base_url } from "@/config";
 import type { TxSql } from "@/datasources/postgres";
 import { Limits } from "@/limits";
 import { makeRequestLoaders } from "@/orm";
@@ -51,6 +52,8 @@ const DEFAULT_REQUEST = {
   },
 };
 
+const PGRST_URL = new URL("api/v1", base_url).toString();
+
 export async function createTestContext(): Promise<Context> {
   const userId = assertNonNull(
     process.env.X_TENDREL_USER,
@@ -60,7 +63,7 @@ export async function createTestContext(): Promise<Context> {
     // biome-ignore lint/suspicious/noExplicitAny: i know i know...
     auth: { userId } as any,
     limits: new Limits(),
-    pgrst: new PostgrestClient("http://localhost:4001", {
+    pgrst: new PostgrestClient(PGRST_URL, {
       async fetch(...args) {
         const token = await getAccessToken(userId)
           .then(r => r.json())

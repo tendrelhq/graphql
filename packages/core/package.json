@@ -1,0 +1,15 @@
+{
+  "name": "@tendrelhq/core",
+  "private": true,
+  "dependencies": {
+    "zod": "^3.24.4"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^1.9.4",
+    "@faker-js/faker": "^9.7.0",
+    "@vtsls/language-server": "^0.2.8",
+    "graphql-language-service-cli": "^3.5.0",
+    "prettier": "^3.5.3",
+    "typescript-language-server": "^4.3.4"
+  }
+}

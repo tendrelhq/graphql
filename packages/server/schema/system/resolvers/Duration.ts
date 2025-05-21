@@ -1,5 +1,5 @@
 import { GraphQLError, GraphQLScalarType, Kind } from "graphql";
-import z from "myzod";
+import z from "zod";
 
 const parser = z.number({ coerce: true });
 

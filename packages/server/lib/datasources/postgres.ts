@@ -1,12 +1,12 @@
-import z from "myzod";
 import postgres, { type Fragment } from "postgres";
+import z from "zod";
 
 const { DB_MAX_CONNECTIONS, DB_STATEMENT_TIMEOUT_MS } = z
   .object({
     DB_MAX_CONNECTIONS: z.number({ coerce: true }).default(3),
     DB_STATEMENT_TIMEOUT_MS: z.number({ coerce: true }).default(10_000),
   })
-  .parse(process.env, { allowUnknown: true });
+  .parse(process.env);
 
 export const sql = postgres({
   max: DB_MAX_CONNECTIONS,
