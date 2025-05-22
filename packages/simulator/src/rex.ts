@@ -31,6 +31,7 @@ export type TimeOptions = {
 };
 
 interface ReadonlyTime {
+  elapsed: number;
   now: number;
 }
 
@@ -55,6 +56,10 @@ class Time implements ReadonlyTime {
 
   static default() {
     return new Time({});
+  }
+
+  get elapsed() {
+    return Date.now() - this.#ref.valueOf();
   }
 
   get now() {
@@ -123,6 +128,8 @@ export class Rex implements ReadonlyRex {
   #systems: Map<string, [AnySystem, string]> = new Map();
   #time: Time;
   #rexId = REX_ID++;
+
+  readonly #abortController = new AbortController();
 
   constructor(
     public environment: Environment,
@@ -196,6 +203,10 @@ export class Rex implements ReadonlyRex {
     setTimeout(() => this.update(), 0);
   }
 
+  public stop() {
+    this.#abortController.abort("stop()");
+  }
+
   private printStats() {
     this.debug(`queries=${this.#queries.size}, systems=${this.#systems.size}`);
     if (this.#systems.size) {
@@ -223,6 +234,8 @@ export class Rex implements ReadonlyRex {
    *    free to do whatever they like
    */
   async update() {
+    if (this.#abortController.signal.aborted) return;
+
     const pendingCompletions: Observable<Completion[]>[] = [];
     for (const [system, queryHash] of this.#systems.values()) {
       const query = this.#queries.get(queryHash);

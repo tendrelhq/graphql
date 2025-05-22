@@ -1,3 +1,4 @@
+import { parseDuration } from "@tendrelhq/core";
 import z from "zod";
 import { faker } from "./rng";
 
@@ -40,6 +41,15 @@ function makeProbability(name: string) {
 //============================================================================//
 
 /**
+ * Force Ink to use raw mode.
+ * Note that this is implicitly enabled in CI.
+ *
+ * @see {@link https://nodejs.org/api/tty.html#tty_readstream_setrawmode_mode}
+ * @see {@link https://github.com/vadimdemedes/ink/tree/master?tab=readme-ov-file#israwmodesupported}
+ */
+export const force_raw_mode = b().parse(e.FORCE_RAW_MODE);
+
+/**
  * Auto select an existing customer by name or id.
  * If it no such customer is found, an error will be thrown.
  * If you intend to select by name, keep in mind that the *first* matching owner
@@ -54,7 +64,7 @@ export const auto_select_owner = z
  * Skip the owner prompt.
  * This will cause a new customer to be generated every time you run the cli!
  */
-export const skip_owner_prompt = b().default(false).parse(e.SKIP_OWNER_PROMPT);
+export const skip_owner_prompt = b().parse(e.SKIP_OWNER_PROMPT);
 
 /**
  * Auto select a template by name or id.
@@ -87,6 +97,26 @@ export const active_probability = makeProbability("ACTIVE_PROBABILITY");
 export const root_probability = makeProbability("ROOT_PROBABILITY");
 
 /**
+ * Write configuration to stdout after starting.
+ */
+export const print_config = b().parse(e.PRINT_CONFIG);
+
+/**
+ * Set a timeout on the simulation. This will cause it to shutdown (and exit)
+ * if the timeout threshold is breached.
+ */
+export const timeout = z
+  .string()
+  .transform(s => {
+    return parseDuration(s).round({
+      largestUnit: "milliseconds",
+      smallestUnit: "milliseconds",
+    }).milliseconds;
+  })
+  .optional()
+  .parse(e.TIMEOUT);
+
+/**
  * How many Worker entities to spin up initially.
  */
 export const worker_count = unsigned().default(1).parse(e.WORKER_COUNT);
@@ -117,12 +147,15 @@ export default {
   // Rex
   ms_per_tick,
   // simulation internals
-  auto_select_owner,
-  skip_owner_prompt,
-  auto_select_template,
-  multiplicity,
   active_probability,
+  auto_select_owner,
+  auto_select_template,
+  force_raw_mode,
+  multiplicity,
+  print_config,
   root_probability,
+  skip_owner_prompt,
+  timeout,
   worker_count,
   // TaskChain.tsx
   chain_lag_n,

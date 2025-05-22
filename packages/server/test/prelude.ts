@@ -292,11 +292,11 @@ export async function createDefaultCustomer(
       create_adminuuid := null,
       create_siteuuid := null,
       create_timezone := ${args.faker.location.timeZone()},
-      create_languagetypeuuids := array['7ebd10ee-5018-4e11-9525-80ab5c6aebee','c3f18dd6-bfc5-4ba5-b3c1-bb09e2a749a9'],
+      create_languagetypeuuids := array['7ebd10ee-5018-4e11-9525-80ab5c6aebee'],
       -- create_languagetypeuuids := (
       --     select array_agg(systaguuid)
       --     from public.systag
-      --     where systagparentid = 2 and systagtype in ('en', 'es')
+      --     where systagparentid = 2 and systagtype in ('en')
       -- ),
       create_modifiedby := 895 -- cheers! -rugg
     );

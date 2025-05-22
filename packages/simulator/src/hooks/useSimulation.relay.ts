@@ -1,10 +1,10 @@
 import { graphql } from "relay-runtime";
 
 graphql`
-  query useSimulationQuery @throwOnFieldError {
+  query useSimulationQuery($includeTime: Boolean = true) @throwOnFieldError {
     simulation @catch(to: NULL) {
       state
-      time
+      ...useSimulationTime_fragment @include(if: $includeTime)
     }
   }
 `;
@@ -20,13 +20,10 @@ graphql`
           ...useTaskName_fragment
           ...useTaskState_fragment
           ...useTaskTypes_fragment
+          ...useSimulationInstance_fragment
           ... on Task {
-            parent {
-              ... on Location {
-                name {
-                  value
-                }
-              }
+            state {
+              __typename
             }
           }
         }
@@ -37,6 +34,30 @@ graphql`
       state
       time
     }
+  }
+`;
+
+graphql`
+  fragment useSimulationTime_fragment on Simulation {
+    time
+  }
+`;
+
+graphql`
+  fragment useSimulationInstance_fragment on Task @throwOnFieldError {
+    id
+    parent {
+      ... on Location {
+        name {
+          value
+        }
+      }
+    }
+    ...useTaskChain_fragment
+    ...useTaskId_fragment
+    ...useTaskName_fragment
+    ...useTaskState_fragment
+    ...useTaskTypes_fragment
   }
 `;
 

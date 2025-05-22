@@ -1,5 +1,5 @@
 {
-  "name": "@tendrelhq/graphql-server",
+  "name": "@tendrelhq/graphql",
   "version": "0.33.0",
   "type": "module",
   "exports": {
@@ -12,28 +12,6 @@
     "check": "biome check --write && tsc --pretty",
     "generate": "grats && bun ./scripts/generate-legacy-schema.ts && bun ./scripts/print-schema.ts"
   },
-  "devDependencies": {
-    "@clerk/types": "^4.6.1",
-    "@eddeee888/gcg-typescript-resolver-files": "^0.8.1",
-    "@graphql-codegen/cli": "^5.0.2",
-    "@graphql-codegen/near-operation-file-preset": "^3.0.0",
-    "@graphql-codegen/schema-ast": "^4.1.0",
-    "@graphql-codegen/typed-document-node": "^5.0.9",
-    "@graphql-codegen/typescript": "^4.0.8",
-    "@graphql-codegen/typescript-graphql-files-modules": "^3.0.0",
-    "@graphql-codegen/typescript-resolvers": "^4.2.0",
-    "@graphql-tools/schema": "^10.0.4",
-    "@supabase/postgrest-js": "^1.19.4",
-    "@types/bun": "latest",
-    "@types/cors": "^2.8.17",
-    "@types/morgan": "^1.9.9",
-    "@types/negotiator": "^0.6.3",
-    "dedent": "^1.5.3",
-    "grats": "^0.0.31"
-  },
-  "peerDependencies": {
-    "typescript": "^5.6.3"
-  },
   "dependencies": {
     "@apollo/server": "^4.10.4",
     "@aws-sdk/client-s3": "^3.692.0",
@@ -41,7 +19,6 @@
     "@clerk/clerk-sdk-node": "^5.0.12",
     "@clerk/shared": "^2.3.1",
     "@formatjs/intl-localematcher": "^0.5.4",
-    "@js-temporal/polyfill": "^0.4.4",
     "@tendrelhq/core": "workspace:*",
     "cors": "^2.8.5",
     "dataloader": "^2.2.2",
@@ -56,5 +33,23 @@
     "pattycake": "^0.0.2",
     "postgres": "^3.4.4",
     "ts-pattern": "^5.5.0"
+  },
+  "devDependencies": {
+    "@clerk/types": "^4.6.1",
+    "@eddeee888/gcg-typescript-resolver-files": "^0.8.1",
+    "@graphql-codegen/cli": "^5.0.2",
+    "@graphql-codegen/near-operation-file-preset": "^3.0.0",
+    "@graphql-codegen/schema-ast": "^4.1.0",
+    "@graphql-codegen/typed-document-node": "^5.0.9",
+    "@graphql-codegen/typescript": "^4.0.8",
+    "@graphql-codegen/typescript-graphql-files-modules": "^3.0.0",
+    "@graphql-codegen/typescript-resolvers": "^4.2.0",
+    "@graphql-tools/schema": "^10.0.4",
+    "@supabase/postgrest-js": "^1.19.4",
+    "@types/cors": "^2.8.17",
+    "@types/morgan": "^1.9.9",
+    "@types/negotiator": "^0.6.3",
+    "dedent": "^1.5.3",
+    "grats": "^0.0.31"
   }
 }

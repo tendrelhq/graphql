@@ -4,7 +4,7 @@ To get started:
 
 0. Set up PostgreSQL
    - Run the scripts in [./sql/deploy/](./sql/deploy),
-     e.g. `psql -f ./sql/deploy/graphql-service-role.sql`
+     e.g. `psql -f ./sql/deploy/01-permissions.sql`
    - You can use [sqitch] if you feel like it. I use it during development.[^1]
    - If you get errors about things already existing, run the corresponding
      revert script and then re-run the deploy script.

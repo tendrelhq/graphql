@@ -1,4 +1,5 @@
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
+import assert from "node:assert";
 import { sql } from "@/datasources/postgres";
 import { schema } from "@/schema/final";
 import {
@@ -8,7 +9,7 @@ import {
   execute,
   paginateQuery,
 } from "@/test/prelude";
-import { assert, mapOrElse } from "@/util";
+import { mapOrElse } from "@/util";
 import { Faker, base, en } from "@faker-js/faker";
 import {
   AddLanguageTestDocument,
@@ -57,26 +58,13 @@ describe("[console] languages", () => {
                   "primary": true,
                 },
               },
-              {
-                "__typename": "EnabledLanguageEdge",
-                "node": {
-                  "__typename": "EnabledLanguage",
-                  "active": {
-                    "active": true,
-                  },
-                  "language": {
-                    "code": "es",
-                  },
-                  "primary": false,
-                },
-              },
             ],
             "pageInfo": {
               "__typename": "PageInfo",
               "hasNextPage": false,
               "hasPreviousPage": false,
             },
-            "totalCount": 2,
+            "totalCount": 1,
           },
         },
       }
@@ -91,43 +79,43 @@ describe("[console] languages", () => {
       },
     });
     expect(listQuery.errors).toBeFalsy();
-    expect(listQuery.data?.node.__typename).toBe("Organization");
-    if (listQuery.data?.node.__typename === "Organization") {
-      expect(listQuery.data.node.languages.totalCount).toBe(2);
-    }
+    assert(listQuery.data?.node.__typename === "Organization");
+    expect(listQuery.data.node.languages.totalCount).toBe(1);
   });
 
   test("add", async () => {
-    const [{ id: languageId }] = await sql`
-      select systaguuid as id
+    const rows = await sql<{ id: string; code: string }[]>`
+      select systaguuid as id, systagtype as code
       from public.systag
-      where systagparentid = 2 and systagtype = 'fr'
+      where systagparentid = 2 and systagtype in ('es', 'fr')
+      order by systagid
     `;
-
-    const addMutation = await execute(ctx, schema, AddLanguageTestDocument, {
-      customerId: CUSTOMER.id,
-      languageId: languageId,
-    });
-    expect(addMutation.errors).toBeFalsy();
-    expect(addMutation.data).toMatchInlineSnapshot(`
-      {
-        "enableLanguage": {
-          "__typename": "EnabledLanguageEdge",
-          "node": {
-            "__typename": "EnabledLanguage",
-            "active": {
-              "__typename": "ActivationStatus",
-              "active": true,
+    for (const row of rows) {
+      const addMutation = await execute(ctx, schema, AddLanguageTestDocument, {
+        customerId: CUSTOMER.id,
+        languageId: row.id,
+      });
+      expect(addMutation.errors).toBeFalsy();
+      expect(addMutation.data).toMatchInlineSnapshot(`
+        {
+          "enableLanguage": {
+            "__typename": "EnabledLanguageEdge",
+            "node": {
+              "__typename": "EnabledLanguage",
+              "active": {
+                "__typename": "ActivationStatus",
+                "active": true,
+              },
+              "language": {
+                "__typename": "Language",
+                "code": "${row.code}",
+              },
+              "primary": false,
             },
-            "language": {
-              "__typename": "Language",
-              "code": "fr",
-            },
-            "primary": false,
           },
-        },
-      }
-    `);
+        }
+      `);
+    }
 
     const listQuery = await execute(ctx, schema, ListLanguagesTestDocument, {
       customerId: CUSTOMER.id,
@@ -203,9 +191,7 @@ describe("[console] languages", () => {
         });
       },
       next(result) {
-        if (result.data?.node.__typename !== "Organization") {
-          throw "invariant violated";
-        }
+        assert(result.data?.node.__typename === "Organization");
         return result.data.node?.languages.pageInfo;
       },
     })) {

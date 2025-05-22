@@ -1,5 +1,5 @@
 import { map } from "@/util";
-import { Box, Text, type TextProps } from "ink";
+import { Box, Text, type TextProps, useStdin } from "ink";
 import { useMemo } from "react";
 import { match } from "ts-pattern";
 import config from "../config";
@@ -16,6 +16,7 @@ import {
   useTaskState,
   useTaskTypes,
 } from "../hooks/useTask";
+import { formatDuration } from "../lib";
 import { Id, type IdProps } from "./Id";
 
 interface TaskChainProps {
@@ -69,6 +70,11 @@ export function TaskChain({
       );
     })
     .exhaustive();
+
+  const stdin = useStdin();
+  if (!stdin.isRawModeSupported || config.force_raw_mode) {
+    console.log(`└─ chain.length: ${chain.edges.length}`);
+  }
 
   return <Chain />;
 }
@@ -148,11 +154,4 @@ export function TaskState(props: TaskStateProps) {
   }, [state]);
 
   return <Text>{text}</Text>;
-}
-
-export function formatDuration(ms: number): string {
-  if (ms <= 0) return "";
-  if (ms < 1000) return `${ms}ms`; // <1s
-  if (ms < 60_000) return `${ms / 1000}s`; // <60s
-  return `${Math.floor(ms / 60_000)}m ${formatDuration(ms % 60_000)}`.trim();
 }

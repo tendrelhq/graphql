@@ -1,0 +1,19 @@
+{
+  "target": {
+    "graphql": {
+      "cache-from": ["type=gha"],
+      "cache-to": ["type=gha,mode=max"],
+      "output": ["type=docker"]
+    },
+    "nginx": {
+      "cache-from": ["type=gha"],
+      "cache-to": ["type=gha,mode=max"],
+      "output": ["type=docker"]
+    },
+    "postgrest": {
+      "cache-from": ["type=gha"],
+      "cache-to": ["type=gha,mode=max"],
+      "output": ["type=docker"]
+    }
+  }
+}
