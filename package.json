@@ -1,12 +1,13 @@
 {
-  "name": "tendrel-monorepo",
+  "name": "tendrelhq",
   "private": true,
   "workspaces": ["packages/*"],
   "scripts": {
     "clean": "git clean -dffx -e .direnv -e .env.local -e .envrc -e .pre-commit-config.yaml -e /data -e postgrestools.jsonc",
     "format": "eval $TREEFMT",
-    "generate": "bun server:generate && bun format",
+    "generate": "bun server:generate",
     "server:build": "bun run --filter=./packages/server build",
+    "server:install": "bun install --filter=./packages/server",
     "server:generate": "bun run --filter=./packages/server generate",
     "server:start": "bun run --hot --no-clear-screen ./packages/server/bin/app.ts",
     "simulator:generate": "bun run --filter=./packages/simulator generate",

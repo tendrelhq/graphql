@@ -89,7 +89,7 @@
           listen_addresses = "0.0.0.0"; # so docker0 can connect
           log_statement = "all";
           logging_collector = false;
-          shared_preload_libraries = "pg_cron,plpgsql_check";
+          shared_preload_libraries = "pg_cron,pg_stat_statements,plpgsql_check";
         };
       };
 

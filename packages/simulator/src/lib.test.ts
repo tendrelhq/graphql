@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
-import { formatDuration } from "./Task";
+import { formatDuration } from "./lib";
 
-describe("Task", () => {
+describe("formatDuration", () => {
   test("formatDuration(500)", () => {
     expect(formatDuration(500)).toBe("500ms");
   });

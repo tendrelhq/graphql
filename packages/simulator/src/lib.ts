@@ -70,3 +70,10 @@ export async function createCustomer(
     return customer;
   });
 }
+
+export function formatDuration(ms: number): string {
+  if (ms <= 0) return "";
+  if (ms < 1000) return `${ms}ms`; // <1s
+  if (ms < 60_000) return `${ms / 1000}s`; // <60s
+  return `${Math.floor(ms / 60_000)}m ${formatDuration(ms % 60_000)}`.trim();
+}

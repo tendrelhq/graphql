@@ -1,6 +1,8 @@
+import assert from "node:assert";
 import chalk from "chalk";
-import { Text, useInput } from "ink";
+import { Text, useInput, useStdin } from "ink";
 import { useEffect, useState } from "react";
+import config from "../config";
 
 export type Props = {
   /**
@@ -55,6 +57,9 @@ export function Input({
   onChange,
   onSubmit,
 }: Props) {
+  const stdin = useStdin();
+  assert(stdin.isRawModeSupported && !config.force_raw_mode);
+
   const [state, setState] = useState({
     cursorOffset: (originalValue || "").length,
     cursorWidth: 0,

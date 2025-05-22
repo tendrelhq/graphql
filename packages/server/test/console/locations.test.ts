@@ -145,7 +145,7 @@ describe("[console] locations", () => {
     console.log(`
 To reproduce this test:
 
-  SEED=${seed} bun test languages.test --bail
+  SEED=${seed} bun test locations.test --bail
     `);
   });
 });

@@ -26,14 +26,13 @@
           pkgs.bun
           pkgs.docker-buildx
           pkgs.just
-          # pkgs.nodejs
+          pkgs.nodejs # needed by relay-compiler's entrypoint
           pkgs.openssl
           pkgs.python3
           pkgs.ruff
           pkgs.vtsls
         ];
         COMPOSE_BAKE = true;
-        COMPOSE_FILE = "./config/compose.yaml";
         # Janky af I know, but an easy way to silently fail successfully
         TREEFMT = "treefmt";
       };

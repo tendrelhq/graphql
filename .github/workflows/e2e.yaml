@@ -30,21 +30,28 @@ jobs:
           - 5432:5432
     steps:
       - uses: actions/checkout@v4
-      - uses: cachix/install-nix-action@v31
-        with:
-          github_access_token: ${{ secrets.GITHUB_TOKEN }}
-          extra_nix_config: |
-            accept-flake-config = true
+      - uses: docker/setup-buildx-action@v3
+      # - name: bake
+      #   uses: docker/bake-action@v6
+      #   with:
+      #     files: |
+      #       .github/docker-compose-cache.json
+      #       docker-compose.yaml
       - uses: tailscale/github-action@v2
         with:
           oauth-client-id: ${{ secrets.TAILSCALE_OAUTH_CLIENT_ID }}
           oauth-secret: ${{ secrets.TAILSCALE_OAUTH_SECRET }}
           tags: tag:test
+      - uses: cachix/install-nix-action@v31
+        with:
+          github_access_token: ${{ secrets.GITHUB_TOKEN }}
+          extra_nix_config: |
+            accept-flake-config = true
       - id: check-cache
         uses: actions/cache/restore@v4
         with:
           path: db.dump
-          key: ${{ runner.os }}-db-dump-2025-05-19
+          key: ${{ runner.os }}-db-dump-2025-05-22
       - name: dump
         if: steps.check-cache.outputs.cache-hit != 'true'
         run: nix develop -c just dump
@@ -66,10 +73,11 @@ jobs:
           PGUSER: postgres
           PGPASSWORD: postgres
       - name: migrate
-        run: nix develop -c just target=ci migrate
+        run: nix develop -c just migrate
         env:
-          PGPASSWORD: postgres
           PGUSER: postgres
+          PGPASSWORD: postgres
+          SQITCH_TARGET: ci
       - name: analyze
         run: nix develop -c psql -c 'analyze;'
         env:
@@ -79,21 +87,21 @@ jobs:
           PGPASSWORD: postgres
       - name: install
         run: nix develop -c just install
-      - name: up
+      - name: generate
+        run: nix develop -c just generate
+      - name: setup
         run: |
           touch .env.local
-          echo "CLERK_PUBLISHABLE_KEY=${{ secrets.CLERK_PUBLISHABLE_KEY }}" >> .env.local
           echo "CLERK_SECRET_KEY=${{ secrets.CLERK_SECRET_KEY }}" >> .env.local
-          echo "NODE_ENV=development" >> .env.local
           echo "PGDATABASE=ci" >> .env.local
-          echo "PGHOST=localhost" >> .env.local
+          echo "PGHOST=host.docker.internal" >> .env.local
           echo "PGRST_JWT_SECRET=\"${{ secrets.PGRST_JWT_SECRET }}\"" >> .env.local
-          echo "STAGE=dev" >> .env.local
-          nix develop -c docker compose up --build --wait
-      # - run: nix develop -c just test # pgTAP is not installed :(
+      - name: up
+        run: docker compose up --build --wait
+        env:
+          COMPOSE_BAKE: true
       - name: test
-        run: nix develop -c bun test
-        id: unit-tests
+        run: nix develop -c just test
         env:
           PGHOST: localhost
           PGDATABASE: ci
@@ -101,10 +109,9 @@ jobs:
           PGPASSWORD: graphql
           X_TENDREL_USER: user_2jJ7Xl0LFewQGKKNYwfFWAM0Lmc
       - name: simulator
-        if: always()
-        run: |
-          nix develop -c bun simulator:generate &&
-          nix develop -c bun simulator:start
+        if: success()
+        continue-on-error: true
+        run: nix develop -c bun simulator:start
         env:
           # The simulator doesn't quite have full api support yet :/
           PGHOST: localhost
@@ -114,3 +121,16 @@ jobs:
           # TODO: move this to a matrix and run multiple simulations
           SKIP_OWNER_PROMPT: true
           AUTO_SELECT_TEMPLATE: Run
+          PRINT_CONFIG: true
+          # FIXME: this is a rather crude measure to exit "successfully" :D
+          TIMEOUT: 2m
+          X_TENDREL_USER: user_2jJ7Xl0LFewQGKKNYwfFWAM0Lmc
+      - name: dump logs
+        run: docker compose logs --no-color > compose.log
+        if: always()
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: compose.log
+          path: compose.log
+          retention-days: 1

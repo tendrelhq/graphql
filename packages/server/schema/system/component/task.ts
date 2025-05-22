@@ -278,7 +278,11 @@ export class Task implements Assignable, Component, Refetchable, Trackable {
           __typename: "TimestampValue" as const,
           timestamp: match(input.value)
             .with({ timestamp: P.string }, v =>
-              Temporal.Instant.from(v.timestamp).epochSeconds.toString(),
+              map(
+                // We store these as epoch second. Don't ask me why.
+                Temporal.Instant.from(v.timestamp),
+                t => (t.epochMilliseconds / 1000).toString(),
+              ),
             )
             .otherwise(() => null),
         },
