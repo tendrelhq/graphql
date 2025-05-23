@@ -235,5 +235,6 @@ end $function$;
 
 
 REVOKE ALL ON FUNCTION engine0.apply_field_edit(text,text,anyelement,text,engine0.on_error) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION engine0.apply_field_edit(text,text,anyelement,text,engine0.on_error) TO PUBLIC;
+GRANT EXECUTE ON FUNCTION engine0.apply_field_edit(text,text,anyelement,text,engine0.on_error) TO tendreladmin WITH GRANT OPTION;
 GRANT EXECUTE ON FUNCTION engine0.apply_field_edit(text,text,anyelement,text,engine0.on_error) TO graphql;
-GRANT EXECUTE ON FUNCTION engine0.apply_field_edit(text,text,anyelement,text,engine0.on_error) TO tendrelservice;

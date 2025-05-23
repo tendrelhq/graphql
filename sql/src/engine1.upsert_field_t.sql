@@ -245,5 +245,6 @@ end $function$;
 
 
 REVOKE ALL ON FUNCTION engine1.upsert_field_t(text,text,bigint,text,text,text,integer,text,text,boolean,boolean,boolean,text,text,text) FROM PUBLIC;
-GRANT EXECUTE ON FUNCTION engine1.upsert_field_t(text,text,bigint,text,text,text,integer,text,text,boolean,boolean,boolean,text,text,text) TO tendrelservice;
+GRANT EXECUTE ON FUNCTION engine1.upsert_field_t(text,text,bigint,text,text,text,integer,text,text,boolean,boolean,boolean,text,text,text) TO PUBLIC;
+GRANT EXECUTE ON FUNCTION engine1.upsert_field_t(text,text,bigint,text,text,text,integer,text,text,boolean,boolean,boolean,text,text,text) TO tendreladmin WITH GRANT OPTION;
 GRANT EXECUTE ON FUNCTION engine1.upsert_field_t(text,text,bigint,text,text,text,integer,text,text,boolean,boolean,boolean,text,text,text) TO graphql;

@@ -66,17 +66,17 @@ if read_ownerentityuuid isNull
 	else allowners = false;
 end if;
 
-if read_custagsenddeleted isNull and read_custagsenddeleted = false
+if read_custagsenddeleted = false
 	then tempcustagsenddeleted = Array[false];
 	else tempcustagsenddeleted = Array[true,false];
 end if;
 
-if read_custagsenddrafts isNull and read_custagsenddrafts = false
+if read_custagsenddrafts = false
 	then tempcustagsenddrafts = Array[false];
 	else tempcustagsenddrafts = Array[true,false];
 end if;
 
-if read_custagsendinactive isNull and read_custagsendinactive = false
+if read_custagsendinactive = false
 	then tempcustagsendinactive = Array[true];
 	else tempcustagsendinactive = Array[true,false];
 end if;
@@ -110,10 +110,12 @@ if read_allcustags = true
 	ei.entityinstancecornerstoneorder as custagorder,
 	ei.entityinstancedeleted, 
 	ei.entityinstancedraft,
-	case when ei.entityinstanceenddate notnull and ei.entityinstanceenddate::Date < now()::date
-		then false
-		else true
-		end as entityinstanceactive
+	case when ei.entityinstancedeleted then false
+			when ei.entityinstancedraft then false
+			when ei.entityinstanceenddate::Date > now()::date 
+				and ei.entityinstancestartdate < now() then false
+			else true
+	end as entityinstanceactive
 from entity.entityinstance ei
 	Join (select customerid,customeruuid, customerentityuuid  from entity.crud_customer_read_min(read_ownerentityuuid,null, null, allowners, read_custagsenddeleted,read_custagsenddrafts,read_custagsendinactive,null)) as cust  
 		on cust.customerentityuuid = ei.entityinstanceownerentityuuid
@@ -159,10 +161,12 @@ if read_custagentityuuid notNull and read_ownerentityuuid notNull
 	ei.entityinstancecornerstoneorder as custagorder,
 	ei.entityinstancedeleted, 
 	ei.entityinstancedraft,
-	case when ei.entityinstanceenddate notnull and ei.entityinstanceenddate::Date < now()::date
-		then false
-		else true
-		end as entityinstanceactive
+	case when ei.entityinstancedeleted then false
+			when ei.entityinstancedraft then false
+			when ei.entityinstanceenddate::Date > now()::date 
+				and ei.entityinstancestartdate < now() then false
+			else true
+	end as entityinstanceactive
 		from entity.entityinstance ei
 			Join (select customerid,customeruuid, customerentityuuid  from entity.crud_customer_read_min(read_ownerentityuuid,null, null, allowners, read_custagsenddeleted,read_custagsenddrafts,read_custagsendinactive,null)) as cust  
 				on cust.customerentityuuid = ei.entityinstanceownerentityuuid
@@ -209,10 +213,12 @@ if read_custagparententityuuid notNull and read_ownerentityuuid notNull
 	ei.entityinstancecornerstoneorder as custagorder,
 	ei.entityinstancedeleted, 
 	ei.entityinstancedraft,
-	case when ei.entityinstanceenddate notnull and ei.entityinstanceenddate::Date < now()::date
-		then false
-		else true
-		end as entityinstanceactive
+	case when ei.entityinstancedeleted then false
+			when ei.entityinstancedraft then false
+			when ei.entityinstanceenddate::Date > now()::date 
+				and ei.entityinstancestartdate < now() then false
+			else true
+	end as entityinstanceactive
 from entity.entityinstance ei
 	Join (select customerid,customeruuid, customerentityuuid  from entity.crud_customer_read_min(read_ownerentityuuid,null, null, allowners, read_custagsenddeleted,read_custagsenddrafts,read_custagsendinactive,null)) as cust  
 		on cust.customerentityuuid = ei.entityinstanceownerentityuuid
@@ -259,10 +265,12 @@ if read_custagparententityuuid isNull and read_ownerentityuuid notNull
 	ei.entityinstancecornerstoneorder as custagorder,
 	ei.entityinstancedeleted, 
 	ei.entityinstancedraft,
-	case when ei.entityinstanceenddate notnull and ei.entityinstanceenddate::Date < now()::date
-		then false
-		else true
-		end as entityinstanceactive
+	case when ei.entityinstancedeleted then false
+			when ei.entityinstancedraft then false
+			when ei.entityinstanceenddate::Date > now()::date 
+				and ei.entityinstancestartdate < now() then false
+			else true
+	end as entityinstanceactive
 from entity.entityinstance ei
 	Join (select customerid,customeruuid, customerentityuuid  from entity.crud_customer_read_min(read_ownerentityuuid,null, null, allowners,read_custagsenddeleted,read_custagsenddrafts,read_custagsendinactive, null)) as cust  
 		on cust.customerentityuuid = ei.entityinstanceownerentityuuid

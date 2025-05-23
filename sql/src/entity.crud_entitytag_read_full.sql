@@ -2,7 +2,7 @@
 -- Type: FUNCTION ; Name: entity.crud_entitytag_read_full(uuid,uuid,uuid,uuid,uuid,boolean,boolean,boolean,boolean,uuid); Owner: tendreladmin
 
 CREATE OR REPLACE FUNCTION entity.crud_entitytag_read_full(read_ownerentityuuid uuid, read_entitytagentityuuid uuid, read_entitytagentityinstanceuuid uuid, read_entitytagtemplateentityuuid uuid, read_entitytagcustagentityuuid uuid, read_allentitytags boolean, read_entitytagsenddeleted boolean, read_entitytagsenddrafts boolean, read_entitytagsendinactive boolean, read_languagetranslationtypeentityuuid uuid)
- RETURNS TABLE(languagetranslationtypeentityuuid uuid, entitytaguuid uuid, entitytagownerentityuuid uuid, entitytagownername text, entitytagentityinstanceentityuuid uuid, entitytagentitytemplateentityuuid uuid, entitytagentitytemplatename text, entitytagcreateddate timestamp with time zone, entitytagmodifieddate timestamp with time zone, entitytagstartdate timestamp with time zone, entitytagenddate timestamp with time zone, entitytagrefid bigint, entitytagrefuuid text, entitytagmodifiedbyuuid text, entitytagcustagentityuuid uuid, entitytagcustagtype text, entitytagsenddeleted boolean, entitytagsenddrafts boolean, entitytagsendinactive boolean)
+ RETURNS TABLE(languagetranslationtypeentityuuid uuid, entitytaguuid uuid, entitytagownerentityuuid uuid, entitytagownername text, entitytagentityinstanceentityuuid uuid, entitytagentityinstanceentityname text, entitytagentitytemplateentityuuid uuid, entitytagentitytemplatename text, entitytagcreateddate timestamp with time zone, entitytagmodifieddate timestamp with time zone, entitytagstartdate timestamp with time zone, entitytagenddate timestamp with time zone, entitytagrefid bigint, entitytagrefuuid text, entitytagmodifiedbyuuid text, entitytagcustagparententityuuid uuid, entitytagparentcustagtype text, entitytagcustagentityuuid uuid, entitytagcustagtype text, entitytagsenddeleted boolean, entitytagsenddrafts boolean, entitytagsendinactive boolean)
  LANGUAGE plpgsql
  ROWS 1e+07
 AS $function$
@@ -70,6 +70,7 @@ if read_allentitytags = true
 	    et.entitytagownerentityuuid,
 		customer.customername,
 	    et.entitytagentityinstanceentityuuid,
+		einstance.entityinstancename,
 	    et.entitytagentitytemplateentityuuid,
 		etemplate.entitytemplatename,
 	    et.entitytagcreateddate,
@@ -79,26 +80,32 @@ if read_allentitytags = true
 	    et.entitytagrefid,
 	    et.entitytagrefuuid,
 	    et.entitytagmodifiedbyuuid,
+		custag.custagparententityuuid,  
+		custag.custagparentname,
 	    et.entitytagcustagentityuuid,
-		custag.custagtype,
+		custag.custagname,
 		et.entitytagdeleted boolean,
 		et.entitytagdraft boolean,
-		case when et.entitytagenddate notnull and et.entitytagenddate::Date < now()::date
-			then false
-			else true
-		end as entitytaginactive
+		case when et.entitytagdeleted then false
+			when et.entitytagdraft then false
+			when et.entitytagenddate::Date > now()::date 
+				and et.entitytagstartdate < now() then false
+		else true
+	end as entitytagactive
 	from entity.entitytag et
 		inner join (select * 
 						from entity.crud_customer_read_full(null,null, null, true, read_entitytagsenddeleted,read_entitytagsenddrafts,read_entitytagsendinactive,read_languagetranslationtypeentityuuid)) customer
 			on et.entitytagownerentityuuid = customerentityuuid
 				and et.entitytagdeleted = ANY (tempentitytagsenddeleted)
 				and et.entitytagdraft = ANY (tempentitytagsenddrafts)
-		inner join (select * 
+		left join (select * 
 						from entity.crud_entitytemplate_read_full(null, null, null,null, null,read_languagetranslationtypeentityuuid)) etemplate
 			on et.entitytagentitytemplateentityuuid = etemplate.entitytemplateuuid
-		inner join (select * from entity.crud_custag_read_min(null,null,null, null, true,read_entitytagsenddeleted ,read_entitytagsenddrafts ,read_entitytagsendinactive ,read_languagetranslationtypeentityuuid)) custag
+		left join (select * from entity.crud_entityinstance_read_full(null,null,null,null,null,null,true,null,null,null,null,read_languagetranslationtypeentityuuid)) einstance
+			on et.entitytagentityinstanceentityuuid = einstance.entityinstanceuuid		
+		inner join (select * from entity.crud_custag_read_full(null,null,null, null, true,read_entitytagsenddeleted ,read_entitytagsenddrafts ,read_entitytagsendinactive ,read_languagetranslationtypeentityuuid)) custag
 			on et.entitytagcustagentityuuid = custag.custagentityuuid) as foo
-		where foo.entitytaginactive = Any (tempentitytagsendinactive);
+		where foo.entitytagactive = Any (tempentitytagsendinactive);
 	return;
 end if;
 
@@ -111,6 +118,7 @@ if read_entitytagentityuuid notNull
 	    et.entitytagownerentityuuid,
 		customer.customername,
 	    et.entitytagentityinstanceentityuuid,
+		einstance.entityinstancename,
 	    et.entitytagentitytemplateentityuuid,
 		etemplate.entitytemplatename,
 	    et.entitytagcreateddate,
@@ -120,14 +128,18 @@ if read_entitytagentityuuid notNull
 	    et.entitytagrefid,
 	    et.entitytagrefuuid,
 	    et.entitytagmodifiedbyuuid,
+		custag.custagparententityuuid,  
+		custag.custagparentname,
 	    et.entitytagcustagentityuuid,
 		custag.custagtype,
 		et.entitytagdeleted boolean,
 		et.entitytagdraft boolean,
-		case when et.entitytagenddate notnull and et.entitytagenddate::Date < now()::date
-			then false
-			else true
-		end as entitytaginactive
+		case when et.entitytagdeleted then false
+			when et.entitytagdraft then false
+			when et.entitytagenddate::Date > now()::date 
+				and et.entitytagstartdate < now() then false
+		else true
+	end as entitytagactive
 	from entity.entitytag et
 		inner join (select * 
 						from entity.crud_customer_read_full(null,null, null, true,read_entitytagsenddeleted,read_entitytagsenddrafts,read_entitytagsendinactive, read_languagetranslationtypeentityuuid)) customer
@@ -135,12 +147,14 @@ if read_entitytagentityuuid notNull
 				and et.entitytaguuid = read_entitytagentityuuid
 				and et.entitytagdeleted = ANY (tempentitytagsenddeleted)
 				and et.entitytagdraft = ANY (tempentitytagsenddrafts)
-		inner join (select * 
+		left join (select * 
 						from entity.crud_entitytemplate_read_full(null, null, null,null, null,read_languagetranslationtypeentityuuid)) etemplate
 			on et.entitytagentitytemplateentityuuid = etemplate.entitytemplateuuid
-		inner join (select * from entity.crud_custag_read_min(null,null,null, null, true,read_entitytagsenddeleted ,read_entitytagsenddrafts ,read_entitytagsendinactive ,read_languagetranslationtypeentityuuid)) custag
+		left join (select * from entity.crud_entityinstance_read_full(null,null,null,null,null,null,true,null,null,null,null,read_languagetranslationtypeentityuuid)) einstance
+			on et.entitytagentityinstanceentityuuid = einstance.entityinstanceuuid	
+		inner join (select * from entity.crud_custag_read_full(null,null,null, null, true,read_entitytagsenddeleted ,read_entitytagsenddrafts ,read_entitytagsendinactive ,read_languagetranslationtypeentityuuid)) custag
 			on et.entitytagcustagentityuuid = custag.custagentityuuid) as foo
-		where foo.entitytaginactive = Any (tempentitytagsendinactive);
+		where foo.entitytagactive = Any (tempentitytagsendinactive);
 	return;
 end if;
 
@@ -154,6 +168,7 @@ if read_entitytagentityinstanceuuid notNull
 	    et.entitytagownerentityuuid,
 		customer.customername,
 	    et.entitytagentityinstanceentityuuid,
+		einstance.entityinstancename,
 	    et.entitytagentitytemplateentityuuid,
 		etemplate.entitytemplatename,
 	    et.entitytagcreateddate,
@@ -163,28 +178,34 @@ if read_entitytagentityinstanceuuid notNull
 	    et.entitytagrefid,
 	    et.entitytagrefuuid,
 	    et.entitytagmodifiedbyuuid,
+		custag.custagparententityuuid,  
+		custag.custagparentname,
 	    et.entitytagcustagentityuuid,
 		custag.custagtype,
 		et.entitytagdeleted boolean,
 		et.entitytagdraft boolean,
-		case when et.entitytagenddate notnull and et.entitytagenddate::Date < now()::date
-			then false
-			else true
-		end as entitytaginactive
+		case when et.entitytagdeleted then false
+			when et.entitytagdraft then false
+			when et.entitytagenddate::Date > now()::date 
+				and et.entitytagstartdate < now() then false
+		else true
+	end as entitytagactive
 	from entity.entitytag et
 		inner join (select * 
 						from entity.crud_customer_read_full(null,null, null, true,read_entitytagsenddeleted,read_entitytagsenddrafts,read_entitytagsendinactive, read_languagetranslationtypeentityuuid)) customer
 			on et.entitytagownerentityuuid = customerentityuuid
 				and et.entitytagdeleted = ANY (tempentitytagsenddeleted)
 				and et.entitytagdraft = ANY (tempentitytagsenddrafts)
-		inner join (select * 
+		left join (select * 
 						from entity.crud_entitytemplate_read_full(null, null, null,null, null,read_languagetranslationtypeentityuuid)) etemplate
 			on et.entitytagentitytemplateentityuuid = etemplate.entitytemplateuuid
-		inner join (select * from entity.crud_custag_read_min(null,null,null, null, true,read_entitytagsenddeleted ,read_entitytagsenddrafts ,read_entitytagsendinactive ,read_languagetranslationtypeentityuuid)) custag
+		inner join (select * from entity.crud_custag_read_full(null,null,null, null, true,read_entitytagsenddeleted ,read_entitytagsenddrafts ,read_entitytagsendinactive ,read_languagetranslationtypeentityuuid)) custag
 			on et.entitytagcustagentityuuid = custag.custagentityuuid
+		left join (select * from entity.crud_entityinstance_read_full(null,null,null,null,null,null,true,null,null,null,null,read_languagetranslationtypeentityuuid)) einstance
+			on et.entitytagentityinstanceentityuuid = einstance.entityinstanceuuid	
 	where et.entitytagentityinstanceentityuuid = read_entitytagentityinstanceuuid 
 		and et.entitytagownerentityuuid = read_ownerentityuuid) as foo
-		where foo.entitytaginactive = Any (tempentitytagsendinactive);
+		where foo.entitytagactive = Any (tempentitytagsendinactive);
 	return;
 end if;	
 
@@ -199,6 +220,7 @@ if read_entitytagtemplateentityuuid  notNull
 	    et.entitytagownerentityuuid,
 		customer.customername,
 	    et.entitytagentityinstanceentityuuid,
+		einstance.entityinstancename,
 	    et.entitytagentitytemplateentityuuid,
 		etemplate.entitytemplatename,
 	    et.entitytagcreateddate,
@@ -208,28 +230,34 @@ if read_entitytagtemplateentityuuid  notNull
 	    et.entitytagrefid,
 	    et.entitytagrefuuid,
 	    et.entitytagmodifiedbyuuid,
+		custag.custagparententityuuid,  
+		custag.custagparentname,
 	    et.entitytagcustagentityuuid,
 		custag.custagtype,
 		et.entitytagdeleted boolean,
 		et.entitytagdraft boolean,
-		case when et.entitytagenddate notnull and et.entitytagenddate::Date < now()::date
-			then false
-			else true
-		end as entitytaginactive
+		case when et.entitytagdeleted then false
+			when et.entitytagdraft then false
+			when et.entitytagenddate::Date > now()::date 
+				and et.entitytagstartdate < now() then false
+		else true
+	end as entitytagactive
 	from entity.entitytag et
 		inner join (select * 
 						from entity.crud_customer_read_full(null,null, null, true,read_entitytagsenddeleted,read_entitytagsenddrafts,read_entitytagsendinactive, read_languagetranslationtypeentityuuid)) customer
 			on et.entitytagownerentityuuid = customerentityuuid
 				and et.entitytagdeleted = ANY (tempentitytagsenddeleted)
 				and et.entitytagdraft = ANY (tempentitytagsenddrafts)
-		inner join (select * 
+		left join (select * 
 						from entity.crud_entitytemplate_read_full(null, null, null,null, null,read_languagetranslationtypeentityuuid)) etemplate
 			on et.entitytagentitytemplateentityuuid = etemplate.entitytemplateuuid
-		inner join (select * from entity.crud_custag_read_min(null,null,null, null, true,read_entitytagsenddeleted ,read_entitytagsenddrafts ,read_entitytagsendinactive ,read_languagetranslationtypeentityuuid)) custag
+		left join (select * from entity.crud_entityinstance_read_full(null,null,null,null,null,null,true,null,null,null,null,read_languagetranslationtypeentityuuid)) einstance
+			on et.entitytagentityinstanceentityuuid = einstance.entityinstanceuuid	
+		inner join (select * from entity.crud_custag_read_full(null,null,null, null, true,read_entitytagsenddeleted ,read_entitytagsenddrafts ,read_entitytagsendinactive ,read_languagetranslationtypeentityuuid)) custag
 			on et.entitytagcustagentityuuid = custag.custagentityuuid
 	where et.entitytagentitytemplateentityuuid = read_entitytagtemplateentityuuid  
 		and et.entitytagownerentityuuid = read_ownerentityuuid) as foo
-		where foo.entitytaginactive = Any (tempentitytagsendinactive);
+		where foo.entitytagactive = Any (tempentitytagsendinactive);
 	return;
 end if;	
 
@@ -244,6 +272,7 @@ if read_entitytagcustagentityuuid  notNull
 	    et.entitytagownerentityuuid,
 		customer.customername,
 	    et.entitytagentityinstanceentityuuid,
+		einstance.entityinstancename,
 	    et.entitytagentitytemplateentityuuid,
 		etemplate.entitytemplatename,
 	    et.entitytagcreateddate,
@@ -253,28 +282,34 @@ if read_entitytagcustagentityuuid  notNull
 	    et.entitytagrefid,
 	    et.entitytagrefuuid,
 	    et.entitytagmodifiedbyuuid,
+		custag.custagparententityuuid,  
+		custag.custagparentname,
 	    et.entitytagcustagentityuuid,
 		custag.custagtype,
 		et.entitytagdeleted boolean,
 		et.entitytagdraft boolean,
-		case when et.entitytagenddate notnull and et.entitytagenddate::Date < now()::date
-			then false
-			else true
-		end as entitytaginactive
+		case when et.entitytagdeleted then false
+			when et.entitytagdraft then false
+			when et.entitytagenddate::Date > now()::date 
+				and et.entitytagstartdate < now() then false
+		else true
+	end as entitytagactive
 	from entity.entitytag et
 		inner join (select * 
 						from entity.crud_customer_read_full(null,null, null, true, read_entitytagsenddeleted,read_entitytagsenddrafts,read_entitytagsendinactive,read_languagetranslationtypeentityuuid)) customer
 			on et.entitytagownerentityuuid = customerentityuuid
 				and et.entitytagdeleted = ANY (tempentitytagsenddeleted)
 				and et.entitytagdraft = ANY (tempentitytagsenddrafts)
-		inner join (select * 
+		left join (select * 
 						from entity.crud_entitytemplate_read_full(null, null, null,null, null,read_languagetranslationtypeentityuuid)) etemplate
 			on et.entitytagentitytemplateentityuuid = etemplate.entitytemplateuuid
-		inner join (select * from entity.crud_custag_read_min(null,null,null, null, true,read_entitytagsenddeleted ,read_entitytagsenddrafts ,read_entitytagsendinactive ,read_languagetranslationtypeentityuuid)) custag
+		left join (select * from entity.crud_entityinstance_read_full(null,null,null,null,null,null,true,null,null,null,null,read_languagetranslationtypeentityuuid)) einstance
+			on et.entitytagentityinstanceentityuuid = einstance.entityinstanceuuid	
+		inner join (select * from entity.crud_custag_read_full(null,null,null, null, true,read_entitytagsenddeleted ,read_entitytagsenddrafts ,read_entitytagsendinactive ,read_languagetranslationtypeentityuuid)) custag
 			on et.entitytagcustagentityuuid = custag.custagentityuuid
 	where et.entitytagcustagentityuuid = read_entitytagcustagentityuuid
 		and et.entitytagownerentityuuid = read_ownerentityuuid) as foo
-		where foo.entitytaginactive = Any (tempentitytagsendinactive);
+		where foo.entitytagactive = Any (tempentitytagsendinactive);
 	return;
 end if;	
 
@@ -289,6 +324,7 @@ if read_entitytagtemplateentityuuid  notNull
 	    et.entitytagownerentityuuid,
 		customer.customername,
 	    et.entitytagentityinstanceentityuuid,
+		einstance.entityinstancename,
 	    et.entitytagentitytemplateentityuuid,
 		etemplate.entitytemplatename,
 	    et.entitytagcreateddate,
@@ -298,29 +334,35 @@ if read_entitytagtemplateentityuuid  notNull
 	    et.entitytagrefid,
 	    et.entitytagrefuuid,
 	    et.entitytagmodifiedbyuuid,
+		custag.custagparententityuuid,  
+		custag.custagparentname,
 	    et.entitytagcustagentityuuid,
 		custag.custagtype,
 		et.entitytagdeleted boolean,
 		et.entitytagdraft boolean,
-		case when et.entitytagenddate notnull and et.entitytagenddate::Date < now()::date
-			then false
-			else true
-		end as entitytaginactive
+		case when et.entitytagdeleted then false
+			when et.entitytagdraft then false
+			when et.entitytagenddate::Date > now()::date 
+				and et.entitytagstartdate < now() then false
+		else true
+	end as entitytagactive
 	from entity.entitytag et
 		inner join (select * 
 						from entity.crud_customer_read_full(null,null, null, true, read_entitytagsenddeleted,read_entitytagsenddrafts,read_entitytagsendinactive,read_languagetranslationtypeentityuuid)) customer
 			on et.entitytagownerentityuuid = customerentityuuid
 				and et.entitytagdeleted = ANY (tempentitytagsenddeleted)
 				and et.entitytagdraft = ANY (tempentitytagsenddrafts)
-		inner join (select * 
+		left join (select * 
 						from entity.crud_entitytemplate_read_full(null, null, null,null, null,read_languagetranslationtypeentityuuid)) etemplate
 			on et.entitytagentitytemplateentityuuid = etemplate.entitytemplateuuid
-		inner join (select * from entity.crud_custag_read_min(null,null,null, null, true,read_entitytagsenddeleted ,read_entitytagsenddrafts ,read_entitytagsendinactive ,read_languagetranslationtypeentityuuid)) custag
+		left join (select * from entity.crud_entityinstance_read_full(null,null,null,null,null,null,true,null,null,null,null,read_languagetranslationtypeentityuuid)) einstance
+			on et.entitytagentityinstanceentityuuid = einstance.entityinstanceuuid	
+		inner join (select * from entity.crud_custag_read_full(null,null,null, null, true,read_entitytagsenddeleted ,read_entitytagsenddrafts ,read_entitytagsendinactive ,read_languagetranslationtypeentityuuid)) custag
 			on et.entitytagcustagentityuuid = custag.custagentityuuid
 	where et.entitytagentitytemplateentityuuid = read_entitytagtemplateentityuuid  
 		and et.entitytagcustagentityuuid = read_entitytagcustagentityuuid
 		and et.entitytagownerentityuuid = read_ownerentityuuid) as foo
-		where foo.entitytaginactive = Any (tempentitytagsendinactive);
+		where foo.entitytagactive = Any (tempentitytagsendinactive);
 	return;
 end if;	
 

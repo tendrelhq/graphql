@@ -5,7 +5,11 @@ CREATE OR REPLACE PROCEDURE entity.crud_entitydescription_update(IN update_entit
  LANGUAGE plpgsql
 AS $procedure$
 Declare
-
+	tempcustomerid bigint;
+	tempcustomeruuid text;
+	templanguagetypeid bigint;
+	templanguagetypeuuid text;
+	templocationid bigint;
 Begin
 
 -- Once created, the only things that can change after something is publsihed are ???
@@ -38,21 +42,13 @@ End if;
  				entitydescriptionname  = case when update_entitydescriptionname notnull and (coalesce(update_entitydescriptionname,'') <> '')
 												then update_entitydescriptionname
 												else entitydescriptionname end,
- 				entitydescriptionsoplink  = case when update_entitydescriptionsoplink notnull 
-												then update_entitydescriptionname
-												else entitydescriptionsoplink end,
- 				entitydescriptionfile  = case when update_entitydescriptionname notnull 
-												then update_entitydescriptionname
-												else entitydescriptionfile end,
- 				entitydescriptionicon  = case when update_entitydescriptionname notnull 
-												then update_entitydescriptionname
-												else entitydescriptionicon end,												
+ 				entitydescriptionsoplink  = update_entitydescriptionsoplink,
+ 				entitydescriptionfile  = update_entitydescriptionfile,
+ 				entitydescriptionicon  = update_entitydescriptionicon,													
  				entitydescriptionmimetypeuuid  = case when update_entitydescriptionmimetypeuuid notnull 
 												then update_entitydescriptionmimetypeuuid
 												else entitydescriptionmimetypeuuid end,
-				entitydescriptionexternalid = case when update_entitydescriptionexternalid notnull 
-												then update_entitydescriptionexternalid
-												else entitydescriptionexternalid end,
+				entitydescriptionexternalid = update_entitydescriptionexternalid,
 				entitydescriptionexternalsystementityuuid = case when update_entitydescriptionexternalsystementityuuid notnull 
 														then update_entitydescriptionexternalsystementityuuid
 														else entitydescriptionexternalsystementityuuid end,
@@ -62,11 +58,23 @@ End if;
 				entitydescriptiondraft = case when update_entitydescriptiondraft notnull 
 										then update_entitydescriptiondraft
 										else entitydescriptiondraft end,
-
 				entitydescriptionstartdate = case when update_entitydescriptionstartdate notnull 
 										then update_entitydescriptionstartdate
 										else entitydescriptionstartdate end,
-	 			entitydescriptionenddate = update_entitydescriptionenddate,
+				  				entitydescriptionenddate = case 	when entitydescriptiondeleted = true 
+											and entitydescriptionenddate isNull
+											and update_entitydescriptionenddate isNull then now()
+										when entitydescriptiondeleted = true 
+											and entitydescriptionenddate isNull
+											and entitydescriptionenddate notNull then entitydescriptionenddate 
+										when entitydescriptiondeleted = true 
+											and entitydescriptionenddate notNull
+											and entitydescriptionenddate isNull then entitydescriptionenddate
+										when entitydescriptiondeleted = true and entitydescriptionenddate notNull
+											and entitydescriptionenddate notNull and entitydescriptionenddate <> entitydescriptionenddate
+											then entitydescriptionenddate	
+										else null
+									end,
 				entitydescriptionmodifieddate=now(),
 				entitydescriptionmodifiedby = update_entitydescriptionmodifiedbyuuid
 		WHERE entitydescriptionuuid = update_entitydescriptionuuid;
@@ -75,28 +83,36 @@ End if;
 			SET entitydescriptionname  = case when update_entitydescriptionname notnull and (coalesce(update_entitydescriptionname,'') <> '')
 												then update_entitydescriptionname
 												else entitydescriptionname end,
- 				entitydescriptionsoplink  = case when update_entitydescriptionsoplink notnull 
-												then update_entitydescriptionname
-												else entitydescriptionsoplink end,
- 				entitydescriptionfile  = case when update_entitydescriptionname notnull 
-												then update_entitydescriptionname
-												else entitydescriptionfile end,
- 				entitydescriptionicon  = case when update_entitydescriptionname notnull 
-												then update_entitydescriptionname
-												else entitydescriptionicon end,												
+ 				entitydescriptionsoplink  = update_entitydescriptionsoplink,
+ 				entitydescriptionfile  = update_entitydescriptionfile,
+ 				entitydescriptionicon  = update_entitydescriptionicon,												
  				entitydescriptionmimetypeuuid  = case when update_entitydescriptionmimetypeuuid notnull 
 												then update_entitydescriptionmimetypeuuid
 												else entitydescriptionmimetypeuuid end,
-				entitydescriptionexternalid = case when update_entitydescriptionexternalid notnull 
-												then update_entitydescriptionexternalid
-												else entitydescriptionexternalid end,
+				entitydescriptionexternalid = update_entitydescriptionexternalid,
 				entitydescriptionexternalsystementityuuid = case when update_entitydescriptionexternalsystementityuuid notnull 
 														then update_entitydescriptionexternalsystementityuuid
 														else entitydescriptionexternalsystementityuuid end,
 				entitydescriptionstartdate = case when update_entitydescriptionstartdate notnull 
 										then update_entitydescriptionstartdate
 										else entitydescriptionstartdate end,
-	 			entitydescriptionenddate = update_entitydescriptionenddate,
+				entitydescriptiondeleted = case when update_entitydescriptiondeleted notnull 
+										then update_entitydescriptiondeleted
+										else entitydescriptiondeleted end, 
+				  				entitydescriptionenddate = case 	when entitydescriptiondeleted = true 
+											and entitydescriptionenddate isNull
+											and entitydescriptionenddate isNull then now()
+										when entitydescriptiondeleted = true 
+											and entitydescriptionenddate isNull
+											and entitydescriptionenddate notNull then entitydescriptionenddate 
+										when entitydescriptiondeleted = true 
+											and entitydescriptionenddate notNull
+											and entitydescriptionenddate isNull then entitydescriptionenddate
+										when entitydescriptiondeleted = true and entitydescriptionenddate notNull
+											and entitydescriptionenddate notNull and entitydescriptionenddate <> entitydescriptionenddate
+											then entitydescriptionenddate	
+										else null
+									end,
 				entitydescriptionmodifieddate=now(),
 				entitydescriptionmodifiedby = update_entitydescriptionmodifiedbyuuid
 		WHERE entitydescriptionuuid = update_entitydescriptionuuid;
@@ -104,8 +120,24 @@ end if;
 
 -- update the languagemaster if the name changed
 
+select customerid, customeruuid into tempcustomerid,tempcustomeruuid
+	from entity.crud_customer_read_min(null,update_entitydescriptionownerentityuuid,null,false,null,null,null, null);
+
+select systagid,systaguuid into templanguagetypeid,templanguagetypeuuid
+	from entity.crud_systag_read_min(null, null, update_languagetypeuuid, null, false,null,null, null,update_languagetypeuuid);
+
+
 if update_entitydescriptionname notNull and (coalesce(update_entitydescriptionname,'') <> '') 
 	then
+	
+		update public.languagetranslations
+			set languagetranslationvalue = update_entitydescriptionname
+		from entity.entitydescription
+			where entitydescriptionuuid = update_entitydescriptionuuid
+				and languagetranslationmasterid = (select languagemasterid from languagemaster where languagemasteruuid = entitydescriptionlanguagemasteruuid)
+				and languagetranslationtypeid = templanguagetypeid
+				and languagetranslationvalue <> update_entitydescriptionname;
+
 		update languagemaster
 		set languagemastersource = update_entitydescriptionname,
 			languagemastermodifiedby = (select workerinstanceid from workerinstance where workerinstanceuuid =update_entitydescriptionmodifiedbyuuid),

@@ -1,4 +1,3 @@
-CREATE SCHEMA IF NOT EXISTS legacy0;
+CREATE SCHEMA legacy0;
 
 GRANT USAGE ON SCHEMA legacy0 TO graphql;
-GRANT USAGE ON SCHEMA legacy0 TO tendrelservice;

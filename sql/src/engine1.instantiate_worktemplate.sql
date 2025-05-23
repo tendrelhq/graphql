@@ -39,5 +39,6 @@ $function$;
 
 
 REVOKE ALL ON FUNCTION engine1.instantiate_worktemplate(jsonb) FROM PUBLIC;
-GRANT EXECUTE ON FUNCTION engine1.instantiate_worktemplate(jsonb) TO tendrelservice;
+GRANT EXECUTE ON FUNCTION engine1.instantiate_worktemplate(jsonb) TO PUBLIC;
+GRANT EXECUTE ON FUNCTION engine1.instantiate_worktemplate(jsonb) TO tendreladmin WITH GRANT OPTION;
 GRANT EXECUTE ON FUNCTION engine1.instantiate_worktemplate(jsonb) TO graphql;

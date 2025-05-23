@@ -5,7 +5,11 @@ CREATE OR REPLACE PROCEDURE entity.crud_entityfield_update(IN update_entityfield
  LANGUAGE plpgsql
 AS $procedure$
 Declare
-
+	tempcustomerid bigint;
+	tempcustomeruuid text;
+	templanguagetypeid bigint;
+	templanguagetypeuuid text;
+	templocationid bigint;
 Begin
 
 -- Once created, the only things that can change after something is publsihed are ???
@@ -75,9 +79,7 @@ End if;
 				entityfieldtranslate = case when update_entityfieldtranslate notnull 
 												then update_entityfieldtranslate
 												else entityfieldtranslate end,
-				entityfieldexternalid = case when update_entityfieldexternalid notnull 
-												then update_entityfieldexternalid
-												else entityfieldexternalid end,
+				entityfieldexternalid = update_entityfieldexternalid,
 				entityfieldexternalsystementityuuid = case when update_entityfieldexternalsystemuuid notnull 
 														then update_entityfieldexternalsystemuuid
 														else entityfieldexternalsystementityuuid end,
@@ -90,7 +92,20 @@ End if;
 				entityfieldstartdate = case when update_entityfieldstartdate notnull 
 										then update_entityfieldstartdate
 										else entityfieldstartdate end,
-	 			entityfieldenddate = update_entityfieldenddate,
+				entityfieldenddate = case 	when entityfielddeleted = true 
+											and entityfieldenddate isNull
+											and update_entityfieldenddate isNull then now()
+										when entityfielddeleted = true 
+											and entityfieldenddate isNull
+											and update_entityfieldenddate notNull then update_entityfieldenddate 
+										when entityfielddeleted = true 
+											and entityfieldenddate notNull
+											and update_entityfieldenddate isNull then entityfieldenddate
+										when entityfielddeleted = true and entityfieldenddate notNull
+											and update_entityfieldenddate notNull and update_entityfieldenddate <> entityfieldenddate
+											then update_entityfieldenddate	
+										else null
+									end,
 				entityfieldmodifieddate=now(),
 				entityfieldmodifiedbyuuid = update_entityfieldmodifiedbyuuid
 		WHERE entityfielduuid = update_entityfielduuid;
@@ -124,22 +139,50 @@ End if;
 				entityfieldtranslate = case when update_entityfieldtranslate notnull 
 												then update_entityfieldtranslate
 												else entityfieldtranslate end,
-				entityfieldexternalid = case when update_entityfieldexternalid notnull 
-												then update_entityfieldexternalid
-												else entityfieldexternalid end,
+				entityfieldexternalid = update_entityfieldexternalid,
 				entityfieldexternalsystementityuuid = case when update_entityfieldexternalsystemuuid notnull 
 														then update_entityfieldexternalsystemuuid
 														else entityfieldexternalsystementityuuid end,
-	 			entityfieldenddate = update_entityfieldenddate,
+				entityfielddeleted = case when update_entityfielddeleted notnull 
+										then update_entityfielddeleted
+										else entityfielddeleted end, 
+				entityfieldenddate = case 	when entityfielddeleted = true 
+											and entityfieldenddate isNull
+											and update_entityfieldenddate isNull then now()
+										when entityfielddeleted = true 
+											and entityfieldenddate isNull
+											and update_entityfieldenddate notNull then update_entityfieldenddate 
+										when entityfielddeleted = true 
+											and entityfieldenddate notNull
+											and update_entityfieldenddate isNull then entityfieldenddate
+										when entityfielddeleted = true and entityfieldenddate notNull
+											and update_entityfieldenddate notNull and update_entityfieldenddate <> entityfieldenddate
+											then update_entityfieldenddate	
+										else null
+									end,
 				entityfieldmodifieddate=now(),
 				entityfieldmodifiedbyuuid = update_entityfieldmodifiedbyuuid
 		WHERE entityfielduuid = update_entityfielduuid;
 end if;
 
--- update the languagemaster if the name changed
+select customerid, customeruuid into tempcustomerid,tempcustomeruuid
+	from entity.crud_customer_read_min(null,update_entityfieldownerentityuuid,null,false,null,null,null, null);
+
+select systagid,systaguuid into templanguagetypeid,templanguagetypeuuid
+	from entity.crud_systag_read_min(null, null, update_languagetypeuuid, null, false,null,null, null,update_languagetypeuuid);
+
 
 if update_entityfieldname notNull and (coalesce(update_entityfieldname,'') <> '') 
 	then
+
+		update public.languagetranslations
+			set languagetranslationvalue = update_entityfieldname
+		from entity.entityfield
+			where entityfielduuid = update_entityfielduuid
+				and languagetranslationmasterid = (select languagemasterid from languagemaster where languagemasteruuid = entityfieldlanguagemasteruuid)
+				and languagetranslationtypeid = templanguagetypeid
+				and languagetranslationvalue <> update_entityfieldname;
+			
 		update languagemaster
 		set languagemastersource = entityfieldname,
 			languagemastermodifiedby = (select workerinstanceid from workerinstance where workerinstanceuuid =update_entityfieldmodifiedbyuuid),

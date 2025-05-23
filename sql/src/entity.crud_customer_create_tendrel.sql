@@ -141,7 +141,6 @@ call entity.crud_location_create(
 -- 				create_modifiedby := create_modifiedby);
 
 -- enable pinpoint
-
 -- call entity.enable_pinpoint(
 -- 				create_customer_uuid := create_customerentityuuid,
 -- 				create_original_customer_uuid := null,
@@ -153,7 +152,6 @@ call entity.crud_location_create(
 -- 				create_modifiedby := create_modifiedby);
 
 -- enable checklist
-
 -- call entity.enable_checklist(
 -- 				create_customer_uuid := create_customerentityuuid,
 -- 				create_original_customer_uuid := null,

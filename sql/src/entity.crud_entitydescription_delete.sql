@@ -69,6 +69,7 @@ end if;
 update entity.entitydescription
 set entitydescriptiondeleted = true,
 	entitydescriptionmodifieddate = now(),
+	entitydescriptionenddate = now(),
 	entitydescriptionmodifiedby = (select workerinstanceuuid from workerinstance where workerinstanceid = create_modifiedbyid)
 where entitydescriptionownerentityuuid = create_entitydescriptionownerentityuuid
 	and entitydescriptionuuid = create_entitydescriptionentityuuid;

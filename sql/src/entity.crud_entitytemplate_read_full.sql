@@ -39,7 +39,7 @@ tendreluuid = 'f90d618d-5de7-4126-8c65-0afb700c6c61';
 if read_languagetranslationtypeuuid isNull
 	then read_languagetranslationtypeuuid = (
 		select systagentityuuid 
-		from entity.crud_systag_read_min(tendreluuid, null, 'bcbe750d-1b3b-4e2b-82ec-448bb8b116f9', null, false,read_entitytemplatesenddeleted, read_entitytemplatesenddrafts,read_entitytemplatesendinactive,'bcbe750d-1b3b-4e2b-82ec-448bb8b116f9')
+		from entity.crud_systag_read_min(tendreluuid, null, 'bcbe750d-1b3b-4e2b-82ec-448bb8b116f9', null, false,read_entitytemplatesenddeleted, read_entitytemplatesenddrafts,read_entitytemplatesendinactive,read_languagetranslationtypeuuid)
 		); 
 end if;
 
@@ -48,17 +48,17 @@ if read_ownerentityuuid isNull
 	else allowners = false;
 end if;
 
-if read_entitytemplatesenddeleted isNull and read_entitytemplatesenddeleted = false
+if  read_entitytemplatesenddeleted = false
 	then tempentitytemplatesenddeleted = Array[false];
 	else tempentitytemplatesenddeleted = Array[true,false];
 end if;
 
-if read_entitytemplatesenddrafts isNull and read_entitytemplatesenddrafts = false
+if  read_entitytemplatesenddrafts = false
 	then tempentitytemplatesenddrafts = Array[false];
 	else tempentitytemplatesenddrafts = Array[true,false];
 end if;
 
-if read_entitytemplatesendinactive isNull and read_entitytemplatesendinactive = false
+if   read_entitytemplatesendinactive = false
 	then tempentitytemplatesendinactive = Array[true];
 	else tempentitytemplatesendinactive = Array[true,false];
 end if;
@@ -75,9 +75,9 @@ if allowners = true and (read_entitytemplateentityuuid isNull)
 			et.entitytemplateownerentityuuid, 
 			cust.customername,
 			et.entitytemplateparententityuuid,
-			siten.languagemastersource as sitename,	
+			parentn.languagemastersource as parentname,	
 			et.entitytemplatetypeentityuuid,
-			enttype.systagtype as entitytemplatetype,
+			enttype.systagname as entitytemplatetype,
 			et.entitytemplateisprimary,
 			et.entitytemplatescanid,
 			et.entitytemplatenameuuid,
@@ -94,35 +94,37 @@ if allowners = true and (read_entitytemplateentityuuid isNull)
 			et.entitytemplaterefuuid,
 			et.entitytemplateexternalsystementityuuid, 
 			systemtype.systagtype as externalsystem,
-				et.entitytemplatedeleted,
-				et.entitytemplatedraft,
-				case when et.entitytemplateenddate notnull and et.entitytemplateenddate::Date < now()::date
-					then false
-					else true
-				end as entitytemplatesendinactive
+			et.entitytemplatedeleted,
+			et.entitytemplatedraft,
+	case when et.entitytemplatedeleted then false
+			when et.entitytemplatedraft then false
+			when et.entitytemplateenddate::Date > now()::date 
+				and et.entitytemplatestartdate < now() then false
+			else true
+	end as entitytemplateactive
 		from entity.entitytemplate et
 			inner join (select * from entity.crud_customer_read_full(null,null, null,true,read_entitytemplatesenddeleted,read_entitytemplatesenddrafts,read_entitytemplatesendinactive, null)) as cust
 				on cust.customerentityuuid = et.entitytemplateownerentityuuid
 					and et.entitytemplatedeleted = ANY (tempentitytemplatesenddeleted)
 				 	and et.entitytemplatedraft = ANY (tempentitytemplatesenddrafts)
-			left join (select * from entity.crud_location_read_min(null,null,null,null,true,null,read_entitytemplatesenddeleted ,read_entitytemplatesenddrafts ,read_entitytemplatesendinactive ,'bcbe750d-1b3b-4e2b-82ec-448bb8b116f9')) as site
-				on site.locationentityuuid = et.entitytemplateparententityuuid
-			left join languagemaster siten
-				on siten.languagemasteruuid = site.locationnameuuid
-			inner join (select * from entity.crud_systag_read_min(null,null,null, null, true,read_entitytemplatesenddeleted, read_entitytemplatesenddrafts,read_entitytemplatesendinactive,'bcbe750d-1b3b-4e2b-82ec-448bb8b116f9')) as enttype
+			left join (select * from entity.crud_entitytemplate_read_min(null, null, null, null, null,null)) as parent
+				on parent.entitytemplateuuid = et.entitytemplateparententityuuid
+			left join languagemaster parentn
+				on parentn.languagemasteruuid = parent.entitytemplatenameuuid
+			inner join (select * from entity.crud_systag_read_full(null,null,null, null, true,read_entitytemplatesenddeleted, read_entitytemplatesenddrafts,read_entitytemplatesendinactive,read_languagetranslationtypeuuid)) as enttype
 				on et.entitytemplatetypeentityuuid = enttype.systagentityuuid
 			inner join languagemaster entlm
 				on et.entitytemplatenameuuid = entlm.languagemasteruuid
 			left join public.languagetranslations entlt
 				on entlt.languagetranslationmasterid  = entlm.languagemasterid
-					and entlt.languagetranslationtypeid = (select systagid from entity.crud_systag_read_min('f90d618d-5de7-4126-8c65-0afb700c6c61', null, 'bcbe750d-1b3b-4e2b-82ec-448bb8b116f9', null, false,read_entitytemplatesenddeleted, read_entitytemplatesenddrafts,read_entitytemplatesendinactive,'bcbe750d-1b3b-4e2b-82ec-448bb8b116f9')) 
+					and entlt.languagetranslationtypeid = (select systagid from entity.crud_systag_read_min('f90d618d-5de7-4126-8c65-0afb700c6c61', null, read_languagetranslationtypeuuid, null, false,read_entitytemplatesenddeleted, read_entitytemplatesenddrafts,read_entitytemplatesendinactive,read_languagetranslationtypeuuid)) 
 			left join workerinstance workerint
 				on workerint.workerinstanceuuid = et.entitytemplatemodifiedbyuuid 
 			left join worker templatemodby
 				on templatemodby.workerid = workerint.workerinstanceworkerid
-			left join (select * from entity.crud_systag_read_min(null,null,null, null, true,read_entitytemplatesenddeleted, read_entitytemplatesenddrafts,read_entitytemplatesendinactive,'bcbe750d-1b3b-4e2b-82ec-448bb8b116f9')) as systemtype
-				on et.entitytemplateexternalsystementityuuid = enttype.systagentityuuid) as foo
-		where foo.entitytemplatesendinactive = Any (tempentitytemplatesendinactive);
+			left join (select * from entity.crud_systag_read_min(null,null,null, null, true,read_entitytemplatesenddeleted, read_entitytemplatesenddrafts,read_entitytemplatesendinactive,read_languagetranslationtypeuuid)) as systemtype
+				on et.entitytemplateexternalsystementityuuid = systemtype.systagentityuuid) as foo
+		where foo.entitytemplateactive = Any (tempentitytemplatesendinactive);
 		return;
 end if;
 
@@ -136,7 +138,7 @@ if allowners = false and (read_entitytemplateentityuuid isNull)
 			et2.entitytemplateownerentityuuid, 
 			cust.customername,
 			et2.entitytemplateparententityuuid,
-			siten.languagemastersource as sitename,	
+			parentn.languagemastersource as parentname,
 			et2.entitytemplatetypeentityuuid,
 			enttype.systagtype as entitytemplatetype,
 			et2.entitytemplateisprimary,
@@ -157,34 +159,36 @@ if allowners = false and (read_entitytemplateentityuuid isNull)
 			systemtype.systagtype as externalsystem,
 				et2.entitytemplatedeleted,
 				et2.entitytemplatedraft,
-				case when et2.entitytemplateenddate notnull and et2.entitytemplateenddate::Date < now()::date
-					then false
-					else true
-				end as entitytemplatesendinactive	
+	case when et2.entitytemplatedeleted then false
+			when et2.entitytemplatedraft then false
+			when et2.entitytemplateenddate::Date > now()::date 
+				and et2.entitytemplatestartdate < now() then false
+			else true
+	end as entitytemplateactive
 		from entity.entitytemplate et2
 			inner join (select * from entity.crud_customer_read_full(null, null,null,true,read_entitytemplatesenddeleted,read_entitytemplatesenddrafts,read_entitytemplatesendinactive, null)) as cust
 				on cust.customerentityuuid = et2.entitytemplateownerentityuuid
 					and et2.entitytemplateownerentityuuid = read_ownerentityuuid
 					and et2.entitytemplatedeleted = ANY (tempentitytemplatesenddeleted)
 				 	and et2.entitytemplatedraft = ANY (tempentitytemplatesenddrafts)
-			left join (select * from entity.crud_location_read_min(null,null,null,null,true,null,read_entitytemplatesenddeleted ,read_entitytemplatesenddrafts ,read_entitytemplatesendinactive ,'bcbe750d-1b3b-4e2b-82ec-448bb8b116f9')) as site
-				on site.locationentityuuid = et2.entitytemplateparententityuuid
-			left join languagemaster siten
-				on siten.languagemasteruuid = site.locationnameuuid
-			inner join (select * from entity.crud_systag_read_min(null,null,null, null, true,read_entitytemplatesenddeleted, read_entitytemplatesenddrafts,read_entitytemplatesendinactive,'bcbe750d-1b3b-4e2b-82ec-448bb8b116f9')) as enttype
-				on et2.entitytemplatetypeentityuuid = enttype.systagentityuuid
+			left join (select * from entity.crud_entitytemplate_read_min(null, null, null, null, null,null)) as parent
+				on parent.entitytemplateuuid = et.entitytemplateparententityuuid
+			left join languagemaster parentn
+				on parentn.languagemasteruuid = parent.entitytemplatenameuuid
+			inner join (select * from entity.crud_systag_read_full(null,null,null, null, true,read_entitytemplatesenddeleted, read_entitytemplatesenddrafts,read_entitytemplatesendinactive,read_languagetranslationtypeuuid)) as enttype
+				on et.entitytemplatetypeentityuuid = enttype.systagentityuuid
 			inner join languagemaster entlm
 				on et2.entitytemplatenameuuid = entlm.languagemasteruuid
 			left join public.languagetranslations entlt
 				on entlt.languagetranslationmasterid  = entlm.languagemasterid
-					and entlt.languagetranslationtypeid = (select systagid from entity.crud_systag_read_min('f90d618d-5de7-4126-8c65-0afb700c6c61', null, 'bcbe750d-1b3b-4e2b-82ec-448bb8b116f9', null, false,read_entitytemplatesenddeleted, read_entitytemplatesenddrafts,read_entitytemplatesendinactive,'bcbe750d-1b3b-4e2b-82ec-448bb8b116f9')) 
+					and entlt.languagetranslationtypeid = (select systagid from entity.crud_systag_read_min('f90d618d-5de7-4126-8c65-0afb700c6c61', null, read_languagetranslationtypeuuid, null, false,read_entitytemplatesenddeleted, read_entitytemplatesenddrafts,read_entitytemplatesendinactive,read_languagetranslationtypeuuid)) 
 			left join workerinstance workerint
 				on workerint.workerinstanceuuid = et2.entitytemplatemodifiedbyuuid 
 			left join worker templatemodby
 				on templatemodby.workerid = workerint.workerinstanceworkerid
-			left join (select * from entity.crud_systag_read_min(null,null,null, null, true,read_entitytemplatesenddeleted, read_entitytemplatesenddrafts,read_entitytemplatesendinactive,'bcbe750d-1b3b-4e2b-82ec-448bb8b116f9')) as systemtype
-				on et2.entitytemplateexternalsystementityuuid = enttype.systagentityuuid) as foo
-		where foo.entitytemplatesendinactive = Any (tempentitytemplatesendinactive);
+			left join (select * from entity.crud_systag_read_min(null,null,null, null, true,read_entitytemplatesenddeleted, read_entitytemplatesenddrafts,read_entitytemplatesendinactive,read_languagetranslationtypeuuid)) as systemtype
+				on et2.entitytemplateexternalsystementityuuid = systemtype.systagentityuuid) as foo
+		where foo.entitytemplateactive = Any (tempentitytemplatesendinactive);
 		return;
 end if;
 
@@ -198,7 +202,7 @@ if allowners = false and (read_entitytemplateentityuuid notNull)
 			et3.entitytemplateownerentityuuid, 
 			cust.customername,
 			et3.entitytemplateparententityuuid,
-			siten.languagemastersource as sitename,	
+			parentn.languagemastersource as parentname,
 			et3.entitytemplatetypeentityuuid,
 			enttype.systagtype as entitytemplatetype,
 			et3.entitytemplateisprimary,
@@ -219,10 +223,12 @@ if allowners = false and (read_entitytemplateentityuuid notNull)
 			systemtype.systagtype as externalsystem,
 				et3.entitytemplatedeleted,
 				et3.entitytemplatedraft,
-				case when et3.entitytemplateenddate notnull and et3.entitytemplateenddate::Date < now()::date
-					then false
-					else true
-				end as entitytemplatesendinactive
+	case when et3.entitytemplatedeleted then false
+			when et3.entitytemplatedraft then false
+			when et3.entitytemplateenddate::Date > now()::date 
+				and et3.entitytemplatestartdate < now() then false
+			else true
+	end as entitytemplateactive
 		from entity.entitytemplate et3
 			inner join (select * from entity.crud_customer_read_full(null, null, null,true,read_entitytemplatesenddeleted,read_entitytemplatesenddrafts,read_entitytemplatesendinactive, null)) as cust
 				on cust.customerentityuuid = et3.entitytemplateownerentityuuid
@@ -231,24 +237,24 @@ if allowners = false and (read_entitytemplateentityuuid notNull)
 					and et3.entitytemplateuuid = read_entitytemplateentityuuid
 					and et3.entitytemplatedeleted = ANY (tempentitytemplatesenddeleted)
 				 	and et3.entitytemplatedraft = ANY (tempentitytemplatesenddrafts)
-			left join (select * from entity.crud_location_read_min(null,null,null,null,true,null,read_entitytemplatesenddeleted ,read_entitytemplatesenddrafts ,read_entitytemplatesendinactive ,'bcbe750d-1b3b-4e2b-82ec-448bb8b116f9')) as site
-				on site.locationentityuuid = et3.entitytemplateparententityuuid
-			left join languagemaster siten
-				on siten.languagemasteruuid = site.locationnameuuid
-			inner join (select * from entity.crud_systag_read_min(null,null,null, null, true,read_entitytemplatesenddeleted, read_entitytemplatesenddrafts,read_entitytemplatesendinactive,'bcbe750d-1b3b-4e2b-82ec-448bb8b116f9')) as enttype
-				on et3.entitytemplatetypeentityuuid = enttype.systagentityuuid
+			left join (select * from entity.crud_entitytemplate_read_min(null, null, null, null, null,null)) as parent
+				on parent.entitytemplateuuid = et.entitytemplateparententityuuid
+			left join languagemaster parentn
+				on parentn.languagemasteruuid = parent.entitytemplatenameuuid
+			inner join (select * from entity.crud_systag_read_full(null,null,null, null, true,read_entitytemplatesenddeleted, read_entitytemplatesenddrafts,read_entitytemplatesendinactive,read_languagetranslationtypeuuid)) as enttype
+				on et.entitytemplatetypeentityuuid = enttype.systagentityuuid
 			inner join languagemaster entlm
 				on et3.entitytemplatenameuuid = entlm.languagemasteruuid
 			left join public.languagetranslations entlt
 				on entlt.languagetranslationmasterid  = entlm.languagemasterid
-					and entlt.languagetranslationtypeid = (select systagid from entity.crud_systag_read_min('f90d618d-5de7-4126-8c65-0afb700c6c61', null, 'bcbe750d-1b3b-4e2b-82ec-448bb8b116f9', null, false,read_entitytemplatesenddeleted, read_entitytemplatesenddrafts,read_entitytemplatesendinactive,'bcbe750d-1b3b-4e2b-82ec-448bb8b116f9')) 
+					and entlt.languagetranslationtypeid = (select systagid from entity.crud_systag_read_min('f90d618d-5de7-4126-8c65-0afb700c6c61', null, read_languagetranslationtypeuuid, null, false,read_entitytemplatesenddeleted, read_entitytemplatesenddrafts,read_entitytemplatesendinactive,read_languagetranslationtypeuuid)) 
 			left join workerinstance workerint
 				on workerint.workerinstanceuuid = et3.entitytemplatemodifiedbyuuid 
 			left join worker templatemodby
 				on templatemodby.workerid = workerint.workerinstanceworkerid
-			left join (select * from entity.crud_systag_read_min(null,null,null, null, true,read_entitytemplatesenddeleted, read_entitytemplatesenddrafts,read_entitytemplatesendinactive,'bcbe750d-1b3b-4e2b-82ec-448bb8b116f9')) as systemtype
-				on et3.entitytemplateexternalsystementityuuid = enttype.systagentityuuid ) as foo
-		where foo.entitytemplatesendinactive = Any (tempentitytemplatesendinactive);
+			left join (select * from entity.crud_systag_read_min(null,null,null, null, true,read_entitytemplatesenddeleted, read_entitytemplatesenddrafts,read_entitytemplatesendinactive,read_languagetranslationtypeuuid)) as systemtype
+				on et3.entitytemplateexternalsystementityuuid = systemtype.systagentityuuid ) as foo
+		where foo.entitytemplateactive = Any (tempentitytemplatesendinactive);
 		return;
 end if;
 

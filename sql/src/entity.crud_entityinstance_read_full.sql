@@ -185,9 +185,11 @@ if allcustomers = true and read_allentityinstances = true
 			ei.entityinstancerefuuid, 
 			ei.entityinstancedeleted, 
 			ei.entityinstancedraft,
-			case when ei.entityinstanceenddate notnull and ei.entityinstanceenddate::Date < now()::date
-				then false
-				else true
+	case when ei.entityinstancedeleted then false
+			when ei.entityinstancedraft then false
+			when ei.entityinstanceenddate::Date > now()::date 
+				and ei.entityinstancestartdate < now() then false
+			else true
 			end as entityinstanceactive,
 			enttag.entitytagcustagentityuuid as entityinstancetagentityuuid			
 		from entity.entityinstance ei
@@ -282,9 +284,11 @@ if allcustomers = false and read_allentityinstances = true
 			ei.entityinstancerefuuid, 
 			ei.entityinstancedeleted, 
 			ei.entityinstancedraft,
-			case when ei.entityinstanceenddate notnull and ei.entityinstanceenddate::Date < now()::date
-				then false
-				else true
+	case when ei.entityinstancedeleted then false
+			when ei.entityinstancedraft then false
+			when ei.entityinstanceenddate::Date > now()::date 
+				and ei.entityinstancestartdate < now() then false
+			else true
 			end as entityinstanceactive,
 			enttag.entitytagcustagentityuuid as entityinstancetagentityuuid				
 		from entity.entityinstance ei
@@ -380,9 +384,11 @@ if read_entityinstanceentityuuid notNull
 			ei.entityinstancerefuuid, 
 			ei.entityinstancedeleted, 
 			ei.entityinstancedraft,
-			case when ei.entityinstanceenddate notnull and ei.entityinstanceenddate::Date < now()::date
-				then false
-				else true
+	case when ei.entityinstancedeleted then false
+			when ei.entityinstancedraft then false
+			when ei.entityinstanceenddate::Date > now()::date 
+				and ei.entityinstancestartdate < now() then false
+			else true
 			end as entityinstanceactive,
 			enttag.entitytagcustagentityuuid as entityinstancetagentityuuid				
 		from entity.entityinstance ei
@@ -514,9 +520,11 @@ return query
 			ei.entityinstancerefuuid, 
 			ei.entityinstancedeleted, 
 			ei.entityinstancedraft,
-			case when ei.entityinstanceenddate notnull and ei.entityinstanceenddate::Date < now()::date
-				then false
-				else true
+	case when ei.entityinstancedeleted then false
+			when ei.entityinstancedraft then false
+			when ei.entityinstanceenddate::Date > now()::date 
+				and ei.entityinstancestartdate < now() then false
+			else true
 			end as entityinstanceactive,
 			enttag.entitytagcustagentityuuid as entityinstancetagentityuuid			
 	from entity.entityinstance ei

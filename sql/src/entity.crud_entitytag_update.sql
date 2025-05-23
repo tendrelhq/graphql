@@ -6,7 +6,6 @@ CREATE OR REPLACE PROCEDURE entity.crud_entitytag_update(IN update_entitytaguuid
 AS $procedure$
 Declare
 
-
 Begin
 
 -- Once created, the only things that can change after something is publsihed are entitytagstartdate and entitytagenddate
@@ -39,7 +38,20 @@ if update_entitytagdraft = true or ((select entitytagdraft
 				entitytagstartdate = case when update_entitytagstartdate notnull 
 										then update_entitytagstartdate
 										else entitytagstartdate end,
-	 			entitytagenddate = update_entitytagenddate,
+	 			entitytagenddate = case 	when entitytagdeleted = true 
+											and entitytagenddate isNull
+											and update_entitytagenddate isNull then now()
+										when entitytagdeleted = true 
+											and entitytagenddate isNull
+											and update_entitytagenddate notNull then update_entitytagenddate 
+										when entitytagdeleted = true 
+											and entitytagenddate notNull
+											and update_entitytagenddate isNull then entitytagenddate
+										when entitytagdeleted = true and entitytagenddate notNull
+											and update_entitytagenddate notNull and update_entitytagenddate <> entitytagenddate
+											then update_entitytagenddate	
+										else null
+									end,		
 				entitytagmodifieddate=now(),
 				entitytagmodifiedbyuuid = (select workerinstanceuuid from workerinstance where workerinstanceid = update_modifiedbyid)
 		WHERE entitytaguuid = update_entitytaguuid;
@@ -48,12 +60,27 @@ if update_entitytagdraft = true or ((select entitytagdraft
 			SET entitytagstartdate = case when update_entitytagstartdate notnull 
 											then update_entitytagstartdate
 											else entitytagstartdate end,
- 				entitytagenddate = update_entitytagenddate,
+				entitytagdeleted = case when update_entitytagdeleted notnull 
+										then update_entitytagdeleted
+										else entitytagdeleted end,							
+	 			entitytagenddate = case 	when entitytagdeleted = true 
+											and entitytagenddate isNull
+											and update_entitytagenddate isNull then now()
+										when entitytagdeleted = true 
+											and entitytagenddate isNull
+											and update_entitytagenddate notNull then update_entitytagenddate 
+										when entitytagdeleted = true 
+											and entitytagenddate notNull
+											and update_entitytagenddate isNull then entitytagenddate
+										when entitytagdeleted = true and entitytagenddate notNull
+											and update_entitytagenddate notNull and update_entitytagenddate <> entitytagenddate
+											then update_entitytagenddate	
+										else null
+									end,	
 				entitytagmodifieddate=now(),
 				entitytagmodifiedbyuuid = (select workerinstanceuuid from workerinstance where workerinstanceid = update_modifiedbyid)
 		WHERE entitytaguuid = update_entitytaguuid;
 end if;
-
 
 End;
 

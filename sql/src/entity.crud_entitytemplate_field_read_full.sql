@@ -55,17 +55,17 @@ if read_ownerentityuuid isNull
 	else allowners = false;
 end if;
 
-if read_entitytemplatesenddeleted isNull and read_entitytemplatesenddeleted = false
+if  read_entitytemplatesenddeleted = false
 	then tempentitytemplatesenddeleted = Array[false];
 	else tempentitytemplatesenddeleted = Array[true,false];
 end if;
 
-if read_entitytemplatesenddrafts isNull and read_entitytemplatesenddrafts = false
+if   read_entitytemplatesenddrafts = false
 	then tempentitytemplatesenddrafts = Array[false];
 	else tempentitytemplatesenddrafts = Array[true,false];
 end if;
 
-if read_entitytemplatesendinactive isNull and read_entitytemplatesendinactive = false
+if   read_entitytemplatesendinactive = false
 	then tempentitytemplatesendinactive = Array[true];
 	else tempentitytemplatesendinactive = Array[true,false];
 end if;
@@ -103,10 +103,12 @@ if allowners = true and (read_entitytemplateentityuuid isNull) and (read_entityf
 			systemtype.systagtype as externalsystem,
 				et.entitytemplatedeleted,
 				et.entitytemplatedraft,
-				case when et.entitytemplateenddate notnull and et.entitytemplateenddate::Date < now()::date
-					then false
-					else true
-				end as entitytemplatesendinactive,
+	case when et.entitytemplatedeleted then false
+			when et.entitytemplatedraft then false
+			when et.entitytemplateenddate::Date < now()::date 
+				and et.entitytemplatestartdate < now() then false
+			else true
+	end as entitytemplateactive,
 			ef.entityfielduuid, 
 			ef.entityfieldentitytemplateentityuuid, 
 			ef.entityfieldcreateddate, 
@@ -147,10 +149,12 @@ if allowners = true and (read_entitytemplateentityuuid isNull) and (read_entityf
 			efpt.systagtype as entityfieldparenttypename,
 				ef.entityfielddeleted,
 				ef.entityfielddraft,
-				case when ef.entityfieldenddate notnull and ef.entityfieldenddate::Date < now()::date
-					then false
-					else true
-				end as entityfieldsendinactive
+	case when ef.entityfielddeleted then false
+			when ef.entityfielddraft then false
+			when ef.entityfieldenddate::Date < now()::date 
+				and ef.entityfieldstartdate < now() then false
+			else true
+	end as entityfieldactive
 		from entity.entitytemplate et
 			inner join entity.entityfield ef
 				on ef.entityfieldentitytemplateentityuuid = et.entitytemplateuuid
@@ -204,8 +208,8 @@ if allowners = true and (read_entitytemplateentityuuid isNull) and (read_entityf
 				on ef.entityfieldentitytypeentityuuid = efet.systagentityuuid	
 			left join (select * from entity.crud_systag_read_min(null,null,null, null, true,read_entitytemplatesenddeleted  , read_entitytemplatesenddrafts  ,read_entitytemplatesendinactive  ,'bcbe750d-1b3b-4e2b-82ec-448bb8b116f9')) as efpt
 				on ef.entityfieldentityparenttypeentityuuid = efpt.systagentityuuid) as foo
-		where foo.entitytemplatesendinactive = Any (tempentitytemplatesendinactive)	
-			and foo.entityfieldsendinactive = Any (tempentitytemplatesendinactive)
+		where foo.entitytemplateactive = Any (tempentitytemplatesendinactive)	
+			and foo.entityfieldactive = Any (tempentitytemplatesendinactive)
 				;
 		return;
 end if;
@@ -241,10 +245,12 @@ if allowners = false and (read_entitytemplateentityuuid isNull) and (read_entity
 			systemtype.systagtype as externalsystem,
 				et.entitytemplatedeleted,
 				et.entitytemplatedraft,
-				case when et.entitytemplateenddate notnull and et.entitytemplateenddate::Date < now()::date
-					then false
-					else true
-				end as entitytemplatesendinactive,
+	case when et.entitytemplatedeleted then false
+			when et.entitytemplatedraft then false
+			when et.entitytemplateenddate::Date < now()::date 
+				and et.entitytemplatestartdate < now() then false
+			else true
+	end as entitytemplateactive,
 			ef.entityfielduuid, 
 			ef.entityfieldentitytemplateentityuuid, 
 			ef.entityfieldcreateddate, 
@@ -285,10 +291,12 @@ if allowners = false and (read_entitytemplateentityuuid isNull) and (read_entity
 			efpt.systagtype as entityfieldparenttypename,
 				ef.entityfielddeleted,
 				ef.entityfielddraft,
-				case when ef.entityfieldenddate notnull and ef.entityfieldenddate::Date < now()::date
-					then false
-					else true
-				end as entityfieldsendinactive
+	case when ef.entityfielddeleted then false
+			when ef.entityfielddraft then false
+			when ef.entityfieldenddate::Date < now()::date 
+				and ef.entityfieldstartdate < now() then false
+			else true
+	end as entityfieldactive
 		from entity.entitytemplate et
 			inner join entity.entityfield ef
 				on ef.entityfieldentitytemplateentityuuid = et.entitytemplateuuid
@@ -344,8 +352,8 @@ if allowners = false and (read_entitytemplateentityuuid isNull) and (read_entity
 				on ef.entityfieldentitytypeentityuuid = efet.systagentityuuid	
 			left join (select * from entity.crud_systag_read_min(null,null,null, null, true,read_entitytemplatesenddeleted  , read_entitytemplatesenddrafts  ,read_entitytemplatesendinactive  ,'bcbe750d-1b3b-4e2b-82ec-448bb8b116f9')) as efpt
 				on ef.entityfieldentityparenttypeentityuuid = efpt.systagentityuuid) as foo
-		where foo.entitytemplatesendinactive = Any (tempentitytemplatesendinactive)
-					and foo.entityfieldsendinactive = Any (tempentitytemplatesendinactive);
+		where foo.entitytemplateactive = Any (tempentitytemplatesendinactive)
+					and foo.entityfieldactive = Any (tempentitytemplatesendinactive);
 			return;
 		 
 end if;
@@ -381,10 +389,12 @@ if allowners = false and (read_entitytemplateentityuuid notNull) and (read_entit
 			systemtype.systagtype as externalsystem,
 				et.entitytemplatedeleted,
 				et.entitytemplatedraft,
-				case when et.entitytemplateenddate notnull and et.entitytemplateenddate::Date < now()::date
-					then false
-					else true
-				end as entitytemplatesendinactive,
+	case when et.entitytemplatedeleted then false
+			when et.entitytemplatedraft then false
+			when et.entitytemplateenddate::Date < now()::date 
+				and et.entitytemplatestartdate < now() then false
+			else true
+	end as entitytemplateactive,
 			ef.entityfielduuid, 
 			ef.entityfieldentitytemplateentityuuid, 
 			ef.entityfieldcreateddate, 
@@ -425,10 +435,12 @@ if allowners = false and (read_entitytemplateentityuuid notNull) and (read_entit
 			efpt.systagtype as entityfieldparenttypename,
 				ef.entityfielddeleted,
 				ef.entityfielddraft,
-				case when ef.entityfieldenddate notnull and ef.entityfieldenddate::Date < now()::date
-					then false
-					else true
-				end as entityfieldsendinactive
+	case when et.entityfielddeleted then false
+			when et.entityfielddraft then false
+			when et.entityfieldenddate::Date < now()::date 
+				and et.entityfieldstartdate < now() then false
+			else true
+	end as entityfieldactive
 		from entity.entitytemplate et
 			inner join entity.entityfield ef
 				on ef.entityfieldentitytemplateentityuuid = et.entitytemplateuuid
@@ -485,8 +497,8 @@ if allowners = false and (read_entitytemplateentityuuid notNull) and (read_entit
 				on ef.entityfieldentitytypeentityuuid = efet.systagentityuuid	
 			left join (select * from entity.crud_systag_read_min(null,null,null, null, true,read_entitytemplatesenddeleted  , read_entitytemplatesenddrafts  ,read_entitytemplatesendinactive  ,'bcbe750d-1b3b-4e2b-82ec-448bb8b116f9')) as efpt
 				on ef.entityfieldentityparenttypeentityuuid = efpt.systagentityuuid) as foo
-		where foo.entitytemplatesendinactive = Any (tempentitytemplatesendinactive)
-					and foo.entityfieldsendinactive = Any (tempentitytemplatesendinactive);
+		where foo.entitytemplateactive = Any (tempentitytemplatesendinactive)
+					and foo.entityfieldactive = Any (tempentitytemplatesendinactive);
 		return;
 
 end if;
@@ -522,10 +534,12 @@ if allowners = false and (read_entityfieldentityuuid notNull)
 			systemtype.systagtype as externalsystem,
 				et.entitytemplatedeleted,
 				et.entitytemplatedraft,
-				case when et.entitytemplateenddate notnull and et.entitytemplateenddate::Date < now()::date
-					then false
-					else true
-				end as entitytemplatesendinactive,
+	case when et.entitytemplatedeleted then false
+			when et.entitytemplatedraft then false
+			when et.entitytemplateenddate::Date < now()::date 
+				and et.entitytemplatestartdate < now() then false
+			else true
+	end as entitytemplateactive,
 			ef.entityfielduuid, 
 			ef.entityfieldentitytemplateentityuuid, 
 			ef.entityfieldcreateddate, 
@@ -566,10 +580,12 @@ if allowners = false and (read_entityfieldentityuuid notNull)
 			efpt.systagtype as entityfieldparenttypename,
 				ef.entityfielddeleted,
 				ef.entityfielddraft,
-				case when ef.entityfieldenddate notnull and ef.entityfieldenddate::Date < now()::date
-					then false
-					else true
-				end as entityfieldsendinactive
+	case when et.entityfielddeleted then false
+			when et.entityfielddraft then false
+			when et.entityfieldenddate::Date < now()::date 
+				and et.entityfieldstartdate < now() then false
+			else true
+	end as entityfieldactive
 		from entity.entitytemplate et
 			inner join entity.entityfield ef
 				on ef.entityfieldentitytemplateentityuuid = et.entitytemplateuuid
@@ -626,8 +642,8 @@ if allowners = false and (read_entityfieldentityuuid notNull)
 				on ef.entityfieldentitytypeentityuuid = efet.systagentityuuid	
 			left join (select * from entity.crud_systag_read_min(null,null,null, null, true,read_entitytemplatesenddeleted  , read_entitytemplatesenddrafts  ,read_entitytemplatesendinactive  ,'bcbe750d-1b3b-4e2b-82ec-448bb8b116f9')) as efpt
 				on ef.entityfieldentityparenttypeentityuuid = efpt.systagentityuuid) as foo
-		where foo.entitytemplatesendinactive = Any (tempentitytemplatesendinactive)
-					and foo.entityfieldsendinactive = Any (tempentitytemplatesendinactive);
+		where foo.entitytemplateactive = Any (tempentitytemplatesendinactive)
+					and foo.entityfieldactive = Any (tempentitytemplatesendinactive);
 		return;
 
 end if;

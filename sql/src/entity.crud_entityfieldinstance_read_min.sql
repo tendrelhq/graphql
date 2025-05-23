@@ -110,10 +110,12 @@ if allcustomers = true and read_allentityfieldinstances = true
 			efi.entityfieldinstancevaluelanguagetypeentityuuid, 
 			efi.entityfieldinstancedeleted, 
 			efi.entityfieldinstancedraft,
-			case when efi.entityfieldinstanceenddate notnull and efi.entityfieldinstanceenddate::Date < now()::date
-				then false
-				else true
-			end as entityfieldinstanceactive
+	case when efi.entityfieldinstancedeleted then false
+			when efi.entityfieldinstancedraft then false
+			when efi.entityfieldinstanceenddate::Date > now()::date 
+				and efi.entityfieldinstancestartdate < now() then false
+			else true
+	end as entityfieldinstanceactive
 		from entity.entityfieldinstance efi
 			Join (select customerid,customeruuid, customerentityuuid  
 					from entity.crud_customer_read_min(read_entityfieldinstanceownerentityuuid,null,null,allcustomers, read_entityfieldinstancesenddeleted,read_entityfieldinstancesenddrafts,read_entityfieldinstancesendinactive,
@@ -150,10 +152,12 @@ if allcustomers = false and read_allentityfieldinstances = true
 			efi.entityfieldinstancevaluelanguagetypeentityuuid, 
 			efi.entityfieldinstancedeleted, 
 			efi.entityfieldinstancedraft,
-			case when efi.entityfieldinstanceenddate notnull and efi.entityfieldinstanceenddate::Date < now()::date
-				then false
-				else true
-			end as entityfieldinstanceactive	
+	case when efi.entityfieldinstancedeleted then false
+			when efi.entityfieldinstancedraft then false
+			when efi.entityfieldinstanceenddate::Date > now()::date 
+				and efi.entityfieldinstancestartdate < now() then false
+			else true
+	end as entityfieldinstanceactive
 		from entity.entityfieldinstance efi
 			Join (select customerid,customeruuid, customerentityuuid  
 					from entity.crud_customer_read_min(read_entityfieldinstanceownerentityuuid,null,null,allcustomers,read_entityfieldinstancesenddeleted,read_entityfieldinstancesenddrafts,read_entityfieldinstancesendinactive,
@@ -192,10 +196,12 @@ if read_entityfieldinstanceentityinstanceentityuuid notNull
 			efi.entityfieldinstancevaluelanguagetypeentityuuid, 
 			efi.entityfieldinstancedeleted, 
 			efi.entityfieldinstancedraft,
-			case when efi.entityfieldinstanceenddate notnull and efi.entityfieldinstanceenddate::Date < now()::date
-				then false
-				else true
-			end as entityfieldinstanceactive	
+	case when efi.entityfieldinstancedeleted then false
+			when efi.entityfieldinstancedraft then false
+			when efi.entityfieldinstanceenddate::Date > now()::date 
+				and efi.entityfieldinstancestartdate < now() then false
+			else true
+	end as entityfieldinstanceactive	
 		from entity.entityfieldinstance efi
 			Join (select customerid,customeruuid, customerentityuuid  
 					from entity.crud_customer_read_min(read_entityfieldinstanceownerentityuuid,null,null,allcustomers, read_entityfieldinstancesenddeleted,read_entityfieldinstancesenddrafts,read_entityfieldinstancesendinactive,
@@ -230,10 +236,12 @@ end if;
 			efi.entityfieldinstancevaluelanguagetypeentityuuid, 
 			efi.entityfieldinstancedeleted, 
 			efi.entityfieldinstancedraft,
-			case when efi.entityfieldinstanceenddate notnull and efi.entityfieldinstanceenddate::Date < now()::date
-				then false
-				else true
-			end as entityfieldinstanceactive	
+	case when efi.entityfieldinstancedeleted then false
+			when efi.entityfieldinstancedraft then false
+			when efi.entityfieldinstanceenddate::Date > now()::date 
+				and efi.entityfieldinstancestartdate < now() then false
+			else true
+	end as entityfieldinstanceactivee	
 		from entity.entityfieldinstance efi
 			Join (select customerid,customeruuid, customerentityuuid  
 					from entity.crud_customer_read_min(read_entityfieldinstanceownerentityuuid,null,null,allcustomers,read_entityfieldinstancesenddeleted,read_entityfieldinstancesenddrafts,read_entityfieldinstancesendinactive,

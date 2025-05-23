@@ -8,8 +8,8 @@ Declare
 	templanguagetypeentityuuid uuid;	
 	tempcustomerid bigint;
 	tempentityfieldparententityuuid uuid;
-	tempcustagid bigint;
-	tempcustaguuid text;
+	tempsystagid bigint;
+	tempsystaguuid text;
 	templanguagetypeid bigint;
 	templanguagetypeuuid text;
 	tempcornerstoneorder integer; 
@@ -29,7 +29,6 @@ Declare
 Begin
 
 /*
-
 
 -- tests needed
 	-- no field name
@@ -344,7 +343,6 @@ Begin
 			null, -- OUT create_entityfieldentityuuid uuid,
 			337::bigint)
 
-
 	-- valid insert-- new format/widget.  
 
 		call entity.crud_entityfield_create(
@@ -389,6 +387,7 @@ if (create_entityfieldname  isNull or coalesce(create_entityfieldname, '')='')
 	else tempentityfieldname = create_entityfieldname;
 end if;
 
+
 -- check for null template
 
 if create_entityfieldtemplateentityuuid isNull
@@ -396,21 +395,26 @@ if create_entityfieldtemplateentityuuid isNull
 	else tempentityfieldtemplateentityuuid = create_entityfieldtemplateentityuuid;
 end if;
 
+
 -- set up customer/owner  
 -- Assumes customer until custag is cutover to entity 100%
 -- Owner will always be taken from the entity template.  We may want to change this in the future
 -- Note this checks for a valid template and valid customer
+
+
 select entitytemplateownerentityuuid into tempentitytemplateownerentityuuid
 	from entity.crud_entitytemplate_read_min(create_entityfieldownerentityuuid ,tempentityfieldtemplateentityuuid ,null,null,null,null);
 
 select customerid into tempcustomerid
 	from entity.crud_customer_read_min(null,tempentitytemplateownerentityuuid,null,false, null,null,null,null);
-	
+
+
 -- probably return an error if the entity is not set to a customer.  
 -- This also covers invalid entity template
 if tempcustomerid isNull
 	then return;   -- need an error code here
 end if;
+
 
 -- check for valid result type - uuid =  '7bbaa455-1965-4171-95f1-ee9f22a98f10'
 if create_entityfieldtypeentityuuid in 
@@ -454,32 +458,31 @@ if create_entityfieldformatentityuuid isNull
 	then tempentityfieldformatentityuuid = create_entityfieldformatentityuuid;
 	elseif create_entityfieldformatentityuuid notNull 
 		and create_entityfieldformatentityuuid in 
-			(select custagentityuuid
-			from entity.crud_custag_read_min(temptendrelentityuuid,null,null, 'ef107a7a-eadd-46dd-be63-d06e8b660852', false,null,null, null,create_languagetypeuuid)
+			(select systagentityuuid
+			from entity.crud_systag_read_min(temptendrelentityuuid,null,null, 'ef107a7a-eadd-46dd-be63-d06e8b660852', false,null,null, null,create_languagetypeuuid)
 			union
-			select custagentityuuid
-			from entity.crud_custag_read_min(tempentitytemplateownerentityuuid,null,null, 'ef107a7a-eadd-46dd-be63-d06e8b660852', false,null,null, null,create_languagetypeuuid))
+			select systagentityuuid
+			from entity.crud_systag_read_min(tempentitytemplateownerentityuuid,null,null, 'ef107a7a-eadd-46dd-be63-d06e8b660852', false,null,null, null,create_languagetypeuuid))
 	then tempentityfieldformatentityuuid = create_entityfieldformatentityuuid;
 	else return;  -- need an error code here
 end if;
 
-
 if tempentityfieldformatentityuuid isNull and (create_entityfieldformatentityname notNull and coalesce(create_entityfieldformatentityname, '')<>'')
 	then 	
-		call entity.crud_custag_create(
-			tempentitytemplateownerentityuuid, --create_custagownerentityuuid
-			'ef107a7a-eadd-46dd-be63-d06e8b660852', --create_custagparententityuuid
-			null,   --create_custagcornerstoneentityuuid
-			null, --create_custagcornerstoneorder 
-			create_entityfieldformatentityname,  -- create_custag
+		call entity.crud_systag_create(
+			tempentitytemplateownerentityuuid, --create_systagownerentityuuid
+			'ef107a7a-eadd-46dd-be63-d06e8b660852', --create_systagparententityuuid
+			null,   --create_systagcornerstoneentityuuid
+			null, --create_systagcornerstoneorder 
+			create_entityfieldformatentityname,  -- create_systag
 			templanguagetypeentityuuid, -- create_languagetypeuuid  
-			null,  -- 	create_custagexternalid text,
-			null, -- create_custagexternalsystemuuid
-			null,--create_custagdeleted boolean,
-			null,--create_custagdraft boolean,
-			tempcustagid, -- OUT create_custagid
-			tempcustaguuid, -- OUT create_custaguuid text,
-			tempentityfieldformatentityuuid, -- OUT create_custagentityuuid uuid
+			null,  -- 	create_systagexternalid text,
+			null, -- create_systagexternalsystemuuid
+			null,--create_systagdeleted boolean,
+			null,--create_systagdraft boolean,
+			tempsystagid, -- OUT create_systagid
+			tempsystaguuid, -- OUT create_systaguuid text,
+			tempentityfieldformatentityuuid, -- OUT create_systagentityuuid uuid
 			337::bigint);
 end if;
 
@@ -488,11 +491,11 @@ if create_entityfieldwidgetentityuuid isNull
 	then tempentityfieldwidgetentityuuid = create_entityfieldwidgetentityuuid;
 	elseif create_entityfieldwidgetentityuuid notNull 
 		and create_entityfieldwidgetentityuuid in (
-				select custagentityuuid 
-				from entity.crud_custag_read_min(temptendrelentityuuid,null,null, 'd19d9e21-0749-4c2a-96c5-02f648e28826', false,null,null, null,create_languagetypeuuid)
+				select systagentityuuid 
+				from entity.crud_systag_read_min(temptendrelentityuuid,null,null, 'd19d9e21-0749-4c2a-96c5-02f648e28826', false,null,null, null,create_languagetypeuuid)
 				union
-				select custagentityuuid 
-				from entity.crud_custag_read_min(tempentitytemplateownerentityuuid,null,null, 'd19d9e21-0749-4c2a-96c5-02f648e28826', false,null,null, null,create_languagetypeuuid)
+				select systagentityuuid 
+				from entity.crud_systag_read_min(tempentitytemplateownerentityuuid,null,null, 'd19d9e21-0749-4c2a-96c5-02f648e28826', false,null,null, null,create_languagetypeuuid)
 					)
 	then tempentityfieldwidgetentityuuid = create_entityfieldwidgetentityuuid;
 	else return;
@@ -500,20 +503,20 @@ end if;
 
 if tempentityfieldwidgetentityuuid isNull and (create_entityfieldwidgetentityname notNull and coalesce(create_entityfieldwidgetentityname, '')<>'')
 	then 
-		call entity.crud_custag_create(
-			tempentitytemplateownerentityuuid, --create_custagownerentityuuid
-			'd19d9e21-0749-4c2a-96c5-02f648e28826', --create_custagparententityuuid
-			null,   --create_custagcornerstoneentityuuid
-			null, --create_custagcornerstoneorder 
-			create_entityfieldwidgetentityname,  -- create_custag
+		call entity.crud_systag_create(
+			tempentitytemplateownerentityuuid, --create_systagownerentityuuid
+			'd19d9e21-0749-4c2a-96c5-02f648e28826', --create_systagparententityuuid
+			null,   --create_systagcornerstoneentityuuid
+			null, --create_systagcornerstoneorder 
+			create_entityfieldwidgetentityname,  -- create_systag
 			templanguagetypeentityuuid, -- create_languagetypeuuid  
-			null,  -- 	create_custagexternalid text,
-			null, -- create_custagexternalsystemuuid
-			null,--create_custagdeleted boolean,
-			null,--create_custagdraft boolean,
-			tempcustagid, -- OUT create_custagid
-			tempcustaguuid, -- OUT create_custaguuid text,
-			tempentityfieldwidgetentityuuid, -- OUT create_custagentityuuid uuid
+			null,  -- 	create_systagexternalid text,
+			null, -- create_systagexternalsystemuuid
+			null,--create_systagdeleted boolean,
+			null,--create_systagdraft boolean,
+			tempsystagid, -- OUT create_systagid
+			tempsystaguuid, -- OUT create_systaguuid text,
+			tempentityfieldwidgetentityuuid, -- OUT create_systagentityuuid uuid
 			337::bigint);
 end if;
 
@@ -541,6 +544,7 @@ If create_entityfielddraft isNull
 	then tempentityfielddraft = false;
 	else tempentityfielddraft = create_entityfielddraft;
 end if;
+
 
 -- time to insert the base entity template
 

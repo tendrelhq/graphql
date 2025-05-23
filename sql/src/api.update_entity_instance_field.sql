@@ -31,14 +31,14 @@ if (old.id = new.id)
 			update_entityfieldinstanceentityfieldentityuuid := new.field,
 			update_entityfieldinstancevalue := new.value,
 			update_entityfieldinstanceentityfieldname := null::text,
-			update_entityfieldinstanceexternalid := null::text,
+			update_entityfieldinstanceexternalid := new.external_id,
 			update_entityfieldinstanceexternalsystemuuid := null::uuid,
 			update_entityfieldinstancedeleted := new._deleted,
 			update_entityfieldinstancedraft := new._draft,
 			update_entityfieldinstancestartdate := new.activated_at,
 			update_entityfieldinstanceenddate := new.deactivated_at,
-			update_entityfieldinstancemodifiedbyuuid := null::text,
-			update_languagetypeuuid := null::uuid
+			update_entityfieldinstancemodifiedbyuuid := ins_useruuid,
+			update_languagetypeuuid := ins_languagetypeentityuuid
 		);
 	else  
 		return null;

@@ -27,9 +27,9 @@ if (select owner in (select * from _api.util_get_onwership()) )
 	  );
 	else
 		return;  -- need an exception here
-end if;	  
+end if;
 
-	return query
+  return query
     select *
     from api.entity_field t
     where t.owner = $1 and t.id = $2

@@ -25,7 +25,7 @@ BEGIN
 
 -- all customers all locations all tags
 select * from entity.crud_location_read_min(null,null,null,null,true,null,null,null,null,'bcbe750d-1b3b-4e2b-82ec-448bb8b116f9')
-
+limit 10
 -- all locations for a specific customer all tags
 select * from entity.crud_location_read_min('f90d618d-5de7-4126-8c65-0afb700c6c61',null,null,null,true,null,null,null,null,'bcbe750d-1b3b-4e2b-82ec-448bb8b116f9')
 
@@ -57,17 +57,17 @@ end if;
 
 tendreluuid = 'f90d618d-5de7-4126-8c65-0afb700c6c61';
 
-if read_locationsenddeleted isNull and read_locationsenddeleted = false
+if  read_locationsenddeleted = false
 	then templocationsenddeleted = Array[false];
 	else templocationsenddeleted = Array[true,false];
 end if;
 
-if read_locationsenddrafts isNull and read_locationsenddrafts = false
+if  read_locationsenddrafts = false
 	then templocationsenddrafts = Array[false];
 	else templocationsenddrafts = Array[true,false];
 end if;
 
-if read_locationsendinactive isNull and read_locationsendinactive = false
+if  read_locationsendinactive = false
 	then templocationsendinactive = Array[true];
 	else templocationsendinactive = Array[true,false];
 end if;
@@ -105,10 +105,12 @@ if allcustomers = true and read_alllocations = true and read_locationtag isNull
 			enttag.entitytagcustagentityuuid as locationtagentityuuid,
 			ei.entityinstancedeleted, 
 			ei.entityinstancedraft,
-			case when ei.entityinstanceenddate notnull and ei.entityinstanceenddate::Date < now()::date
-				then false
-				else true
-			end as entityinstanceactive
+	case when ei.entityinstancedeleted then false
+			when ei.entityinstancedraft then false
+			when ei.entityinstanceenddate::Date > now()::date 
+				and ei.entityinstancestartdate < now() then false
+			else true
+	end as entityinstanceactive
 		from entity.entityinstance ei
 			Join (select customerid,customeruuid, customerentityuuid  
 					from entity.crud_customer_read_min(read_locationownerentityuuid,null,null,allcustomers, null,null,null,null)) as cust
@@ -172,10 +174,12 @@ if allcustomers = false and read_alllocations = true and read_locationtag isNull
 			enttag.entitytagcustagentityuuid as locationtagentityuuid,
 			ei.entityinstancedeleted, 
 			ei.entityinstancedraft,
-			case when ei.entityinstanceenddate notnull and ei.entityinstanceenddate::Date < now()::date
-				then false
-				else true
-			end as entityinstanceactive
+	case when ei.entityinstancedeleted then false
+			when ei.entityinstancedraft then false
+			when ei.entityinstanceenddate::Date > now()::date 
+				and ei.entityinstancestartdate < now() then false
+			else true
+	end as entityinstanceactive
 		from entity.entityinstance ei
 			Join (select customerid,customeruuid, customerentityuuid  from entity.crud_customer_read_min(read_locationownerentityuuid,null,null,allcustomers, null,null,null,null)) as cust
 				on cust.customerentityuuid = ei.entityinstanceownerentityuuid
@@ -240,10 +244,12 @@ if allcustomers = false and read_alllocations = false
 			enttag.entitytagcustagentityuuid as locationtagentityuuid,
 			ei.entityinstancedeleted, 
 			ei.entityinstancedraft,
-			case when ei.entityinstanceenddate notnull and ei.entityinstanceenddate::Date < now()::date
-				then false
-				else true
-			end as entityinstanceactive
+	case when ei.entityinstancedeleted then false
+			when ei.entityinstancedraft then false
+			when ei.entityinstanceenddate::Date > now()::date 
+				and ei.entityinstancestartdate < now() then false
+			else true
+	end as entityinstanceactive
 		from entity.entityinstance ei
 			Join (select customerid,customeruuid, customerentityuuid  from entity.crud_customer_read_min(read_locationownerentityuuid,null,null,allcustomers, null,null,null,null)) as cust
 				on cust.customerentityuuid = ei.entityinstanceownerentityuuid
@@ -307,10 +313,12 @@ if allcustomers = false and read_alllocations = false
 			enttag.entitytagcustagentityuuid as locationtagentityuuid,
 			ei.entityinstancedeleted, 
 			ei.entityinstancedraft,
-			case when ei.entityinstanceenddate notnull and ei.entityinstanceenddate::Date < now()::date
-				then false
-				else true
-			end as entityinstanceactive
+	case when ei.entityinstancedeleted then false
+			when ei.entityinstancedraft then false
+			when ei.entityinstanceenddate::Date > now()::date 
+				and ei.entityinstancestartdate < now() then false
+			else true
+	end as entityinstanceactive
 		from entity.entityinstance ei
 			Join (select customerid,customeruuid, customerentityuuid  from entity.crud_customer_read_min(read_locationownerentityuuid,null,null,allcustomers, null,null,null,null)) as cust
 				on cust.customerentityuuid = ei.entityinstanceownerentityuuid
@@ -374,10 +382,12 @@ if allcustomers = false and read_alllocations = true and read_locationtag notNul
 			read_locationtag as locationtagentityuuid,
 			ei.entityinstancedeleted, 
 			ei.entityinstancedraft,
-			case when ei.entityinstanceenddate notnull and ei.entityinstanceenddate::Date < now()::date
-				then false
-				else true
-			end as entityinstanceactive
+	case when ei.entityinstancedeleted then false
+			when ei.entityinstancedraft then false
+			when ei.entityinstanceenddate::Date > now()::date 
+				and ei.entityinstancestartdate < now() then false
+			else true
+	end as entityinstanceactive
 		from entity.entityinstance ei
 			Join (select customerid,customeruuid, customerentityuuid  from entity.crud_customer_read_min(read_locationownerentityuuid,null,null,allcustomers, null,null,null,null)) as cust
 				on cust.customerentityuuid = ei.entityinstanceownerentityuuid
@@ -442,10 +452,12 @@ if allcustomers = false and read_alllocations = false and read_locationentityuui
 			enttag.entitytagcustagentityuuid as locationtagentityuuid,
 			ei.entityinstancedeleted, 
 			ei.entityinstancedraft,
-			case when ei.entityinstanceenddate notnull and ei.entityinstanceenddate::Date < now()::date
-				then false
-				else true
-			end as entityinstanceactive
+	case when ei.entityinstancedeleted then false
+			when ei.entityinstancedraft then false
+			when ei.entityinstanceenddate::Date > now()::date 
+				and ei.entityinstancestartdate < now() then false
+			else true
+	end as entityinstanceactive
 		from entity.entityinstance ei
 			Join (select customerid,customeruuid, customerentityuuid  from entity.crud_customer_read_min(read_locationownerentityuuid,null,null,allcustomers, null,null,null,null)) as cust
 				on cust.customerentityuuid = ei.entityinstanceownerentityuuid

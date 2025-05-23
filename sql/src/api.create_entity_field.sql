@@ -9,6 +9,11 @@ AS $function$
 declare
   ins_entity uuid;
   ins_row api.entity_field%rowtype;
+  ins_useruuid text;
+	ins_userid bigint;
+	ins_languagetypeuuid text;	
+	ins_languagetypeentityuuid uuid;
+	ins_languagetypeid bigint;
 begin
 
   	if new.owner = 'f90d618d-5de7-4126-8c65-0afb700c6c61' and new._primary = true
@@ -16,13 +21,19 @@ begin
 		else new._primary = false;
 	end if;
 
+select get_workerinstanceid, get_workerinstanceuuid, get_languagetypeid, get_languagetypeuuid, get_languagetypeentityuuid
+into ins_userid, ins_useruuid, ins_languagetypeid,ins_languagetypeuuid, ins_languagetypeentityuuid
+from _api.util_user_details();
+
+if (select new.owner in (select * from _api.util_get_onwership()))
+	then
   call entity.crud_entityfield_create(
       create_entityfieldownerentityuuid := new.owner,
       create_entityfieldparententityuuid := new.parent,
       create_entityfieldtemplateentityuuid := new.template,
       create_entityfieldcornerstoneorder := new._order,
       create_entityfieldname := new.name,
-      create_entityfieldtypeentityuuid := new.type_id,
+      create_entityfieldtypeentityuuid := new.type,
       create_entityfieldentityparenttypeentityuuid := new.parent_type,
       create_entityfieldentitytypeentityuuid := new.entity_type,
       create_entityfielddefaultvalue := new.default_value,
@@ -44,6 +55,7 @@ begin
       create_modifiedbyid := ins_userid,
       create_entityfieldentityuuid := ins_entity
   );
+end if;
 
   select * into ins_row
   from api.entity_field

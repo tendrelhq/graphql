@@ -79,11 +79,14 @@ if allowners = true and (read_entityfileinstanceentityuuid isNull)
 				efi.entityfileinstancerefuuid, 
 				efi.entityfileinstancedraft, 
 				efi.entityfileinstancedeleted,
-				efi.entityfileinstancedeleted as entityfileinstancesendinactive
+	case when efi.entityfileinstancedeleted then false
+			when efi.entityfileinstancedraft then false
+			else true
+			end as entityfileinstanceactive
 		FROM entity.entityfileinstance	efi	
 			where efi.entityfileinstancedeleted = ANY (tempentityfileinstancesenddeleted)
 				 and efi.entityfileinstancedraft = ANY (tempentityfileinstancesenddrafts)) as foo
-		where foo.entityfileinstancesendinactive = Any (tempentityfileinstancesendinactive) ;
+		where foo.entityfileinstanceactive = Any (tempentityfileinstancesendinactive) ;
 		return;
 end if;
 
@@ -108,14 +111,17 @@ if allowners = false and read_entityfileinstanceentityuuid notNull
 				efi.entityfileinstancerefuuid, 
 				efi.entityfileinstancedraft, 
 				efi.entityfileinstancedeleted,
-				efi.entityfileinstancedeleted as entityfileinstancesendinactive
+	case when efi.entityfileinstancedeleted then false
+			when efi.entityfileinstancedraft then false
+			else true
+			end as entityfileinstanceactive
 		FROM entity.entityfileinstance	efi	
 		where (efi.entityfileinstanceownerentityuuid = read_ownerentityuuid
 					or efi.entityfileinstanceownerentityuuid = tendreluuid) 
 			and efi.entityfileinstanceuuid = read_entityfileinstanceentityuuid			
 			and efi.entityfileinstancedeleted = ANY (tempentityfileinstancesenddeleted)
 			and efi.entityfileinstancedraft = ANY (tempentityfileinstancesenddrafts)) as foo
-		where foo.entityfileinstancesendinactive = Any (tempentityfileinstancesendinactive
+		where foo.entityfileinstanceactive = Any (tempentityfileinstancesendinactive
 		) ;
 		return;
 end if;
@@ -141,14 +147,17 @@ if allowners = false and read_entityfileinstanceentityentityinstanceentityuuid  
 				efi.entityfileinstancerefuuid, 
 				efi.entityfileinstancedraft, 
 				efi.entityfileinstancedeleted,
-				efi.entityfileinstancedeleted as entityfileinstancesendinactive
+	case when efi.entityfileinstancedeleted then false
+			when efi.entityfileinstancedraft then false
+			else true
+			end as entityfileinstanceactive
 		FROM entity.entityfileinstance	efi	
 			where (efi.entityfileinstanceownerentityuuid = read_ownerentityuuid
 					or efi.entityfileinstanceownerentityuuid = tendreluuid) 
 				and efi.entityfileinstanceentityentityinstanceentityuuid = read_entityfileinstanceentityentityinstanceentityuuid 
 				and efi.entityfileinstancedeleted = ANY (tempentityfileinstancesenddeleted)
 				and efi.entityfileinstancedraft = ANY (tempentityfileinstancesenddrafts)) as foo
-		where foo.entityfileinstancesendinactive = Any (tempentityfileinstancesendinactive) ;
+		where foo.entityfileinstanceactive = Any (tempentityfileinstancesendinactive) ;
 end if;
 
 if allowners = false and read_entityfileinstanceentityfieldinstanceentityuuid notNull
@@ -172,14 +181,17 @@ if allowners = false and read_entityfileinstanceentityfieldinstanceentityuuid no
 				efi.entityfileinstancerefuuid, 
 				efi.entityfileinstancedraft, 
 				efi.entityfileinstancedeleted,
-				efi.entityfileinstancedeleted as entityfileinstancesendinactive
+	case when efi.entityfileinstancedeleted then false
+			when efi.entityfileinstancedraft then false
+			else true
+			end as entityfileinstanceactive
 		FROM entity.entityfileinstance	efi	
 			where (efi.entityfileinstanceownerentityuuid = read_ownerentityuuid
 					or efi.entityfileinstanceownerentityuuid = tendreluuid) 
 				and efi.entityfileinstanceentityfieldinstanceentityuuid = read_entityfileinstanceentityfieldinstanceentityuuid
 				and efi.entityfileinstancedeleted = ANY (tempentityfileinstancesenddeleted)
 				and efi.entityfileinstancedraft = ANY (tempentityfileinstancesenddrafts)) as foo
-		where foo.entityfileinstancesendinactive = Any (tempentityfileinstancesendinactive) ;
+		where foo.entityfileinstanceactive = Any (tempentityfileinstancesendinactive) ;
 end if;
 
 if allowners = false and read_entityfileinstanceentityfieldinstanceentityuuid isNull 
@@ -205,17 +217,19 @@ if allowners = false and read_entityfileinstanceentityfieldinstanceentityuuid is
 				efi.entityfileinstancerefuuid, 
 				efi.entityfileinstancedraft, 
 				efi.entityfileinstancedeleted,
-				efi.entityfileinstancedeleted as entityfileinstancesendinactive
+	case when efi.entityfileinstancedeleted then false
+			when efi.entityfileinstancedraft then false
+			else true
+			end as entityfileinstanceactive
 		FROM entity.entityfileinstance	efi	
 			where (efi.entityfileinstanceownerentityuuid = read_ownerentityuuid
 					or efi.entityfileinstanceownerentityuuid = tendreluuid) 
 					and efi.entityfileinstancedeleted = ANY (tempentityfileinstancesenddeleted)
 				 	and efi.entityfileinstancedraft = ANY (tempentityfileinstancesenddrafts)
 				 ) as foo
-		where foo.entityfileinstancesendinactive = Any (tempentityfileinstancesendinactive) ;
+		where foo.entityfileinstanceactive = Any (tempentityfileinstancesendinactive) ;
 		return;
 end if;	
-
 
 End;	
 

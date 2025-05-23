@@ -1,28 +1,10 @@
 
 -- Type: FUNCTION ; Name: engine0.rebase(text,text); Owner: tendreladmin
 
-drop function if exists engine0.rebase;
-
--- Rebase a chain onto another chain.
--- Note that `node` can only be a chain root at the moment.
---
--- For example, given two chains:
---
---   A---B---C
---
---  and
---
---   D---E---F---G
---
--- Rebasing A onto D results in:
---
---    A---B---C
---   /
---   D---E---F---G
---
-create or replace function engine0.rebase(base text, node text)
-returns table(id text, updates bigint)
-as $$
+CREATE OR REPLACE FUNCTION engine0.rebase(base text, node text)
+ RETURNS TABLE(id text, updates bigint)
+ LANGUAGE sql
+AS $function$
   -- `base` is our new originator
   -- `node` is whom we will be updating (along with all of its children)
   with recursive
@@ -48,14 +30,14 @@ as $$
       from to_update, public.workinstance as child
       where to_update.workinstanceid = child.workinstancepreviousid
         and to_update.workinstanceoriginatorworkinstanceid = child.workinstanceoriginatorworkinstanceid
-    ) cycle id set is_cycle using path,
+    ),
     updated_children as (
       update public.workinstance as t
       set workinstanceoriginatorworkinstanceid = base.workinstanceid,
           workinstancemodifiedby = auth.current_identity(t.workinstancecustomerid, current_setting('user.id')),
           workinstancemodifieddate = now()
       from base, to_update
-      where t.id = to_update.id and not is_cycle
+      where t.id = to_update.id
       returning t.id
     ),
     updated_node as (
@@ -73,9 +55,10 @@ as $$
   from updated_node
   left join updated_children on true
   group by updated_node.id;
-$$
-language sql;
+$function$;
+
 
 REVOKE ALL ON FUNCTION engine0.rebase(text,text) FROM PUBLIC;
-GRANT EXECUTE ON FUNCTION engine0.rebase(text,text) TO tendrelservice;
+GRANT EXECUTE ON FUNCTION engine0.rebase(text,text) TO PUBLIC;
+GRANT EXECUTE ON FUNCTION engine0.rebase(text,text) TO tendreladmin WITH GRANT OPTION;
 GRANT EXECUTE ON FUNCTION engine0.rebase(text,text) TO graphql;

@@ -48,17 +48,17 @@ if read_ownerentityuuid isNull
 	else allowners = false;
 end if;
 
-if read_entitytemplatesenddeleted isNull and read_entitytemplatesenddeleted = false
+if  read_entitytemplatesenddeleted = false
 	then tempentitytemplatesenddeleted = Array[false];
 	else tempentitytemplatesenddeleted = Array[true,false];
 end if;
 
-if read_entitytemplatesenddrafts isNull and read_entitytemplatesenddrafts = false
+if read_entitytemplatesenddrafts = false
 	then tempentitytemplatesenddrafts = Array[false];
 	else tempentitytemplatesenddrafts = Array[true,false];
 end if;
 
-if read_entitytemplatesendinactive isNull and read_entitytemplatesendinactive = false
+if  read_entitytemplatesendinactive = false
 	then tempentitytemplatesendinactive = Array[true];
 	else tempentitytemplatesendinactive = Array[true,false];
 end if;
@@ -90,14 +90,16 @@ if allowners = true and (read_entitytemplateentityuuid isNull)
 				et.entitytemplateexternalsystementityuuid,
 				et.entitytemplatedeleted,
 				et.entitytemplatedraft,
-				case when et.entitytemplateenddate notnull and et.entitytemplateenddate::Date < now()::date
-					then false
-					else true
-				end as entitytemplatesendinactive
+	case when et.entitytemplatedeleted then false
+			when et.entitytemplatedraft then false
+			when et.entitytemplateenddate::Date > now()::date 
+				and et.entitytemplatestartdate < now() then false
+			else true
+	end as entitytemplateactive
 			FROM entity.entitytemplate et
 			where et.entitytemplatedeleted = ANY (tempentitytemplatesenddeleted)
 				 and et.entitytemplatedraft = ANY (tempentitytemplatesenddrafts)) as foo
-		where foo.entitytemplatesendinactive = Any (tempentitytemplatesendinactive
+		where foo.entitytemplateactive = Any (tempentitytemplatesendinactive
 		) ;
 		return;
 end if;
@@ -127,15 +129,17 @@ if allowners = false and (read_entitytemplateentityuuid isNull)
 				et2.entitytemplateexternalsystementityuuid,
 				et2.entitytemplatedeleted,
 				et2.entitytemplatedraft,
-				case when et2.entitytemplateenddate notnull and et2.entitytemplateenddate::Date < now()::date
-					then false
-					else true
-				end as entitytemplatesendinactive
+	case when et2.entitytemplatedeleted then false
+			when et2.entitytemplatedraft then false
+			when et2.entitytemplateenddate::Date > now()::date 
+				and et2.entitytemplatestartdate < now() then false
+			else true
+	end as entitytemplateactive
 		FROM entity.entitytemplate et2
 		where et2.entitytemplateownerentityuuid = read_ownerentityuuid
 			and et2.entitytemplatedeleted = ANY (tempentitytemplatesenddeleted)
 			and et2.entitytemplatedraft = ANY (tempentitytemplatesenddrafts)) as foo
-		where foo.entitytemplatesendinactive = Any (tempentitytemplatesendinactive
+		where foo.entitytemplateactive = Any (tempentitytemplatesendinactive
 		) ;
 		return;
 end if;
@@ -165,17 +169,19 @@ if allowners = false and (read_entitytemplateentityuuid notNull)
 				et3.entitytemplateexternalsystementityuuid,
 				et3.entitytemplatedeleted,
 				et3.entitytemplatedraft,
-				case when et3.entitytemplateenddate notnull and et3.entitytemplateenddate::Date < now()::date
-					then false
-					else true
-				end as entitytemplatesendinactive
+	case when et3.entitytemplatedeleted then false
+			when et3.entitytemplatedraft then false
+			when et3.entitytemplateenddate::Date > now()::date 
+				and et3.entitytemplatestartdate < now() then false
+			else true
+				end as entitytemplateactive
 			FROM entity.entitytemplate et3
 			where (et3.entitytemplateownerentityuuid = read_ownerentityuuid
 					or et3.entitytemplateownerentityuuid = tendreluuid) 
 				and et3.entitytemplateuuid = read_entitytemplateentityuuid
 				and et3.entitytemplatedeleted = ANY (tempentitytemplatesenddeleted)
 				and et3.entitytemplatedraft = ANY (tempentitytemplatesenddrafts)) as foo
-		where foo.entitytemplatesendinactive = Any (tempentitytemplatesendinactive) ;
+		where foo.entitytemplateactive = Any (tempentitytemplatesendinactive) ;
 end if;
 
 End;	

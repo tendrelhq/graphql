@@ -28,22 +28,25 @@ into ins_customerentityuuid
 from entity.crud_customer_read_min(null,null, null, true, null,null,null,null)
 where customerid = (select workerinstancecustomerid from workerinstance where workerinstanceid = ins_userid);
 
-  call entity.crud_custag_create(
-  		create_custagownerentityuuid := ins_customerentityuuid, 
-		create_custagparententityuuid := new.parent, 
-		create_custagcornerstoneentityuuid := new.cornerstone, 
-		create_custagcornerstoneorder := new._order, 
-		create_custag := new.type, 
-		create_languagetypeuuid := ins_languagetypeentityuuid, 
-		create_custagexternalid := new.external_id, 
-		create_custagexternalsystemuuid := new.external_system,
-		create_custagdeleted := new._deleted, 
-		create_custagdraft := new._draft, 
-		create_custagid := ins_bigint, 
-		create_custaguuid := ins_text, 
-		create_custagentityuuid := ins_entity, 
-		create_modifiedbyid := ins_userid  
-  );
+if (select new.owner in (select * from _api.util_get_onwership()))
+	then
+	  call entity.crud_custag_create(
+	  		create_custagownerentityuuid := new.owner, 
+			create_custagparententityuuid := new.parent, 
+			create_custagcornerstoneentityuuid := new.cornerstone, 
+			create_custagcornerstoneorder := new._order, 
+			create_custag := new.type, 
+			create_languagetypeuuid := ins_languagetypeentityuuid, 
+			create_custagexternalid := new.external_id, 
+			create_custagexternalsystemuuid := new.external_system,
+			create_custagdeleted := new._deleted, 
+			create_custagdraft := new._draft, 
+			create_custagid := ins_bigint, 
+			create_custaguuid := ins_text, 
+			create_custagentityuuid := ins_entity, 
+			create_modifiedbyid := ins_userid  
+	  );
+end if;
 
   select * into ins_row
   from api.custag

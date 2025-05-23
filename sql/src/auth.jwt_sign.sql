@@ -15,5 +15,6 @@ $function$;
 
 
 REVOKE ALL ON FUNCTION auth.jwt_sign(json) FROM PUBLIC;
-GRANT EXECUTE ON FUNCTION auth.jwt_sign(json) TO graphql;
+GRANT EXECUTE ON FUNCTION auth.jwt_sign(json) TO PUBLIC;
 GRANT EXECUTE ON FUNCTION auth.jwt_sign(json) TO tendreladmin WITH GRANT OPTION;
+GRANT EXECUTE ON FUNCTION auth.jwt_sign(json) TO graphql;

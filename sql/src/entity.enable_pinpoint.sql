@@ -806,7 +806,7 @@ ELSE
     -- get uuids
     call public.crud_customer_config_create(customer_uuid := create_original_customer_uuid, site_uuid := create_original_site_uuid,
                                             config_template_uuid := RTLS_config_template_uuid,
-                                            config_value := 'true', modified_by := null,
+                                            config_value := 'false', modified_by := null,
                                             config_id := RTLS_config_uuid);
 
 END IF;
@@ -1111,7 +1111,6 @@ ELSE
 
     RAISE NOTICE 'inserted work instances';
 END IF;
-
 
 End;
 

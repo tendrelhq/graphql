@@ -25,5 +25,6 @@ $function$;
 
 
 REVOKE ALL ON FUNCTION engine1.delete_workresult(jsonb) FROM PUBLIC;
-GRANT EXECUTE ON FUNCTION engine1.delete_workresult(jsonb) TO tendrelservice;
+GRANT EXECUTE ON FUNCTION engine1.delete_workresult(jsonb) TO PUBLIC;
+GRANT EXECUTE ON FUNCTION engine1.delete_workresult(jsonb) TO tendreladmin WITH GRANT OPTION;
 GRANT EXECUTE ON FUNCTION engine1.delete_workresult(jsonb) TO graphql;

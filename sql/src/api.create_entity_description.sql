@@ -9,11 +9,20 @@ AS $function$
 declare
   ins_entity uuid;
   ins_row api.entity_description%rowtype;
+    ins_useruuid text;
+	ins_userid bigint;
+	ins_languagetypeuuid text;	
+	ins_languagetypeentityuuid uuid;
+	ins_languagetypeid bigint;
 
 begin
 
--- only tendrel can have primary templates
+select get_workerinstanceid, get_workerinstanceuuid, get_languagetypeid, get_languagetypeuuid, get_languagetypeentityuuid
+into ins_userid, ins_useruuid, ins_languagetypeid,ins_languagetypeuuid, ins_languagetypeentityuuid
+from _api.util_user_details();
 
+if (select new.owner in (select * from _api.util_get_onwership()))
+	then
 	call entity.crud_entitydescription_create(
 		create_entitydescriptionownerentityuuid  := new.owner, 
 		create_entitytemplateentityuuid  := new.template, 
@@ -29,6 +38,7 @@ begin
 		create_entitydescriptionentityuuid  := ins_entity, 
 		create_modifiedbyid :=ins_userid  
   	);
+end if;
 
   select * into ins_row
   from api.entity_description

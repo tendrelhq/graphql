@@ -18,7 +18,7 @@ Begin
 -- remove this once language issues are passed through
 
 if update_languagetypeuuid isNull
-	then update_languagetypeuuid = (select systaguuid from systag where systagid = 20);
+	then update_languagetypeuuid = 'bcbe750d-1b3b-4e2b-82ec-448bb8b116f9';
 End if;
 
  if update_entityinstancedraft = true or ((select entityinstancedraft 
@@ -65,7 +65,20 @@ End if;
 				entityinstancestartdate = case when update_entityinstancestartdate notnull 
 										then update_entityinstancestartdate
 										else entityinstancestartdate end,
-	 			entityinstanceenddate = update_entityinstanceenddate,
+				entityinstanceenddate = case 	when entityinstancedeleted = true 
+											and entityinstanceenddate isNull
+											and update_entityinstanceenddate isNull then now()
+										when entityinstancedeleted = true 
+											and entityinstanceenddate isNull
+											and update_entityinstanceenddate notNull then update_entityinstanceenddate 
+										when entityinstancedeleted = true 
+											and entityinstanceenddate notNull
+											and update_entityinstanceenddate isNull then entityinstanceenddate
+										when entityinstancedeleted = true and entityinstanceenddate notNull
+											and update_entityinstanceenddate notNull and update_entityinstanceenddate <> entityinstanceenddate
+											then update_entityinstanceenddate	
+										else null
+									end,
 				entityinstancemodifieddate=now(),
 				entityinstancemodifiedbyuuid = update_entityinstancemodifiedbyuuid
 		WHERE entityinstanceuuid = update_entityinstanceentityuuid;
@@ -95,7 +108,23 @@ End if;
 				entityinstancestartdate = case when update_entityinstancestartdate notnull 
 										then update_entityinstancestartdate
 										else entityinstancestartdate end,
-	 			entityinstanceenddate = update_entityinstanceenddate,
+				entityinstancedeleted = case when update_entityinstancedeleted notnull 
+										then update_entityinstancedeleted
+										else entityinstancedeleted end, 
+				entityinstanceenddate = case 	when entityinstancedeleted = true 
+											and entityinstanceenddate isNull
+											and update_entityinstanceenddate isNull then now()
+										when entityinstancedeleted = true 
+											and entityinstanceenddate isNull
+											and update_entityinstanceenddate notNull then update_entityinstanceenddate 
+										when entityinstancedeleted = true 
+											and entityinstanceenddate notNull
+											and update_entityinstanceenddate isNull then entityinstanceenddate
+										when entityinstancedeleted = true and entityinstanceenddate notNull
+											and update_entityinstanceenddate notNull and update_entityinstanceenddate <> entityinstanceenddate
+											then update_entityinstanceenddate	
+										else null
+									end,
 				entityinstancemodifieddate=now(),
 				entityinstancemodifiedbyuuid = update_entityinstancemodifiedbyuuid
 		WHERE entityinstanceuuid = update_entityinstanceentityuuid;
@@ -114,7 +143,6 @@ if  update_entityinstancename notNull and (coalesce(update_entityinstancename,''
 		where entityinstanceuuid = update_entityinstanceentityuuid
 			and languagemasteruuid = entityinstancenameuuid
 			and languagemastersource <> update_entityinstancename;
-
 
 ----------------------
 -- need to update tempaltename if templateuuid changes.  

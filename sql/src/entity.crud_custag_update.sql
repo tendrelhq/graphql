@@ -37,9 +37,7 @@ End if;
 				entityinstancetype = case when update_custag notnull and (coalesce(update_custag,'') <> '')
 												then update_custag
 												else entityinstancetype end,
-				entityinstanceexternalid = case when update_custagexternalid notnull 
-												then update_custagexternalid
-												else entityinstanceexternalid end,												
+				entityinstanceexternalid = update_custagexternalid,													
 				entityinstanceexternalsystementityuuid = case when update_custagexternalsystemuuid notnull 
 														then update_custagexternalsystemuuid
 														else entityinstanceexternalsystementityuuid end,
@@ -80,9 +78,7 @@ End if;
 				entityinstancetype = case when update_custag notnull and (coalesce(update_custag,'') <> '')
 												then update_custag
 												else entityinstancetype end,
-				entityinstanceexternalid = case when update_custagexternalid notnull 
-												then update_custagexternalid
-												else entityinstanceexternalid end,												
+				entityinstanceexternalid = update_custagexternalid,												
 				entityinstanceexternalsystementityuuid = case when update_custagexternalsystemuuid notnull 
 														then update_custagexternalsystemuuid
 														else entityinstanceexternalsystementityuuid end,
@@ -111,7 +107,7 @@ End if;
 		WHERE entityinstanceuuid = update_custagentityuuid;
 end if;
 
-update_custagownerentityuuid = (select owner from api.entity_instance where id = update_custagentityuuid);
+update_custagownerentityuuid = (select entityinstanceownerentityuuid from entity.entityinstance where entityinstanceuuid = update_custagentityuuid);
 
 -- update the language master
 
@@ -163,10 +159,8 @@ if update_custag_displayname notnull and (coalesce(update_custag_displayname,'')
 
 end if;
 
-
 if update_custag_name notnull and (coalesce(update_custag_name,'') <> '')
 	then
-
 
 	-- update name in languagetranslations (Temp until the retranslate runs)	
 		update public.languagetranslations

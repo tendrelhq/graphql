@@ -32,5 +32,6 @@ $function$;
 
 
 REVOKE ALL ON FUNCTION engine0.eval_field_condition(jsonb) FROM PUBLIC;
-GRANT EXECUTE ON FUNCTION engine0.eval_field_condition(jsonb) TO tendrelservice;
+GRANT EXECUTE ON FUNCTION engine0.eval_field_condition(jsonb) TO PUBLIC;
+GRANT EXECUTE ON FUNCTION engine0.eval_field_condition(jsonb) TO tendreladmin WITH GRANT OPTION;
 GRANT EXECUTE ON FUNCTION engine0.eval_field_condition(jsonb) TO graphql;

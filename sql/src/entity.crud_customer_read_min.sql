@@ -40,17 +40,17 @@ from entity.crud_customer_read_min(null,null,'f90d618d-5de7-4126-8c65-0afb700c6c
 
 */
 
-if read_customersenddeleted isNull and read_customersenddeleted = false
+if  read_customersenddeleted = false
 	then tempcustomersenddeleted = Array[false];
 	else tempcustomersenddeleted = Array[true,false];
 end if;
 
-if read_customersenddrafts isNull and read_customersenddrafts = false
+if  read_customersenddrafts = false
 	then tempcustomersenddrafts = Array[false];
 	else tempcustomersenddrafts = Array[true,false];
 end if;
 
-if read_customersendinactive isNull and read_customersendinactive = false
+if   read_customersendinactive = false
 	then tempcustomersendinactive = Array[true];
 	else tempcustomersendinactive = Array[true,false];
 end if;
@@ -80,10 +80,12 @@ if read_allcustomers = true
 		efi.entityfieldinstancevalue::uuid AS customerlanguagetypeentityuuid,
 		entityinstancedeleted, 
 		entityinstancedraft,
-		case when entityinstancedraft = true then false
-				when entityinstanceenddate notnull and entityinstanceenddate::Date < now()::date then false
-				else true
-		end as entityinstanceactive
+	case when entityinstancedeleted then false
+			when entityinstancedraft then false
+			when entityinstanceenddate::Date > now()::date 
+				and entityinstancestartdate < now() then false
+			else true
+	end as entityinstanceactive
 	from entity.entityinstance
 		JOIN entity.entityfieldinstance efi 
 			on entityinstanceuuid = efi.entityfieldinstanceentityinstanceentityuuid
@@ -126,10 +128,12 @@ then
 		efi.entityfieldinstancevalue::uuid AS customerlanguagetypeentityuuid,
 		entityinstancedeleted, 
 		entityinstancedraft,
-		case when entityinstancedraft = true then false
-				when entityinstanceenddate notnull and entityinstanceenddate::Date < now()::date then false
-				else true
-		end as entityinstanceactive
+	case when entityinstancedeleted then false
+			when entityinstancedraft then false
+			when entityinstanceenddate::Date > now()::date 
+				and entityinstancestartdate < now() then false
+			else true
+	end as entityinstanceactive
 	from entity.entityinstance
 		JOIN entity.entityfieldinstance efi 
 			on entityinstanceuuid = efi.entityfieldinstanceentityinstanceentityuuid
@@ -173,10 +177,12 @@ then
 		efi.entityfieldinstancevalue::uuid AS customerlanguagetypeentityuuid,
 		entityinstancedeleted, 
 		entityinstancedraft,
-		case when entityinstancedraft = true then false
-				when entityinstanceenddate notnull and entityinstanceenddate::Date < now()::date then false
-				else true
-		end as entityinstanceactive
+	case when entityinstancedeleted then false
+			when entityinstancedraft then false
+			when entityinstanceenddate::Date > now()::date 
+				and entityinstancestartdate < now() then false
+			else true
+	end as entityinstanceactive
 	from entity.entityinstance
 		JOIN entity.entityfieldinstance efi 
 			on entityinstanceuuid = efi.entityfieldinstanceentityinstanceentityuuid
@@ -218,10 +224,12 @@ return query
 		efi.entityfieldinstancevalue::uuid AS customerlanguagetypeentityuuid,
 		entityinstancedeleted, 
 		entityinstancedraft,
-		case when entityinstancedraft = true then false
-				when entityinstanceenddate notnull and entityinstanceenddate::Date < now()::date then false
-				else true
-		end as entityinstanceactive
+	case when entityinstancedeleted then false
+			when entityinstancedraft then false
+			when entityinstanceenddate::Date > now()::date 
+				and entityinstancestartdate < now() then false
+			else true
+	end as entityinstanceactive
 	from entity.entityinstance
 		JOIN entity.entityfieldinstance efi 
 			on entityinstanceuuid = efi.entityfieldinstanceentityinstanceentityuuid

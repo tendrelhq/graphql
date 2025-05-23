@@ -66,5 +66,6 @@ end $function$;
 
 
 REVOKE ALL ON FUNCTION legacy0.create_rrule(text,text,numeric,bigint) FROM PUBLIC;
-GRANT EXECUTE ON FUNCTION legacy0.create_rrule(text,text,numeric,bigint) TO tendrelservice;
+GRANT EXECUTE ON FUNCTION legacy0.create_rrule(text,text,numeric,bigint) TO PUBLIC;
+GRANT EXECUTE ON FUNCTION legacy0.create_rrule(text,text,numeric,bigint) TO tendreladmin WITH GRANT OPTION;
 GRANT EXECUTE ON FUNCTION legacy0.create_rrule(text,text,numeric,bigint) TO graphql;

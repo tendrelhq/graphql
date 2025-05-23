@@ -26,7 +26,6 @@ end if;
 update public.customerrequestedlanguage
 set customerrequestedlanguageenddate = now(),
 	customerrequestedlanguagemodifieddate = now(),
-	customerrequestedlanguageenddate = now(),	
 	customerrequestedlanguagemodifiedby = create_modifiedbyid
 where customerrequestedlanguagecustomerid = (select customerid 
 											from entity.crud_customer_read_min(create_customerownerentityuuid,null, null, false,null,null,null, null))

@@ -36,7 +36,7 @@ if (old.id = new.id)
 			update_entityfieldtemplateentityuuid := new.template,
 			update_entityfieldcornerstoneorder := new._order,
 			update_entityfieldname := new.name,
-			update_entityfieldtypeentityuuid := new.type_id,
+			update_entityfieldtypeentityuuid := new.type,
 			update_entityfieldentityparenttypeentityuuid := new.parent_type,
 			update_entityfieldentitytypeentityuuid := new.entity_type,
 			update_entityfielddefaultvalue := new.default_value,
@@ -54,8 +54,8 @@ if (old.id = new.id)
 			update_entityfielddraft := new._draft,
 			update_entityfieldstartdate := new.activated_at,
 			update_entityfieldenddate := new.deactivated_at,
-			update_entityfieldmodifiedbyuuid := null::text,
-			update_languagetypeuuid :=  null::uuid
+			update_entityfieldmodifiedbyuuid := ins_useruuid,
+			update_languagetypeuuid :=  ins_languagetypeentityuuid
 		);
 	else  
 		return null;

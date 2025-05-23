@@ -66,6 +66,7 @@ end if;
 update entity.entitytag
 set entitytagdeleted = true,
 	entitytagmodifieddate = now(),
+	entitytagenddate = now(),
 	entitytagmodifiedbyuuid = (select workerinstanceuuid from workerinstance where workerinstanceid = create_modifiedbyid)
 where entitytagownerentityuuid = create_entitytagownerentityuuid
 	and entitytaguuid = create_entitytagentityuuid;

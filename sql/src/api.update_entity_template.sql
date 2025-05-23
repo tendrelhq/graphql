@@ -45,8 +45,8 @@ if (old.id = new.id)
 		    update_entitytemplatedraft := new._draft,
 		    update_entitytemplatestartdate := new.activated_at,
 		    update_entitytemplateenddate := new.deactivated_at,
-		    update_entitytemplatemodifiedbyuuid := null::text,  -- Fix this later 
-			update_languagetypeuuid :=  null::uuid
+		    update_entitytemplatemodifiedbyuuid := ins_useruuid,  
+			update_languagetypeuuid :=  ins_languagetypeentityuuid
 		);
 	else  
 		return null;

@@ -1,7 +1,7 @@
 
--- Type: PROCEDURE ; Name: entity.crud_systag_update(uuid,uuid,uuid,uuid,integer,text,uuid,text,uuid,boolean,boolean,timestamp with time zone,timestamp with time zone,text); Owner: tendreladmin
+-- Type: PROCEDURE ; Name: entity.crud_systag_update(uuid,uuid,uuid,uuid,integer,text,text,text,uuid,text,uuid,boolean,boolean,timestamp with time zone,timestamp with time zone,text); Owner: tendreladmin
 
-CREATE OR REPLACE PROCEDURE entity.crud_systag_update(IN update_systagentityuuid uuid, IN update_systagownerentityuuid uuid, IN update_systagparententityuuid uuid, IN update_systagcornerstoneentityuuid uuid, IN update_systagcornerstoneorder integer, IN update_systag text, IN update_languagetypeuuid uuid, IN update_systagexternalid text, IN update_systagexternalsystemuuid uuid, IN update_systagdeleted boolean, IN update_systagdraft boolean, IN update_systagstartdate timestamp with time zone, IN update_systagenddate timestamp with time zone, IN update_systagmodifiedbyuuid text)
+CREATE OR REPLACE PROCEDURE entity.crud_systag_update(IN update_systagentityuuid uuid, IN update_systagownerentityuuid uuid, IN update_systagparententityuuid uuid, IN update_systagcornerstoneentityuuid uuid, IN update_systagcornerstoneorder integer, IN update_systag text, IN update_systag_name text, IN update_systag_displayname text, IN update_languagetypeuuid uuid, IN update_systagexternalid text, IN update_systagexternalsystemuuid uuid, IN update_systagdeleted boolean, IN update_systagdraft boolean, IN update_systagstartdate timestamp with time zone, IN update_systagenddate timestamp with time zone, IN update_systagmodifiedbyuuid text)
  LANGUAGE plpgsql
 AS $procedure$
 Declare
@@ -37,9 +37,7 @@ End if;
 				entityinstancetype = case when update_systag notnull and (coalesce(update_systag,'') <> '')
 												then update_systag
 												else entityinstancetype end,
-				entityinstanceexternalid = case when update_systagexternalid notnull 
-												then update_systagexternalid
-												else entityinstanceexternalid end,												
+				entityinstanceexternalid = update_systagexternalid,												
 				entityinstanceexternalsystementityuuid = case when update_systagexternalsystemuuid notnull 
 														then update_systagexternalsystemuuid
 														else entityinstanceexternalsystementityuuid end,
@@ -80,9 +78,7 @@ End if;
 				entityinstancetype = case when update_systag notnull and (coalesce(update_systag,'') <> '')
 												then update_systag
 												else entityinstancetype end,
-				entityinstanceexternalid = case when update_systagexternalid notnull 
-												then update_systagexternalid
-												else entityinstanceexternalid end,												
+				entityinstanceexternalid = update_systagexternalid,												
 				entityinstanceexternalsystementityuuid = case when update_systagexternalsystemuuid notnull 
 														then update_systagexternalsystemuuid
 														else entityinstanceexternalsystementityuuid end,
@@ -121,35 +117,78 @@ select customerid, customeruuid into tempcustomerid,tempcustomeruuid
 select systagid,systaguuid into templanguagetypeid,templanguagetypeuuid
 	from entity.crud_systag_read_min(null, null, update_languagetypeuuid, null, false,null,null, null,update_languagetypeuuid);
 
-if update_systag notnull and (coalesce(update_systag,'') <> '')
+if update_systag_displayname notnull and (coalesce(update_systag_displayname,'') <> '')
 	then
-	-- update name in languagemaster
-		update public.languagemaster
-			set languagemastersourcelanguagetypeid = templanguagetypeid,
-				languagemastersource = update_systag,
-				languagemastermodifiedby = (select workerinstanceid from workerinstance where workerinstanceuuid = update_systagmodifiedbyuuid),
-				languagemastermodifieddate = now()
-		where languagemasteruuid = (select entityinstancenameuuid from entity.entityinstance WHERE entityinstanceuuid = update_systagentityuuid);
+
+	-- update name in languagetranslations (Temp until the retranslate runs)	
+		update public.languagetranslations
+			set languagetranslationvalue = update_systag_displayname
+		from entity.entityinstance
+		where languagetranslationmasterid = (select languagemasterid 
+												from languagemaster 
+												where languagemasteruuid = (select entityfieldinstancevaluelanguagemasteruuid 
+																			from entity.entityfieldinstance
+																			where entityfieldinstanceentityinstanceentityuuid = update_systagentityuuid
+																				and  entityfieldinstanceentityfieldentityuuid = 'cf94ce9c-edd3-4c7b-8128-ab598fc9710a'))
+				and languagetranslationtypeid = templanguagetypeid
+				and languagetranslationvalue <> update_systag_displayname;
 	
 	-- update displayname in languagemaster
 		update public.languagemaster
 			set languagemastersourcelanguagetypeid = templanguagetypeid,
-				languagemastersource = update_systag,
+				languagemastersource = update_systag_displayname,
 				languagemastermodifiedby = (select workerinstanceid from workerinstance where workerinstanceuuid = update_systagmodifiedbyuuid),
-				languagemastermodifieddate = now()
+				languagemastermodifieddate = now(),
+				languagemasterstatus = 'NEEDS_COMPLETE_RETRANSLATION'	
 		where languagemasteruuid = (select entityfieldinstancevaluelanguagemasteruuid 
 									from entity.entityfieldinstance
 									where entityfieldinstanceentityinstanceentityuuid = update_systagentityuuid
-										and  entityfieldinstanceentityfieldentityuuid = '1b29e7b0-0800-4366-b79e-424dd9bafa71');
+										and  entityfieldinstanceentityfieldentityuuid = 'cf94ce9c-edd3-4c7b-8128-ab598fc9710a')
+				and languagemastersource <> update_systag_displayname;
+
+	-- update the field instance
+
+		update entity.entityfieldinstance
+			set entityfieldinstancevalue = update_systag_displayname,
+				entityfieldinstancevaluelanguagetypeentityuuid = update_languagetypeuuid,
+				entityfieldinstancemodifieddate = now(),
+				entityfieldinstancemodifiedbyuuid = update_systagmodifiedbyuuid
+		where entityfieldinstanceentityinstanceentityuuid = update_systagentityuuid
+				and  entityfieldinstanceentityfieldentityuuid = 'cf94ce9c-edd3-4c7b-8128-ab598fc9710a'
+				and entityfieldinstancevalue <> update_systag_displayname; 
+
+end if;
+
+if update_systag_name notnull and (coalesce(update_systag_name,'') <> '')
+	then
+
+	-- update name in languagetranslations (Temp until the retranslate runs)	
+		update public.languagetranslations
+			set languagetranslationvalue = update_systag_name
+		from entity.entityinstance
+			where entityinstanceuuid = update_systagentityuuid
+				and languagetranslationmasterid = (select languagemasterid from languagemaster where languagemasteruuid = entityinstancenameuuid)
+				and languagetranslationtypeid = templanguagetypeid
+				and languagetranslationvalue <> update_systag_name;
+
+	-- update name in languagemaster
+		update public.languagemaster
+			set languagemastersourcelanguagetypeid = templanguagetypeid,
+				languagemastersource = update_systag_name,
+				languagemastermodifiedby = (select workerinstanceid from workerinstance where workerinstanceuuid = update_systagmodifiedbyuuid),
+				languagemastermodifieddate = now(),
+				languagemasterstatus = 'NEEDS_COMPLETE_RETRANSLATION'	
+		from entity.entityinstance
+			where entityinstanceuuid = update_systagentityuuid
+				and languagemasteruuid = entityinstancenameuuid
+				and languagemastersource <> update_systag_name;
+				
 end if;
 
 -- update systag
 
 update public.systag
-		set systagtype = case when update_systag notnull and (coalesce(update_systag,'') <> '')
-								then update_systag
-								else systagtype end,
-			systagstartdate = case when update_systagstartdate notnull 
+		set systagstartdate = case when update_systagstartdate notnull 
 									then update_systagstartdate
 									else systagstartdate end,
 			systagenddate  = update_systagenddate, 
@@ -162,7 +201,7 @@ End;
 $procedure$;
 
 
-REVOKE ALL ON PROCEDURE entity.crud_systag_update(uuid,uuid,uuid,uuid,integer,text,uuid,text,uuid,boolean,boolean,timestamp with time zone,timestamp with time zone,text) FROM PUBLIC;
-GRANT EXECUTE ON PROCEDURE entity.crud_systag_update(uuid,uuid,uuid,uuid,integer,text,uuid,text,uuid,boolean,boolean,timestamp with time zone,timestamp with time zone,text) TO PUBLIC;
-GRANT EXECUTE ON PROCEDURE entity.crud_systag_update(uuid,uuid,uuid,uuid,integer,text,uuid,text,uuid,boolean,boolean,timestamp with time zone,timestamp with time zone,text) TO tendreladmin WITH GRANT OPTION;
-GRANT EXECUTE ON PROCEDURE entity.crud_systag_update(uuid,uuid,uuid,uuid,integer,text,uuid,text,uuid,boolean,boolean,timestamp with time zone,timestamp with time zone,text) TO graphql;
+REVOKE ALL ON PROCEDURE entity.crud_systag_update(uuid,uuid,uuid,uuid,integer,text,text,text,uuid,text,uuid,boolean,boolean,timestamp with time zone,timestamp with time zone,text) FROM PUBLIC;
+GRANT EXECUTE ON PROCEDURE entity.crud_systag_update(uuid,uuid,uuid,uuid,integer,text,text,text,uuid,text,uuid,boolean,boolean,timestamp with time zone,timestamp with time zone,text) TO PUBLIC;
+GRANT EXECUTE ON PROCEDURE entity.crud_systag_update(uuid,uuid,uuid,uuid,integer,text,text,text,uuid,text,uuid,boolean,boolean,timestamp with time zone,timestamp with time zone,text) TO tendreladmin WITH GRANT OPTION;
+GRANT EXECUTE ON PROCEDURE entity.crud_systag_update(uuid,uuid,uuid,uuid,integer,text,text,text,uuid,text,uuid,boolean,boolean,timestamp with time zone,timestamp with time zone,text) TO graphql;

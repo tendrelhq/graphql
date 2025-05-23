@@ -33,8 +33,8 @@ if (old.id = new.id)
 			update_entityfileinstancemimetypeuuid := new.file_mime_type,
 			update_entityfileinstancedeleted := new._deleted,
 			update_entityfileinstancedraft := new._draft,
-			update_entityfileinstancemodifiedbyuuid := null::text,
-			update_languagetypeuuid := null::uuid
+			update_entityfileinstancemodifiedbyuuid := ins_useruuid,
+			update_languagetypeuuid := ins_languagetypeentityuuid
 		);
 	else  
 		return null;

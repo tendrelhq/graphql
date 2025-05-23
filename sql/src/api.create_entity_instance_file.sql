@@ -10,6 +10,9 @@ declare
   ins_entity uuid;
   ins_row api.entity_instance_file%rowtype;
 begin
+
+if (select new.owner in (select * from _api.util_get_onwership()))
+	then
 	call entity.crud_entityfileinstance_create(
 		create_entityfileinstanceownerentityuuid := new.owner, 
 		create_entityfileinstanceentityentityinstanceentityuuid := new.instance, 
@@ -22,6 +25,7 @@ begin
 		create_entityfileinstanceentityuuid := ins_entity, 
 		create_modifiedbyid := ins_userid  
   );
+end if;
 
   select * into ins_row
   from api.entity_instance_file

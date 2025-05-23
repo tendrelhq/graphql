@@ -80,14 +80,16 @@ if read_allentitytags = true
 	    et.entitytagcustagentityuuid,
 		et.entitytagdeleted boolean,
 		et.entitytagdraft boolean,
-		case when et.entitytagenddate notnull and et.entitytagenddate::Date < now()::date
-			then false
-			else true
-		end as entitytaginactive
+		case when et.entitytagdeleted then false
+			when et.entitytagdraft then false
+			when et.entitytagenddate::Date > now()::date 
+				and et.entitytagstartdate < now() then false
+		else true
+	end as entitytagactive
 	from entity.entitytag et
 	where et.entitytagdeleted = ANY (tempentitytagsenddeleted)
 				 and et.entitytagdraft = ANY (tempentitytagsenddrafts)) as foo
-		where foo.entitytaginactive = Any (tempentitytagsendinactive
+		where foo.entitytagactive = Any (tempentitytagsendinactive
 		) ;
 	return;
 end if;
@@ -111,15 +113,17 @@ if read_entitytagentityuuid notNull
 	    et.entitytagcustagentityuuid,
 		et.entitytagdeleted boolean,
 		et.entitytagdraft boolean,
-		case when et.entitytagenddate notnull and et.entitytagenddate::Date < now()::date
-			then false
-			else true
-		end as entitytaginactive
+		case when et.entitytagdeleted then false
+			when et.entitytagdraft then false
+			when et.entitytagenddate::Date > now()::date 
+				and et.entitytagstartdate < now() then false
+		else true
+	end as entitytagactive
 	from entity.entitytag et
 	where et.entitytaguuid = read_entitytagentityuuid
 			and et.entitytagdeleted = ANY (tempentitytagsenddeleted)
 			and et.entitytagdraft = ANY (tempentitytagsenddrafts)) as foo
-		where foo.entitytaginactive = Any (tempentitytagsendinactive
+		where foo.entitytagactive = Any (tempentitytagsendinactive
 		) ;
 	return;
 end if;
@@ -144,16 +148,18 @@ if read_entitytagentityinstanceuuid notNull
 	    et.entitytagcustagentityuuid,
 		et.entitytagdeleted boolean,
 		et.entitytagdraft boolean,
-		case when et.entitytagenddate notnull and et.entitytagenddate::Date < now()::date
-			then false
-			else true
-		end as entitytaginactive
+		case when et.entitytagdeleted then false
+			when et.entitytagdraft then false
+			when et.entitytagenddate::Date > now()::date 
+				and et.entitytagstartdate < now() then false
+		else true
+	end as entitytagactive
 	from entity.entitytag et
 	where et.entitytagentityinstanceentityuuid = read_entitytagentityinstanceuuid 
 		and et.entitytagownerentityuuid = read_ownerentityuuid
 			and et.entitytagdeleted = ANY (tempentitytagsenddeleted)
 			and et.entitytagdraft = ANY (tempentitytagsenddrafts)) as foo
-		where foo.entitytaginactive = Any (tempentitytagsendinactive
+		where foo.entitytagactive = Any (tempentitytagsendinactive
 		) ;
 	return;
 end if;	
@@ -179,16 +185,18 @@ if read_entitytagtemplateentityuuid  notNull
 	    et.entitytagcustagentityuuid,
 		et.entitytagdeleted boolean,
 		et.entitytagdraft boolean,
-		case when et.entitytagenddate notnull and et.entitytagenddate::Date < now()::date
-			then false
-			else true
-		end as entitytaginactive
+		case when et.entitytagdeleted then false
+			when et.entitytagdraft then false
+			when et.entitytagenddate::Date > now()::date 
+				and et.entitytagstartdate < now() then false
+		else true
+	end as entitytagactive
 	from entity.entitytag et
 	where et.entitytagentitytemplateentityuuid = read_entitytagtemplateentityuuid  
 		and et.entitytagownerentityuuid = read_ownerentityuuid
 			and et.entitytagdeleted = ANY (tempentitytagsenddeleted)
 			and et.entitytagdraft = ANY (tempentitytagsenddrafts)) as foo
-		where foo.entitytaginactive = Any (tempentitytagsendinactive
+		where foo.entitytagactive = Any (tempentitytagsendinactive
 		) ;
 	return;
 end if;	
@@ -214,16 +222,18 @@ if read_entitytagcustagentityuuid  notNull
 	    et.entitytagcustagentityuuid,
 		et.entitytagdeleted boolean,
 		et.entitytagdraft boolean,
-		case when et.entitytagenddate notnull and et.entitytagenddate::Date < now()::date
-			then false
-			else true
-		end as entitytaginactive
+		case when et.entitytagdeleted then false
+			when et.entitytagdraft then false
+			when et.entitytagenddate::Date > now()::date 
+				and et.entitytagstartdate < now() then false
+		else true
+	end as entitytagactive
 	from entity.entitytag et
 	where et.entitytagcustagentityuuid = read_entitytagcustagentityuuid
 		and et.entitytagownerentityuuid = read_ownerentityuuid
 			and et.entitytagdeleted = ANY (tempentitytagsenddeleted)
 			and et.entitytagdraft = ANY (tempentitytagsenddrafts)) as foo
-		where foo.entitytaginactive = Any (tempentitytagsendinactive
+		where foo.entitytagactive = Any (tempentitytagsendinactive
 		) ;
 	return;
 end if;	
@@ -249,17 +259,19 @@ if read_entitytagtemplateentityuuid  notNull
 	    et.entitytagcustagentityuuid,
 		et.entitytagdeleted boolean,
 		et.entitytagdraft boolean,
-		case when et.entitytagenddate notnull and et.entitytagenddate::Date < now()::date
-			then false
-			else true
-		end as entitytaginactive
+		case when et.entitytagdeleted then false
+			when et.entitytagdraft then false
+			when et.entitytagenddate::Date > now()::date 
+				and et.entitytagstartdate < now() then false
+		else true
+	end as entitytagactive
 	from entity.entitytag et
 	where et.entitytagentitytemplateentityuuid = read_entitytagtemplateentityuuid  
 		and et.entitytagcustagentityuuid = read_entitytagcustagentityuuid
 		and et.entitytagownerentityuuid = read_ownerentityuuid
 			and et.entitytagdeleted = ANY (tempentitytagsenddeleted)
 			and et.entitytagdraft = ANY (tempentitytagsenddrafts)) as foo
-		where foo.entitytaginactive = Any (tempentitytagsendinactive
+		where foo.entitytagactive = Any (tempentitytagsendinactive
 		) ;
 	return;
 end if;	

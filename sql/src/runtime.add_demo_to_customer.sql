@@ -129,6 +129,22 @@ begin
     raise exception 'failed to create template fields';
   end if;
 
+  -- The canonical on-demand in-progress "respawn" rule. This rule causes a new,
+  -- Open task instance to be created when a task transitions to InProgress.
+  return query
+    select '  +irule', t.next
+    from legacy0.create_instantiation_rule(
+        prev_template_id := ins_template,
+        next_template_id := ins_template,
+        state_condition := 'In Progress',
+        type_tag := 'Task',
+        modified_by := modified_by
+    ) as t;
+  --
+  if not found then
+    raise exception 'failed to create canonical on-demand in-progress irule';
+  end if;
+
   -- Create the constraint for the root template at each child location.
   <<loop0>>
   foreach loop0_x in array ins_locations loop
@@ -368,5 +384,6 @@ end $function$;
 
 
 REVOKE ALL ON FUNCTION runtime.add_demo_to_customer(text,text,bigint,text) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION runtime.add_demo_to_customer(text,text,bigint,text) TO PUBLIC;
 GRANT EXECUTE ON FUNCTION runtime.add_demo_to_customer(text,text,bigint,text) TO tendreladmin WITH GRANT OPTION;
 GRANT EXECUTE ON FUNCTION runtime.add_demo_to_customer(text,text,bigint,text) TO graphql;

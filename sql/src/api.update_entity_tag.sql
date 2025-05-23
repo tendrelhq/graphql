@@ -30,16 +30,17 @@ if (old.id = new.id)
 			update_entitytagentityinstanceuuid := new.instance, 
 			update_entitytagentitytemplateuuid := new.template, 
 			update_entitytagcustaguuid := new.customer_tag, 
-			update_languagetypeuuid := null::uuid,  -- Fix this later 
+			update_languagetypeuuid := ins_languagetypeentityuuid,  
 			update_entitytagdeleted := new._deleted, 
 			update_entitytagdraft := new._draft, 
 			update_entitytagstartdate := new.activated_at, 
 			update_entitytagenddate := new.deactivated_at, 
-			update_modifiedbyid :=  null::bigint  -- Fix this later 
+			update_modifiedbyid :=  ins_userid 
 		);
 	else  
 		return null;
 end if;
+
 
   select * into ins_row
   from api.entity_tag

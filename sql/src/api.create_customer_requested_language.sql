@@ -23,8 +23,7 @@ select get_workerinstanceid, get_workerinstanceuuid, get_languagetypeid, get_lan
 into ins_userid, ins_useruuid, ins_languagetypeid,ins_languagetypeuuid, ins_languagetypeentityuuid
 from _api.util_user_details();
 
-
-if (select new.owner in (select * from _api.util_get_onwership())) or (new.id notNull)
+if (select new.owner in (select * from _api.util_get_onwership())) or (new.languagetype_id notNull)
 	then
 		call entity.crud_customerrequestedlanguage_create(
 			create_customerrequestedlanguageownerentityuuid := new.owner,

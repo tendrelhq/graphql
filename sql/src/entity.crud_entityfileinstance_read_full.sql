@@ -33,7 +33,6 @@ select * from entity.crud_entityfileinstance_read_full('e69fbc64-df87-4c0b-9cbf-
 -- all file instances for a fieldinstanceuuid
 select * from entity.crud_entityfileinstance_read_full('e69fbc64-df87-4c0b-9cbf-bc87774947c7', null, null,'6d29bc9a-f37f-43e4-81c0-b34a940ae1f9', null, null,null,null)
 
-
 */
 
 tendreluuid = 'f90d618d-5de7-4126-8c65-0afb700c6c61';
@@ -93,7 +92,10 @@ if allowners = true and (read_entityfileinstanceentityuuid isNull)
 				efi.entityfileinstancerefuuid, 
 				efi.entityfileinstancedraft, 
 				efi.entityfileinstancedeleted,
-				efi.entityfileinstancedeleted as entityfileinstancesendinactive
+	case when efi.entityfileinstancedeleted then false
+			when efi.entityfileinstancedraft then false
+			else true
+			end as entityfileinstanceactive
 		FROM entity.entityfileinstance	efi	
 				inner join (select * from entity.crud_customer_read_full(null,null, null,true,read_entityfileinstancesenddeleted,read_entityfileinstancesenddrafts,read_entityfileinstancesendinactive, null)) as cust
 					on cust.customerentityuuid = efi.entityfileinstanceownerentityuuid
@@ -110,7 +112,7 @@ if allowners = true and (read_entityfileinstanceentityuuid isNull)
 				inner join (select * from entity.crud_systag_read_full(tendreluuid,null,null, 'e5d15a8c-ea2e-4def-b214-6eb7f6b1e70a', false,null,null, null,read_languagetranslationtypeuuid)) as mime
 					on mime.systagentityuuid = efi.entityfileinstancemimetypeuuid
 			) as foo
-		where foo.entityfileinstancesendinactive = Any (tempentityfileinstancesendinactive) ;
+		where foo.entityfileinstanceactive = Any (tempentityfileinstancesendinactive) ;
 		return;
 end if;
 
@@ -139,7 +141,10 @@ if allowners = false and read_entityfileinstanceentityuuid notNull
 				efi.entityfileinstancerefuuid, 
 				efi.entityfileinstancedraft, 
 				efi.entityfileinstancedeleted,
-				efi.entityfileinstancedeleted as entityfileinstancesendinactive
+	case when efi.entityfileinstancedeleted then false
+			when efi.entityfileinstancedraft then false
+			else true
+			end as entityfileinstanceactive
 		FROM entity.entityfileinstance	efi	
 				inner join (select * from entity.crud_customer_read_full(null,null, null,true,read_entityfileinstancesenddeleted,read_entityfileinstancesenddrafts,read_entityfileinstancesendinactive, null)) as cust
 					on cust.customerentityuuid = efi.entityfileinstanceownerentityuuid
@@ -159,7 +164,7 @@ if allowners = false and read_entityfileinstanceentityuuid notNull
 				inner join (select * from entity.crud_systag_read_full(tendreluuid,null,null, 'e5d15a8c-ea2e-4def-b214-6eb7f6b1e70a', false,null,null, null,read_languagetranslationtypeuuid)) as mime
 					on mime.systagentityuuid = efi.entityfileinstancemimetypeuuid
 			) as foo
-		where foo.entityfileinstancesendinactive = Any (tempentityfileinstancesendinactive
+		where foo.entityfileinstanceactive = Any (tempentityfileinstancesendinactive
 		) ;
 		return;
 end if;
@@ -189,7 +194,10 @@ if allowners = false and read_entityfileinstanceentityentityinstanceentityuuid  
 				efi.entityfileinstancerefuuid, 
 				efi.entityfileinstancedraft, 
 				efi.entityfileinstancedeleted,
-				efi.entityfileinstancedeleted as entityfileinstancesendinactive
+	case when efi.entityfileinstancedeleted then false
+			when efi.entityfileinstancedraft then false
+			else true
+			end as entityfileinstanceactive
 			FROM entity.entityfileinstance	efi	
 				inner join (select * from entity.crud_customer_read_full(null,null, null,true,read_entityfileinstancesenddeleted,read_entityfileinstancesenddrafts,read_entityfileinstancesendinactive, null)) as cust
 					on cust.customerentityuuid = efi.entityfileinstanceownerentityuuid
@@ -208,7 +216,7 @@ if allowners = false and read_entityfileinstanceentityentityinstanceentityuuid  
 					on efield.entityfieldinstanceuuid = efi.entityfileinstanceentityfieldinstanceentityuuid
 				inner join (select * from entity.crud_systag_read_full(tendreluuid,null,null, 'e5d15a8c-ea2e-4def-b214-6eb7f6b1e70a', false,null,null, null,read_languagetranslationtypeuuid)) as mime
 					on mime.systagentityuuid = efi.entityfileinstancemimetypeuuid) as foo
-		where foo.entityfileinstancesendinactive = Any (tempentityfileinstancesendinactive) ;
+		where foo.entityfileinstanceactive = Any (tempentityfileinstancesendinactive) ;
 end if;
 
 if allowners = false and read_entityfileinstanceentityfieldinstanceentityuuid notNull
@@ -236,7 +244,10 @@ if allowners = false and read_entityfileinstanceentityfieldinstanceentityuuid no
 				efi.entityfileinstancerefuuid, 
 				efi.entityfileinstancedraft, 
 				efi.entityfileinstancedeleted,
-				efi.entityfileinstancedeleted as entityfileinstancesendinactive
+	case when efi.entityfileinstancedeleted then false
+			when efi.entityfileinstancedraft then false
+			else true
+			end as entityfileinstanceactive
 		FROM entity.entityfileinstance	efi
 				inner join (select * from entity.crud_customer_read_full(null,null, null,true,read_entityfileinstancesenddeleted,read_entityfileinstancesenddrafts,read_entityfileinstancesendinactive, null)) as cust
 					on cust.customerentityuuid = efi.entityfileinstanceownerentityuuid
@@ -255,7 +266,7 @@ if allowners = false and read_entityfileinstanceentityfieldinstanceentityuuid no
 					on efield.entityfieldinstanceuuid = efi.entityfileinstanceentityfieldinstanceentityuuid
 				inner join (select * from entity.crud_systag_read_full(tendreluuid,null,null, 'e5d15a8c-ea2e-4def-b214-6eb7f6b1e70a', false,null,null, null,read_languagetranslationtypeuuid)) as mime
 					on mime.systagentityuuid = efi.entityfileinstancemimetypeuuid) as foo
-		where foo.entityfileinstancesendinactive = Any (tempentityfileinstancesendinactive) ;
+		where foo.entityfileinstanceactive = Any (tempentityfileinstancesendinactive) ;
 end if;
 
 if allowners = false and read_entityfileinstanceentityfieldinstanceentityuuid isNull 
@@ -285,7 +296,10 @@ if allowners = false and read_entityfileinstanceentityfieldinstanceentityuuid is
 				efi.entityfileinstancerefuuid, 
 				efi.entityfileinstancedraft, 
 				efi.entityfileinstancedeleted,
-				efi.entityfileinstancedeleted as entityfileinstancesendinactive
+	case when efi.entityfileinstancedeleted then false
+			when efi.entityfileinstancedraft then false
+			else true
+			end as entityfileinstanceactive
 		FROM entity.entityfileinstance	efi	
 				inner join (select * from entity.crud_customer_read_full(null,null, null,true,read_entityfileinstancesenddeleted,read_entityfileinstancesenddrafts,read_entityfileinstancesendinactive, null)) as cust
 					on cust.customerentityuuid = efi.entityfileinstanceownerentityuuid
@@ -304,11 +318,9 @@ if allowners = false and read_entityfileinstanceentityfieldinstanceentityuuid is
 				inner join (select * from entity.crud_systag_read_full(tendreluuid,null,null, 'e5d15a8c-ea2e-4def-b214-6eb7f6b1e70a', false,null,null, null,read_languagetranslationtypeuuid)) as mime
 					on mime.systagentityuuid = efi.entityfileinstancemimetypeuuid
 			) as foo
-		where foo.entityfileinstancesendinactive = Any (tempentityfileinstancesendinactive) ;
+		where foo.entityfileinstanceactive = Any (tempentityfileinstancesendinactive) ;
 		return;
 end if;	
-
-
 
 End;	
 

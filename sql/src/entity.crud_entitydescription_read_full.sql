@@ -27,7 +27,6 @@ select * from entity.crud_entitydescription_read_full('e69fbc64-df87-4c0b-9cbf-b
 -- descriptions for an entity
 select * from entity.crud_entitydescription_read_full('e69fbc64-df87-4c0b-9cbf-bc87774947c7', 'f42f8873-37a0-450e-97c8-c223955b2f02', null,null, null, null,null,null)
 
-
 -- all descriptions for a template
 select * from entity.crud_entitydescription_read_full('e69fbc64-df87-4c0b-9cbf-bc87774947c7', null, '2de8bf04-15bd-4df9-b5bc-4eb7fbb8e37e',null, null, null,null,null)
 
@@ -97,10 +96,12 @@ if allowners = true and (read_entitydescriptionentityuuid isNull)
 				et.entitydescriptionrefuuid, 
 				et.entitydescriptiondraft, 
 				et.entitydescriptiondeleted,
-				case when et.entitydescriptionenddate notnull and et.entitydescriptionenddate::Date < now()::date
-					then false
-					else true
-				end as entitydescriptionsendinactive,
+			case when et.entitydescriptiondeleted then false
+			when et.entitydescriptiondraft then false
+			when et.entitydescriptionstartdate::Date > now()::date 
+				and et.entitydescriptionenddate < now() then false
+			else true
+	end as entitydescriptionactive,
 				et.entitydescriptionmimetypeuuid,
 				mime.systagtype
 			FROM entity.entitydescription et
@@ -123,7 +124,7 @@ if allowners = true and (read_entitydescriptionentityuuid isNull)
 						and entlt.languagetranslationtypeid = (select systagid from entity.crud_systag_read_min('f90d618d-5de7-4126-8c65-0afb700c6c61', null,read_languagetranslationtypeuuid, null, false,read_entitydescriptionsenddeleted  , read_entitydescriptionsenddrafts  ,read_entitydescriptionsendinactive  ,'bcbe750d-1b3b-4e2b-82ec-448bb8b116f9')) 
 			where et.entitydescriptiondeleted = ANY (tempentitydescriptionsenddeleted)
 				 and et.entitydescriptiondraft = ANY (tempentitydescriptionsenddrafts)) as foo
-		where foo.entitydescriptionsendinactive = Any (tempentitydescriptionsendinactive
+		where foo.entitydescriptionactive = Any (tempentitydescriptionsendinactive
 		) ;
 		return;
 end if;
@@ -158,10 +159,12 @@ if allowners = false and read_entitydescriptionentityuuid notNull
 				et.entitydescriptionrefuuid, 
 				et.entitydescriptiondraft, 
 				et.entitydescriptiondeleted,
-				case when et.entitydescriptionenddate notnull and et.entitydescriptionenddate::Date < now()::date
-					then false
-					else true
-				end as entitydescriptionsendinactive,
+			case when et.entitydescriptiondeleted then false
+			when et.entitydescriptiondraft then false
+			when et.entitydescriptionstartdate::Date > now()::date 
+				and et.entitydescriptionenddate < now() then false
+			else true
+	end as entitydescriptionactive,
 				et.entitydescriptionmimetypeuuid,
 				mime.systagtype
 		FROM entity.entitydescription et
@@ -185,7 +188,7 @@ if allowners = false and read_entitydescriptionentityuuid notNull
 				left join public.languagetranslations entlt
 					on entlt.languagetranslationmasterid  = entlm.languagemasterid
 						and entlt.languagetranslationtypeid = (select systagid from entity.crud_systag_read_min('f90d618d-5de7-4126-8c65-0afb700c6c61', null,read_languagetranslationtypeuuid, null, false,read_entitydescriptionsenddeleted  , read_entitydescriptionsenddrafts  ,read_entitydescriptionsendinactive  ,'bcbe750d-1b3b-4e2b-82ec-448bb8b116f9'))) as foo
-		where foo.entitydescriptionsendinactive = Any (tempentitydescriptionsendinactive
+		where foo.entitydescriptionactive = Any (tempentitydescriptionsendinactive
 		) ;
 		return;
 end if;
@@ -220,10 +223,12 @@ if allowners = false and read_entityfieldentityuuid notNull
 				et.entitydescriptionrefuuid, 
 				et.entitydescriptiondraft, 
 				et.entitydescriptiondeleted,
-				case when et.entitydescriptionenddate notnull and et.entitydescriptionenddate::Date < now()::date
-					then false
-					else true
-				end as entitydescriptionsendinactive,
+			case when et.entitydescriptiondeleted then false
+			when et.entitydescriptiondraft then false
+			when et.entitydescriptionstartdate::Date > now()::date 
+				and et.entitydescriptionenddate < now() then false
+			else true
+	end as entitydescriptionactive,
 				et.entitydescriptionmimetypeuuid,
 				mime.systagtype
 		FROM entity.entitydescription et
@@ -247,7 +252,7 @@ if allowners = false and read_entityfieldentityuuid notNull
 				left join public.languagetranslations entlt
 					on entlt.languagetranslationmasterid  = entlm.languagemasterid
 						and entlt.languagetranslationtypeid = (select systagid from entity.crud_systag_read_min('f90d618d-5de7-4126-8c65-0afb700c6c61', null,read_languagetranslationtypeuuid, null, false,read_entitydescriptionsenddeleted  , read_entitydescriptionsenddrafts  ,read_entitydescriptionsendinactive  ,'bcbe750d-1b3b-4e2b-82ec-448bb8b116f9')) ) as foo
-		where foo.entitydescriptionsendinactive = Any (tempentitydescriptionsendinactive) ;
+		where foo.entitydescriptionactive = Any (tempentitydescriptionsendinactive) ;
 end if;
 
 if allowners = false and read_entitytemplateentityuuid notNull
@@ -280,10 +285,12 @@ if allowners = false and read_entitytemplateentityuuid notNull
 				et.entitydescriptionrefuuid, 
 				et.entitydescriptiondraft, 
 				et.entitydescriptiondeleted,
-				case when et.entitydescriptionenddate notnull and et.entitydescriptionenddate::Date < now()::date
-					then false
-					else true
-				end as entitydescriptionsendinactive,
+			case when et.entitydescriptiondeleted then false
+			when et.entitydescriptiondraft then false
+			when et.entitydescriptionstartdate::Date > now()::date 
+				and et.entitydescriptionenddate < now() then false
+			else true
+	end as entitydescriptionactive,
 				et.entitydescriptionmimetypeuuid,
 				mime.systagtype
 		FROM entity.entitydescription et
@@ -307,7 +314,7 @@ if allowners = false and read_entitytemplateentityuuid notNull
 				left join public.languagetranslations entlt
 					on entlt.languagetranslationmasterid  = entlm.languagemasterid
 						and entlt.languagetranslationtypeid = (select systagid from entity.crud_systag_read_min('f90d618d-5de7-4126-8c65-0afb700c6c61', null,read_languagetranslationtypeuuid, null, false,read_entitydescriptionsenddeleted  , read_entitydescriptionsenddrafts  ,read_entitydescriptionsendinactive  ,'bcbe750d-1b3b-4e2b-82ec-448bb8b116f9'))) as foo
-		where foo.entitydescriptionsendinactive = Any (tempentitydescriptionsendinactive) ;
+		where foo.entitydescriptionactive = Any (tempentitydescriptionsendinactive) ;
 end if;
 
 if allowners = false and read_entitytemplateentityuuid isNull 
@@ -341,10 +348,12 @@ if allowners = false and read_entitytemplateentityuuid isNull
 				et.entitydescriptionrefuuid, 
 				et.entitydescriptiondraft, 
 				et.entitydescriptiondeleted,
-				case when et.entitydescriptionenddate notnull and et.entitydescriptionenddate::Date < now()::date
-					then false
-					else true
-				end as entitydescriptionsendinactive,
+			case when et.entitydescriptiondeleted then false
+			when et.entitydescriptiondraft then false
+			when et.entitydescriptionstartdate::Date > now()::date 
+				and et.entitydescriptionenddate < now() then false
+			else true
+	end as entitydescriptionactive,
 				et.entitydescriptionmimetypeuuid,
 				mime.systagtype
 		FROM entity.entitydescription et
@@ -367,7 +376,7 @@ if allowners = false and read_entitytemplateentityuuid isNull
 				left join public.languagetranslations entlt
 					on entlt.languagetranslationmasterid  = entlm.languagemasterid
 						and entlt.languagetranslationtypeid = (select systagid from entity.crud_systag_read_min('f90d618d-5de7-4126-8c65-0afb700c6c61', null,read_languagetranslationtypeuuid, null, false,read_entitydescriptionsenddeleted  , read_entitydescriptionsenddrafts  ,read_entitydescriptionsendinactive  ,'bcbe750d-1b3b-4e2b-82ec-448bb8b116f9'))) as foo
-		where foo.entitydescriptionsendinactive = Any (tempentitydescriptionsendinactive
+		where foo.entitydescriptionactive = Any (tempentitydescriptionsendinactive
 		) ;
 		return;
 end if;

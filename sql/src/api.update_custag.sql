@@ -7,8 +7,8 @@ CREATE OR REPLACE FUNCTION api.update_custag()
  SECURITY DEFINER
 AS $function$
 declare
-  ins_entity uuid;
-  ins_row api.custag%rowtype;
+	ins_entity uuid;
+	ins_row api.custag%rowtype;
   	ins_useruuid text;
 	ins_userid bigint;
 	ins_languagetypeuuid text;	

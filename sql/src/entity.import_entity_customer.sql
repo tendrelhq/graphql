@@ -85,8 +85,7 @@ englishuuid = 'bcbe750d-1b3b-4e2b-82ec-448bb8b116f9';
 			on sys.systagid = cust.customerexternalsystemid
 	where entityinstanceuuid isNull 
 		and cust.customermodifieddate > insertdate
-		-- and cust.customermodifieddate < now() - interval '10 minutes';
-  ;
+		and cust.customermodifieddate < now() - interval '10 minutes';
 
 -- add in the corect customerentity uuid.  It references self.  
 
@@ -124,7 +123,7 @@ englishuuid = 'bcbe750d-1b3b-4e2b-82ec-448bb8b116f9';
 			on customerid = entityinstanceoriginalid
 				and entityinstancetypeentityuuid = (select entitytemplatetypeentityuuid from entity.entitytemplate where entitytemplatename = 'Customer')  -- Flip these to the function in the future
 				and cust.customermodifieddate > insertdate
-				-- and cust.customermodifieddate < now() - interval '15 minutes'
+				and cust.customermodifieddate < now() - interval '15 minutes'
 		inner join entity.entitytemplate
 			on entityinstanceentitytemplateentityuuid = entitytemplateuuid
 		inner join entity.entityfield
@@ -164,7 +163,7 @@ englishuuid = 'bcbe750d-1b3b-4e2b-82ec-448bb8b116f9';
 			on customerid = entityinstanceoriginalid
 				and entityinstancetypeentityuuid = (select entitytemplatetypeentityuuid from entity.entitytemplate where entitytemplatename = 'Customer') -- Flip these to the function in the future
 				and customermodifieddate > insertdate
-				-- and customermodifieddate < now() - interval '15 minutes'
+				and customermodifieddate < now() - interval '15 minutes'
 		inner join entity.entitytemplate
 			on entityinstanceentitytemplateentityuuid = entitytemplateuuid
 		inner join entity.entityfield
@@ -208,7 +207,7 @@ englishuuid = 'bcbe750d-1b3b-4e2b-82ec-448bb8b116f9';
 			on customerid = entityinstanceoriginalid
 				and entityinstancetypeentityuuid = (select entitytemplatetypeentityuuid from entity.entitytemplate where entitytemplatename = 'Customer')  -- Flip these to the function in the future
 				and customermodifieddate > insertdate
-				-- and customermodifieddate < now() - interval '15 minutes'
+				and customermodifieddate < now() - interval '15 minutes'
 		inner join entity.entitytemplate
 			on entityinstanceentitytemplateentityuuid = entitytemplateuuid
 		inner join entity.entityfield
@@ -250,7 +249,7 @@ englishuuid = 'bcbe750d-1b3b-4e2b-82ec-448bb8b116f9';
 			on customerid = entityinstanceoriginalid
 				and entityinstancetypeentityuuid = (select entitytemplatetypeentityuuid from entity.entitytemplate where entitytemplatename = 'Customer')  -- Flip these to the function in the future
 				and customermodifieddate > insertdate
-				-- and customermodifieddate < now() - interval '15 minutes'
+				and customermodifieddate < now() - interval '15 minutes'
 		inner join entity.entitytemplate
 			on entityinstanceentitytemplateentityuuid = entitytemplateuuid
 		inner join entity.entityfield

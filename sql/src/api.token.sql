@@ -1,28 +1,4 @@
 
--- Type: grant_type
-
--- DROP TYPE IF EXISTS api.grant_type;
-
-CREATE TYPE api.grant_type AS ENUM
-    ('urn:ietf:params:oauth:grant-type:token-exchange');
-
-ALTER TYPE api.grant_type
-    OWNER TO tendreladmin;
-
-GRANT USAGE ON TYPE api.grant_type TO PUBLIC;
-
--- Type: token_type
-
--- DROP TYPE IF EXISTS api.token_type;
-
-CREATE TYPE api.token_type AS ENUM
-    ('urn:ietf:params:oauth:token-type:jwt');
-
-ALTER TYPE api.token_type
-    OWNER TO tendreladmin;
-
-GRANT USAGE ON TYPE api.token_type TO PUBLIC;
-
 -- Type: FUNCTION ; Name: api.token(api.grant_type,text,api.token_type,text,text); Owner: tendreladmin
 
 CREATE OR REPLACE FUNCTION api.token(grant_type api.grant_type, subject_token text, subject_token_type api.token_type, actor_token text DEFAULT NULL::text, actor_token_type text DEFAULT NULL::text)
@@ -66,7 +42,7 @@ begin
         'scope', string_agg(systagtype, ' '),
         'exp', extract(epoch from now() + '24hr'::interval),
         'iat', extract(epoch from now()),
-        'iss', 'urn:tendrel:beta',
+        'iss', 'urn:tendrel:test',
         'nbf', extract(epoch from now() - '30s'::interval),
         'sub', current_setting('request.jwt.claims')::jsonb ->> 'sub'
       )
@@ -98,5 +74,6 @@ end $function$;
 
 
 REVOKE ALL ON FUNCTION api.token(api.grant_type,text,api.token_type,text,text) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION api.token(api.grant_type,text,api.token_type,text,text) TO tendreladmin WITH GRANT OPTION;
 GRANT EXECUTE ON FUNCTION api.token(api.grant_type,text,api.token_type,text,text) TO anonymous;
 GRANT EXECUTE ON FUNCTION api.token(api.grant_type,text,api.token_type,text,text) TO authenticated;

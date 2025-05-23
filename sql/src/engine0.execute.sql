@@ -69,5 +69,6 @@ COMMENT ON FUNCTION engine0.execute(text,bigint) IS '
 ';
 
 REVOKE ALL ON FUNCTION engine0.execute(text,bigint) FROM PUBLIC;
-GRANT EXECUTE ON FUNCTION engine0.execute(text,bigint) TO tendrelservice;
+GRANT EXECUTE ON FUNCTION engine0.execute(text,bigint) TO PUBLIC;
+GRANT EXECUTE ON FUNCTION engine0.execute(text,bigint) TO tendreladmin WITH GRANT OPTION;
 GRANT EXECUTE ON FUNCTION engine0.execute(text,bigint) TO graphql;

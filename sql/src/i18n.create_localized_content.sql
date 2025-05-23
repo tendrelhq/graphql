@@ -27,5 +27,6 @@ $function$;
 
 
 REVOKE ALL ON FUNCTION i18n.create_localized_content(text,text,text) FROM PUBLIC;
-GRANT EXECUTE ON FUNCTION i18n.create_localized_content(text,text,text) TO tendrelservice;
+GRANT EXECUTE ON FUNCTION i18n.create_localized_content(text,text,text) TO PUBLIC;
+GRANT EXECUTE ON FUNCTION i18n.create_localized_content(text,text,text) TO tendreladmin WITH GRANT OPTION;
 GRANT EXECUTE ON FUNCTION i18n.create_localized_content(text,text,text) TO graphql;

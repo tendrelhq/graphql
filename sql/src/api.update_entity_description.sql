@@ -40,8 +40,8 @@ if (old.id = new.id)
 			update_entitydescriptiondraft := new._draft,
 			update_entitydescriptionstartdate := new.activated_at,
 			update_entitydescriptionenddate := new.deactivated_at,	
-			update_entitydescriptionmodifiedbyuuid := null::text,
-			update_languagetypeuuid := null::uuid
+			update_entitydescriptionmodifiedbyuuid := ins_useruuid,
+			update_languagetypeuuid := ins_languagetypeentityuuid
 			);
 	else  
 		return null;

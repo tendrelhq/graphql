@@ -705,7 +705,7 @@ BEGIN
     -- get uuids
     CALL public.crud_customer_config_create(customer_uuid := create_original_customer_uuid, site_uuid := create_original_site_uuid,
                                             config_template_uuid := Checklist_config_template_uuid,
-                                            config_value := 'true', 
+                                            config_value := 'false', 
 											 modified_by := tempcreate_modifiedby_uud,
                                             config_id := Checklist_config_uuid);
 

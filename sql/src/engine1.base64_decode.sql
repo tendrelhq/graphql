@@ -18,5 +18,6 @@ $function$;
 
 
 REVOKE ALL ON FUNCTION engine1.base64_decode(text) FROM PUBLIC;
-GRANT EXECUTE ON FUNCTION engine1.base64_decode(text) TO tendrelservice;
+GRANT EXECUTE ON FUNCTION engine1.base64_decode(text) TO PUBLIC;
+GRANT EXECUTE ON FUNCTION engine1.base64_decode(text) TO tendreladmin WITH GRANT OPTION;
 GRANT EXECUTE ON FUNCTION engine1.base64_decode(text) TO graphql;

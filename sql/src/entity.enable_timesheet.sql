@@ -1407,7 +1407,7 @@ Begin
     -- get uuids
     call public.crud_customer_config_create(customer_uuid := create_original_customer_uuid, site_uuid := create_original_site_uuid,
                                             config_template_uuid := timeclock_config_template_uuid,
-                                            config_value := 'true', modified_by := modified_by_uuid,
+                                            config_value := 'false', modified_by := modified_by_uuid,
                                             config_id := timeclock_config_uuid);
 
     

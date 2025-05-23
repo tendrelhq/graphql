@@ -88,6 +88,7 @@ end if;
 update entity.entitytemplate
 set entitytemplatedeleted = true,
 	entitytemplatemodifieddate = now(),
+	entitytemplateenddate = now(),	
 	entitytemplatemodifiedbyuuid = (select workerinstanceuuid from workerinstance where workerinstanceid = create_modifiedbyid)
 where entitytemplateownerentityuuid = create_entitytemplateownerentityuuid
 	and entitytemplateuuid = create_entitytemplateentityuuid;

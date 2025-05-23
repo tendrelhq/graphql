@@ -5,7 +5,11 @@ CREATE OR REPLACE PROCEDURE entity.crud_entitytemplate_update(IN update_entityte
  LANGUAGE plpgsql
 AS $procedure$
 Declare
-
+	tempcustomerid bigint;
+	tempcustomeruuid text;
+	templanguagetypeid bigint;
+	templanguagetypeuuid text;
+	templocationid bigint;
 Begin
 
 -- Once created, the only things that can change after something is publsihed are ???
@@ -18,7 +22,7 @@ Begin
 -- remove this once language issues are passed through
 
 if update_languagetypeuuid isNull
-	then update_languagetypeuuid = (select systaguuid from systag where systagid = 20);
+	then update_languagetypeuuid = 'bcbe750d-1b3b-4e2b-82ec-448bb8b116f9';
 End if;
 
  if update_entitytemplatedraft = true or ((select entitytemplatedraft 
@@ -35,15 +39,11 @@ End if;
 				entitytemplatetypeentityuuid = case when update_entitytemplatetypeentityuuid notnull 
 												then update_entitytemplatetypeentityuuid
 												else entitytemplatetypeentityuuid end,
-				entitytemplateexternalid = case when update_entitytemplateexternalid notnull 
-												then update_entitytemplateexternalid
-												else entitytemplateexternalid end,
+				entitytemplateexternalid = update_entitytemplateexternalid ,
 				entitytemplateexternalsystementityuuid = case when update_entitytemplateexternalsystementityuuid notnull 
 														then update_entitytemplateexternalsystementityuuid
 														else entitytemplateexternalsystementityuuid end,
-				entitytemplatescanid = case when update_entitytemplatescanid notnull 
-												then update_entitytemplatescanid
-												else entitytemplatescanid end,
+				entitytemplatescanid = update_entitytemplatescanid,
  				entitytemplatename  = case when update_entitytemplatename notnull and (coalesce(update_entitytemplatename,'') <> '')
 												then update_entitytemplatename
 												else entitytemplatename end,
@@ -62,7 +62,20 @@ End if;
 				entitytemplatestartdate = case when update_entitytemplatestartdate notnull 
 										then update_entitytemplatestartdate
 										else entitytemplatestartdate end,
-	 			entitytemplateenddate = update_entitytemplateenddate,
+	 			entitytemplateenddate = case 	when entitytemplatedeleted = true 
+											and entitytemplateenddate isNull
+											and update_entitytemplateenddate isNull then now()
+										when entitytemplatedeleted = true 
+											and entitytemplateenddate isNull
+											and update_entitytemplateenddate notNull then update_entitytemplateenddate 
+										when entitytemplatedeleted = true 
+											and entitytemplateenddate notNull
+											and update_entitytemplateenddate isNull then entitytemplateenddate
+										when entitytemplatedeleted = true and entitytemplateenddate notNull
+											and update_entitytemplateenddate notNull and update_entitytemplateenddate <> entitytemplateenddate
+											then update_entitytemplateenddate	
+										else null
+									end,
 				entitytemplatemodifieddate=now(),
 				entitytemplatemodifiedbyuuid = update_entitytemplatemodifiedbyuuid
 		WHERE entitytemplateuuid = update_entitytemplateuuid;
@@ -80,25 +93,55 @@ End if;
 				entitytemplateorder = case when update_entitytemplateorder notnull 
 												then update_entitytemplateorder
 												else entitytemplateorder end, 
-				entitytemplateexternalid = case when update_entitytemplateexternalid notnull 
-												then update_entitytemplateexternalid
-												else entitytemplateexternalid end,
+				entitytemplateexternalid = update_entitytemplateexternalid ,
+				entitytemplatescanid = update_entitytemplatescanid,
 				entitytemplateexternalsystementityuuid = case when update_entitytemplateexternalsystementityuuid notnull 
 														then update_entitytemplateexternalsystementityuuid
 														else entitytemplateexternalsystementityuuid end,
- 				entitytemplateenddate = update_entitytemplateenddate,
+				entitytemplatedeleted = case when update_entitytemplatedeleted notnull 
+										then update_entitytemplatedeleted
+										else entitytemplatedeleted end, 
+ 				entitytemplateenddate = case 	when entitytemplatedeleted = true 
+											and entitytemplateenddate isNull
+											and update_entitytemplateenddate isNull then now()
+										when entitytemplatedeleted = true 
+											and entitytemplateenddate isNull
+											and update_entitytemplateenddate notNull then update_entitytemplateenddate 
+										when entitytemplatedeleted = true 
+											and entitytemplateenddate notNull
+											and update_entitytemplateenddate isNull then entitytemplateenddate
+										when entitytemplatedeleted = true and entitytemplateenddate notNull
+											and update_entitytemplateenddate notNull and update_entitytemplateenddate <> entitytemplateenddate
+											then update_entitytemplateenddate	
+										else null
+									end,
 				entitytemplatemodifieddate=now(),
 				entitytemplatemodifiedbyuuid = update_entitytemplatemodifiedbyuuid
 		WHERE entitytemplateuuid = update_entitytemplateuuid;
 end if;
 
+select customerid, customeruuid into tempcustomerid,tempcustomeruuid
+	from entity.crud_customer_read_min(null,update_entitytemplateownerentityuuid,null,false,null,null,null, null);
+
+select systagid,systaguuid into templanguagetypeid,templanguagetypeuuid
+	from entity.crud_systag_read_min(null, null, update_languagetypeuuid, null, false,null,null, null,update_languagetypeuuid);
 
 if  update_entitytemplatename notNull and (coalesce(update_entitytemplatename,'') <> '')
 	then
+
+		update public.languagetranslations
+			set languagetranslationvalue = update_entitytemplatename
+		from entity.entitytemplate
+			where entitytemplateuuid = update_entitytemplateuuid
+				and languagetranslationmasterid = (select languagemasterid from languagemaster where languagemasteruuid = entitytemplatenameuuid)
+				and languagetranslationtypeid = templanguagetypeid
+				and languagetranslationvalue <> update_entitytemplatename;
+	
 		-- update the languagemaster if the name changed
 	
 		update languagemaster
 		set languagemastersource = update_entitytemplatename,
+			languagemastermodifieddate = now(),
 			languagemastermodifiedby = (select workerinstanceid from workerinstance where workerinstanceuuid =update_entitytemplatemodifiedbyuuid),
 			languagemastersourcelanguagetypeid = (select entityinstanceoriginalid from entity.entityinstance where entityinstanceuuid = update_languagetypeuuid),
 			languagemasterstatus = 'NEEDS_COMPLETE_RETRANSLATION'		
@@ -109,21 +152,12 @@ if  update_entitytemplatename notNull and (coalesce(update_entitytemplatename,''
 	
 		-- update the languagemaster and entityinstance if the type changed
 	
-		update languagemaster
-		set languagemastersource = update_entitytemplatename,
-			languagemastermodifiedby = (select workerinstanceid from workerinstance where workerinstanceuuid =update_entitytemplatemodifiedbyuuid),
-			languagemastersourcelanguagetypeid = (select entityinstanceoriginalid from entity.entityinstance where entityinstanceuuid = update_languagetypeuuid),
-			languagemasterstatus = 'NEEDS_COMPLETE_RETRANSLATION'		
-		from entity.entityinstance
-		where entityinstanceuuid = update_entitytemplatetypeentityuuid	
-			and entityinstancenameuuid = languagemasteruuid
-			and languagemastersource <> update_entitytemplatename;
-	
 		update entity.entityinstance
-		set entityinstancetype = update_entitytemplatename,
+		set entityinstanceentitytemplatename = update_entitytemplatename,
 			entityinstancemodifiedbyuuid = update_entitytemplatemodifiedbyuuid	
 		where entityinstanceuuid = update_entitytemplatetypeentityuuid	
-			and entityinstancetype <> update_entitytemplatename;
+			and entityinstancetype <> update_entitytemplatename
+			and entityinstancedeleted = false ;
 END IF;
 
 End;

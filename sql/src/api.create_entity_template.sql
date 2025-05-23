@@ -9,33 +9,52 @@ AS $function$
 declare
   ins_entity uuid;
   ins_row api.entity_template%rowtype;
+  	ins_customeruuid text;
+	ins_customerentityuuid uuid;
+	ins_useruuid text;
+	ins_userid bigint;
+	ins_languagetypeuuid text;	
+	ins_languagetypeentityuuid uuid;
+	ins_languagetypeid bigint;
 
 begin
 
 -- only tendrel can have primary templates
 
+select get_workerinstanceid, get_workerinstanceuuid, get_languagetypeid, get_languagetypeuuid, get_languagetypeentityuuid
+into ins_userid, ins_useruuid, ins_languagetypeid,ins_languagetypeuuid, ins_languagetypeentityuuid
+from _api.util_user_details();
+
+select customerentityuuid
+into ins_customerentityuuid
+from entity.crud_customer_read_min(null,null, null, true, null,null,null,null)
+where customerid = (select workerinstancecustomerid from workerinstance where workerinstanceid = ins_userid)   ;
+
   	if new.owner = 'f90d618d-5de7-4126-8c65-0afb700c6c61' and new._primary = true
   		then new._primary = true;
 		else new._primary = false;
 	end if;
-
-  call entity.crud_entitytemplate_create(
-      create_entitytemplatecornerstoneorder := new._order,   
-      create_entitytemplatedeleted := false, 
-      create_entitytemplatedraft := new._draft,  
-      create_entitytemplateexternalid := new.external_id,  
-      create_entitytemplateexternalsystemuuid := new.external_system,  
-      create_entitytemplateisprimary := new._primary, 
-      create_entitytemplatename := new.name,  
-      create_entitytemplateownerentityuuid := new.owner, 
-      create_entitytemplateparententityuuid := new.parent, 
-      create_entitytemplatescanid := new.scan_code,  
-      create_entitytemplatetag := null::text,  -- save for an all in rpc
-      create_entitytemplatetaguuid := null::uuid, -- save for an all in rpc
-      create_languagetypeuuid := ins_languagetypeentityuuid,  -- Fix this later
-      create_modifiedbyid :=ins_userid,  -- Fix this later
-      create_entitytemplateentityuuid := ins_entity
-  );
+	
+if (select new.owner in (select * from _api.util_get_onwership()) )
+	then
+	  call entity.crud_entitytemplate_create(
+	      create_entitytemplatecornerstoneorder := new._order,   
+	      create_entitytemplatedeleted := false, 
+	      create_entitytemplatedraft := new._draft,  
+	      create_entitytemplateexternalid := new.external_id,  
+	      create_entitytemplateexternalsystemuuid := new.external_system,  
+	      create_entitytemplateisprimary := new._primary, 
+	      create_entitytemplatename := new.name,  
+	      create_entitytemplateownerentityuuid := new.owner, 
+	      create_entitytemplateparententityuuid := new.parent, 
+	      create_entitytemplatescanid := new.scan_code,  
+	      create_entitytemplatetag := null::text,  -- save for an all in rpc
+	      create_entitytemplatetaguuid := null::uuid, -- save for an all in rpc
+	      create_languagetypeuuid := ins_languagetypeentityuuid,  -- Fix this later
+	      create_modifiedbyid :=ins_userid,  -- Fix this later
+	      create_entitytemplateentityuuid := ins_entity
+	  );
+end if;
 
   select * into ins_row
   from api.entity_template

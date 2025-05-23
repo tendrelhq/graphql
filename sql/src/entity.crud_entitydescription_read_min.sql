@@ -92,15 +92,17 @@ if allowners = true and (read_entitydescriptionentityuuid isNull)
 				et.entitydescriptionrefuuid, 
 				et.entitydescriptiondraft, 
 				et.entitydescriptiondeleted,
-				case when et.entitydescriptionenddate notnull and et.entitydescriptionenddate::Date < now()::date
-					then false
-					else true
-				end as entitydescriptionsendinactive,
+			case when et.entitydescriptiondeleted then false
+			when et.entitydescriptiondraft then false
+			when et.entitydescriptionstartdate::Date > now()::date 
+				and et.entitydescriptionenddate < now() then false
+			else true
+	end as entitydescriptionactive,
 				et.entitydescriptionmimetypeuuid
 			FROM entity.entitydescription et
 			where et.entitydescriptiondeleted = ANY (tempentitydescriptionsenddeleted)
 				 and et.entitydescriptiondraft = ANY (tempentitydescriptionsenddrafts)) as foo
-		where foo.entitydescriptionsendinactive = Any (tempentitydescriptionsendinactive
+		where foo.entitydescriptionactive = Any (tempentitydescriptionsendinactive
 		) ;
 		return;
 end if;
@@ -131,10 +133,12 @@ if allowners = false and read_entitydescriptionentityuuid notNull
 				et2.entitydescriptionrefuuid, 
 				et2.entitydescriptiondraft, 
 				et2.entitydescriptiondeleted,
-				case when et2.entitydescriptionenddate notnull and et2.entitydescriptionenddate::Date < now()::date
-					then false
-					else true
-				end as entitydescriptionsendinactive,
+			case when et2.entitydescriptiondeleted then false
+			when et2.entitydescriptiondraft then false
+			when et2.entitydescriptionstartdate::Date > now()::date 
+				and et2.entitydescriptionenddate < now() then false
+			else true
+	end as entitydescriptionactive,
 				et2.entitydescriptionmimetypeuuid
 		FROM entity.entitydescription et2
 		where (et2.entitydescriptionownerentityuuid = read_ownerentityuuid
@@ -142,7 +146,7 @@ if allowners = false and read_entitydescriptionentityuuid notNull
 			and et2.entitydescriptionuuid = read_entitydescriptionentityuuid			
 			and et2.entitydescriptiondeleted = ANY (tempentitydescriptionsenddeleted)
 			and et2.entitydescriptiondraft = ANY (tempentitydescriptionsenddrafts)) as foo
-		where foo.entitydescriptionsendinactive = Any (tempentitydescriptionsendinactive
+		where foo.entitydescriptionactive = Any (tempentitydescriptionsendinactive
 		) ;
 		return;
 end if;
@@ -173,10 +177,12 @@ if allowners = false and read_entityfieldentityuuid notNull
 				et3.entitydescriptionrefuuid, 
 				et3.entitydescriptiondraft, 
 				et3.entitydescriptiondeleted,
-				case when et3.entitydescriptionenddate notnull and et3.entitydescriptionenddate::Date < now()::date
-					then false
-					else true
-				end as entitydescriptionsendinactive,
+			case when et3.entitydescriptiondeleted then false
+			when et3.entitydescriptiondraft then false
+			when et3.entitydescriptionstartdate::Date > now()::date 
+				and et3.entitydescriptionenddate < now() then false
+			else true
+	end as entitydescriptionactive,
 				et3.entitydescriptionmimetypeuuid
 			FROM entity.entitydescription et3
 			where (et3.entitydescriptionownerentityuuid = read_ownerentityuuid
@@ -184,7 +190,7 @@ if allowners = false and read_entityfieldentityuuid notNull
 				and et3.entitydescriptionentityfieldentityduuid = read_entityfieldentityuuid
 				and et3.entitydescriptiondeleted = ANY (tempentitydescriptionsenddeleted)
 				and et3.entitydescriptiondraft = ANY (tempentitydescriptionsenddrafts)) as foo
-		where foo.entitydescriptionsendinactive = Any (tempentitydescriptionsendinactive) ;
+		where foo.entitydescriptionactive = Any (tempentitydescriptionsendinactive) ;
 end if;
 
 if allowners = false and read_entitytemplateentityuuid notNull
@@ -213,10 +219,12 @@ if allowners = false and read_entitytemplateentityuuid notNull
 				et4.entitydescriptionrefuuid, 
 				et4.entitydescriptiondraft, 
 				et4.entitydescriptiondeleted,
-				case when et4.entitydescriptionenddate notnull and et4.entitydescriptionenddate::Date < now()::date
-					then false
-					else true
-				end as entitydescriptionsendinactive,
+			case when et4.entitydescriptiondeleted then false
+			when et4.entitydescriptiondraft then false
+			when et4.entitydescriptionstartdate::Date > now()::date 
+				and et4.entitydescriptionenddate < now() then false
+			else true
+	end as entitydescriptionactive,
 				et4.entitydescriptionmimetypeuuid
 			FROM entity.entitydescription et4
 			where (et4.entitydescriptionownerentityuuid = read_ownerentityuuid
@@ -224,7 +232,7 @@ if allowners = false and read_entitytemplateentityuuid notNull
 				and et4.entitydescriptionentitytemplateentityuuid = read_entitytemplateentityuuid
 				and et4.entitydescriptiondeleted = ANY (tempentitydescriptionsenddeleted)
 				and et4.entitydescriptiondraft = ANY (tempentitydescriptionsenddrafts)) as foo
-		where foo.entitydescriptionsendinactive = Any (tempentitydescriptionsendinactive) ;
+		where foo.entitydescriptionactive = Any (tempentitydescriptionsendinactive) ;
 end if;
 
 if allowners = false and read_entitytemplateentityuuid isNull 
@@ -254,17 +262,19 @@ if allowners = false and read_entitytemplateentityuuid isNull
 				et5.entitydescriptionrefuuid, 
 				et5.entitydescriptiondraft, 
 				et5.entitydescriptiondeleted,
-				case when et5.entitydescriptionenddate notnull and et5.entitydescriptionenddate::Date < now()::date
-					then false
-					else true
-				end as entitydescriptionsendinactive,
+			case when et5.entitydescriptiondeleted then false
+			when et5.entitydescriptiondraft then false
+			when et5.entitydescriptionstartdate::Date > now()::date 
+				and et5.entitydescriptionenddate < now() then false
+			else true
+	end as entitydescriptionactive,
 				et5.entitydescriptionmimetypeuuid
 		FROM entity.entitydescription et5
 		where (et5.entitydescriptionownerentityuuid = read_ownerentityuuid
 					or et5.entitydescriptionownerentityuuid = tendreluuid) 
 			and et5.entitydescriptiondeleted = ANY (tempentitydescriptionsenddeleted)
 			and et5.entitydescriptiondraft = ANY (tempentitydescriptionsenddrafts)) as foo
-		where foo.entitydescriptionsendinactive = Any (tempentitydescriptionsendinactive
+		where foo.entitydescriptionactive = Any (tempentitydescriptionsendinactive
 		) ;
 		return;
 end if;

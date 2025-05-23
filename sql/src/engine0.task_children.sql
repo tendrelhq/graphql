@@ -1,8 +1,11 @@
-drop function if exists engine0.task_children;
 
-create function engine0.task_children(text)
-returns table(id text)
-as $$
+-- Type: FUNCTION ; Name: engine0.task_children(text); Owner: tendreladmin
+
+CREATE OR REPLACE FUNCTION engine0.task_children(text)
+ RETURNS TABLE(id text)
+ LANGUAGE sql
+ STABLE
+AS $function$
   with recursive cte as (
     select *
     from public.workinstance
@@ -19,9 +22,10 @@ as $$
     workinstancestartdate,
     workinstanceid
   ;
-$$
-language sql
-stable;
+$function$;
 
-revoke all on function engine0.task_children from public;
-grant execute on function engine0.task_children to graphql;
+
+REVOKE ALL ON FUNCTION engine0.task_children(text) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION engine0.task_children(text) TO PUBLIC;
+GRANT EXECUTE ON FUNCTION engine0.task_children(text) TO tendreladmin WITH GRANT OPTION;
+GRANT EXECUTE ON FUNCTION engine0.task_children(text) TO graphql;

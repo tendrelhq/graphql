@@ -122,5 +122,6 @@ end $function$;
 
 
 REVOKE ALL ON FUNCTION legacy0.create_field_t(text,text,text,text,boolean,boolean,boolean,text,integer,text,text,text,text,bigint) FROM PUBLIC;
-GRANT EXECUTE ON FUNCTION legacy0.create_field_t(text,text,text,text,boolean,boolean,boolean,text,integer,text,text,text,text,bigint) TO tendrelservice;
+GRANT EXECUTE ON FUNCTION legacy0.create_field_t(text,text,text,text,boolean,boolean,boolean,text,integer,text,text,text,text,bigint) TO PUBLIC;
+GRANT EXECUTE ON FUNCTION legacy0.create_field_t(text,text,text,text,boolean,boolean,boolean,text,integer,text,text,text,text,bigint) TO tendreladmin WITH GRANT OPTION;
 GRANT EXECUTE ON FUNCTION legacy0.create_field_t(text,text,text,text,boolean,boolean,boolean,text,integer,text,text,text,text,bigint) TO graphql;
