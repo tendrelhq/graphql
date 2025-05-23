@@ -168,7 +168,7 @@ export class Task implements Assignable, Component, Refetchable, Trackable {
         () => sql`
           select
             customer.customeruuid as customer_id,
-            'en' as language_type,
+            ${ctx.req.i18n.language} as language_type,
             auth.current_identity(customer.customerid, current_setting('user.id')) as modified_by,
             worktemplate.id as template_id
           from public.workinstance
@@ -192,13 +192,20 @@ export class Task implements Assignable, Component, Refetchable, Trackable {
       )
       .exhaustive();
 
-    const fieldType = match(input.type)
-      .with("boolean", () => "Boolean")
-      .with("entity", () => "Entity")
-      .with("number", () => "Number")
-      .with("string", () => "String")
-      .with("timestamp", () => "Date")
-      .otherwise(() => null);
+    const valueType = match(input.type)
+      .with("boolean", () => "Boolean" as const)
+      .with("entity", () => "Entity" as const)
+      .with("number", () => "Number" as const)
+      .with("string", () => "String" as const)
+      .with("timestamp", () => "Date" as const)
+      .otherwise(() => {
+        throw new GraphQLError("Unknown Field value type", {
+          extensions: {
+            code: "BAD_REQUEST",
+            hint: "Expected one of: boolean,entity,number,string,timestamp",
+          },
+        });
+      });
 
     const result = await sql.begin(async sql => {
       await setCurrentIdentity(sql, ctx);
@@ -215,7 +222,7 @@ export class Task implements Assignable, Component, Refetchable, Trackable {
             field_id := null,
             field_name := ${input.name},
             field_order := ${input.order ?? 0},
-            field_type := ${fieldType}
+            field_type := ${valueType}
           ) as ops,
           engine1.execute(ops.*) as t
         ;
@@ -233,8 +240,8 @@ export class Task implements Assignable, Component, Refetchable, Trackable {
 
     // This is still ugly...
     // but honestly it's gotten way better since the Checklist days lmao.
-    return match(input.type)
-      .with("boolean", () => ({
+    return match(valueType)
+      .with("Boolean", () => ({
         id: field,
         value: {
           __typename: "BooleanValue" as const,
@@ -244,7 +251,7 @@ export class Task implements Assignable, Component, Refetchable, Trackable {
         },
         valueType: "boolean" as const,
       }))
-      .with("entity", () => ({
+      .with("Entity", () => ({
         id: field,
         value: {
           __typename: "EntityValue" as const,
@@ -252,7 +259,7 @@ export class Task implements Assignable, Component, Refetchable, Trackable {
         },
         valueType: "entity" as const,
       }))
-      .with("number", () => ({
+      .with("Number", () => ({
         id: field,
         value: {
           __typename: "NumberValue" as const,
@@ -262,7 +269,7 @@ export class Task implements Assignable, Component, Refetchable, Trackable {
         },
         valueType: "number" as const,
       }))
-      .with("string", () => ({
+      .with("String", () => ({
         id: field,
         value: {
           __typename: "StringValue" as const,
@@ -272,7 +279,7 @@ export class Task implements Assignable, Component, Refetchable, Trackable {
         },
         valueType: "string" as const,
       }))
-      .with("timestamp", () => ({
+      .with("Date", () => ({
         id: field,
         value: {
           __typename: "TimestampValue" as const,
@@ -288,14 +295,7 @@ export class Task implements Assignable, Component, Refetchable, Trackable {
         },
         valueType: "timestamp" as const,
       }))
-      .otherwise(() => {
-        throw new GraphQLError("Unknown Field value type", {
-          extensions: {
-            code: "BAD_REQUEST",
-            hint: "Expected one of: Boolean, Entity, Number, String, Timestamp",
-          },
-        });
-      });
+      .exhaustive();
   }
 
   async createTransition(
