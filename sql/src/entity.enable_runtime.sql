@@ -233,18 +233,18 @@ begin
   -- is live! This is to maintain backwards compatibility. Once it is, this can
   -- be removed in favor of lazy instantiation.
   --
-  perform '  +irule', t.next
-  from legacy0.create_instantiation_rule(
-      prev_template_id := ins_template,
-      next_template_id := ins_template,
-      state_condition := 'In Progress',
-      type_tag := 'Task', -- Eager instantiation := driven by the engine
-      modified_by := modified_by
-  ) as t;
-  --
-  if not found then
-    raise exception 'failed to create canonical on-demand in-progress irule';
-  end if;
+  -- perform '  +irule', t.next
+  -- from legacy0.create_instantiation_rule(
+  --     prev_template_id := ins_template,
+  --     next_template_id := ins_template,
+  --     state_condition := 'In Progress',
+  --     type_tag := 'Task', -- Eager instantiation := driven by the engine
+  --     modified_by := modified_by
+  -- ) as t;
+  -- --
+  -- if not found then
+  --   raise exception 'failed to create canonical on-demand in-progress irule';
+  -- end if;
 
   -----------------------------------------------------------------------
   -- Create the constraint for the root template at each child location.

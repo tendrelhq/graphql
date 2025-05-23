@@ -23,8 +23,10 @@ jobs:
             accept-flake-config = true
       # Run our checks to catch quick issues
       - run: nix flake check
-      # Run a full build to ensure that works
+      # Run a full build to ensure that works. And then a rebuild to double
+      # check the hardcoded outputHash of our node_modules derivation.
       - run: nix build
+      - run: nix build .#node_modules --rebuild
   build:
     needs: check
     runs-on: ubuntu-latest

@@ -62,15 +62,31 @@
             pgtap
             plpgsql_check
           ];
+        hbaConf = lib.mkForce [
+          # This one is the default docker bridge network.
+          {
+            type = "host";
+            database = "all";
+            user = "all";
+            address = "172.17.0.0/16";
+            method = "trust";
+          }
+          # On my machine this is the tendrel_default network. YMMV.
+          {
+            type = "host";
+            database = "all";
+            user = "all";
+            address = "172.18.0.0/16";
+            method = "trust";
+          }
+        ];
         initialDatabases = [
           {
             name = "dev";
           }
         ];
-        initialScript.after = ''
-          create extension ddlx schema pg_catalog;
-        '';
         settings = {
+          listen_addresses = "0.0.0.0"; # so docker0 can connect
           log_statement = "all";
           logging_collector = false;
           shared_preload_libraries = "pg_cron,plpgsql_check";

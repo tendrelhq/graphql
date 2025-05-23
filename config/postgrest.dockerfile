@@ -15,5 +15,6 @@ FROM scratch
 WORKDIR /app
 COPY --from=builder /tmp/nix-store-closure /nix/store
 COPY --from=builder /tmp/build/result /app
-HEALTHCHECK CMD ["/app/bin/healthcheck"]
+
+HEALTHCHECK --start-period=30s --start-interval=1s CMD ["/app/bin/healthcheck"]
 ENTRYPOINT ["/app/bin/entrypoint"]

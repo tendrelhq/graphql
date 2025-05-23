@@ -19,21 +19,20 @@
           config.pre-commit.devShell
         ];
         buildInputs = [
+          config.packages.biome
           config.packages.copilot-cli
           config.packages.devenv
           pkgs.awscli2
           pkgs.bun
           pkgs.docker-buildx
           pkgs.just
-          pkgs.nodejs
+          pkgs.nodejs # needed by relay-compiler's entrypoint
           pkgs.openssl
           pkgs.python3
           pkgs.ruff
           pkgs.vtsls
         ];
-        BIOME_BINARY = lib.getExe config.packages.biome;
         COMPOSE_BAKE = true;
-        COMPOSE_FILE = "./config/compose.yaml";
         # Janky af I know, but an easy way to silently fail successfully
         TREEFMT = "treefmt";
       };
@@ -41,7 +40,7 @@
 
     packages = {
       biome = let
-        pkgJSON = lib.importJSON ../package.json;
+        pkgJSON = lib.importJSON ../packages/core/package.json;
       in
         pkgs.stdenv.mkDerivation rec {
           pname = "biome";
@@ -100,7 +99,7 @@
         biome = {
           enable = true;
           package = config.packages.biome;
-          includes = ["*.graphql" "*.json" "*.ts"];
+          includes = ["*.graphql" "*.json" "*.ts" "*.tsx"];
         };
         prettier = {
           enable = true;

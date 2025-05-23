@@ -1,0 +1,57 @@
+name: tendrel
+services:
+  graphql:
+    build:
+      dockerfile: ./config/graphql.dockerfile
+      cache_from:
+        - type=gha
+      cache_to:
+        - type=gha,mode=max
+      tags:
+        - tendrelhq/graphql:latest
+    env_file: .env.local
+    environment:
+      BASE_URL: http://nginx
+      CLERK_PUBLISHABLE_KEY: pk_test_YXdha2UtaG9nLTI2LmNsZXJrLmFjY291bnRzLmRldiQ
+      NODE_ENV: development
+      PGUSER: graphql
+      PGPASSWORD: graphql
+      STAGE: dev
+    extra_hosts:
+      - host.docker.internal:host-gateway
+    links:
+      - postgrest:dev.postgrest.local
+    restart: always
+  nginx:
+    build:
+      context: config
+      dockerfile: nginx.dockerfile
+      cache_from:
+        - type=gha
+      cache_to:
+        - type=gha,mode=max
+      tags:
+        - tendrelhq/nginx:latest
+    env_file: .env.local
+    links:
+      - graphql:dev.graphql.local
+      - postgrest:dev.postgrest.local
+    ports:
+      - 80:80
+    restart: always
+  postgrest:
+    build:
+      dockerfile: ./config/postgrest.dockerfile
+      cache_from:
+        - type=gha
+      cache_to:
+        - type=gha,mode=max
+      tags:
+        - tendrelhq/postgrest:latest
+    env_file: .env.local
+    environment:
+      PGUSER: graphql
+      PGPASSWORD: graphql
+    extra_hosts:
+      - host.docker.internal:host-gateway
+    restart: always

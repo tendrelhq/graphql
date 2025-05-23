@@ -1,9 +1,10 @@
 !.env.local.template
-!.envrc.template
+!.github/
 *.dump
 *.generated.ts
 /.*
 data/
 node_modules/
+out/
 postgrestools.jsonc
 result

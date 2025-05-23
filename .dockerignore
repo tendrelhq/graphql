@@ -7,10 +7,12 @@ biome.json
 config/
 copilot/
 data/
+docker-compose.yaml
 docs/
 justfile
 node_modules/
 postgresql.conf
+postgrestools.jsonc.template
 result
 sqitch.conf
 sql/

@@ -1,4 +1,4 @@
-{inputs, ...}: {
+{
   perSystem = {
     config,
     self',
@@ -17,7 +17,7 @@
     };
 
     packages = let
-      pkg = lib.importJSON ../package.json;
+      pkg = lib.importJSON ../packages/server/package.json;
       pname = lib.replaceStrings ["@"] [""] pkg.name;
     in {
       default = pkgs.stdenv.mkDerivation {
@@ -36,20 +36,20 @@
           chmod -R u+x node_modules/.bin
           patchShebangs node_modules
           export PATH="$PWD/node_modules/.bin:$PATH"
-          bun generate
+          bun server:generate
           runHook postConfigure
         '';
 
         buildPhase = ''
           runHook preBuild
-          bun run build
+          bun server:build
           runHook postBuild
         '';
 
         installPhase = ''
           runHook preInstall
           mkdir -p $out/bin
-          cp app $out/bin/entrypoint
+          cp ./packages/server/out/app $out/bin/entrypoint
           runHook postInstall
         '';
 
@@ -69,7 +69,7 @@
         buildPhase = ''
           runHook preBuild
           export HOME=$TMPDIR
-          bun install --no-cache --no-progress --frozen-lockfile --ignore-scripts
+          bun server:install --frozen-lockfile --ignore-scripts --no-cache --no-progress
           runHook postBuild
         '';
 
@@ -80,12 +80,10 @@
           runHook postInstall
         '';
 
-        # TODO: Not sure what is causing these to differ.
-        # Regardless, soon to be fixed via: https://github.com/NixOS/nixpkgs/issues/335534
         outputHash =
           if pkgs.system == "aarch64-linux"
-          then "sha256-RSEpWk1sVxT1N6OMABSxV9OIYEOBRPDU6ZOALbpLbDg="
-          else "sha256-IMgsvC3ncj5Wi9nlUTlI0rFfKA51SoqOrsSp9JGLG+8=";
+          then "sha256-UskJ6g+OcQPE4qBIPCRPTxtaxJo7OkuoKeqViJ78/tE="
+          else "sha256-cLqh+RAYeTHaQUNP+ezQzHF9brUW9nmKP5E3woLj3yU=";
         outputHashAlgo = "sha256";
         outputHashMode = "recursive";
       };

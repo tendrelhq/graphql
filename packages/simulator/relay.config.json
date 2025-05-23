@@ -1,0 +1,13 @@
+{
+  "$schema": "../../node_modules/relay-compiler/relay-compiler-config-schema.json",
+  "artifactDirectory": "./src/__generated__",
+  "src": ".",
+  "schema": "../server/schema.graphql",
+  "schemaExtensions": ["./src/hooks"],
+  "language": "typescript",
+  "eagerEsModules": true,
+  "useImportTypeSyntax": true,
+  "customScalarTypes": {
+    "Timestamp": "string"
+  }
+}
