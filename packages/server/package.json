@@ -29,7 +29,7 @@
     "graphql-tag": "^2.12.6",
     "jose": "^6.0.9",
     "morgan": "^1.10.0",
-    "negotiator": "^0.6.3",
+    "negotiator": "^1.0.0",
     "pattycake": "^0.0.2",
     "postgres": "^3.4.4",
     "ts-pattern": "^5.5.0"
