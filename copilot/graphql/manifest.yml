@@ -50,7 +50,6 @@ secrets:
     secretsmanager: "/database/service/graphql:dbname::"
 
 variables:
-  BASE_URL: ${COPILOT_SERVICE_DISCOVERY_ENDPOINT}
   CLERK_PUBLISHABLE_KEY: pk_live_Y2xlcmsudGVuZHJlbC5pbyQ
   NODE_ENV: production
   STAGE: ${COPILOT_ENVIRONMENT_NAME}
@@ -70,6 +69,10 @@ sidecars:
     port: 80
     image:
       build: config/nginx.dockerfile
+    variables:
+      GQL_URL: http://localhost
+      PGRST_URL: http://localhost
+      # ^-> see ../../config/upstreams.conf.template
   postgrest:
     port: 4001
     image:

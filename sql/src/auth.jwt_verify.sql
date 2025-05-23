@@ -38,6 +38,5 @@ $function$;
 
 
 REVOKE ALL ON FUNCTION auth.jwt_verify(text) FROM PUBLIC;
-GRANT EXECUTE ON FUNCTION auth.jwt_verify(text) TO PUBLIC;
 GRANT EXECUTE ON FUNCTION auth.jwt_verify(text) TO tendreladmin WITH GRANT OPTION;
 GRANT EXECUTE ON FUNCTION auth.jwt_verify(text) TO graphql;

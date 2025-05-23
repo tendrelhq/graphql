@@ -27,6 +27,5 @@ $function$;
 
 
 REVOKE ALL ON FUNCTION auth.jwk_sign(auth._jwk,json) FROM PUBLIC;
-GRANT EXECUTE ON FUNCTION auth.jwk_sign(auth._jwk,json) TO PUBLIC;
 GRANT EXECUTE ON FUNCTION auth.jwk_sign(auth._jwk,json) TO tendreladmin WITH GRANT OPTION;
 GRANT EXECUTE ON FUNCTION auth.jwk_sign(auth._jwk,json) TO graphql;

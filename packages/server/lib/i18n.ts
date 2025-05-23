@@ -33,7 +33,7 @@ export async function getUserLanguage(req: e.Request) {
     select systagtype as code
     from public.worker
     inner join public.systag
-      on workerlanguagetypeid = systagid
+      on workerlanguageid = systagid
     where workeridentityid = ${req.auth.userId}
   `;
   return row?.code ?? "en";

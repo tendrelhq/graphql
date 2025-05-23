@@ -11,7 +11,7 @@ restore:
     pg_restore --jobs=$(nproc) --verbose --exit-on-error --no-acl --no-owner --dbname=$PGDATABASE db.dump
 
 install:
-    bun install --frozen-lockfile
+    bun clean && bun install --frozen-lockfile
 
 generate: install
     bun --filter=./packages/* generate

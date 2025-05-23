@@ -82,8 +82,8 @@
 
         outputHash =
           if pkgs.system == "aarch64-linux"
-          then "sha256-UskJ6g+OcQPE4qBIPCRPTxtaxJo7OkuoKeqViJ78/tE="
-          else "sha256-cLqh+RAYeTHaQUNP+ezQzHF9brUW9nmKP5E3woLj3yU=";
+          then "sha256-Hs1Pw7Jh9P73b35XSO5coVTSBwE38gzgLOz1ikxPXuE="
+          else "sha256-lzuZoPy3HiXpkfG3yoKMz9blYHKKhOAWQLKULHfOw78=";
         outputHashAlgo = "sha256";
         outputHashMode = "recursive";
       };

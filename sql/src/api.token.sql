@@ -1,7 +1,7 @@
 
--- Type: FUNCTION ; Name: api.token(api.grant_type,text,api.token_type,text,text); Owner: tendreladmin
+drop function api.token;
 
-CREATE OR REPLACE FUNCTION api.token(grant_type api.grant_type, subject_token text, subject_token_type api.token_type, actor_token text DEFAULT NULL::text, actor_token_type text DEFAULT NULL::text)
+CREATE OR REPLACE FUNCTION api.token(grant_type api.grant_type, subject_token text, subject_token_type api.token_type, requested_token_lifetime text = null)
  RETURNS jsonb
  LANGUAGE plpgsql
  SECURITY DEFINER
@@ -40,7 +40,7 @@ begin
         'owner', current_setting('request.jwt.claims')::jsonb ->> 'owner',
         'role', coalesce(role, 'authenticated'),
         'scope', string_agg(systagtype, ' '),
-        'exp', extract(epoch from now() + '24hr'::interval),
+        'exp', extract(epoch from now() + requested_token_lifetime::interval),
         'iat', extract(epoch from now()),
         'iss', 'urn:tendrel:test',
         'nbf', extract(epoch from now() - '30s'::interval),
@@ -73,7 +73,7 @@ begin
 end $function$;
 
 
-REVOKE ALL ON FUNCTION api.token(api.grant_type,text,api.token_type,text,text) FROM PUBLIC;
-GRANT EXECUTE ON FUNCTION api.token(api.grant_type,text,api.token_type,text,text) TO tendreladmin WITH GRANT OPTION;
-GRANT EXECUTE ON FUNCTION api.token(api.grant_type,text,api.token_type,text,text) TO anonymous;
-GRANT EXECUTE ON FUNCTION api.token(api.grant_type,text,api.token_type,text,text) TO authenticated;
+REVOKE ALL ON FUNCTION api.token FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION api.token TO tendreladmin WITH GRANT OPTION;
+GRANT EXECUTE ON FUNCTION api.token TO anonymous;
+GRANT EXECUTE ON FUNCTION api.token TO authenticated;

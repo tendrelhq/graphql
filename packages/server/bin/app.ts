@@ -103,6 +103,13 @@ app.use(
           },
         });
       }
+
+      // Just fire it off, don't await.
+      const token = auth
+        .getAccessToken(req.auth.userId)
+        .then(r => r.json())
+        .then(r => r.access_token);
+
       return {
         auth: req.auth,
         limits: new Limits(),
@@ -111,19 +118,14 @@ app.use(
         // default developer setup since *everything* is localhost.
         pgrst: new PostgrestClient(config.pgrst_url.toString(), {
           // @ts-expect-error - idk man
-          async fetch(...args) {
-            const token = await auth
-              .getAccessToken(req.auth.userId)
-              .then(r => r.json())
-              .then(r => r.access_token);
-            const init = {
-              ...(args[1] ?? {}),
+          async fetch(input, init) {
+            return fetch(input, {
+              ...(init ?? {}),
               headers: {
-                ...(args[1]?.headers ?? {}),
-                Authorization: `Bearer ${token}`,
+                ...(init?.headers ?? {}),
+                Authorization: `Bearer ${await token}`,
               },
-            };
-            return fetch(args[0], init);
+            });
           },
         }),
         orm: makeRequestLoaders(req),

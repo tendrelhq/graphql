@@ -9,6 +9,7 @@ import type { RequestHandler } from "express";
 import { GraphQLError } from "graphql";
 import config from "./config";
 import { type TxSql, sql } from "./datasources/postgres";
+import { map } from "./util";
 
 declare global {
   namespace Express {
@@ -59,7 +60,7 @@ export function clerk() {
  */
 export const login: RequestHandler = async (req, res) => {
   try {
-    const r = await getAccessToken(req.auth.userId);
+    const r = await getAccessToken(req.auth.userId, req.body.expires);
     const token = await r.json();
 
     res
@@ -89,7 +90,7 @@ const ACCESS_TOKEN_ENDPOINT = new URL("/api/v1/rpc/token", config.base_url);
  * Get an access token for the given `sub`ject. This is always a Clerk user ID
  * at the moment.
  */
-export async function getAccessToken(sub: string) {
+export async function getAccessToken(sub: string, expires = "1hr") {
   const [{ jwt }] = await sql`
     select auth.jwt_sign(
       json_build_object(
@@ -112,6 +113,7 @@ export async function getAccessToken(sub: string) {
       grant_type: "urn:ietf:params:oauth:grant-type:token-exchange",
       subject_token: jwt,
       subject_token_type: "urn:ietf:params:oauth:token-type:jwt",
+      requested_token_lifetime: expires === "never" ? null : (expires ?? "1hr"),
     }),
     headers: {
       Authorization: `Bearer ${jwt}`,

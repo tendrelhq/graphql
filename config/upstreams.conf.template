@@ -1,10 +1,10 @@
 # vim: ft=nginx
 
 http {
-  upstream postgrest {
-    server ${STAGE}.postgrest.local;
-  }
   upstream graphql {
-    server ${STAGE}.graphql.local;
+    server ${GQL_URL}
+  }
+  upstream postgrest {
+    server ${PGRST_URL}
   }
 }
