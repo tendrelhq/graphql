@@ -64,6 +64,7 @@ export async function createTestContext(): Promise<Context> {
     auth: { userId } as any,
     limits: new Limits(),
     pgrst: new PostgrestClient(PGRST_URL, {
+      // @ts-expect-error - idk man
       async fetch(...args) {
         const token = await getAccessToken(userId)
           .then(r => r.json())

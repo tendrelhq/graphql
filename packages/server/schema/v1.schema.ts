@@ -31,6 +31,7 @@ import {
   parent as fieldParentResolver,
 } from "./system/component";
 import {
+  addFields as mutationAddFieldsResolver,
   applyFieldEdits as mutationApplyFieldEditsResolver,
   rebase as mutationRebaseResolver,
   assignees as taskAssigneesResolver,
@@ -1829,6 +1830,79 @@ export function getSchema(): GraphQLSchema {
       };
     },
   });
+  const ValueInputType: GraphQLInputObjectType = new GraphQLInputObjectType({
+    name: "ValueInput",
+    fields() {
+      return {
+        boolean: {
+          name: "boolean",
+          type: GraphQLBoolean,
+        },
+        id: {
+          name: "id",
+          type: GraphQLID,
+        },
+        number: {
+          name: "number",
+          type: GraphQLInt,
+        },
+        string: {
+          name: "string",
+          type: GraphQLString,
+        },
+        timestamp: {
+          description: "ISO 8601 format.",
+          name: "timestamp",
+          type: GraphQLString,
+        },
+      };
+    },
+    isOneOf: true,
+  });
+  const FieldDefinitionInputType: GraphQLInputObjectType =
+    new GraphQLInputObjectType({
+      name: "FieldDefinitionInput",
+      fields() {
+        return {
+          description: {
+            name: "description",
+            type: GraphQLString,
+          },
+          isDraft: {
+            name: "isDraft",
+            type: GraphQLBoolean,
+          },
+          isPrimary: {
+            name: "isPrimary",
+            type: GraphQLBoolean,
+          },
+          name: {
+            name: "name",
+            type: new GraphQLNonNull(GraphQLString),
+          },
+          order: {
+            name: "order",
+            type: GraphQLInt,
+          },
+          referenceType: {
+            name: "referenceType",
+            type: GraphQLString,
+          },
+          type: {
+            name: "type",
+            type: new GraphQLNonNull(ValueTypeType),
+          },
+          value: {
+            name: "value",
+            type: ValueInputType,
+          },
+          widget: {
+            name: "widget",
+            type: GraphQLString,
+          },
+        };
+      },
+    });
   const DiagnosticKindType: GraphQLEnumType = new GraphQLEnumType({
     name: "DiagnosticKind",
     values: {
@@ -1923,35 +1997,6 @@ export function getSchema(): GraphQLSchema {
         };
       },
     });
-  const ValueInputType: GraphQLInputObjectType = new GraphQLInputObjectType({
-    name: "ValueInput",
-    fields() {
-      return {
-        boolean: {
-          name: "boolean",
-          type: GraphQLBoolean,
-        },
-        id: {
-          name: "id",
-          type: GraphQLID,
-        },
-        number: {
-          name: "number",
-          type: GraphQLInt,
-        },
-        string: {
-          name: "string",
-          type: GraphQLString,
-        },
-        timestamp: {
-          description: "ISO 8601 format.",
-          name: "timestamp",
-          type: GraphQLString,
-        },
-      };
-    },
-    isOneOf: true,
-  });
   const FieldInputType: GraphQLInputObjectType = new GraphQLInputObjectType({
     name: "FieldInput",
     fields() {
@@ -2225,6 +2270,25 @@ export function getSchema(): GraphQLSchema {
     name: "Mutation",
     fields() {
       return {
+        addFields: {
+          name: "addFields",
+          type: TaskType,
+          args: {
+            fields: {
+              name: "fields",
+              type: new GraphQLNonNull(
+                new GraphQLList(new GraphQLNonNull(FieldDefinitionInputType)),
+              ),
+            },
+            node: {
+              name: "node",
+              type: new GraphQLNonNull(GraphQLID),
+            },
+          },
+          resolve(_source, args, context) {
+            return assertNonNull(mutationAddFieldsResolver(args, context));
+          },
+        },
         advance: {
           name: "advance",
           type: AdvanceTaskStateMachineResultType,
@@ -2537,50 +2601,6 @@ export function getSchema(): GraphQLSchema {
           value: {
             name: "value",
             type: new GraphQLNonNull(DynamicStringInputType),
-          },
-        };
-      },
-    });
-  const FieldDefinitionInputType: GraphQLInputObjectType =
-    new GraphQLInputObjectType({
-      name: "FieldDefinitionInput",
-      fields() {
-        return {
-          description: {
-            name: "description",
-            type: GraphQLString,
-          },
-          isDraft: {
-            name: "isDraft",
-            type: GraphQLBoolean,
-          },
-          isPrimary: {
-            name: "isPrimary",
-            type: GraphQLBoolean,
-          },
-          name: {
-            name: "name",
-            type: new GraphQLNonNull(GraphQLString),
-          },
-          order: {
-            name: "order",
-            type: GraphQLInt,
-          },
-          referenceType: {
-            name: "referenceType",
-            type: GraphQLString,
-          },
-          type: {
-            name: "type",
-            type: new GraphQLNonNull(ValueTypeType),
-          },
-          value: {
-            name: "value",
-            type: ValueInputType,
-          },
-          widget: {
-            name: "widget",
-            type: GraphQLString,
           },
         };
       },

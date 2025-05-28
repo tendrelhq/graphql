@@ -1181,6 +1181,7 @@ type Mutation {
   """
   activate(entity: ID!): Activatable!
   activateWorker(id: ID!): Worker!
+  addFields(fields: [FieldDefinitionInput!]!, node: ID!): Task @semanticNonNull
   advance(opts: AdvanceFsmOptions!): AdvanceTaskStateMachineResult
     @semanticNonNull
   applyFieldEdits(edits: [FieldInput!]!, entity: ID!): Task @semanticNonNull

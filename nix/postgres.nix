@@ -57,6 +57,7 @@
         extensions = exts:
           with exts;
           with config.packages; [
+            hypopg
             pg_cron
             pgddl
             pgtap

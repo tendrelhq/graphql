@@ -606,6 +606,7 @@ type Location implements Component & Node & Trackable {
 }
 
 type Mutation {
+  addFields(fields: [FieldDefinitionInput!]!, node: ID!): Task @semanticNonNull
   advance(opts: AdvanceFsmOptions!): AdvanceTaskStateMachineResult
     @semanticNonNull
   applyFieldEdits(edits: [FieldInput!]!, entity: ID!): Task @semanticNonNull

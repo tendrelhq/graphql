@@ -161,7 +161,11 @@ export class Task implements Assignable, Component, Refetchable, Trackable {
     return row ?? null;
   }
 
-  async addField(ctx: Context, input: FieldDefinitionInput): Promise<Field> {
+  async addField(
+    input: FieldDefinitionInput,
+    ctx: Context,
+    sql: TxSql,
+  ): Promise<Field> {
     const cte = match(this._type)
       .with(
         "workinstance",
@@ -207,27 +211,29 @@ export class Task implements Assignable, Component, Refetchable, Trackable {
         });
       });
 
-    const result = await sql.begin(async sql => {
-      await setCurrentIdentity(sql, ctx);
-      return await sql`
-        with cte as (${cte})
-        select t.*
-        from
-          cte,
-          engine1.upsert_field_t(
-            customer_id := cte.customer_id,
-            language_type := cte.language_type,
-            modified_by := cte.modified_by,
-            template_id := cte.template_id,
-            field_id := null,
-            field_name := ${input.name},
-            field_order := ${input.order ?? 0},
-            field_type := ${valueType}
-          ) as ops,
-          engine1.execute(ops.*) as t
-        ;
-      `;
-    });
+    const result = await sql`
+      with cte as (${cte})
+      select t.*
+      from
+        cte,
+        engine1.upsert_field_t(
+          customer_id := cte.customer_id,
+          language_type := cte.language_type,
+          modified_by := cte.modified_by,
+          template_id := cte.template_id,
+          field_description := ${input.description ?? null},
+          field_id := null,
+          field_is_draft := ${input.isDraft ?? false},
+          field_is_primary := ${input.isPrimary ?? false},
+          field_name := ${input.name},
+          field_order := ${input.order ?? 0},
+          field_type := ${valueType},
+          field_value := ${valueInputToSql({ value: input.value, valueType: input.type })},
+          field_widget := ${input.widget ?? null}
+        ) as ops,
+        engine1.execute(ops.*) as t
+      ;
+    `;
 
     // TODO: the return value could be more helpful.
     // For now we know we the workresult will always be the first one.
@@ -1684,6 +1690,21 @@ export async function fields(
   };
 }
 
+/** @gqlMutationField */
+export async function addFields(
+  args: { node: ID; fields: FieldDefinitionInput[] },
+  ctx: Context,
+): Promise<Task> {
+  const t = new Task({ id: args.node });
+  if (t._type === "worktemplate" && args.fields.length > 0) {
+    await sql.begin(async sql => {
+      await setCurrentIdentity(sql, ctx);
+      await Promise.all(args.fields.map(f => t.addField(f, ctx, sql)));
+    });
+  }
+  return t;
+}
+
 /** @gqlField */
 export async function applyFieldEdits(
   _: Mutation,
@@ -1761,7 +1782,9 @@ export function applyFieldEdits_(
   `;
 }
 
-export function valueInputToSql(input: FieldInput) {
+export function valueInputToSql(
+  input: Pick<FieldInput, "value" | "valueType">,
+) {
   if (!input.value) return null;
   switch (true) {
     case "boolean" in input.value: {

@@ -1,0 +1,60 @@
+query TestRuntime($owner: ID!, $type: [String!]!) {
+  templates(owner: $owner, type: $type) {
+    edges {
+      node {
+        asTask {
+          ...TestRuntime_fragment
+        }
+      }
+    }
+    totalCount
+  }
+}
+
+mutation TestAddField($node: ID!, $fields: [FieldDefinitionInput!]!) {
+  addFields(node: $node, fields: $fields) {
+    ...TestRuntime_fragment
+  }
+}
+
+fragment TestRuntime_fragment on Task {
+  id
+  fields {
+    edges {
+      node {
+        description {
+          value
+        }
+        name {
+          value
+        }
+        value {
+          ...TestRuntimeValue_fragment
+        }
+        valueType
+      }
+    }
+    totalCount
+  }
+}
+
+fragment TestRuntimeValue_fragment on Value {
+  __typename
+  ... on BooleanValue {
+    boolean
+  }
+  ... on EntityValue {
+    entity {
+      __typename
+    }
+  }
+  ... on NumberValue {
+    number
+  }
+  ... on StringValue {
+    string
+  }
+  ... on TimestampValue {
+    timestamp
+  }
+}
