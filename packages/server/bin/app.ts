@@ -19,12 +19,6 @@ import express from "express";
 import { GraphQLError } from "graphql";
 import morgan from "morgan";
 
-if (process.argv.some(arg => arg === "--healthcheck")) {
-  // We are calling our own healthcheck here! The one ~25 lines below.
-  const r = await fetch(new URL("/api/v1/query/live", config.base_url));
-  process.exit(r.ok ? 0 : 1);
-}
-
 console.log(`NODE_ENV=${process.env.NODE_ENV}`);
 if (process.env.NODE_ENV === "development") {
   console.debug("--------------------");

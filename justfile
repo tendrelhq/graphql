@@ -3,6 +3,9 @@ node_env   := "development"
 
 default: generate
 
+check:
+    bun --filter=./packages/* check
+
 dump:
     pg_dump --verbose --format=c --no-acl --no-owner --exclude-schema=datawarehouse --exclude-schema=upload --file db.dump
 

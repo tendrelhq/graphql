@@ -16,77 +16,95 @@
       };
     };
 
-    packages = let
-      pkg = lib.importJSON ../packages/server/package.json;
-      pname = lib.replaceStrings ["@"] [""] pkg.name;
-    in {
-      default = pkgs.stdenv.mkDerivation {
-        inherit pname;
-        inherit (pkg) version;
-        src = pkgs.nix-gitignore.gitignoreSource [../.dockerignore] ../.;
+    packages = {
+      default = let
+        pkg = lib.importJSON ../packages/server/package.json;
+        pname = lib.replaceStrings ["@"] [""] pkg.name;
 
-        nativeBuildInputs = with pkgs; [bun nodejs config.packages.node_modules];
+        node_modules = pkgs.stdenv.mkDerivation {
+          pname = "${pname}-deps";
+          inherit (pkg) version;
+          src = pkgs.nix-gitignore.gitignoreSource [../.dockerignore] ../.;
 
-        dontFixup = true; # patchShebangs produces illegal path references in FODs
+          nativeBuildInputs = [pkgs.bun];
 
-        configurePhase = ''
-          runHook preConfigure
-          cp -a ${config.packages.node_modules}/node_modules ./node_modules
-          chmod -R u+rw node_modules
-          chmod -R u+x node_modules/.bin
-          patchShebangs node_modules
-          export PATH="$PWD/node_modules/.bin:$PATH"
-          bun server:generate
-          runHook postConfigure
-        '';
+          dontConfigure = true;
+          dontFixup = true; # patchShebangs produces illegal path references in FODs
 
-        buildPhase = ''
-          runHook preBuild
-          bun server:build
-          runHook postBuild
-        '';
+          buildPhase = ''
+            runHook preBuild
+            export HOME=$TMPDIR
+            bun server:install --frozen-lockfile --ignore-scripts --no-cache --no-progress
+            runHook postBuild
+          '';
 
-        installPhase = ''
-          runHook preInstall
-          mkdir -p $out/bin
-          cp ./packages/server/out/app $out/bin/entrypoint
-          runHook postInstall
-        '';
+          installPhase = ''
+            runHook preInstall
+            mkdir -p $out/node_modules
+            mv node_modules $out/
+            runHook postInstall
+          '';
 
-        meta.mainProgram = "entrypoint"; # so you can `nix run`
-      };
+          outputHash =
+            if pkgs.system == "aarch64-linux"
+            then "sha256-Hs1Pw7Jh9P73b35XSO5coVTSBwE38gzgLOz1ikxPXuE="
+            else "sha256-lzuZoPy3HiXpkfG3yoKMz9blYHKKhOAWQLKULHfOw78=";
+          outputHashAlgo = "sha256";
+          outputHashMode = "recursive";
+        };
 
-      node_modules = pkgs.stdenv.mkDerivation {
-        pname = "${pname}-deps";
-        inherit (pkg) version;
-        src = pkgs.nix-gitignore.gitignoreSource [../.dockerignore] ../.;
+        entrypoint = pkgs.stdenv.mkDerivation {
+          inherit pname;
+          inherit (pkg) version;
+          src = pkgs.nix-gitignore.gitignoreSource [../.dockerignore] ../.;
 
-        nativeBuildInputs = [pkgs.bun];
+          nativeBuildInputs = with pkgs; [bun nodejs node_modules];
 
-        dontConfigure = true;
-        dontFixup = true; # patchShebangs produces illegal path references in FODs
+          dontFixup = true; # patchShebangs produces illegal path references in FODs
 
-        buildPhase = ''
-          runHook preBuild
-          export HOME=$TMPDIR
-          bun server:install --frozen-lockfile --ignore-scripts --no-cache --no-progress
-          runHook postBuild
-        '';
+          configurePhase = ''
+            runHook preConfigure
+            cp -a ${node_modules}/node_modules ./node_modules
+            chmod -R u+rw node_modules
+            chmod -R u+x node_modules/.bin
+            patchShebangs node_modules
+            export PATH="$PWD/node_modules/.bin:$PATH"
+            bun server:generate
+            runHook postConfigure
+          '';
 
-        installPhase = ''
-          runHook preInstall
-          mkdir -p $out/node_modules
-          mv node_modules $out/
-          runHook postInstall
-        '';
+          buildPhase = ''
+            runHook preBuild
+            bun server:build
+            runHook postBuild
+          '';
 
-        outputHash =
-          if pkgs.system == "aarch64-linux"
-          then "sha256-Hs1Pw7Jh9P73b35XSO5coVTSBwE38gzgLOz1ikxPXuE="
-          else "sha256-lzuZoPy3HiXpkfG3yoKMz9blYHKKhOAWQLKULHfOw78=";
-        outputHashAlgo = "sha256";
-        outputHashMode = "recursive";
-      };
+          installPhase = ''
+            runHook preInstall
+            mkdir -p $out/bin
+            cp ./packages/server/out/app $out/bin/entrypoint
+            runHook postInstall
+          '';
+
+          meta.mainProgram = "entrypoint"; # so you can `nix run`
+        };
+
+        healthcheck = pkgs.writeShellApplication {
+          name = "healthcheck";
+          runtimeInputs = [pkgs.curl];
+          text = ''
+            curl -I http://localhost:4000/live
+          '';
+        };
+      in
+        pkgs.symlinkJoin {
+          name = "graphql";
+          paths = [
+            healthcheck
+            entrypoint
+          ];
+          passthru = {inherit node_modules;};
+        };
 
       postgrest = let
         healthcheck = pkgs.writeShellApplication {
