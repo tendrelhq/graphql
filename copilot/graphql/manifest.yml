@@ -69,10 +69,6 @@ sidecars:
     port: 80
     image:
       build: config/nginx.dockerfile
-    variables:
-      GQL_URL: http://localhost
-      PGRST_URL: http://localhost
-      # ^-> see ../../config/upstreams.conf.template
   postgrest:
     port: 4001
     image:
