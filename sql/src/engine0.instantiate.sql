@@ -1,3 +1,9 @@
+BEGIN;
+
+/*
+DROP FUNCTION engine0.instantiate(text,text,text,text,bigint,text,text);
+*/
+
 
 -- Type: FUNCTION ; Name: engine0.instantiate(text,text,text,text,bigint,text,text); Owner: tendreladmin
 
@@ -175,3 +181,5 @@ REVOKE ALL ON FUNCTION engine0.instantiate(text,text,text,text,bigint,text,text)
 GRANT EXECUTE ON FUNCTION engine0.instantiate(text,text,text,text,bigint,text,text) TO PUBLIC;
 GRANT EXECUTE ON FUNCTION engine0.instantiate(text,text,text,text,bigint,text,text) TO tendreladmin WITH GRANT OPTION;
 GRANT EXECUTE ON FUNCTION engine0.instantiate(text,text,text,text,bigint,text,text) TO graphql;
+
+END;

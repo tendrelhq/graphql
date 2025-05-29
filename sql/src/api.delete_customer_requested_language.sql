@@ -1,3 +1,9 @@
+BEGIN;
+
+/*
+DROP FUNCTION api.delete_customer_requested_language(uuid,text);
+*/
+
 
 -- Type: FUNCTION ; Name: api.delete_customer_requested_language(uuid,text); Owner: tendreladmin
 
@@ -46,3 +52,5 @@ $function$;
 REVOKE ALL ON FUNCTION api.delete_customer_requested_language(uuid,text) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION api.delete_customer_requested_language(uuid,text) TO tendreladmin WITH GRANT OPTION;
 GRANT EXECUTE ON FUNCTION api.delete_customer_requested_language(uuid,text) TO authenticated;
+
+END;

@@ -1,3 +1,12 @@
+BEGIN;
+
+/*
+DROP FUNCTION api.delete_systag(uuid,uuid);
+DROP VIEW api.systag;
+
+DROP FUNCTION entity.crud_systag_read_api(uuid[],uuid,uuid,uuid,boolean,boolean,boolean,boolean,uuid);
+*/
+
 
 -- Type: FUNCTION ; Name: entity.crud_systag_read_api(uuid[],uuid,uuid,uuid,boolean,boolean,boolean,boolean,uuid); Owner: tendreladmin
 
@@ -21,11 +30,11 @@ BEGIN
 -- call entity.test_entity()
 
 -- all customers all systags 
-select * from entity.crud_systag_read_full(null,null,null, null, true,null,null, null,'bcbe750d-1b3b-4e2b-82ec-448bb8b116f9')
+select * from entity.crud_systag_read_api(null,null,null, null, true,null,null, null,'bcbe750d-1b3b-4e2b-82ec-448bb8b116f9')
 order by systagid
 
 -- all systags for a specific customer
-select * from entity.crud_systag_read_full('f90d618d-5de7-4126-8c65-0afb700c6c61',null,null, null, true,null,null, null,'bcbe750d-1b3b-4e2b-82ec-448bb8b116f9')
+select * from entity.crud_systag_read_api(ARRAY['f90d618d-5de7-4126-8c65-0afb700c6c61'],null,null, null, true,null,null, null,'bcbe750d-1b3b-4e2b-82ec-448bb8b116f9')
 order by systagid
 
 -- all systags for a parent
@@ -96,6 +105,7 @@ return query
 			on customer.entityinstanceuuid = ei.entityinstanceownerentityuuid
 				and (ei.entityinstanceownerentityuuid = ANY(read_ownerentityuuid)
 					or	ei.entityinstanceownerentityuuid = 'f90d618d-5de7-4126-8c65-0afb700c6c61')
+				and ei.entityinstanceentitytemplateentityuuid = 'def05966-06b2-483e-8988-d0f898e45e6c'
 		inner join public.languagemaster customerlm
 			on customer.entityinstancenameuuid = customerlm.languagemasteruuid
 		left join public.languagetranslations customerlt
@@ -115,7 +125,7 @@ return query
 				and namelt.languagetranslationtypeid = templanguagetranslationtypeid
 		join entity.entityfieldinstance dn
 			on ei.entityinstanceuuid = dn.entityfieldinstanceentityinstanceentityuuid
-				and dn.entityfieldinstanceentityfieldentityuuid = '1b29e7b0-0800-4366-b79e-424dd9bafa71' 
+				and dn.entityfieldinstanceentityfieldentityuuid = 'cf94ce9c-edd3-4c7b-8128-ab598fc9710a' 
 		left join languagemaster displaylm
 			on dn.entityfieldinstancevaluelanguagemasteruuid = displaylm.languagemasteruuid
 		left join public.languagetranslations displaylt
@@ -132,3 +142,128 @@ REVOKE ALL ON FUNCTION entity.crud_systag_read_api(uuid[],uuid,uuid,uuid,boolean
 GRANT EXECUTE ON FUNCTION entity.crud_systag_read_api(uuid[],uuid,uuid,uuid,boolean,boolean,boolean,boolean,uuid) TO PUBLIC;
 GRANT EXECUTE ON FUNCTION entity.crud_systag_read_api(uuid[],uuid,uuid,uuid,boolean,boolean,boolean,boolean,uuid) TO tendreladmin WITH GRANT OPTION;
 GRANT EXECUTE ON FUNCTION entity.crud_systag_read_api(uuid[],uuid,uuid,uuid,boolean,boolean,boolean,boolean,uuid) TO graphql;
+
+-- DEPENDANTS
+
+
+-- Type: VIEW ; Name: systag; Owner: tendreladmin
+
+CREATE OR REPLACE VIEW api.systag AS
+ SELECT systagentityuuid AS id,
+    systagid AS legacy_id,
+    systaguuid AS legacy_uuid,
+    systagownerentityuuid AS owner,
+    systagownerentityname AS owner_name,
+    systagparententityuuid AS parent,
+    systagparentname AS parent_name,
+    NULL::uuid AS cornerstone,
+    systagnameuuid AS name_id,
+    systagname AS name,
+    systagdisplaynameuuid AS displayname_id,
+    systagdisplayname AS displayname,
+    systagtype AS type,
+    systagcreateddate AS created_at,
+    systagmodifieddate AS updated_at,
+    systagstartdate AS activated_at,
+    systagenddate AS deactivated_at,
+    systagexternalid AS external_id,
+    systagexternalsystementityuuid AS external_system,
+    systagmodifiedbyuuid AS modified_by,
+    systagorder AS _order,
+    systagsenddeleted AS _deleted,
+    systagsenddrafts AS _draft,
+    systagsendinactive AS _active
+   FROM ( SELECT crud_systag_read_api.languagetranslationtypeentityuuid,
+            crud_systag_read_api.systagid,
+            crud_systag_read_api.systaguuid,
+            crud_systag_read_api.systagentityuuid,
+            crud_systag_read_api.systagownerentityuuid,
+            crud_systag_read_api.systagownerentityname,
+            crud_systag_read_api.systagparententityuuid,
+            crud_systag_read_api.systagparentname,
+            crud_systag_read_api.systagcornerstoneentityid,
+            crud_systag_read_api.systagcustomerid,
+            crud_systag_read_api.systagcustomeruuid,
+            crud_systag_read_api.systagcustomerentityuuid,
+            crud_systag_read_api.systagcustomername,
+            crud_systag_read_api.systagnameuuid,
+            crud_systag_read_api.systagname,
+            crud_systag_read_api.systagdisplaynameuuid,
+            crud_systag_read_api.systagdisplayname,
+            crud_systag_read_api.systagtype,
+            crud_systag_read_api.systagcreateddate,
+            crud_systag_read_api.systagmodifieddate,
+            crud_systag_read_api.systagstartdate,
+            crud_systag_read_api.systagenddate,
+            crud_systag_read_api.systagexternalid,
+            crud_systag_read_api.systagexternalsystementityuuid,
+            crud_systag_read_api.systagexternalsystemenname,
+            crud_systag_read_api.systagmodifiedbyuuid,
+            crud_systag_read_api.systagabbreviationentityuuid,
+            crud_systag_read_api.systagabbreviationname,
+            crud_systag_read_api.systagorder,
+            crud_systag_read_api.systagsenddeleted,
+            crud_systag_read_api.systagsenddrafts,
+            crud_systag_read_api.systagsendinactive
+           FROM entity.crud_systag_read_api(ARRAY( SELECT util_get_onwership.get_ownership
+                   FROM _api.util_get_onwership() util_get_onwership(get_ownership)), NULL::uuid, NULL::uuid, NULL::uuid, true, NULL::boolean, NULL::boolean, NULL::boolean, ( SELECT util_user_details.get_languagetypeentityuuid
+                   FROM _api.util_user_details() util_user_details(get_workerinstanceid, get_workerinstanceuuid, get_languagetypeid, get_languagetypeuuid, get_languagetypeentityuuid))) crud_systag_read_api(languagetranslationtypeentityuuid, systagid, systaguuid, systagentityuuid, systagownerentityuuid, systagownerentityname, systagparententityuuid, systagparentname, systagcornerstoneentityid, systagcustomerid, systagcustomeruuid, systagcustomerentityuuid, systagcustomername, systagnameuuid, systagname, systagdisplaynameuuid, systagdisplayname, systagtype, systagcreateddate, systagmodifieddate, systagstartdate, systagenddate, systagexternalid, systagexternalsystementityuuid, systagexternalsystemenname, systagmodifiedbyuuid, systagabbreviationentityuuid, systagabbreviationname, systagorder, systagsenddeleted, systagsenddrafts, systagsendinactive)) systag;
+
+COMMENT ON VIEW api.systag IS '
+## language
+';
+
+CREATE TRIGGER create_systag_tg INSTEAD OF INSERT ON api.systag FOR EACH ROW EXECUTE FUNCTION api.create_systag();
+CREATE TRIGGER update_systag_tg INSTEAD OF UPDATE ON api.systag FOR EACH ROW EXECUTE FUNCTION api.update_systag();
+
+GRANT INSERT ON api.systag TO authenticated;
+GRANT SELECT ON api.systag TO authenticated;
+GRANT UPDATE ON api.systag TO authenticated;
+
+-- Type: FUNCTION ; Name: api.delete_systag(uuid,uuid); Owner: tendreladmin
+
+CREATE OR REPLACE FUNCTION api.delete_systag(owner uuid, id uuid)
+ RETURNS SETOF api.systag
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+AS $function$
+declare
+	ins_userid bigint;
+begin
+  -- TODO: I wonder what we should do here. Do we:
+  -- (a) Grant access to the entity schema to authenticated?
+  -- (b) Use SECURITY DEFINER functions
+  -- The downside of (a) is broader permissions, while of (b) is we lose RLS.
+  -- I lean towards (a) at the moment.
+
+select get_workerinstanceid
+into ins_userid
+from _api.util_user_details();
+
+if (select owner in (select * from _api.util_get_onwership()) )
+	then  
+	  call entity.crud_systag_delete(
+	      create_systagownerentityuuid := owner,
+	      create_systagentityuuid := id,
+	      create_modifiedbyid := ins_userid
+	  );
+	else
+		return;  -- need an exception here
+end if;
+
+  return query
+    select *
+    from api.systag t
+    where t.owner = $1 and t.id = $2
+  ;
+
+  return;
+end 
+$function$;
+
+
+REVOKE ALL ON FUNCTION api.delete_systag(uuid,uuid) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION api.delete_systag(uuid,uuid) TO tendreladmin WITH GRANT OPTION;
+GRANT EXECUTE ON FUNCTION api.delete_systag(uuid,uuid) TO authenticated;
+
+END;

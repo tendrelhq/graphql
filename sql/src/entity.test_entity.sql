@@ -1,3 +1,9 @@
+BEGIN;
+
+/*
+DROP PROCEDURE entity.test_entity();
+*/
+
 
 -- Type: PROCEDURE ; Name: entity.test_entity(); Owner: tendreladmin
 
@@ -507,3 +513,5 @@ REVOKE ALL ON PROCEDURE entity.test_entity() FROM PUBLIC;
 GRANT EXECUTE ON PROCEDURE entity.test_entity() TO PUBLIC;
 GRANT EXECUTE ON PROCEDURE entity.test_entity() TO tendreladmin WITH GRANT OPTION;
 GRANT EXECUTE ON PROCEDURE entity.test_entity() TO graphql;
+
+END;

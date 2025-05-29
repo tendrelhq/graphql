@@ -1,3 +1,9 @@
+BEGIN;
+
+/*
+DROP PROCEDURE entity.test_entity_create(boolean,bigint);
+*/
+
 
 -- Type: PROCEDURE ; Name: entity.test_entity_create(boolean,bigint); Owner: tendreladmin
 
@@ -2942,3 +2948,5 @@ REVOKE ALL ON PROCEDURE entity.test_entity_create(boolean,bigint) FROM PUBLIC;
 GRANT EXECUTE ON PROCEDURE entity.test_entity_create(boolean,bigint) TO PUBLIC;
 GRANT EXECUTE ON PROCEDURE entity.test_entity_create(boolean,bigint) TO tendreladmin WITH GRANT OPTION;
 GRANT EXECUTE ON PROCEDURE entity.test_entity_create(boolean,bigint) TO graphql;
+
+END;

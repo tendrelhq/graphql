@@ -1,3 +1,11 @@
+BEGIN;
+
+/*
+DROP TRIGGER create_runtime_upload_tg ON api.runtime_upload;
+
+DROP FUNCTION api.create_runtime_upload();
+*/
+
 
 -- Type: FUNCTION ; Name: api.create_runtime_upload(); Owner: tendreladmin
 
@@ -105,3 +113,10 @@ $function$;
 REVOKE ALL ON FUNCTION api.create_runtime_upload() FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION api.create_runtime_upload() TO tendreladmin WITH GRANT OPTION;
 GRANT EXECUTE ON FUNCTION api.create_runtime_upload() TO authenticated;
+
+-- DEPENDANTS
+
+CREATE TRIGGER create_runtime_upload_tg INSTEAD OF INSERT ON api.runtime_upload FOR EACH ROW EXECUTE FUNCTION api.create_runtime_upload();
+
+
+END;

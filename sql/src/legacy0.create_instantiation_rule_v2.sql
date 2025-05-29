@@ -1,3 +1,9 @@
+BEGIN;
+
+/*
+DROP FUNCTION legacy0.create_instantiation_rule_v2(text,text,text,text,text,text,bigint);
+*/
+
 
 -- Type: FUNCTION ; Name: legacy0.create_instantiation_rule_v2(text,text,text,text,text,text,bigint); Owner: tendreladmin
 
@@ -63,3 +69,5 @@ REVOKE ALL ON FUNCTION legacy0.create_instantiation_rule_v2(text,text,text,text,
 GRANT EXECUTE ON FUNCTION legacy0.create_instantiation_rule_v2(text,text,text,text,text,text,bigint) TO PUBLIC;
 GRANT EXECUTE ON FUNCTION legacy0.create_instantiation_rule_v2(text,text,text,text,text,text,bigint) TO tendreladmin WITH GRANT OPTION;
 GRANT EXECUTE ON FUNCTION legacy0.create_instantiation_rule_v2(text,text,text,text,text,text,bigint) TO graphql;
+
+END;

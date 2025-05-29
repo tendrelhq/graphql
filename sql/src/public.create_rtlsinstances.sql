@@ -1,3 +1,9 @@
+BEGIN;
+
+/*
+DROP PROCEDURE create_rtlsinstances(text,text,text,text,text,text,numeric,text,numeric,numeric,numeric,numeric,numeric,numeric,numeric,bigint);
+*/
+
 
 -- Type: PROCEDURE ; Name: create_rtlsinstances(text,text,text,text,text,text,numeric,text,numeric,numeric,numeric,numeric,numeric,numeric,numeric,bigint); Owner: tendreladmin
 
@@ -59,6 +65,7 @@ temppreviousid = (select workinstanceid
 tempworkerinstanceid = (select workerinstanceid
 							from workerinstance
 							where workerinstanceuuid =  create_workerinstanceuuid);
+
 
 temptz = (select locationtimezone from location where locationid = tempsiteid);
 
@@ -506,3 +513,5 @@ $procedure$;
 REVOKE ALL ON PROCEDURE create_rtlsinstances(text,text,text,text,text,text,numeric,text,numeric,numeric,numeric,numeric,numeric,numeric,numeric,bigint) FROM PUBLIC;
 GRANT EXECUTE ON PROCEDURE create_rtlsinstances(text,text,text,text,text,text,numeric,text,numeric,numeric,numeric,numeric,numeric,numeric,numeric,bigint) TO PUBLIC;
 GRANT EXECUTE ON PROCEDURE create_rtlsinstances(text,text,text,text,text,text,numeric,text,numeric,numeric,numeric,numeric,numeric,numeric,numeric,bigint) TO tendreladmin WITH GRANT OPTION;
+
+END;

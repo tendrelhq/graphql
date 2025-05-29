@@ -1,7 +1,13 @@
+BEGIN;
 
-drop function api.token;
+/*
+DROP FUNCTION api.token(api.grant_type,text,api.token_type,text);
+*/
 
-CREATE OR REPLACE FUNCTION api.token(grant_type api.grant_type, subject_token text, subject_token_type api.token_type, requested_token_lifetime text = null)
+
+-- Type: FUNCTION ; Name: api.token(api.grant_type,text,api.token_type,text); Owner: tendreladmin
+
+CREATE OR REPLACE FUNCTION api.token(grant_type api.grant_type, subject_token text, subject_token_type api.token_type, requested_token_lifetime text DEFAULT NULL::text)
  RETURNS jsonb
  LANGUAGE plpgsql
  SECURITY DEFINER
@@ -73,7 +79,9 @@ begin
 end $function$;
 
 
-REVOKE ALL ON FUNCTION api.token FROM PUBLIC;
-GRANT EXECUTE ON FUNCTION api.token TO tendreladmin WITH GRANT OPTION;
-GRANT EXECUTE ON FUNCTION api.token TO anonymous;
-GRANT EXECUTE ON FUNCTION api.token TO authenticated;
+REVOKE ALL ON FUNCTION api.token(api.grant_type,text,api.token_type,text) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION api.token(api.grant_type,text,api.token_type,text) TO tendreladmin WITH GRANT OPTION;
+GRANT EXECUTE ON FUNCTION api.token(api.grant_type,text,api.token_type,text) TO anonymous;
+GRANT EXECUTE ON FUNCTION api.token(api.grant_type,text,api.token_type,text) TO authenticated;
+
+END;

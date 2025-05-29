@@ -1,3 +1,9 @@
+BEGIN;
+
+/*
+DROP FUNCTION engine0.eval_condition_expression(text,text,text,text);
+*/
+
 
 -- Type: FUNCTION ; Name: engine0.eval_condition_expression(text,text,text,text); Owner: tendreladmin
 
@@ -72,3 +78,5 @@ REVOKE ALL ON FUNCTION engine0.eval_condition_expression(text,text,text,text) FR
 GRANT EXECUTE ON FUNCTION engine0.eval_condition_expression(text,text,text,text) TO PUBLIC;
 GRANT EXECUTE ON FUNCTION engine0.eval_condition_expression(text,text,text,text) TO tendreladmin WITH GRANT OPTION;
 GRANT EXECUTE ON FUNCTION engine0.eval_condition_expression(text,text,text,text) TO graphql;
+
+END;

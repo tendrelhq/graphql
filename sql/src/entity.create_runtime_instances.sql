@@ -1,3 +1,9 @@
+BEGIN;
+
+/*
+DROP PROCEDURE entity.create_runtime_instances();
+*/
+
 
 -- Type: PROCEDURE ; Name: entity.create_runtime_instances(); Owner: tendreladmin
 
@@ -101,7 +107,8 @@ where customerid isNull and import_batch = etl_batch;
 -- process the location
 update entity.runtime_upload_prepped
 	set uploadlocationname = location.locationname,
-		locationid = location.locationid
+		locationid = location.locationid,
+		timezone = locationtimezone
 from ( select locationentityuuid,locationname, locationid,locationtimezone,locationcustomerid 
 		from entity.crud_location_read_full(null,null,null,null,true,null,null,null,null,'bcbe750d-1b3b-4e2b-82ec-448bb8b116f9')) location
 where locationentityuuid = uploadlocationuuid
@@ -111,8 +118,9 @@ where locationentityuuid = uploadlocationuuid
 
 update entity.runtime_upload_prepped
 	set uploadlocationuuid = locationentityuuid,
-			locationid = location.locationid
-from ( select locationentityuuid,locationname , locationid, locationcustomerid 
+		locationid = location.locationid,
+		timezone = locationtimezone
+from ( select locationentityuuid,locationname , locationid, locationcustomerid, locationtimezone 
 	from entity.crud_location_read_full(null,null,null,null,true,null,null,null,null,'bcbe750d-1b3b-4e2b-82ec-448bb8b116f9')) location
 	where uploadlocationname = location.locationname
 		and locationcustomerid = customerid
@@ -145,26 +153,24 @@ from ( select locationentityuuid,locationname , locationid , locationtimezone, l
 -- Need to harden this.  Skip if there are 2 sites?  grab the first site?  Right now this will be random.
 
 update entity.runtime_upload_prepped
-	set uploadparentuuid = locationentityuuid,
+	set uploadparentname = location.locationname,
+		uploadparentuuid = location.locationentityuuid,
 		siteid = location.locationid,
-		timezone = location.locationtimezone
-from ( select locationentityuuid, locationownerentityuuid,locationparententityuuid, locationid, locationtimezone , locationcustomerid 
-	from entity.crud_location_read_full(null,null,null,null,true,null,null,null,null,'bcbe750d-1b3b-4e2b-82ec-448bb8b116f9')
-		where locationentityuuid = locationparententityuuid
-	group by locationentityuuid, locationownerentityuuid, locationparententityuuid, locationid, locationtimezone, locationcustomerid 
-	) location
-where uploadowneruuid = locationownerentityuuid 
-	and locationcustomerid = customerid 
+		timezone = locationtimezone
+from ( select locationentityuuid,locationname, locationid,locationtimezone,locationcustomerid, locationparententityuuid 
+		from entity.crud_location_read_full(null,null,null,null,true,null,null,null,null,'bcbe750d-1b3b-4e2b-82ec-448bb8b116f9')) location
+where locationentityuuid = locationparententityuuid
+	and locationcustomerid = customerid
 	and uploadparentuuid isNull
 	and import_batch = etl_batch;
 
 -- create missing records
 
 BEGIN FOR temprow IN
-		SELECT uploadowneruuid, uploadparentuuid,uploadlocationname 
+		SELECT uploadowneruuid, uploadparentuuid,uploadlocationname, timezone
 		from entity.runtime_upload_prepped 
 		where uploadlocationuuid isNull and import_batch = etl_batch
-		group by uploadowneruuid, uploadparentuuid,uploadlocationname
+		group by uploadowneruuid, uploadparentuuid,uploadlocationname, timezone
 	LOOP
 		call entity.crud_location_create(
 			temprow.uploadowneruuid, --create_locationownerentityuuid
@@ -176,7 +182,7 @@ BEGIN FOR temprow IN
 			temprow.uploadlocationname,  -- create_locationname
 			temprow.uploadlocationname,  -- locationdisplayname 
 			null, -- locationscanid	
-			null,  -- locationtimezone   -- Defaults to UTC
+			temprow.timezone,  -- locationtimezone   -- Defaults to UTC
 			'bcbe750d-1b3b-4e2b-82ec-448bb8b116f9', -- languagetypeuuid  
 			null, -- locationexternalid
 			null, -- locationexternalsystemuuid
@@ -187,11 +193,25 @@ BEGIN FOR temprow IN
 			null,
 			templocationentityuuid, -- OUT create_locationentityuuid
 			null);
-	  	update entity.runtime_upload_prepped
-			set uploadlocationuuid = templocationentityuuid    
-		where uploadlocationname = temprow.uploadlocationname and import_batch = etl_batch;
+	  	--update entity.runtime_upload_prepped
+		--	set uploadlocationuuid = templocationentityuuid    
+		--where uploadlocationname = temprow.uploadlocationname and import_batch = etl_batch;
 	END LOOP;
 END;
+
+-- update location id
+update entity.runtime_upload_prepped prep
+	set locationid = location.locationid,
+		uploadlocationuuid = locationentityuuid,
+	siteid = location.locationid,
+	timezone = locationtimezone
+from ( select locationentityuuid,locationname , locationid, locationcustomerid, locationtimezone 
+	from entity.crud_location_read_full(null,null,null,null,true,null,null,null,null,'bcbe750d-1b3b-4e2b-82ec-448bb8b116f9')) location
+	where uploadlocationname = location.locationname
+		and locationcustomerid = customerid
+		and prep.locationid isNull
+		and import_batch = etl_batch;
+
 
 update entity.runtime_upload_prepped
 	set uploadstartdate = (uploadenddate - make_interval(secs => uploadduration))
@@ -468,3 +488,5 @@ REVOKE ALL ON PROCEDURE entity.create_runtime_instances() FROM PUBLIC;
 GRANT EXECUTE ON PROCEDURE entity.create_runtime_instances() TO PUBLIC;
 GRANT EXECUTE ON PROCEDURE entity.create_runtime_instances() TO tendreladmin WITH GRANT OPTION;
 GRANT EXECUTE ON PROCEDURE entity.create_runtime_instances() TO graphql;
+
+END;

@@ -1,5 +1,5 @@
 select
   nspname as name,
-  ddlx_create(oid, '{}') as src
+  ddlx_script(oid, '{}') as src
 from pg_namespace
 where nspname = :nspname

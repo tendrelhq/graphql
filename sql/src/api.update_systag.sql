@@ -1,3 +1,11 @@
+BEGIN;
+
+/*
+DROP TRIGGER update_systag_tg ON api.systag;
+
+DROP FUNCTION api.update_systag();
+*/
+
 
 -- Type: FUNCTION ; Name: api.update_systag(); Owner: tendreladmin
 
@@ -62,3 +70,10 @@ $function$;
 REVOKE ALL ON FUNCTION api.update_systag() FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION api.update_systag() TO tendreladmin WITH GRANT OPTION;
 GRANT EXECUTE ON FUNCTION api.update_systag() TO authenticated;
+
+-- DEPENDANTS
+
+CREATE TRIGGER update_systag_tg INSTEAD OF UPDATE ON api.systag FOR EACH ROW EXECUTE FUNCTION api.update_systag();
+
+
+END;

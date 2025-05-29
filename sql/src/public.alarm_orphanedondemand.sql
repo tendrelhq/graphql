@@ -1,3 +1,9 @@
+BEGIN;
+
+/*
+DROP PROCEDURE alarm_orphanedondemand();
+*/
+
 
 -- Type: PROCEDURE ; Name: alarm_orphanedondemand(); Owner: tendreladmin
 
@@ -94,3 +100,5 @@ $procedure$;
 REVOKE ALL ON PROCEDURE alarm_orphanedondemand() FROM PUBLIC;
 GRANT EXECUTE ON PROCEDURE alarm_orphanedondemand() TO PUBLIC;
 GRANT EXECUTE ON PROCEDURE alarm_orphanedondemand() TO tendreladmin WITH GRANT OPTION;
+
+END;

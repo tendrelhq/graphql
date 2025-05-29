@@ -1,3 +1,9 @@
+BEGIN;
+
+/*
+DROP FUNCTION api.delete_systag(uuid,uuid);
+*/
+
 
 -- Type: FUNCTION ; Name: api.delete_systag(uuid,uuid); Owner: tendreladmin
 
@@ -44,3 +50,5 @@ $function$;
 REVOKE ALL ON FUNCTION api.delete_systag(uuid,uuid) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION api.delete_systag(uuid,uuid) TO tendreladmin WITH GRANT OPTION;
 GRANT EXECUTE ON FUNCTION api.delete_systag(uuid,uuid) TO authenticated;
+
+END;

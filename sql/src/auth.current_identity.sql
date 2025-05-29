@@ -1,3 +1,9 @@
+BEGIN;
+
+/*
+DROP FUNCTION auth.current_identity(bigint,text);
+*/
+
 
 -- Type: FUNCTION ; Name: auth.current_identity(bigint,text); Owner: tendreladmin
 
@@ -34,3 +40,5 @@ REVOKE ALL ON FUNCTION auth.current_identity(bigint,text) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION auth.current_identity(bigint,text) TO PUBLIC;
 GRANT EXECUTE ON FUNCTION auth.current_identity(bigint,text) TO tendreladmin WITH GRANT OPTION;
 GRANT EXECUTE ON FUNCTION auth.current_identity(bigint,text) TO graphql;
+
+END;

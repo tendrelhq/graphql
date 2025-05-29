@@ -1,3 +1,9 @@
+BEGIN;
+
+/*
+DROP FUNCTION engine0.build_instantiation_plan(text);
+*/
+
 
 -- Type: FUNCTION ; Name: engine0.build_instantiation_plan(text); Owner: tendreladmin
 
@@ -178,3 +184,5 @@ REVOKE ALL ON FUNCTION engine0.build_instantiation_plan(text) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION engine0.build_instantiation_plan(text) TO PUBLIC;
 GRANT EXECUTE ON FUNCTION engine0.build_instantiation_plan(text) TO tendreladmin WITH GRANT OPTION;
 GRANT EXECUTE ON FUNCTION engine0.build_instantiation_plan(text) TO graphql;
+
+END;

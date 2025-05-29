@@ -1,3 +1,9 @@
+BEGIN;
+
+/*
+DROP PROCEDURE crud_timesheet_create_customer_v2(text,text,text,bigint);
+*/
+
 
 -- Type: PROCEDURE ; Name: crud_timesheet_create_customer_v2(text,text,text,bigint); Owner: tendreladmin
 
@@ -1262,3 +1268,5 @@ $procedure$;
 REVOKE ALL ON PROCEDURE crud_timesheet_create_customer_v2(text,text,text,bigint) FROM PUBLIC;
 GRANT EXECUTE ON PROCEDURE crud_timesheet_create_customer_v2(text,text,text,bigint) TO PUBLIC;
 GRANT EXECUTE ON PROCEDURE crud_timesheet_create_customer_v2(text,text,text,bigint) TO tendreladmin WITH GRANT OPTION;
+
+END;

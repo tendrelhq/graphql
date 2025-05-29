@@ -1,3 +1,11 @@
+BEGIN;
+
+/*
+DROP TRIGGER create_customer_tg ON api.customer;
+
+DROP FUNCTION api.create_customer();
+*/
+
 
 -- Type: FUNCTION ; Name: api.create_customer(); Owner: tendreladmin
 
@@ -70,3 +78,10 @@ $function$;
 REVOKE ALL ON FUNCTION api.create_customer() FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION api.create_customer() TO tendreladmin WITH GRANT OPTION;
 GRANT EXECUTE ON FUNCTION api.create_customer() TO authenticated;
+
+-- DEPENDANTS
+
+CREATE TRIGGER create_customer_tg INSTEAD OF INSERT ON api.customer FOR EACH ROW EXECUTE FUNCTION api.create_customer();
+
+
+END;

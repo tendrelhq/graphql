@@ -1,3 +1,11 @@
+BEGIN;
+
+/*
+DROP VIEW api.entity_instance_field_ux;
+
+DROP FUNCTION entity.crud_entityfieldinstance_read_api(uuid[],uuid,uuid,boolean,boolean,boolean,boolean,uuid);
+*/
+
 
 -- Type: FUNCTION ; Name: entity.crud_entityfieldinstance_read_api(uuid[],uuid,uuid,boolean,boolean,boolean,boolean,uuid); Owner: tendreladmin
 
@@ -144,3 +152,94 @@ REVOKE ALL ON FUNCTION entity.crud_entityfieldinstance_read_api(uuid[],uuid,uuid
 GRANT EXECUTE ON FUNCTION entity.crud_entityfieldinstance_read_api(uuid[],uuid,uuid,boolean,boolean,boolean,boolean,uuid) TO PUBLIC;
 GRANT EXECUTE ON FUNCTION entity.crud_entityfieldinstance_read_api(uuid[],uuid,uuid,boolean,boolean,boolean,boolean,uuid) TO tendreladmin WITH GRANT OPTION;
 GRANT EXECUTE ON FUNCTION entity.crud_entityfieldinstance_read_api(uuid[],uuid,uuid,boolean,boolean,boolean,boolean,uuid) TO graphql;
+
+-- DEPENDANTS
+
+
+-- Type: VIEW ; Name: entity_instance_field_ux; Owner: tendreladmin
+
+CREATE OR REPLACE VIEW api.entity_instance_field_ux AS
+ SELECT entityfieldinstanceuuid AS id,
+    entityfieldinstanceentityinstanceentityuuid AS instance,
+    entityfieldinstanceentityinstanceentityname AS instance_name,
+    entityfieldinstanceownerentityuuid AS owner,
+    entityfieldinstanceownerentityname AS owner_name,
+    entityfieldinstancetemplateentityuuid AS template,
+    entityfieldinstancetemplateentityname AS template_name,
+    entityfieldinstancetemplateprimary AS template_primary,
+    entityfieldinstanceentityfieldentityuuid AS field,
+    entityfieldinstancetranslatedname AS field_name,
+    entityfieldinstancetypeentityuuid AS type,
+    entityfieldinstancetypename AS type_name,
+    entityfieldinstanceentitytypeentityuuid AS entity_type,
+    entityfieldinstanceentitytypename AS entity_type_name,
+    entityfieldinstancevalue AS value,
+    entityfieldinstancevaluelanguagemasteruuid AS value_id,
+    entityfieldinstanceorder AS "order",
+    entityfieldinstanceformatentityuuid AS format,
+    entityfieldinstanceformatname AS format_name,
+    entityfieldinstancewidgetentityuuid AS widget,
+    entityfieldinstancewidgetname AS widget_name,
+    entityfieldinstanceiscalculated AS _calculated,
+    entityfieldinstanceiseditable AS _editable,
+    entityfieldinstanceisvisible AS _visible,
+    entityfieldinstanceisrequired AS _required,
+    entityfieldinstanceisprimary AS _primary,
+    entityfieldinstancetranslate AS _translate,
+    entityfieldinstancedeleted AS _deleted,
+    entityfieldinstancedraft AS _draft,
+    entityfieldinstanceactive AS _active,
+    entityfieldinstancestartdate AS activated_at,
+    entityfieldinstanceenddate AS deactivated_at,
+    entityfieldinstancecreateddate AS created_at,
+    entityfieldinstancemodifieddate AS updated_at,
+    entityfieldinstancemodifiedbyuuid AS modified_by
+   FROM ( SELECT crud_entityfieldinstance_read_api.languagetranslationtypeentityuuid,
+            crud_entityfieldinstance_read_api.entityfieldinstanceuuid,
+            crud_entityfieldinstance_read_api.entityfieldinstanceentityinstanceentityuuid,
+            crud_entityfieldinstance_read_api.entityfieldinstanceentityinstanceentityname,
+            crud_entityfieldinstance_read_api.entityfieldinstanceownerentityuuid,
+            crud_entityfieldinstance_read_api.entityfieldinstanceownerentityname,
+            crud_entityfieldinstance_read_api.entityfieldinstancetemplateentityuuid,
+            crud_entityfieldinstance_read_api.entityfieldinstancetemplateentityname,
+            crud_entityfieldinstance_read_api.entityfieldinstancetemplateprimary,
+            crud_entityfieldinstance_read_api.entityfieldinstanceentityfieldentityuuid,
+            crud_entityfieldinstance_read_api.entityfieldinstancetranslatedname,
+            crud_entityfieldinstance_read_api.entityfieldinstancetypeentityuuid,
+            crud_entityfieldinstance_read_api.entityfieldinstancetypename,
+            crud_entityfieldinstance_read_api.entityfieldinstanceentitytypeentityuuid,
+            crud_entityfieldinstance_read_api.entityfieldinstanceentitytypename,
+            crud_entityfieldinstance_read_api.entityfieldinstanceformatentityuuid,
+            crud_entityfieldinstance_read_api.entityfieldinstanceformatname,
+            crud_entityfieldinstance_read_api.entityfieldinstancewidgetentityuuid,
+            crud_entityfieldinstance_read_api.entityfieldinstancewidgetname,
+            crud_entityfieldinstance_read_api.entityfieldinstancevalue,
+            crud_entityfieldinstance_read_api.entityfieldinstancevaluelanguagemasteruuid,
+            crud_entityfieldinstance_read_api.entityfieldinstanceorder,
+            crud_entityfieldinstance_read_api.entityfieldinstanceiscalculated,
+            crud_entityfieldinstance_read_api.entityfieldinstanceiseditable,
+            crud_entityfieldinstance_read_api.entityfieldinstanceisvisible,
+            crud_entityfieldinstance_read_api.entityfieldinstanceisrequired,
+            crud_entityfieldinstance_read_api.entityfieldinstanceisprimary,
+            crud_entityfieldinstance_read_api.entityfieldinstancetranslate,
+            crud_entityfieldinstance_read_api.entityfieldinstancecreateddate,
+            crud_entityfieldinstance_read_api.entityfieldinstancemodifieddate,
+            crud_entityfieldinstance_read_api.entityfieldinstancestartdate,
+            crud_entityfieldinstance_read_api.entityfieldinstanceenddate,
+            crud_entityfieldinstance_read_api.entityfieldinstancemodifiedbyuuid,
+            crud_entityfieldinstance_read_api.entityfieldinstancerefid,
+            crud_entityfieldinstance_read_api.entityfieldinstancerefuuid,
+            crud_entityfieldinstance_read_api.entityfieldinstancevaluelanguagetypeentityuuid,
+            crud_entityfieldinstance_read_api.entityfieldinstancedeleted,
+            crud_entityfieldinstance_read_api.entityfieldinstancedraft,
+            crud_entityfieldinstance_read_api.entityfieldinstanceactive
+           FROM entity.crud_entityfieldinstance_read_api(ARRAY( SELECT util_get_onwership.get_ownership
+                   FROM _api.util_get_onwership() util_get_onwership(get_ownership)), NULL::uuid, NULL::uuid, true, NULL::boolean, NULL::boolean, NULL::boolean, ( SELECT util_user_details.get_languagetypeentityuuid
+                   FROM _api.util_user_details() util_user_details(get_workerinstanceid, get_workerinstanceuuid, get_languagetypeid, get_languagetypeuuid, get_languagetypeentityuuid))) crud_entityfieldinstance_read_api(languagetranslationtypeentityuuid, entityfieldinstanceuuid, entityfieldinstanceentityinstanceentityuuid, entityfieldinstanceentityinstanceentityname, entityfieldinstanceownerentityuuid, entityfieldinstanceownerentityname, entityfieldinstancetemplateentityuuid, entityfieldinstancetemplateentityname, entityfieldinstancetemplateprimary, entityfieldinstanceentityfieldentityuuid, entityfieldinstancetranslatedname, entityfieldinstancetypeentityuuid, entityfieldinstancetypename, entityfieldinstanceentitytypeentityuuid, entityfieldinstanceentitytypename, entityfieldinstanceformatentityuuid, entityfieldinstanceformatname, entityfieldinstancewidgetentityuuid, entityfieldinstancewidgetname, entityfieldinstancevalue, entityfieldinstancevaluelanguagemasteruuid, entityfieldinstanceorder, entityfieldinstanceiscalculated, entityfieldinstanceiseditable, entityfieldinstanceisvisible, entityfieldinstanceisrequired, entityfieldinstanceisprimary, entityfieldinstancetranslate, entityfieldinstancecreateddate, entityfieldinstancemodifieddate, entityfieldinstancestartdate, entityfieldinstanceenddate, entityfieldinstancemodifiedbyuuid, entityfieldinstancerefid, entityfieldinstancerefuuid, entityfieldinstancevaluelanguagetypeentityuuid, entityfieldinstancedeleted, entityfieldinstancedraft, entityfieldinstanceactive)) entityfieldinstance;
+
+
+GRANT INSERT ON api.entity_instance_field_ux TO authenticated;
+GRANT SELECT ON api.entity_instance_field_ux TO authenticated;
+GRANT UPDATE ON api.entity_instance_field_ux TO authenticated;
+
+END;

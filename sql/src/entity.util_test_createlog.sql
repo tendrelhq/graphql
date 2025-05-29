@@ -1,3 +1,9 @@
+BEGIN;
+
+/*
+DROP FUNCTION entity.util_test_createlog(bigint,bigint,boolean,text,text,text,text,timestamp with time zone,boolean);
+*/
+
 
 -- Type: FUNCTION ; Name: entity.util_test_createlog(bigint,bigint,boolean,text,text,text,text,timestamp with time zone,boolean); Owner: tendreladmin
 
@@ -55,3 +61,5 @@ REVOKE ALL ON FUNCTION entity.util_test_createlog(bigint,bigint,boolean,text,tex
 GRANT EXECUTE ON FUNCTION entity.util_test_createlog(bigint,bigint,boolean,text,text,text,text,timestamp with time zone,boolean) TO PUBLIC;
 GRANT EXECUTE ON FUNCTION entity.util_test_createlog(bigint,bigint,boolean,text,text,text,text,timestamp with time zone,boolean) TO tendreladmin WITH GRANT OPTION;
 GRANT EXECUTE ON FUNCTION entity.util_test_createlog(bigint,bigint,boolean,text,text,text,text,timestamp with time zone,boolean) TO graphql;
+
+END;

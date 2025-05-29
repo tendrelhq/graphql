@@ -1,3 +1,12 @@
+BEGIN;
+
+/*
+DROP FUNCTION api.delete_entity_tag(uuid,uuid);
+DROP VIEW api.entity_tag;
+
+DROP FUNCTION entity.crud_entitytag_read_api(uuid[],uuid,uuid,uuid,uuid,boolean,boolean,boolean,boolean,uuid);
+*/
+
 
 -- Type: FUNCTION ; Name: entity.crud_entitytag_read_api(uuid[],uuid,uuid,uuid,uuid,boolean,boolean,boolean,boolean,uuid); Owner: tendreladmin
 
@@ -121,3 +130,118 @@ REVOKE ALL ON FUNCTION entity.crud_entitytag_read_api(uuid[],uuid,uuid,uuid,uuid
 GRANT EXECUTE ON FUNCTION entity.crud_entitytag_read_api(uuid[],uuid,uuid,uuid,uuid,boolean,boolean,boolean,boolean,uuid) TO PUBLIC;
 GRANT EXECUTE ON FUNCTION entity.crud_entitytag_read_api(uuid[],uuid,uuid,uuid,uuid,boolean,boolean,boolean,boolean,uuid) TO tendreladmin WITH GRANT OPTION;
 GRANT EXECUTE ON FUNCTION entity.crud_entitytag_read_api(uuid[],uuid,uuid,uuid,uuid,boolean,boolean,boolean,boolean,uuid) TO graphql;
+
+-- DEPENDANTS
+
+
+-- Type: VIEW ; Name: entity_tag; Owner: tendreladmin
+
+CREATE OR REPLACE VIEW api.entity_tag AS
+ SELECT entitytaguuid AS id,
+    entitytagownerentityuuid AS owner,
+    entitytagownername AS owner_name,
+    entitytagentityinstanceentityuuid AS instance,
+    entitytagentityinstanceentityname AS instance_name,
+    entitytagentitytemplateentityuuid AS template,
+    entitytagentitytemplatename AS template_name,
+    entitytagcustagparententityuuid AS parent,
+    entitytagparentcustagtype AS parent_name,
+    entitytagcustagentityuuid AS customer_tag,
+    entitytagcustagtype AS customer_tag_name,
+    entitytagsenddeleted AS _deleted,
+    entitytagsenddrafts AS _draft,
+    entitytagsendinactive AS _active,
+    entitytagstartdate AS activated_at,
+    entitytagenddate AS deactivated_at,
+    entitytagcreateddate AS created_at,
+    entitytagmodifieddate AS updated_at,
+    entitytagmodifiedbyuuid AS modified_by
+   FROM ( SELECT crud_entitytag_read_api.languagetranslationtypeentityuuid,
+            crud_entitytag_read_api.entitytaguuid,
+            crud_entitytag_read_api.entitytagownerentityuuid,
+            crud_entitytag_read_api.entitytagownername,
+            crud_entitytag_read_api.entitytagentityinstanceentityuuid,
+            crud_entitytag_read_api.entitytagentityinstanceentityname,
+            crud_entitytag_read_api.entitytagentitytemplateentityuuid,
+            crud_entitytag_read_api.entitytagentitytemplatename,
+            crud_entitytag_read_api.entitytagcreateddate,
+            crud_entitytag_read_api.entitytagmodifieddate,
+            crud_entitytag_read_api.entitytagstartdate,
+            crud_entitytag_read_api.entitytagenddate,
+            crud_entitytag_read_api.entitytagrefid,
+            crud_entitytag_read_api.entitytagrefuuid,
+            crud_entitytag_read_api.entitytagmodifiedbyuuid,
+            crud_entitytag_read_api.entitytagcustagparententityuuid,
+            crud_entitytag_read_api.entitytagparentcustagtype,
+            crud_entitytag_read_api.entitytagcustagentityuuid,
+            crud_entitytag_read_api.entitytagcustagtype,
+            crud_entitytag_read_api.entitytagsenddeleted,
+            crud_entitytag_read_api.entitytagsenddrafts,
+            crud_entitytag_read_api.entitytagsendinactive
+           FROM entity.crud_entitytag_read_api(ARRAY( SELECT util_get_onwership.get_ownership
+                   FROM _api.util_get_onwership() util_get_onwership(get_ownership)), NULL::uuid, NULL::uuid, NULL::uuid, NULL::uuid, true, NULL::boolean, NULL::boolean, NULL::boolean, ( SELECT util_user_details.get_languagetypeentityuuid
+                   FROM _api.util_user_details() util_user_details(get_workerinstanceid, get_workerinstanceuuid, get_languagetypeid, get_languagetypeuuid, get_languagetypeentityuuid))) crud_entitytag_read_api(languagetranslationtypeentityuuid, entitytaguuid, entitytagownerentityuuid, entitytagownername, entitytagentityinstanceentityuuid, entitytagentityinstanceentityname, entitytagentitytemplateentityuuid, entitytagentitytemplatename, entitytagcreateddate, entitytagmodifieddate, entitytagstartdate, entitytagenddate, entitytagrefid, entitytagrefuuid, entitytagmodifiedbyuuid, entitytagcustagparententityuuid, entitytagparentcustagtype, entitytagcustagentityuuid, entitytagcustagtype, entitytagsenddeleted, entitytagsenddrafts, entitytagsendinactive)) entitytag
+  WHERE (entitytagownerentityuuid IN ( SELECT util_get_onwership.get_ownership
+           FROM _api.util_get_onwership() util_get_onwership(get_ownership)));
+
+COMMENT ON VIEW api.entity_tag IS '
+## Entity tag
+
+A description of what an entity tag is and why it is used
+
+';
+
+CREATE TRIGGER create_entity_tag_tg INSTEAD OF INSERT ON api.entity_tag FOR EACH ROW EXECUTE FUNCTION api.create_entity_tag();
+CREATE TRIGGER update_entity_tag_tg INSTEAD OF UPDATE ON api.entity_tag FOR EACH ROW EXECUTE FUNCTION api.update_entity_tag();
+
+GRANT INSERT ON api.entity_tag TO authenticated;
+GRANT SELECT ON api.entity_tag TO authenticated;
+GRANT UPDATE ON api.entity_tag TO authenticated;
+
+-- Type: FUNCTION ; Name: api.delete_entity_tag(uuid,uuid); Owner: tendreladmin
+
+CREATE OR REPLACE FUNCTION api.delete_entity_tag(owner uuid, id uuid)
+ RETURNS SETOF api.entity_tag
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+AS $function$
+declare
+	ins_userid bigint;
+begin
+  -- TODO: I wonder what we should do here. Do we:
+  -- (a) Grant access to the entity schema to authenticated?
+  -- (b) Use SECURITY DEFINER functions
+  -- The downside of (a) is broader permissions, while of (b) is we lose RLS.
+  -- I lean towards (a) at the moment.
+
+select get_workerinstanceid
+into ins_userid
+from _api.util_user_details();
+
+if (select owner in (select * from _api.util_get_onwership()) )
+	then  
+	  call entity.crud_entitytag_delete(
+	      create_entitytagownerentityuuid := owner,
+	      create_entitytagentityuuid := id,
+	      create_modifiedbyid := ins_userid
+	  );
+	else
+		return;  -- need an exception here
+end if;
+
+  return query
+    select *
+    from api.entity_tag t
+    where t.owner = $1 and t.id = $2
+  ;
+
+  return;
+end 
+$function$;
+
+
+REVOKE ALL ON FUNCTION api.delete_entity_tag(uuid,uuid) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION api.delete_entity_tag(uuid,uuid) TO tendreladmin WITH GRANT OPTION;
+GRANT EXECUTE ON FUNCTION api.delete_entity_tag(uuid,uuid) TO authenticated;
+
+END;

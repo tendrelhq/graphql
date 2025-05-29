@@ -1,5 +1,11 @@
+BEGIN;
 
--- Type: FUNCTION ; Name: api.delete_location(uuid,uuid); Owner: tendreladmin
+/*
+DROP FUNCTION api.delete_location(uuid,uuid);
+*/
+
+
+-- Type: FUNCTION ; Name: api.delete_location(uuid,uuid); Owner: bombadil
 
 CREATE OR REPLACE FUNCTION api.delete_location(owner uuid, id uuid)
  RETURNS SETOF api.location
@@ -42,5 +48,7 @@ $function$;
 
 
 REVOKE ALL ON FUNCTION api.delete_location(uuid,uuid) FROM PUBLIC;
-GRANT EXECUTE ON FUNCTION api.delete_location(uuid,uuid) TO tendreladmin WITH GRANT OPTION;
+GRANT EXECUTE ON FUNCTION api.delete_location(uuid,uuid) TO bombadil WITH GRANT OPTION;
 GRANT EXECUTE ON FUNCTION api.delete_location(uuid,uuid) TO authenticated;
+
+END;

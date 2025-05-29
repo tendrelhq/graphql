@@ -1,3 +1,9 @@
+BEGIN;
+
+/*
+DROP PROCEDURE entity.enable_checklist(uuid,text,uuid,text,uuid,text,text,bigint);
+*/
+
 
 -- Type: PROCEDURE ; Name: entity.enable_checklist(uuid,text,uuid,text,uuid,text,text,bigint); Owner: tendreladmin
 
@@ -718,3 +724,5 @@ REVOKE ALL ON PROCEDURE entity.enable_checklist(uuid,text,uuid,text,uuid,text,te
 GRANT EXECUTE ON PROCEDURE entity.enable_checklist(uuid,text,uuid,text,uuid,text,text,bigint) TO PUBLIC;
 GRANT EXECUTE ON PROCEDURE entity.enable_checklist(uuid,text,uuid,text,uuid,text,text,bigint) TO tendreladmin WITH GRANT OPTION;
 GRANT EXECUTE ON PROCEDURE entity.enable_checklist(uuid,text,uuid,text,uuid,text,text,bigint) TO graphql;
+
+END;

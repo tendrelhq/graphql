@@ -1,3 +1,9 @@
+BEGIN;
+
+/*
+DROP FUNCTION api.token_introspect(text);
+*/
+
 
 -- Type: FUNCTION ; Name: api.token_introspect(text); Owner: tendreladmin
 
@@ -20,3 +26,5 @@ $function$;
 REVOKE ALL ON FUNCTION api.token_introspect(text) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION api.token_introspect(text) TO tendreladmin WITH GRANT OPTION;
 GRANT EXECUTE ON FUNCTION api.token_introspect(text) TO authenticated;
+
+END;

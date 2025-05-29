@@ -1,3 +1,9 @@
+BEGIN;
+
+/*
+DROP FUNCTION legacy0.compute_time_at_task(bigint);
+*/
+
 
 -- Type: FUNCTION ; Name: legacy0.compute_time_at_task(bigint); Owner: tendreladmin
 
@@ -45,3 +51,5 @@ REVOKE ALL ON FUNCTION legacy0.compute_time_at_task(bigint) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION legacy0.compute_time_at_task(bigint) TO PUBLIC;
 GRANT EXECUTE ON FUNCTION legacy0.compute_time_at_task(bigint) TO tendreladmin WITH GRANT OPTION;
 GRANT EXECUTE ON FUNCTION legacy0.compute_time_at_task(bigint) TO graphql;
+
+END;

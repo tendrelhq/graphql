@@ -1,3 +1,9 @@
+BEGIN;
+
+/*
+DROP FUNCTION alarm_missingexpirationdate_details();
+*/
+
 
 -- Type: FUNCTION ; Name: alarm_missingexpirationdate_details(); Owner: tendreladmin
 
@@ -38,3 +44,5 @@ $function$;
 REVOKE ALL ON FUNCTION alarm_missingexpirationdate_details() FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION alarm_missingexpirationdate_details() TO PUBLIC;
 GRANT EXECUTE ON FUNCTION alarm_missingexpirationdate_details() TO tendreladmin WITH GRANT OPTION;
+
+END;

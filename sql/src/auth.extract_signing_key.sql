@@ -1,3 +1,9 @@
+BEGIN;
+
+/*
+DROP FUNCTION auth.extract_signing_key(auth._jwk);
+*/
+
 
 -- Type: FUNCTION ; Name: auth.extract_signing_key(auth._jwk); Owner: tendreladmin
 
@@ -11,7 +17,7 @@ begin
     return jwk.params ->> 'k';
   end if;
 
-  raise exception 'unknown kty "%" for jwk with kid: %', jwk.kty, jwk.kid;
+  raise exception 'unknown kty % for jwk with kid: %', jwk.kty, jwk.kid;
 end $function$;
 
 
@@ -19,3 +25,5 @@ REVOKE ALL ON FUNCTION auth.extract_signing_key(auth._jwk) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION auth.extract_signing_key(auth._jwk) TO PUBLIC;
 GRANT EXECUTE ON FUNCTION auth.extract_signing_key(auth._jwk) TO tendreladmin WITH GRANT OPTION;
 GRANT EXECUTE ON FUNCTION auth.extract_signing_key(auth._jwk) TO graphql;
+
+END;

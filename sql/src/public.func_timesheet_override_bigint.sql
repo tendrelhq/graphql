@@ -1,3 +1,9 @@
+BEGIN;
+
+/*
+DROP FUNCTION func_timesheet_override_bigint(bigint,date);
+*/
+
 
 -- Type: FUNCTION ; Name: func_timesheet_override_bigint(bigint,date); Owner: tendreladmin
 
@@ -53,3 +59,5 @@ $function$;
 REVOKE ALL ON FUNCTION func_timesheet_override_bigint(bigint,date) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION func_timesheet_override_bigint(bigint,date) TO PUBLIC;
 GRANT EXECUTE ON FUNCTION func_timesheet_override_bigint(bigint,date) TO tendreladmin WITH GRANT OPTION;
+
+END;

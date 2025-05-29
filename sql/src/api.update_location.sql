@@ -1,3 +1,11 @@
+BEGIN;
+
+/*
+DROP TRIGGER update_location_tg ON api.location;
+
+DROP FUNCTION api.update_location();
+*/
+
 
 -- Type: FUNCTION ; Name: api.update_location(); Owner: tendreladmin
 
@@ -69,3 +77,10 @@ $function$;
 REVOKE ALL ON FUNCTION api.update_location() FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION api.update_location() TO tendreladmin WITH GRANT OPTION;
 GRANT EXECUTE ON FUNCTION api.update_location() TO authenticated;
+
+-- DEPENDANTS
+
+CREATE TRIGGER update_location_tg INSTEAD OF UPDATE ON api.location FOR EACH ROW EXECUTE FUNCTION api.update_location();
+
+
+END;

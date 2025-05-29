@@ -1,3 +1,9 @@
+BEGIN;
+
+/*
+DROP PROCEDURE entity.create_run_instances(uuid);
+*/
+
 
 -- Type: PROCEDURE ; Name: entity.create_run_instances(uuid); Owner: tendreladmin
 
@@ -86,6 +92,31 @@ from entity.runtime_upload_prepped prep
 			and languagetranslationtypeid = 20
 where wri_ins.workresultinstanceid = wri.workresultinstanceid;
 			 
+update public.workresultinstance wri_ins
+set workresultinstancevalue = 	case when workinstancestatusid = 710
+									then EXTRACT(EPOCH FROM (uploadenddate - uploadstartdate))
+									else null
+								end,
+	workresultinstancecompleteddate = uploadenddate,
+	workresultinstancemodifieddate = now(),
+	workresultinstancemodifiedby = (select workerinstanceid from workerinstance where workerinstanceuuid = uploademployeetendreluuid)
+from entity.runtime_upload_prepped prep
+	inner join public.workinstance wi
+		on workinstanceexternalid = uploadrecordid
+			and workinstancecustomerid = prep.customerid
+			 and import_batch = etl_batch
+	inner join worktemplate wt
+		on workinstanceworktemplateid = worktemplateid
+	inner join public.worktemplatetype wtt
+		on worktemplatetypeworktemplateuuid = wt.id
+			and worktemplatetypesystagid in (987)	
+	inner join public.workresultinstance wri
+		on wri.workresultinstanceworkinstanceid = workinstanceid
+	inner join  view_workresult wr
+ 		on workresultworktemplateid = workinstanceworktemplateid
+ 			and workresulttypeid = 737	
+			and languagetranslationtypeid = 20
+where wri_ins.workresultinstanceid = wri.workresultinstanceid;
 
 -- if it does not exist create it  
 -- handle duplicates.
@@ -564,3 +595,5 @@ REVOKE ALL ON PROCEDURE entity.create_run_instances(uuid) FROM PUBLIC;
 GRANT EXECUTE ON PROCEDURE entity.create_run_instances(uuid) TO PUBLIC;
 GRANT EXECUTE ON PROCEDURE entity.create_run_instances(uuid) TO tendreladmin WITH GRANT OPTION;
 GRANT EXECUTE ON PROCEDURE entity.create_run_instances(uuid) TO graphql;
+
+END;

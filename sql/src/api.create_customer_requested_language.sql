@@ -1,3 +1,11 @@
+BEGIN;
+
+/*
+DROP TRIGGER create_customer_requested_language_tg ON api.customer_requested_language;
+
+DROP FUNCTION api.create_customer_requested_language();
+*/
+
 
 -- Type: FUNCTION ; Name: api.create_customer_requested_language(); Owner: tendreladmin
 
@@ -54,3 +62,10 @@ $function$;
 REVOKE ALL ON FUNCTION api.create_customer_requested_language() FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION api.create_customer_requested_language() TO tendreladmin WITH GRANT OPTION;
 GRANT EXECUTE ON FUNCTION api.create_customer_requested_language() TO authenticated;
+
+-- DEPENDANTS
+
+CREATE TRIGGER create_customer_requested_language_tg INSTEAD OF INSERT ON api.customer_requested_language FOR EACH ROW EXECUTE FUNCTION api.create_customer_requested_language();
+
+
+END;

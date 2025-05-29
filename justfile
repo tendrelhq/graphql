@@ -26,5 +26,8 @@ migrate:
 package:
     docker build --build-arg=NODE_ENV={{node_env}} --file=config/graphql.dockerfile -t {{image_name}} .
 
+pull-schemas:
+    ./sql/scripts/pull-schemas.sh
+
 test:
     bun test

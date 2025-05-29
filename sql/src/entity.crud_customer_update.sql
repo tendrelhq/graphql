@@ -1,3 +1,9 @@
+BEGIN;
+
+/*
+DROP PROCEDURE entity.crud_customer_update(text,text,text,uuid,uuid,uuid,text,uuid,boolean,boolean,timestamp with time zone,timestamp with time zone,uuid,text);
+*/
+
 
 -- Type: PROCEDURE ; Name: entity.crud_customer_update(text,text,text,uuid,uuid,uuid,text,uuid,boolean,boolean,timestamp with time zone,timestamp with time zone,uuid,text); Owner: tendreladmin
 
@@ -137,3 +143,5 @@ REVOKE ALL ON PROCEDURE entity.crud_customer_update(text,text,text,uuid,uuid,uui
 GRANT EXECUTE ON PROCEDURE entity.crud_customer_update(text,text,text,uuid,uuid,uuid,text,uuid,boolean,boolean,timestamp with time zone,timestamp with time zone,uuid,text) TO PUBLIC;
 GRANT EXECUTE ON PROCEDURE entity.crud_customer_update(text,text,text,uuid,uuid,uuid,text,uuid,boolean,boolean,timestamp with time zone,timestamp with time zone,uuid,text) TO tendreladmin WITH GRANT OPTION;
 GRANT EXECUTE ON PROCEDURE entity.crud_customer_update(text,text,text,uuid,uuid,uuid,text,uuid,boolean,boolean,timestamp with time zone,timestamp with time zone,uuid,text) TO graphql;
+
+END;

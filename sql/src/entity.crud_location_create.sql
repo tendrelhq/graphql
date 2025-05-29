@@ -1,3 +1,9 @@
+BEGIN;
+
+/*
+DROP PROCEDURE entity.crud_location_create(uuid,uuid,uuid,integer,uuid,text,text,text,text,text,uuid,text,uuid,text,text,text,boolean,boolean,bigint);
+*/
+
 
 -- Type: PROCEDURE ; Name: entity.crud_location_create(uuid,uuid,uuid,integer,uuid,text,text,text,text,text,uuid,text,uuid,text,text,text,boolean,boolean,bigint); Owner: tendreladmin
 
@@ -571,3 +577,5 @@ REVOKE ALL ON PROCEDURE entity.crud_location_create(uuid,uuid,uuid,integer,uuid,
 GRANT EXECUTE ON PROCEDURE entity.crud_location_create(uuid,uuid,uuid,integer,uuid,text,text,text,text,text,uuid,text,uuid,text,text,text,boolean,boolean,bigint) TO PUBLIC;
 GRANT EXECUTE ON PROCEDURE entity.crud_location_create(uuid,uuid,uuid,integer,uuid,text,text,text,text,text,uuid,text,uuid,text,text,text,boolean,boolean,bigint) TO tendreladmin WITH GRANT OPTION;
 GRANT EXECUTE ON PROCEDURE entity.crud_location_create(uuid,uuid,uuid,integer,uuid,text,text,text,text,text,uuid,text,uuid,text,text,text,boolean,boolean,bigint) TO graphql;
+
+END;

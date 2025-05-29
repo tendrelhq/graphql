@@ -1,3 +1,9 @@
+BEGIN;
+
+/*
+DROP FUNCTION engine1.base64_decode(text);
+*/
+
 
 -- Type: FUNCTION ; Name: engine1.base64_decode(text); Owner: tendreladmin
 
@@ -21,3 +27,5 @@ REVOKE ALL ON FUNCTION engine1.base64_decode(text) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION engine1.base64_decode(text) TO PUBLIC;
 GRANT EXECUTE ON FUNCTION engine1.base64_decode(text) TO tendreladmin WITH GRANT OPTION;
 GRANT EXECUTE ON FUNCTION engine1.base64_decode(text) TO graphql;
+
+END;

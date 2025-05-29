@@ -1,3 +1,9 @@
+BEGIN;
+
+/*
+DROP FUNCTION engine1.upsert_field_t(text,text,bigint,text,text,text,integer,text,text,boolean,boolean,boolean,text,text,text);
+*/
+
 
 -- Type: FUNCTION ; Name: engine1.upsert_field_t(text,text,bigint,text,text,text,integer,text,text,boolean,boolean,boolean,text,text,text); Owner: tendreladmin
 
@@ -248,3 +254,5 @@ REVOKE ALL ON FUNCTION engine1.upsert_field_t(text,text,bigint,text,text,text,in
 GRANT EXECUTE ON FUNCTION engine1.upsert_field_t(text,text,bigint,text,text,text,integer,text,text,boolean,boolean,boolean,text,text,text) TO PUBLIC;
 GRANT EXECUTE ON FUNCTION engine1.upsert_field_t(text,text,bigint,text,text,text,integer,text,text,boolean,boolean,boolean,text,text,text) TO tendreladmin WITH GRANT OPTION;
 GRANT EXECUTE ON FUNCTION engine1.upsert_field_t(text,text,bigint,text,text,text,integer,text,text,boolean,boolean,boolean,text,text,text) TO graphql;
+
+END;

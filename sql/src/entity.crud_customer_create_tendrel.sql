@@ -1,3 +1,9 @@
+BEGIN;
+
+/*
+DROP PROCEDURE entity.crud_customer_create_tendrel(text,uuid,uuid,text,uuid,boolean,boolean,text,text,text,text,text,uuid,uuid[],text,bigint);
+*/
+
 
 -- Type: PROCEDURE ; Name: entity.crud_customer_create_tendrel(text,uuid,uuid,text,uuid,boolean,boolean,text,text,text,text,text,uuid,uuid[],text,bigint); Owner: tendreladmin
 
@@ -184,3 +190,5 @@ REVOKE ALL ON PROCEDURE entity.crud_customer_create_tendrel(text,uuid,uuid,text,
 GRANT EXECUTE ON PROCEDURE entity.crud_customer_create_tendrel(text,uuid,uuid,text,uuid,boolean,boolean,text,text,text,text,text,uuid,uuid[],text,bigint) TO PUBLIC;
 GRANT EXECUTE ON PROCEDURE entity.crud_customer_create_tendrel(text,uuid,uuid,text,uuid,boolean,boolean,text,text,text,text,text,uuid,uuid[],text,bigint) TO tendreladmin WITH GRANT OPTION;
 GRANT EXECUTE ON PROCEDURE entity.crud_customer_create_tendrel(text,uuid,uuid,text,uuid,boolean,boolean,text,text,text,text,text,uuid,uuid[],text,bigint) TO graphql;
+
+END;

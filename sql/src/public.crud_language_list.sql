@@ -1,3 +1,9 @@
+BEGIN;
+
+/*
+DROP FUNCTION crud_language_list(bigint);
+*/
+
 
 -- Type: FUNCTION ; Name: crud_language_list(bigint); Owner: tendreladmin
 
@@ -35,3 +41,5 @@ $function$;
 REVOKE ALL ON FUNCTION crud_language_list(bigint) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION crud_language_list(bigint) TO PUBLIC;
 GRANT EXECUTE ON FUNCTION crud_language_list(bigint) TO tendreladmin WITH GRANT OPTION;
+
+END;

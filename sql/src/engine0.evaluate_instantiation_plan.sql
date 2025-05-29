@@ -1,3 +1,9 @@
+BEGIN;
+
+/*
+DROP FUNCTION engine0.evaluate_instantiation_plan(text,text,engine0.closure[]);
+*/
+
 
 -- Type: FUNCTION ; Name: engine0.evaluate_instantiation_plan(text,text,engine0.closure[]); Owner: tendreladmin
 
@@ -31,3 +37,5 @@ REVOKE ALL ON FUNCTION engine0.evaluate_instantiation_plan(text,text,engine0.clo
 GRANT EXECUTE ON FUNCTION engine0.evaluate_instantiation_plan(text,text,engine0.closure[]) TO PUBLIC;
 GRANT EXECUTE ON FUNCTION engine0.evaluate_instantiation_plan(text,text,engine0.closure[]) TO tendreladmin WITH GRANT OPTION;
 GRANT EXECUTE ON FUNCTION engine0.evaluate_instantiation_plan(text,text,engine0.closure[]) TO graphql;
+
+END;

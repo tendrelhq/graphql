@@ -1,3 +1,9 @@
+BEGIN;
+
+/*
+DROP PROCEDURE entity.import_entity_location(text);
+*/
+
 
 -- Type: PROCEDURE ; Name: entity.import_entity_location(text); Owner: tendreladmin
 
@@ -543,3 +549,5 @@ REVOKE ALL ON PROCEDURE entity.import_entity_location(text) FROM PUBLIC;
 GRANT EXECUTE ON PROCEDURE entity.import_entity_location(text) TO PUBLIC;
 GRANT EXECUTE ON PROCEDURE entity.import_entity_location(text) TO tendreladmin WITH GRANT OPTION;
 GRANT EXECUTE ON PROCEDURE entity.import_entity_location(text) TO graphql;
+
+END;

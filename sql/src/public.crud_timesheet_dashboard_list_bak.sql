@@ -1,3 +1,9 @@
+BEGIN;
+
+/*
+DROP FUNCTION crud_timesheet_dashboard_list_bak(timestamp with time zone,timestamp with time zone,bigint);
+*/
+
 
 -- Type: FUNCTION ; Name: crud_timesheet_dashboard_list_bak(timestamp with time zone,timestamp with time zone,bigint); Owner: tendreladmin
 
@@ -60,3 +66,5 @@ $function$;
 REVOKE ALL ON FUNCTION crud_timesheet_dashboard_list_bak(timestamp with time zone,timestamp with time zone,bigint) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION crud_timesheet_dashboard_list_bak(timestamp with time zone,timestamp with time zone,bigint) TO PUBLIC;
 GRANT EXECUTE ON FUNCTION crud_timesheet_dashboard_list_bak(timestamp with time zone,timestamp with time zone,bigint) TO tendreladmin WITH GRANT OPTION;
+
+END;

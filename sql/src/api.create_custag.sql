@@ -1,3 +1,11 @@
+BEGIN;
+
+/*
+DROP TRIGGER create_custag_tg ON api.custag;
+
+DROP FUNCTION api.create_custag();
+*/
+
 
 -- Type: FUNCTION ; Name: api.create_custag(); Owner: tendreladmin
 
@@ -64,3 +72,10 @@ $function$;
 REVOKE ALL ON FUNCTION api.create_custag() FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION api.create_custag() TO tendreladmin WITH GRANT OPTION;
 GRANT EXECUTE ON FUNCTION api.create_custag() TO authenticated;
+
+-- DEPENDANTS
+
+CREATE TRIGGER create_custag_tg INSTEAD OF INSERT ON api.custag FOR EACH ROW EXECUTE FUNCTION api.create_custag();
+
+
+END;

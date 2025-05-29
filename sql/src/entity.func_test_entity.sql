@@ -1,3 +1,9 @@
+BEGIN;
+
+/*
+DROP FUNCTION entity.func_test_entity();
+*/
+
 
 -- Type: FUNCTION ; Name: entity.func_test_entity(); Owner: tendreladmin
 
@@ -100,3 +106,5 @@ REVOKE ALL ON FUNCTION entity.func_test_entity() FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION entity.func_test_entity() TO PUBLIC;
 GRANT EXECUTE ON FUNCTION entity.func_test_entity() TO tendreladmin WITH GRANT OPTION;
 GRANT EXECUTE ON FUNCTION entity.func_test_entity() TO graphql;
+
+END;

@@ -1,3 +1,11 @@
+BEGIN;
+
+/*
+DROP VIEW api.alltag;
+
+DROP FUNCTION entity.crud_custag_read_full(uuid,uuid,uuid,uuid,boolean,boolean,boolean,boolean,uuid);
+*/
+
 
 -- Type: FUNCTION ; Name: entity.crud_custag_read_full(uuid,uuid,uuid,uuid,boolean,boolean,boolean,boolean,uuid); Owner: tendreladmin
 
@@ -402,3 +410,77 @@ REVOKE ALL ON FUNCTION entity.crud_custag_read_full(uuid,uuid,uuid,uuid,boolean,
 GRANT EXECUTE ON FUNCTION entity.crud_custag_read_full(uuid,uuid,uuid,uuid,boolean,boolean,boolean,boolean,uuid) TO PUBLIC;
 GRANT EXECUTE ON FUNCTION entity.crud_custag_read_full(uuid,uuid,uuid,uuid,boolean,boolean,boolean,boolean,uuid) TO tendreladmin WITH GRANT OPTION;
 GRANT EXECUTE ON FUNCTION entity.crud_custag_read_full(uuid,uuid,uuid,uuid,boolean,boolean,boolean,boolean,uuid) TO graphql;
+
+-- DEPENDANTS
+
+
+-- Type: VIEW ; Name: alltag; Owner: tendreladmin
+
+CREATE OR REPLACE VIEW api.alltag AS
+ SELECT systag.systagentityuuid AS id,
+    systag.systagid AS legacy_id,
+    systag.systaguuid AS legacy_uuid,
+    systag.systagcustomerentityuuid AS owner,
+    systag.systagcustomername AS owner_name,
+    systag.systagparententityuuid AS parent,
+    systag.systagparentname AS parent_name,
+    NULL::uuid AS cornerstone,
+    systag.systagnameuuid AS name_id,
+    systag.systagname AS name,
+    systag.systagdisplaynameuuid AS displayname_id,
+    systag.systagdisplayname AS displayname,
+    systag.systagtype AS type,
+    systag.systagcreateddate AS created_at,
+    systag.systagmodifieddate AS modified_at,
+    systag.systagstartdate AS activated_at,
+    systag.systagenddate AS deactivated_at,
+    systag.systagexternalid AS external_id,
+    systag.systagexternalsystementityuuid AS external_system,
+    systag.systagmodifiedbyuuid AS modified_by,
+    systag.systagorder AS _order,
+    systag.systagsenddeleted AS _deleted,
+    systag.systagsenddrafts AS _draft,
+    systag.systagsendinactive AS _active
+   FROM entity.crud_systag_read_full(NULL::uuid, NULL::uuid, NULL::uuid, NULL::uuid, true, NULL::boolean, NULL::boolean, NULL::boolean, ( SELECT util_user_details.get_languagetypeentityuuid
+           FROM _api.util_user_details() util_user_details(get_workerinstanceid, get_workerinstanceuuid, get_languagetypeid, get_languagetypeuuid, get_languagetypeentityuuid))) systag(languagetranslationtypeentityuuid, systagid, systaguuid, systagentityuuid, systagcustomerid, systagcustomeruuid, systagcustomerentityuuid, systagcustomername, systagnameuuid, systagname, systagdisplaynameuuid, systagdisplayname, systagtype, systagcreateddate, systagmodifieddate, systagstartdate, systagenddate, systagexternalid, systagexternalsystementityuuid, systagexternalsystementname, systagmodifiedbyuuid, systagabbreviationentityuuid, systagabbreviationname, systagparententityuuid, systagparentname, systagorder, systagsenddeleted, systagsenddrafts, systagsendinactive)
+  WHERE (systag.systagcustomerentityuuid IN ( SELECT util_get_onwership.get_ownership
+           FROM _api.util_get_onwership() util_get_onwership(get_ownership))) OR systag.systagcustomerentityuuid = 'f90d618d-5de7-4126-8c65-0afb700c6c61'::uuid
+UNION
+ SELECT custag.custagentityuuid AS id,
+    custag.custagid AS legacy_id,
+    custag.custaguuid AS legacy_uuid,
+    custag.custagownerentityuuid AS owner,
+    custag.custagownerentityname AS owner_name,
+    custag.custagparententityuuid AS parent,
+    custag.custagparentname AS parent_name,
+    custag.custagcornerstoneentityid AS cornerstone,
+    custag.custagnameuuid AS name_id,
+    custag.custagname AS name,
+    custag.custagdisplaynameuuid AS displayname_id,
+    custag.custagdisplayname AS displayname,
+    custag.custagtype AS type,
+    custag.custagcreateddate AS created_at,
+    custag.custagmodifieddate AS modified_at,
+    custag.custagstartdate AS activated_at,
+    custag.custagenddate AS deactivated_at,
+    custag.custagexternalid AS external_id,
+    custag.custagexternalsystementityuuid AS external_system,
+    custag.custagmodifiedbyuuid AS modified_by,
+    custag.custagorder AS _order,
+    custag.systagsenddeleted AS _deleted,
+    custag.systagsenddrafts AS _draft,
+    custag.systagsendinactive AS _active
+   FROM entity.crud_custag_read_full(NULL::uuid, NULL::uuid, NULL::uuid, NULL::uuid, true, NULL::boolean, NULL::boolean, NULL::boolean, ( SELECT util_user_details.get_languagetypeentityuuid
+           FROM _api.util_user_details() util_user_details(get_workerinstanceid, get_workerinstanceuuid, get_languagetypeid, get_languagetypeuuid, get_languagetypeentityuuid))) custag(languagetranslationtypeentityuuid, custagid, custaguuid, custagentityuuid, custagownerentityuuid, custagownerentityname, custagparententityuuid, custagparentname, custagcornerstoneentityid, custagcustomerid, custagcustomeruuid, custagcustomerentityuuid, custagcustomername, custagnameuuid, custagname, custagdisplaynameuuid, custagdisplayname, custagtype, custagcreateddate, custagmodifieddate, custagstartdate, custagenddate, custagexternalid, custagexternalsystementityuuid, custagexternalsystemenname, custagmodifiedbyuuid, custagabbreviationentityuuid, custagabbreviationname, custagorder, systagsenddeleted, systagsenddrafts, systagsendinactive)
+  WHERE (custag.custagownerentityuuid IN ( SELECT util_get_onwership.get_ownership
+           FROM _api.util_get_onwership() util_get_onwership(get_ownership)));
+
+COMMENT ON VIEW api.alltag IS '
+## language
+';
+
+GRANT INSERT ON api.alltag TO authenticated;
+GRANT SELECT ON api.alltag TO authenticated;
+GRANT UPDATE ON api.alltag TO authenticated;
+
+END;

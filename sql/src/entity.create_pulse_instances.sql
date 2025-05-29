@@ -1,3 +1,9 @@
+BEGIN;
+
+/*
+DROP PROCEDURE entity.create_pulse_instances();
+*/
+
 
 -- Type: PROCEDURE ; Name: entity.create_pulse_instances(); Owner: tendreladmin
 
@@ -334,3 +340,5 @@ REVOKE ALL ON PROCEDURE entity.create_pulse_instances() FROM PUBLIC;
 GRANT EXECUTE ON PROCEDURE entity.create_pulse_instances() TO PUBLIC;
 GRANT EXECUTE ON PROCEDURE entity.create_pulse_instances() TO tendreladmin WITH GRANT OPTION;
 GRANT EXECUTE ON PROCEDURE entity.create_pulse_instances() TO graphql;
+
+END;

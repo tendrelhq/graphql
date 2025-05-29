@@ -1,3 +1,9 @@
+BEGIN;
+
+/*
+DROP PROCEDURE entity.crud_location_update(uuid,uuid,uuid,uuid,integer,uuid,text,text,text,text,text,uuid,text,uuid,text,text,text,timestamp with time zone,timestamp with time zone,boolean,boolean,text);
+*/
+
 
 -- Type: PROCEDURE ; Name: entity.crud_location_update(uuid,uuid,uuid,uuid,integer,uuid,text,text,text,text,text,uuid,text,uuid,text,text,text,timestamp with time zone,timestamp with time zone,boolean,boolean,text); Owner: tendreladmin
 
@@ -250,3 +256,5 @@ REVOKE ALL ON PROCEDURE entity.crud_location_update(uuid,uuid,uuid,uuid,integer,
 GRANT EXECUTE ON PROCEDURE entity.crud_location_update(uuid,uuid,uuid,uuid,integer,uuid,text,text,text,text,text,uuid,text,uuid,text,text,text,timestamp with time zone,timestamp with time zone,boolean,boolean,text) TO PUBLIC;
 GRANT EXECUTE ON PROCEDURE entity.crud_location_update(uuid,uuid,uuid,uuid,integer,uuid,text,text,text,text,text,uuid,text,uuid,text,text,text,timestamp with time zone,timestamp with time zone,boolean,boolean,text) TO tendreladmin WITH GRANT OPTION;
 GRANT EXECUTE ON PROCEDURE entity.crud_location_update(uuid,uuid,uuid,uuid,integer,uuid,text,text,text,text,text,uuid,text,uuid,text,text,text,timestamp with time zone,timestamp with time zone,boolean,boolean,text) TO graphql;
+
+END;

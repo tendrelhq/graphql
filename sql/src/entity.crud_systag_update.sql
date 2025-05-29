@@ -1,3 +1,9 @@
+BEGIN;
+
+/*
+DROP PROCEDURE entity.crud_systag_update(uuid,uuid,uuid,uuid,integer,text,text,text,uuid,text,uuid,boolean,boolean,timestamp with time zone,timestamp with time zone,text);
+*/
+
 
 -- Type: PROCEDURE ; Name: entity.crud_systag_update(uuid,uuid,uuid,uuid,integer,text,text,text,uuid,text,uuid,boolean,boolean,timestamp with time zone,timestamp with time zone,text); Owner: tendreladmin
 
@@ -205,3 +211,5 @@ REVOKE ALL ON PROCEDURE entity.crud_systag_update(uuid,uuid,uuid,uuid,integer,te
 GRANT EXECUTE ON PROCEDURE entity.crud_systag_update(uuid,uuid,uuid,uuid,integer,text,text,text,uuid,text,uuid,boolean,boolean,timestamp with time zone,timestamp with time zone,text) TO PUBLIC;
 GRANT EXECUTE ON PROCEDURE entity.crud_systag_update(uuid,uuid,uuid,uuid,integer,text,text,text,uuid,text,uuid,boolean,boolean,timestamp with time zone,timestamp with time zone,text) TO tendreladmin WITH GRANT OPTION;
 GRANT EXECUTE ON PROCEDURE entity.crud_systag_update(uuid,uuid,uuid,uuid,integer,text,text,text,uuid,text,uuid,boolean,boolean,timestamp with time zone,timestamp with time zone,text) TO graphql;
+
+END;

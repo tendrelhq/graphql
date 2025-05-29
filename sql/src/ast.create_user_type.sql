@@ -1,3 +1,9 @@
+BEGIN;
+
+/*
+DROP FUNCTION ast.create_user_type(text,text,text,text,bigint);
+*/
+
 
 -- Type: FUNCTION ; Name: ast.create_user_type(text,text,text,text,bigint); Owner: tendreladmin
 
@@ -66,3 +72,5 @@ REVOKE ALL ON FUNCTION ast.create_user_type(text,text,text,text,bigint) FROM PUB
 GRANT EXECUTE ON FUNCTION ast.create_user_type(text,text,text,text,bigint) TO PUBLIC;
 GRANT EXECUTE ON FUNCTION ast.create_user_type(text,text,text,text,bigint) TO tendreladmin WITH GRANT OPTION;
 GRANT EXECUTE ON FUNCTION ast.create_user_type(text,text,text,text,bigint) TO graphql;
+
+END;

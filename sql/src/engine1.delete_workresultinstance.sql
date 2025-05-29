@@ -1,3 +1,9 @@
+BEGIN;
+
+/*
+DROP FUNCTION engine1.delete_workresultinstance(jsonb);
+*/
+
 
 -- Type: FUNCTION ; Name: engine1.delete_workresultinstance(jsonb); Owner: tendreladmin
 
@@ -20,3 +26,5 @@ REVOKE ALL ON FUNCTION engine1.delete_workresultinstance(jsonb) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION engine1.delete_workresultinstance(jsonb) TO PUBLIC;
 GRANT EXECUTE ON FUNCTION engine1.delete_workresultinstance(jsonb) TO tendreladmin WITH GRANT OPTION;
 GRANT EXECUTE ON FUNCTION engine1.delete_workresultinstance(jsonb) TO graphql;
+
+END;

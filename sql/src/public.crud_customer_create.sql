@@ -1,3 +1,9 @@
+BEGIN;
+
+/*
+DROP PROCEDURE crud_customer_create(text,text,text,text,text,text,text,text,text,text,text,text[],bigint);
+*/
+
 
 -- Type: PROCEDURE ; Name: crud_customer_create(text,text,text,text,text,text,text,text,text,text,text,text[],bigint); Owner: tendreladmin
 
@@ -52,7 +58,6 @@ tempadminidentitysystemuuid = (select systagentityuuid
 								from entity.crud_systag_read_min(null,null,null, null, true,null,null,null,'bcbe750d-1b3b-4e2b-82ec-448bb8b116f9') as lang
 								where systaguuid = create_adminidentitysystemuuid);	
 
-
 call entity.crud_customer_create_tendrel(
 	create_customername := create_customername,
 	create_customeruuid := create_customeruuid,
@@ -86,3 +91,5 @@ $procedure$;
 REVOKE ALL ON PROCEDURE crud_customer_create(text,text,text,text,text,text,text,text,text,text,text,text[],bigint) FROM PUBLIC;
 GRANT EXECUTE ON PROCEDURE crud_customer_create(text,text,text,text,text,text,text,text,text,text,text,text[],bigint) TO PUBLIC;
 GRANT EXECUTE ON PROCEDURE crud_customer_create(text,text,text,text,text,text,text,text,text,text,text,text[],bigint) TO tendreladmin WITH GRANT OPTION;
+
+END;

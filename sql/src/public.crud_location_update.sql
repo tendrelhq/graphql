@@ -1,3 +1,9 @@
+BEGIN;
+
+/*
+DROP PROCEDURE crud_location_update(text,text,text,bigint,bigint,bigint,text,text,text,text,text,boolean,bigint,bigint,text,bigint);
+*/
+
 
 -- Type: PROCEDURE ; Name: crud_location_update(text,text,text,bigint,bigint,bigint,text,text,text,text,text,boolean,bigint,bigint,text,bigint); Owner: tendreladmin
 
@@ -145,3 +151,5 @@ $procedure$;
 REVOKE ALL ON PROCEDURE crud_location_update(text,text,text,bigint,bigint,bigint,text,text,text,text,text,boolean,bigint,bigint,text,bigint) FROM PUBLIC;
 GRANT EXECUTE ON PROCEDURE crud_location_update(text,text,text,bigint,bigint,bigint,text,text,text,text,text,boolean,bigint,bigint,text,bigint) TO PUBLIC;
 GRANT EXECUTE ON PROCEDURE crud_location_update(text,text,text,bigint,bigint,bigint,text,text,text,text,text,boolean,bigint,bigint,text,bigint) TO tendreladmin WITH GRANT OPTION;
+
+END;

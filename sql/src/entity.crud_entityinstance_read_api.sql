@@ -1,3 +1,12 @@
+BEGIN;
+
+/*
+DROP FUNCTION api.delete_entity_instance(uuid,uuid);
+DROP VIEW api.entity_instance;
+
+DROP FUNCTION entity.crud_entityinstance_read_api(uuid[],uuid,uuid,uuid,uuid,uuid,boolean,uuid,boolean,boolean,boolean,uuid);
+*/
+
 
 -- Type: FUNCTION ; Name: entity.crud_entityinstance_read_api(uuid[],uuid,uuid,uuid,uuid,uuid,boolean,uuid,boolean,boolean,boolean,uuid); Owner: tendreladmin
 
@@ -222,3 +231,127 @@ REVOKE ALL ON FUNCTION entity.crud_entityinstance_read_api(uuid[],uuid,uuid,uuid
 GRANT EXECUTE ON FUNCTION entity.crud_entityinstance_read_api(uuid[],uuid,uuid,uuid,uuid,uuid,boolean,uuid,boolean,boolean,boolean,uuid) TO PUBLIC;
 GRANT EXECUTE ON FUNCTION entity.crud_entityinstance_read_api(uuid[],uuid,uuid,uuid,uuid,uuid,boolean,uuid,boolean,boolean,boolean,uuid) TO tendreladmin WITH GRANT OPTION;
 GRANT EXECUTE ON FUNCTION entity.crud_entityinstance_read_api(uuid[],uuid,uuid,uuid,uuid,uuid,boolean,uuid,boolean,boolean,boolean,uuid) TO graphql;
+
+-- DEPENDANTS
+
+
+-- Type: VIEW ; Name: entity_instance; Owner: tendreladmin
+
+CREATE OR REPLACE VIEW api.entity_instance AS
+ SELECT entityinstanceuuid AS id,
+    entityinstanceownerentityuuid AS owner,
+    entityinstanceownerentityname AS owner_name,
+    entityinstanceparententityuuid AS parent,
+    entityinstanceparententityname AS parent_name,
+    entityinstanceentitytemplateentityuuid AS template,
+    entityinstanceentitytemplatetranslatedname AS template_name,
+    entityinstanceexternalid AS external_id,
+    entityinstanceexternalsystementityuuid AS external_system,
+    entityinstancescanid AS scan_code,
+    entityinstancenameuuid AS name_id,
+    entityinstancename AS name,
+    entityinstancetypeentityuuid AS type,
+    entityinstancetypeentityuuid AS type_name,
+    entityinstancecornerstoneentityuuid AS cornerstone,
+    entityinstancecornerstoneentitname AS cornerstone_name,
+    entityinstancecornerstoneorder AS _order,
+    entityinstancedeleted AS _deleted,
+    entityinstancedraft AS _draft,
+    entityinstanceactive AS _active,
+    entityinstancestartdate AS activated_at,
+    entityinstanceenddate AS deactivated_at,
+    entityinstancecreateddate AS created_at,
+    entityinstancemodifieddate AS updated_at,
+    entityinstancemodifiedbyuuid AS modified_by
+   FROM ( SELECT crud_entityinstance_read_api.languagetranslationtypeentityuuid,
+            crud_entityinstance_read_api.entityinstanceoriginalid,
+            crud_entityinstance_read_api.entityinstanceoriginaluuid,
+            crud_entityinstance_read_api.entityinstanceuuid,
+            crud_entityinstance_read_api.entityinstanceownerentityuuid,
+            crud_entityinstance_read_api.entityinstanceownerentityname,
+            crud_entityinstance_read_api.entityinstanceparententityuuid,
+            crud_entityinstance_read_api.entityinstanceparententityname,
+            crud_entityinstance_read_api.entityinstancecornerstoneentityuuid,
+            crud_entityinstance_read_api.entityinstancecornerstoneentitname,
+            crud_entityinstance_read_api.entityinstancecornerstoneorder,
+            crud_entityinstance_read_api.entityinstanceentitytemplateentityuuid,
+            crud_entityinstance_read_api.entityinstanceentitytemplatename,
+            crud_entityinstance_read_api.entityinstanceentitytemplatetranslatedname,
+            crud_entityinstance_read_api.entityinstancetypeentityuuid,
+            crud_entityinstance_read_api.entityinstancetype,
+            crud_entityinstance_read_api.entityinstancenameuuid,
+            crud_entityinstance_read_api.entityinstancename,
+            crud_entityinstance_read_api.entityinstancescanid,
+            crud_entityinstance_read_api.entityinstancesiteentityuuid,
+            crud_entityinstance_read_api.entityinstancecreateddate,
+            crud_entityinstance_read_api.entityinstancemodifieddate,
+            crud_entityinstance_read_api.entityinstancemodifiedbyuuid,
+            crud_entityinstance_read_api.entityinstancestartdate,
+            crud_entityinstance_read_api.entityinstanceenddate,
+            crud_entityinstance_read_api.entityinstanceexternalid,
+            crud_entityinstance_read_api.entityinstanceexternalsystementityuuid,
+            crud_entityinstance_read_api.entityinstanceexternalsystementityname,
+            crud_entityinstance_read_api.entityinstancerefid,
+            crud_entityinstance_read_api.entityinstancerefuuid,
+            crud_entityinstance_read_api.entityinstancedeleted,
+            crud_entityinstance_read_api.entityinstancedraft,
+            crud_entityinstance_read_api.entityinstanceactive,
+            crud_entityinstance_read_api.entityinstancetagentityuuid
+           FROM entity.crud_entityinstance_read_api(ARRAY( SELECT util_get_onwership.get_ownership
+                   FROM _api.util_get_onwership() util_get_onwership(get_ownership)), NULL::uuid, NULL::uuid, NULL::uuid, NULL::uuid, NULL::uuid, true, NULL::uuid, NULL::boolean, NULL::boolean, NULL::boolean, ( SELECT util_user_details.get_languagetypeentityuuid
+                   FROM _api.util_user_details() util_user_details(get_workerinstanceid, get_workerinstanceuuid, get_languagetypeid, get_languagetypeuuid, get_languagetypeentityuuid))) crud_entityinstance_read_api(languagetranslationtypeentityuuid, entityinstanceoriginalid, entityinstanceoriginaluuid, entityinstanceuuid, entityinstanceownerentityuuid, entityinstanceownerentityname, entityinstanceparententityuuid, entityinstanceparententityname, entityinstancecornerstoneentityuuid, entityinstancecornerstoneentitname, entityinstancecornerstoneorder, entityinstanceentitytemplateentityuuid, entityinstanceentitytemplatename, entityinstanceentitytemplatetranslatedname, entityinstancetypeentityuuid, entityinstancetype, entityinstancenameuuid, entityinstancename, entityinstancescanid, entityinstancesiteentityuuid, entityinstancecreateddate, entityinstancemodifieddate, entityinstancemodifiedbyuuid, entityinstancestartdate, entityinstanceenddate, entityinstanceexternalid, entityinstanceexternalsystementityuuid, entityinstanceexternalsystementityname, entityinstancerefid, entityinstancerefuuid, entityinstancedeleted, entityinstancedraft, entityinstanceactive, entityinstancetagentityuuid)) entityinstance;
+
+
+CREATE TRIGGER create_entity_instance_tg INSTEAD OF INSERT ON api.entity_instance FOR EACH ROW EXECUTE FUNCTION api.create_entity_instance();
+CREATE TRIGGER update_entity_instance_tg INSTEAD OF UPDATE ON api.entity_instance FOR EACH ROW EXECUTE FUNCTION api.update_entity_instance();
+
+GRANT INSERT ON api.entity_instance TO authenticated;
+GRANT SELECT ON api.entity_instance TO authenticated;
+GRANT UPDATE ON api.entity_instance TO authenticated;
+
+-- Type: FUNCTION ; Name: api.delete_entity_instance(uuid,uuid); Owner: tendreladmin
+
+CREATE OR REPLACE FUNCTION api.delete_entity_instance(owner uuid, id uuid)
+ RETURNS SETOF api.entity_instance
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+AS $function$
+declare
+	ins_userid bigint;
+begin
+  -- TODO: I wonder what we should do here. Do we:
+  -- (a) Grant access to the entity schema to authenticated?
+  -- (b) Use SECURITY DEFINER functions
+  -- The downside of (a) is broader permissions, while of (b) is we lose RLS.
+  -- I lean towards (a) at the moment.
+select get_workerinstanceid
+into ins_userid
+from _api.util_user_details();
+
+if (select owner in (select * from _api.util_get_onwership()) )
+	then  
+	  call entity.crud_entityinstance_delete(
+	      create_entityinstanceownerentityuuid := owner,
+	      create_entityinstanceentityuuid := id,
+	      create_modifiedbyid := ins_userid
+	  );
+	else
+		return;  -- need an exception here
+end if;
+
+  return query
+    select *
+    from api.entity_instance t
+    where t.owner = $1 and t.id = $2
+  ;
+
+  return;
+end 
+$function$;
+
+
+REVOKE ALL ON FUNCTION api.delete_entity_instance(uuid,uuid) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION api.delete_entity_instance(uuid,uuid) TO tendreladmin WITH GRANT OPTION;
+GRANT EXECUTE ON FUNCTION api.delete_entity_instance(uuid,uuid) TO authenticated;
+
+END;

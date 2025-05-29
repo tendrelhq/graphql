@@ -1,3 +1,14 @@
+BEGIN;
+
+/*
+DROP FUNCTION api.delete_reason_code(uuid,uuid,text,text);
+DROP FUNCTION api.delete_custag(uuid,uuid);
+DROP VIEW api.reason_code;
+DROP VIEW api.custag;
+
+DROP FUNCTION entity.crud_custag_read_api(uuid[],uuid,uuid,uuid,boolean,boolean,boolean,boolean,uuid);
+*/
+
 
 -- Type: FUNCTION ; Name: entity.crud_custag_read_api(uuid[],uuid,uuid,uuid,boolean,boolean,boolean,boolean,uuid); Owner: tendreladmin
 
@@ -52,7 +63,6 @@ into templanguagetranslationtypeid
 from entity.entityinstance ei
 where entityinstanceuuid=read_languagetranslationtypeentityuuid; 
 
-
 return query
 	SELECT 
 		read_languagetranslationtypeentityuuid as languagetranslationtypeentityuuid,
@@ -96,6 +106,7 @@ return query
 		inner join entity.entityinstance customer
 			on customer.entityinstanceuuid = ei.entityinstanceownerentityuuid
 				and ei.entityinstanceownerentityuuid = ANY(read_ownerentityuuid)
+				and ei.entityinstanceentitytemplateentityuuid = '30a317b8-6a56-45b4-8480-f9b58e099c77'
 		inner join public.languagemaster customerlm
 			on customer.entityinstancenameuuid = customerlm.languagemasteruuid
 		left join public.languagetranslations customerlt
@@ -123,6 +134,7 @@ return query
 				and displaylt.languagetranslationtypeid = templanguagetranslationtypeid;
 return;
 
+
 End;	
 
 $function$;
@@ -132,3 +144,279 @@ REVOKE ALL ON FUNCTION entity.crud_custag_read_api(uuid[],uuid,uuid,uuid,boolean
 GRANT EXECUTE ON FUNCTION entity.crud_custag_read_api(uuid[],uuid,uuid,uuid,boolean,boolean,boolean,boolean,uuid) TO PUBLIC;
 GRANT EXECUTE ON FUNCTION entity.crud_custag_read_api(uuid[],uuid,uuid,uuid,boolean,boolean,boolean,boolean,uuid) TO tendreladmin WITH GRANT OPTION;
 GRANT EXECUTE ON FUNCTION entity.crud_custag_read_api(uuid[],uuid,uuid,uuid,boolean,boolean,boolean,boolean,uuid) TO graphql;
+
+-- DEPENDANTS
+
+
+-- Type: VIEW ; Name: custag; Owner: tendreladmin
+
+CREATE OR REPLACE VIEW api.custag AS
+ SELECT custagentityuuid AS id,
+    custagid AS legacy_id,
+    custaguuid AS legacy_uuid,
+    custagownerentityuuid AS owner,
+    custagownerentityname AS owner_name,
+    custagparententityuuid AS parent,
+    custagparentname AS parent_name,
+    custagcornerstoneentityid AS cornerstone,
+    custagnameuuid AS name_id,
+    custagname AS name,
+    custagdisplaynameuuid AS displayname_id,
+    custagdisplayname AS displayname,
+    custagtype AS type,
+    custagcreateddate AS created_at,
+    custagmodifieddate AS updated_at,
+    custagstartdate AS activated_at,
+    custagenddate AS deactivated_at,
+    custagexternalid AS external_id,
+    custagexternalsystementityuuid AS external_system,
+    custagmodifiedbyuuid AS modified_by,
+    custagorder AS _order,
+    systagsenddeleted AS _deleted,
+    systagsenddrafts AS _draft,
+    systagsendinactive AS _active
+   FROM ( SELECT crud_custag_read_api.languagetranslationtypeentityuuid,
+            crud_custag_read_api.custagid,
+            crud_custag_read_api.custaguuid,
+            crud_custag_read_api.custagentityuuid,
+            crud_custag_read_api.custagownerentityuuid,
+            crud_custag_read_api.custagownerentityname,
+            crud_custag_read_api.custagparententityuuid,
+            crud_custag_read_api.custagparentname,
+            crud_custag_read_api.custagcornerstoneentityid,
+            crud_custag_read_api.custagcustomerid,
+            crud_custag_read_api.custagcustomeruuid,
+            crud_custag_read_api.custagcustomerentityuuid,
+            crud_custag_read_api.custagcustomername,
+            crud_custag_read_api.custagnameuuid,
+            crud_custag_read_api.custagname,
+            crud_custag_read_api.custagdisplaynameuuid,
+            crud_custag_read_api.custagdisplayname,
+            crud_custag_read_api.custagtype,
+            crud_custag_read_api.custagcreateddate,
+            crud_custag_read_api.custagmodifieddate,
+            crud_custag_read_api.custagstartdate,
+            crud_custag_read_api.custagenddate,
+            crud_custag_read_api.custagexternalid,
+            crud_custag_read_api.custagexternalsystementityuuid,
+            crud_custag_read_api.custagexternalsystemenname,
+            crud_custag_read_api.custagmodifiedbyuuid,
+            crud_custag_read_api.custagabbreviationentityuuid,
+            crud_custag_read_api.custagabbreviationname,
+            crud_custag_read_api.custagorder,
+            crud_custag_read_api.systagsenddeleted,
+            crud_custag_read_api.systagsenddrafts,
+            crud_custag_read_api.systagsendinactive
+           FROM entity.crud_custag_read_api(ARRAY( SELECT util_get_onwership.get_ownership
+                   FROM _api.util_get_onwership() util_get_onwership(get_ownership)), NULL::uuid, NULL::uuid, NULL::uuid, true, NULL::boolean, NULL::boolean, NULL::boolean, ( SELECT util_user_details.get_languagetypeentityuuid
+                   FROM _api.util_user_details() util_user_details(get_workerinstanceid, get_workerinstanceuuid, get_languagetypeid, get_languagetypeuuid, get_languagetypeentityuuid))) crud_custag_read_api(languagetranslationtypeentityuuid, custagid, custaguuid, custagentityuuid, custagownerentityuuid, custagownerentityname, custagparententityuuid, custagparentname, custagcornerstoneentityid, custagcustomerid, custagcustomeruuid, custagcustomerentityuuid, custagcustomername, custagnameuuid, custagname, custagdisplaynameuuid, custagdisplayname, custagtype, custagcreateddate, custagmodifieddate, custagstartdate, custagenddate, custagexternalid, custagexternalsystementityuuid, custagexternalsystemenname, custagmodifiedbyuuid, custagabbreviationentityuuid, custagabbreviationname, custagorder, systagsenddeleted, systagsenddrafts, systagsendinactive)) custag
+  WHERE (custagownerentityuuid IN ( SELECT util_get_onwership.get_ownership
+           FROM _api.util_get_onwership() util_get_onwership(get_ownership)));
+
+COMMENT ON VIEW api.custag IS '
+## Custag
+
+A description of what an entity tempalte is and why it is used
+
+### get {baseUrl}/custag
+
+A bunch of comments explaining get
+
+### del {baseUrl}/custag
+
+A bunch of comments explaining del
+
+### patch {baseUrl}/custag
+
+A bunch of comments explaining patch
+';
+
+CREATE TRIGGER create_custag_tg INSTEAD OF INSERT ON api.custag FOR EACH ROW EXECUTE FUNCTION api.create_custag();
+CREATE TRIGGER update_custag_tg INSTEAD OF UPDATE ON api.custag FOR EACH ROW EXECUTE FUNCTION api.update_custag();
+
+GRANT INSERT ON api.custag TO authenticated;
+GRANT SELECT ON api.custag TO authenticated;
+GRANT UPDATE ON api.custag TO authenticated;
+
+-- Type: VIEW ; Name: reason_code; Owner: tendreladmin
+
+CREATE OR REPLACE VIEW api.reason_code AS
+ SELECT custag.custagentityuuid AS id,
+    custag.custagid AS legacy_id,
+    custag.custaguuid AS legacy_uuid,
+    custag.custagownerentityuuid AS owner,
+    custag.custagownerentityname AS owner_name,
+    custag.custagparententityuuid AS parent,
+    custag.custagparentname AS parent_name,
+    custag.custagcornerstoneentityid AS cornerstone,
+    custag.custagnameuuid AS name_id,
+    custag.custagname AS name,
+    custag.custagdisplaynameuuid AS displayname_id,
+    custag.custagdisplayname AS displayname,
+    custag.custagtype AS type,
+    custag.custagcreateddate AS created_at,
+    custag.custagmodifieddate AS updated_at,
+    custag.custagstartdate AS activated_at,
+    custag.custagenddate AS deactivated_at,
+    custag.custagexternalid AS external_id,
+    custag.custagexternalsystementityuuid AS external_system,
+    custag.custagmodifiedbyuuid AS modified_by,
+    custag.custagorder AS _order,
+    custag.systagsenddeleted AS _deleted,
+    custag.systagsenddrafts AS _draft,
+    custag.systagsendinactive AS _active,
+    wtc.worktemplateconstraintid AS work_template_constraint,
+    wt.id AS work_template,
+    COALESCE(lt.languagetranslationvalue, lm.languagemastersource) AS work_template_name
+   FROM ( SELECT crud_custag_read_api.languagetranslationtypeentityuuid,
+            crud_custag_read_api.custagid,
+            crud_custag_read_api.custaguuid,
+            crud_custag_read_api.custagentityuuid,
+            crud_custag_read_api.custagownerentityuuid,
+            crud_custag_read_api.custagownerentityname,
+            crud_custag_read_api.custagparententityuuid,
+            crud_custag_read_api.custagparentname,
+            crud_custag_read_api.custagcornerstoneentityid,
+            crud_custag_read_api.custagcustomerid,
+            crud_custag_read_api.custagcustomeruuid,
+            crud_custag_read_api.custagcustomerentityuuid,
+            crud_custag_read_api.custagcustomername,
+            crud_custag_read_api.custagnameuuid,
+            crud_custag_read_api.custagname,
+            crud_custag_read_api.custagdisplaynameuuid,
+            crud_custag_read_api.custagdisplayname,
+            crud_custag_read_api.custagtype,
+            crud_custag_read_api.custagcreateddate,
+            crud_custag_read_api.custagmodifieddate,
+            crud_custag_read_api.custagstartdate,
+            crud_custag_read_api.custagenddate,
+            crud_custag_read_api.custagexternalid,
+            crud_custag_read_api.custagexternalsystementityuuid,
+            crud_custag_read_api.custagexternalsystemenname,
+            crud_custag_read_api.custagmodifiedbyuuid,
+            crud_custag_read_api.custagabbreviationentityuuid,
+            crud_custag_read_api.custagabbreviationname,
+            crud_custag_read_api.custagorder,
+            crud_custag_read_api.systagsenddeleted,
+            crud_custag_read_api.systagsenddrafts,
+            crud_custag_read_api.systagsendinactive
+           FROM entity.crud_custag_read_api(ARRAY( SELECT util_get_onwership.get_ownership
+                   FROM _api.util_get_onwership() util_get_onwership(get_ownership)), NULL::uuid, NULL::uuid, 'f875b28c-ccc9-4c69-b5b4-9f10ad89d23b'::uuid, false, NULL::boolean, NULL::boolean, NULL::boolean, ( SELECT util_user_details.get_languagetypeentityuuid
+                   FROM _api.util_user_details() util_user_details(get_workerinstanceid, get_workerinstanceuuid, get_languagetypeid, get_languagetypeuuid, get_languagetypeentityuuid))) crud_custag_read_api(languagetranslationtypeentityuuid, custagid, custaguuid, custagentityuuid, custagownerentityuuid, custagownerentityname, custagparententityuuid, custagparentname, custagcornerstoneentityid, custagcustomerid, custagcustomeruuid, custagcustomerentityuuid, custagcustomername, custagnameuuid, custagname, custagdisplaynameuuid, custagdisplayname, custagtype, custagcreateddate, custagmodifieddate, custagstartdate, custagenddate, custagexternalid, custagexternalsystementityuuid, custagexternalsystemenname, custagmodifiedbyuuid, custagabbreviationentityuuid, custagabbreviationname, custagorder, systagsenddeleted, systagsenddrafts, systagsendinactive)) custag
+     LEFT JOIN worktemplateconstraint wtc ON wtc.worktemplateconstraintconstrainedtypeid = 'systag_4bbc3e18-de10-4f93-aabb-b1d051a2923d'::text AND wtc.worktemplateconstraintconstraintid = custag.custaguuid
+     LEFT JOIN worktemplate wt ON wtc.worktemplateconstrainttemplateid = wt.id
+     LEFT JOIN languagemaster lm ON wt.worktemplatenameid = lm.languagemasterid
+     LEFT JOIN languagetranslations lt ON lm.languagemasterid = lt.languagetranslationmasterid
+  WHERE (custag.custagownerentityuuid IN ( SELECT util_get_onwership.get_ownership
+           FROM _api.util_get_onwership() util_get_onwership(get_ownership)));
+
+COMMENT ON VIEW api.reason_code IS '
+## Reason Code
+
+A description of what an entity tempalte is and why it is used
+
+### get {baseUrl}/custag
+
+A bunch of comments explaining get
+
+### del {baseUrl}/custag
+
+A bunch of comments explaining del
+
+### patch {baseUrl}/custag
+
+A bunch of comments explaining patch
+';
+
+GRANT INSERT ON api.reason_code TO authenticated;
+GRANT SELECT ON api.reason_code TO authenticated;
+GRANT UPDATE ON api.reason_code TO authenticated;
+
+-- Type: FUNCTION ; Name: api.delete_custag(uuid,uuid); Owner: tendreladmin
+
+CREATE OR REPLACE FUNCTION api.delete_custag(owner uuid, id uuid)
+ RETURNS SETOF api.custag
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+AS $function$
+declare
+	ins_userid bigint;
+begin
+  -- TODO: I wonder what we should do here. Do we:
+  -- (a) Grant access to the entity schema to authenticated?
+  -- (b) Use SECURITY DEFINER functions
+  -- The downside of (a) is broader permissions, while of (b) is we lose RLS.
+  -- I lean towards (a) at the moment.
+
+select get_workerinstanceid
+into ins_userid
+from _api.util_user_details();
+
+if (select owner in (select * from _api.util_get_onwership()) )
+	then  
+	  call entity.crud_custag_delete(
+	      create_custagownerentityuuid := owner,
+	      create_custagentityuuid := id,
+	      create_modifiedbyid := ins_userid
+	  );
+end if;
+
+  return query
+    select *
+    from api.custag t
+    where t.owner = $1 and t.id = $2
+  ;
+
+  return;
+end 
+$function$;
+
+
+REVOKE ALL ON FUNCTION api.delete_custag(uuid,uuid) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION api.delete_custag(uuid,uuid) TO tendreladmin WITH GRANT OPTION;
+GRANT EXECUTE ON FUNCTION api.delete_custag(uuid,uuid) TO authenticated;
+
+-- Type: FUNCTION ; Name: api.delete_reason_code(uuid,uuid,text,text); Owner: tendreladmin
+
+CREATE OR REPLACE FUNCTION api.delete_reason_code(owner uuid, id uuid, work_template_constraint text, work_template text)
+ RETURNS SETOF api.reason_code
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+AS $function$
+declare
+	ins_userid bigint;
+begin
+
+select get_workerinstanceid
+into ins_userid
+from _api.util_user_details();
+
+-- NEED TO ADD MORE CONDITIONS.  
+-- DO WE ALLOW THE CONSTRAINT TO BE DELETED OR JUST THE CUSTAG TO BE DEACTIVATED.
+-- VERSION BELOW JUST DEACTIVATES THE CUSTAG, BUT THAT IS FOR ALL TEMPLATES.
+
+if (select owner in (select * from _api.util_get_onwership()) )
+	then  
+	  call entity.crud_custag_delete(
+	      create_custagownerentityuuid := owner,
+	      create_custagentityuuid := id,
+	      create_modifiedbyid := ins_userid
+	  );
+end if;
+
+  return query
+    select *
+    from api.reason_code t
+    where t.owner = $1 and t.id = $2
+  ;
+
+  return;
+end 
+$function$;
+
+
+REVOKE ALL ON FUNCTION api.delete_reason_code(uuid,uuid,text,text) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION api.delete_reason_code(uuid,uuid,text,text) TO tendreladmin WITH GRANT OPTION;
+GRANT EXECUTE ON FUNCTION api.delete_reason_code(uuid,uuid,text,text) TO authenticated;
+
+END;

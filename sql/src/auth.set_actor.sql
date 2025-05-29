@@ -1,3 +1,9 @@
+BEGIN;
+
+/*
+DROP FUNCTION auth.set_actor(text,text,boolean);
+*/
+
 
 -- Type: FUNCTION ; Name: auth.set_actor(text,text,boolean); Owner: tendreladmin
 
@@ -53,3 +59,5 @@ REVOKE ALL ON FUNCTION auth.set_actor(text,text,boolean) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION auth.set_actor(text,text,boolean) TO PUBLIC;
 GRANT EXECUTE ON FUNCTION auth.set_actor(text,text,boolean) TO tendreladmin WITH GRANT OPTION;
 GRANT EXECUTE ON FUNCTION auth.set_actor(text,text,boolean) TO graphql;
+
+END;

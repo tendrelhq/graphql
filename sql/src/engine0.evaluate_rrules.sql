@@ -1,3 +1,9 @@
+BEGIN;
+
+/*
+DROP FUNCTION engine0.evaluate_rrules(text,text,text,text);
+*/
+
 
 -- Type: FUNCTION ; Name: engine0.evaluate_rrules(text,text,text,text); Owner: tendreladmin
 
@@ -42,3 +48,5 @@ REVOKE ALL ON FUNCTION engine0.evaluate_rrules(text,text,text,text) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION engine0.evaluate_rrules(text,text,text,text) TO PUBLIC;
 GRANT EXECUTE ON FUNCTION engine0.evaluate_rrules(text,text,text,text) TO tendreladmin WITH GRANT OPTION;
 GRANT EXECUTE ON FUNCTION engine0.evaluate_rrules(text,text,text,text) TO graphql;
+
+END;

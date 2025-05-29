@@ -1,3 +1,9 @@
+BEGIN;
+
+/*
+DROP PROCEDURE entity.crud_entitydescription_create(uuid,uuid,uuid,text,text,text,text,uuid,uuid,boolean,boolean,bigint);
+*/
+
 
 -- Type: PROCEDURE ; Name: entity.crud_entitydescription_create(uuid,uuid,uuid,text,text,text,text,uuid,uuid,boolean,boolean,bigint); Owner: tendreladmin
 
@@ -249,3 +255,5 @@ REVOKE ALL ON PROCEDURE entity.crud_entitydescription_create(uuid,uuid,uuid,text
 GRANT EXECUTE ON PROCEDURE entity.crud_entitydescription_create(uuid,uuid,uuid,text,text,text,text,uuid,uuid,boolean,boolean,bigint) TO PUBLIC;
 GRANT EXECUTE ON PROCEDURE entity.crud_entitydescription_create(uuid,uuid,uuid,text,text,text,text,uuid,uuid,boolean,boolean,bigint) TO tendreladmin WITH GRANT OPTION;
 GRANT EXECUTE ON PROCEDURE entity.crud_entitydescription_create(uuid,uuid,uuid,text,text,text,text,uuid,uuid,boolean,boolean,bigint) TO graphql;
+
+END;

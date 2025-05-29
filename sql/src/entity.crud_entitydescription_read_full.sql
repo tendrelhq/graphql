@@ -1,3 +1,12 @@
+BEGIN;
+
+/*
+DROP FUNCTION api.delete_entity_description(uuid,uuid);
+DROP VIEW api.entity_description;
+
+DROP FUNCTION entity.crud_entitydescription_read_full(uuid,uuid,uuid,uuid,boolean,boolean,boolean,uuid);
+*/
+
 
 -- Type: FUNCTION ; Name: entity.crud_entitydescription_read_full(uuid,uuid,uuid,uuid,boolean,boolean,boolean,uuid); Owner: tendreladmin
 
@@ -389,3 +398,139 @@ REVOKE ALL ON FUNCTION entity.crud_entitydescription_read_full(uuid,uuid,uuid,uu
 GRANT EXECUTE ON FUNCTION entity.crud_entitydescription_read_full(uuid,uuid,uuid,uuid,boolean,boolean,boolean,uuid) TO PUBLIC;
 GRANT EXECUTE ON FUNCTION entity.crud_entitydescription_read_full(uuid,uuid,uuid,uuid,boolean,boolean,boolean,uuid) TO tendreladmin WITH GRANT OPTION;
 GRANT EXECUTE ON FUNCTION entity.crud_entitydescription_read_full(uuid,uuid,uuid,uuid,boolean,boolean,boolean,uuid) TO graphql;
+
+-- DEPENDANTS
+
+
+-- Type: VIEW ; Name: entity_description; Owner: tendreladmin
+
+CREATE OR REPLACE VIEW api.entity_description AS
+ SELECT entitydescriptionuuid AS id,
+    entitydescriptionownerentityuuid AS owner,
+    entitydescriptionownerentityname AS owner_name,
+    entitydescriptionentitytemplateentityuuid AS template,
+    entitydescriptionentitytemplateentityname AS template_name,
+    entitydescriptionentityfieldentityduuid AS field,
+    entitydescriptionentityfieldentitydname AS field_name,
+    entitydescriptionlanguagemasteruuid AS description_id,
+    entitydescriptionname AS description,
+    entitydescriptionsoplink AS sop_link,
+    entitydescriptionfile AS file_link,
+    entitydescriptionmimetypeuuid AS file_mime_type,
+    entitydescriptionicon AS icon_link,
+    entitydescriptionexternalid AS external_id,
+    entitydescriptionexternalsystementityuuid AS external_system,
+    entitydescriptiondeleted AS _deleted,
+    entitydescriptiondraft AS _draft,
+    entitydescriptionactive AS _active,
+    entitydescriptionstartdate AS activated_at,
+    entitydescriptionenddate AS deactivated_at,
+    entitydescriptioncreateddate AS created_at,
+    entitydescriptionmodifieddate AS updated_at,
+    entitydescriptionmodifiedby AS modified_by
+   FROM ( SELECT crud_entitydescription_read_full.languagetranslationtypeuuid,
+            crud_entitydescription_read_full.entitydescriptionuuid,
+            crud_entitydescription_read_full.entitydescriptionownerentityuuid,
+            crud_entitydescription_read_full.entitydescriptionownerentityname,
+            crud_entitydescription_read_full.entitydescriptionentitytemplateentityuuid,
+            crud_entitydescription_read_full.entitydescriptionentitytemplateentityname,
+            crud_entitydescription_read_full.entitydescriptionentityfieldentityduuid,
+            crud_entitydescription_read_full.entitydescriptionentityfieldentitydname,
+            crud_entitydescription_read_full.entitydescriptionname,
+            crud_entitydescription_read_full.entitydescriptionlanguagemasteruuid,
+            crud_entitydescription_read_full.entitydescriptionsoplink,
+            crud_entitydescription_read_full.entitydescriptionfile,
+            crud_entitydescription_read_full.entitydescriptionicon,
+            crud_entitydescription_read_full.entitydescriptiontranslatedname,
+            crud_entitydescription_read_full.entitydescriptioncreateddate,
+            crud_entitydescription_read_full.entitydescriptionmodifieddate,
+            crud_entitydescription_read_full.entitydescriptionstartdate,
+            crud_entitydescription_read_full.entitydescriptionenddate,
+            crud_entitydescription_read_full.entitydescriptionmodifiedby,
+            crud_entitydescription_read_full.entitydescriptionexternalid,
+            crud_entitydescription_read_full.entitydescriptionexternalsystementityuuid,
+            crud_entitydescription_read_full.entitydescriptionrefid,
+            crud_entitydescription_read_full.entitydescriptionrefuuid,
+            crud_entitydescription_read_full.entitydescriptiondraft,
+            crud_entitydescription_read_full.entitydescriptiondeleted,
+            crud_entitydescription_read_full.entitydescriptionactive,
+            crud_entitydescription_read_full.entitydescriptionmimetypeuuid,
+            crud_entitydescription_read_full.entitydescriptionmimetypename
+           FROM entity.crud_entitydescription_read_full(NULL::uuid, NULL::uuid, NULL::uuid, NULL::uuid, NULL::boolean, NULL::boolean, NULL::boolean, ( SELECT util_user_details.get_languagetypeentityuuid
+                   FROM _api.util_user_details() util_user_details(get_workerinstanceid, get_workerinstanceuuid, get_languagetypeid, get_languagetypeuuid, get_languagetypeentityuuid))) crud_entitydescription_read_full(languagetranslationtypeuuid, entitydescriptionuuid, entitydescriptionownerentityuuid, entitydescriptionownerentityname, entitydescriptionentitytemplateentityuuid, entitydescriptionentitytemplateentityname, entitydescriptionentityfieldentityduuid, entitydescriptionentityfieldentitydname, entitydescriptionname, entitydescriptionlanguagemasteruuid, entitydescriptionsoplink, entitydescriptionfile, entitydescriptionicon, entitydescriptiontranslatedname, entitydescriptioncreateddate, entitydescriptionmodifieddate, entitydescriptionstartdate, entitydescriptionenddate, entitydescriptionmodifiedby, entitydescriptionexternalid, entitydescriptionexternalsystementityuuid, entitydescriptionrefid, entitydescriptionrefuuid, entitydescriptiondraft, entitydescriptiondeleted, entitydescriptionactive, entitydescriptionmimetypeuuid, entitydescriptionmimetypename)) entitydescription
+  WHERE (entitydescriptionownerentityuuid IN ( SELECT util_get_onwership.get_ownership
+           FROM _api.util_get_onwership() util_get_onwership(get_ownership)));
+
+COMMENT ON VIEW api.entity_description IS '
+## Entity Template
+
+A description of what an entity tempalte is and why it is used
+
+### get {baseUrl}/entity_template
+
+A bunch of comments explaining get
+
+### del {baseUrl}/entity_template
+
+A bunch of comments explaining del
+
+### patch {baseUrl}/entity_template
+
+A bunch of comments explaining patch
+';
+
+CREATE TRIGGER create_entity_description_tg INSTEAD OF INSERT ON api.entity_description FOR EACH ROW EXECUTE FUNCTION api.create_entity_description();
+CREATE TRIGGER update_entity_description_tg INSTEAD OF UPDATE ON api.entity_description FOR EACH ROW EXECUTE FUNCTION api.update_entity_description();
+
+GRANT INSERT ON api.entity_description TO authenticated;
+GRANT SELECT ON api.entity_description TO authenticated;
+GRANT UPDATE ON api.entity_description TO authenticated;
+
+-- Type: FUNCTION ; Name: api.delete_entity_description(uuid,uuid); Owner: tendreladmin
+
+CREATE OR REPLACE FUNCTION api.delete_entity_description(owner uuid, id uuid)
+ RETURNS SETOF api.entity_description
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+AS $function$
+declare
+	ins_userid bigint;
+begin
+  -- TODO: I wonder what we should do here. Do we:
+  -- (a) Grant access to the entity schema to authenticated?
+  -- (b) Use SECURITY DEFINER functions
+  -- The downside of (a) is broader permissions, while of (b) is we lose RLS.
+  -- I lean towards (a) at the moment.
+
+  
+select get_workerinstanceid
+into ins_userid
+from _api.util_user_details();
+
+if (select owner in (select * from _api.util_get_onwership()) )
+	then  
+	  call entity.crud_entitydescription_delete(
+	      create_entitydescriptionownerentityuuid := owner,
+	      create_entitydescriptionentityuuid := id,
+	      create_modifiedbyid := ins_userid
+	  );
+	else
+		return;  -- need an exception here
+end if;
+
+  return query
+    select *
+    from api.entity_description t
+    where t.owner = $1 and t.id = $2
+  ;
+
+  return;
+end 
+$function$;
+
+
+REVOKE ALL ON FUNCTION api.delete_entity_description(uuid,uuid) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION api.delete_entity_description(uuid,uuid) TO tendreladmin WITH GRANT OPTION;
+GRANT EXECUTE ON FUNCTION api.delete_entity_description(uuid,uuid) TO authenticated;
+
+END;

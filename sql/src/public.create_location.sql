@@ -1,3 +1,9 @@
+BEGIN;
+
+/*
+DROP FUNCTION create_location(text,bigint,text,text,text,text,text);
+*/
+
 
 -- Type: FUNCTION ; Name: create_location(text,bigint,text,text,text,text,text); Owner: tendreladmin
 
@@ -27,3 +33,5 @@ $function$;
 REVOKE ALL ON FUNCTION create_location(text,bigint,text,text,text,text,text) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION create_location(text,bigint,text,text,text,text,text) TO PUBLIC;
 GRANT EXECUTE ON FUNCTION create_location(text,bigint,text,text,text,text,text) TO tendreladmin WITH GRANT OPTION;
+
+END;

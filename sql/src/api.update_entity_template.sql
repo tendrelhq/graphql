@@ -1,3 +1,11 @@
+BEGIN;
+
+/*
+DROP TRIGGER update_entity_template_tg ON api.entity_template;
+
+DROP FUNCTION api.update_entity_template();
+*/
+
 
 -- Type: FUNCTION ; Name: api.update_entity_template(); Owner: tendreladmin
 
@@ -69,3 +77,10 @@ $function$;
 REVOKE ALL ON FUNCTION api.update_entity_template() FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION api.update_entity_template() TO tendreladmin WITH GRANT OPTION;
 GRANT EXECUTE ON FUNCTION api.update_entity_template() TO authenticated;
+
+-- DEPENDANTS
+
+CREATE TRIGGER update_entity_template_tg INSTEAD OF UPDATE ON api.entity_template FOR EACH ROW EXECUTE FUNCTION api.update_entity_template();
+
+
+END;

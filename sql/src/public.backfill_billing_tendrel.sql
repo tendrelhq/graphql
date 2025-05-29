@@ -1,3 +1,9 @@
+BEGIN;
+
+/*
+DROP PROCEDURE backfill_billing_tendrel();
+*/
+
 
 -- Type: PROCEDURE ; Name: backfill_billing_tendrel(); Owner: tendreladmin
 
@@ -56,3 +62,5 @@ $procedure$;
 REVOKE ALL ON PROCEDURE backfill_billing_tendrel() FROM PUBLIC;
 GRANT EXECUTE ON PROCEDURE backfill_billing_tendrel() TO PUBLIC;
 GRANT EXECUTE ON PROCEDURE backfill_billing_tendrel() TO tendreladmin WITH GRANT OPTION;
+
+END;

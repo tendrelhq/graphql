@@ -1,3 +1,9 @@
+BEGIN;
+
+/*
+DROP FUNCTION check_workresult_name();
+*/
+
 
 -- Type: FUNCTION ; Name: check_workresult_name(); Owner: tendreladmin
 
@@ -30,3 +36,5 @@ $function$;
 REVOKE ALL ON FUNCTION check_workresult_name() FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION check_workresult_name() TO PUBLIC;
 GRANT EXECUTE ON FUNCTION check_workresult_name() TO tendreladmin WITH GRANT OPTION;
+
+END;

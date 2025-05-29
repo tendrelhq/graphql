@@ -1,3 +1,9 @@
+BEGIN;
+
+/*
+DROP PROCEDURE alarm();
+*/
+
 
 -- Type: PROCEDURE ; Name: alarm(); Owner: tendreladmin
 
@@ -31,3 +37,5 @@ $procedure$;
 REVOKE ALL ON PROCEDURE alarm() FROM PUBLIC;
 GRANT EXECUTE ON PROCEDURE alarm() TO PUBLIC;
 GRANT EXECUTE ON PROCEDURE alarm() TO tendreladmin WITH GRANT OPTION;
+
+END;

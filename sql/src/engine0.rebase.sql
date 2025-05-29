@@ -1,3 +1,9 @@
+BEGIN;
+
+/*
+DROP FUNCTION engine0.rebase(text,text);
+*/
+
 
 -- Type: FUNCTION ; Name: engine0.rebase(text,text); Owner: tendreladmin
 
@@ -62,3 +68,5 @@ REVOKE ALL ON FUNCTION engine0.rebase(text,text) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION engine0.rebase(text,text) TO PUBLIC;
 GRANT EXECUTE ON FUNCTION engine0.rebase(text,text) TO tendreladmin WITH GRANT OPTION;
 GRANT EXECUTE ON FUNCTION engine0.rebase(text,text) TO graphql;
+
+END;

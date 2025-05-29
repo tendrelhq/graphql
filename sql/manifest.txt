@@ -9,4 +9,3 @@ entity
 i18n
 legacy0
 public
-runtime

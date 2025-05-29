@@ -1,3 +1,9 @@
+BEGIN;
+
+/*
+DROP PROCEDURE crud_customer_config_update(text,text,text,text);
+*/
+
 
 -- Type: PROCEDURE ; Name: crud_customer_config_update(text,text,text,text); Owner: tendreladmin
 
@@ -29,3 +35,5 @@ $procedure$;
 REVOKE ALL ON PROCEDURE crud_customer_config_update(text,text,text,text) FROM PUBLIC;
 GRANT EXECUTE ON PROCEDURE crud_customer_config_update(text,text,text,text) TO PUBLIC;
 GRANT EXECUTE ON PROCEDURE crud_customer_config_update(text,text,text,text) TO tendreladmin WITH GRANT OPTION;
+
+END;

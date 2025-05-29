@@ -1,3 +1,9 @@
+BEGIN;
+
+/*
+DROP PROCEDURE crud_site_restart(text,text,text,bigint,bigint);
+*/
+
 
 -- Type: PROCEDURE ; Name: crud_site_restart(text,text,text,bigint,bigint); Owner: tendreladmin
 
@@ -32,3 +38,5 @@ $procedure$;
 REVOKE ALL ON PROCEDURE crud_site_restart(text,text,text,bigint,bigint) FROM PUBLIC;
 GRANT EXECUTE ON PROCEDURE crud_site_restart(text,text,text,bigint,bigint) TO PUBLIC;
 GRANT EXECUTE ON PROCEDURE crud_site_restart(text,text,text,bigint,bigint) TO tendreladmin WITH GRANT OPTION;
+
+END;

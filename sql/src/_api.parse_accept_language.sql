@@ -1,3 +1,9 @@
+BEGIN;
+
+/*
+DROP FUNCTION _api.parse_accept_language(text);
+*/
+
 
 -- Type: FUNCTION ; Name: _api.parse_accept_language(text); Owner: tendreladmin
 
@@ -46,3 +52,5 @@ end $function$;
 REVOKE ALL ON FUNCTION _api.parse_accept_language(text) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION _api.parse_accept_language(text) TO tendreladmin WITH GRANT OPTION;
 GRANT EXECUTE ON FUNCTION _api.parse_accept_language(text) TO authenticated;
+
+END;

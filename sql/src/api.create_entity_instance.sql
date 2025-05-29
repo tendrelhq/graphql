@@ -1,3 +1,11 @@
+BEGIN;
+
+/*
+DROP TRIGGER create_entity_instance_tg ON api.entity_instance;
+
+DROP FUNCTION api.create_entity_instance();
+*/
+
 
 -- Type: FUNCTION ; Name: api.create_entity_instance(); Owner: tendreladmin
 
@@ -68,3 +76,10 @@ $function$;
 REVOKE ALL ON FUNCTION api.create_entity_instance() FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION api.create_entity_instance() TO tendreladmin WITH GRANT OPTION;
 GRANT EXECUTE ON FUNCTION api.create_entity_instance() TO authenticated;
+
+-- DEPENDANTS
+
+CREATE TRIGGER create_entity_instance_tg INSTEAD OF INSERT ON api.entity_instance FOR EACH ROW EXECUTE FUNCTION api.create_entity_instance();
+
+
+END;

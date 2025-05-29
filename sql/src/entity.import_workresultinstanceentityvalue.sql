@@ -1,3 +1,9 @@
+BEGIN;
+
+/*
+DROP PROCEDURE entity.import_workresultinstanceentityvalue(text);
+*/
+
 
 -- Type: PROCEDURE ; Name: entity.import_workresultinstanceentityvalue(text); Owner: tendreladmin
 
@@ -61,3 +67,5 @@ REVOKE ALL ON PROCEDURE entity.import_workresultinstanceentityvalue(text) FROM P
 GRANT EXECUTE ON PROCEDURE entity.import_workresultinstanceentityvalue(text) TO PUBLIC;
 GRANT EXECUTE ON PROCEDURE entity.import_workresultinstanceentityvalue(text) TO tendreladmin WITH GRANT OPTION;
 GRANT EXECUTE ON PROCEDURE entity.import_workresultinstanceentityvalue(text) TO graphql;
+
+END;

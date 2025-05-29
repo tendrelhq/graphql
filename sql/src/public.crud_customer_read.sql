@@ -1,3 +1,9 @@
+BEGIN;
+
+/*
+DROP FUNCTION crud_customer_read(text,text,text);
+*/
+
 
 -- Type: FUNCTION ; Name: crud_customer_read(text,text,text); Owner: tendreladmin
 
@@ -39,3 +45,5 @@ $function$;
 REVOKE ALL ON FUNCTION crud_customer_read(text,text,text) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION crud_customer_read(text,text,text) TO PUBLIC;
 GRANT EXECUTE ON FUNCTION crud_customer_read(text,text,text) TO tendreladmin WITH GRANT OPTION;
+
+END;

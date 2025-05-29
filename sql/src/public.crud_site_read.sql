@@ -1,3 +1,9 @@
+BEGIN;
+
+/*
+DROP FUNCTION crud_site_read(text,text,text,bigint,text);
+*/
+
 
 -- Type: FUNCTION ; Name: crud_site_read(text,text,text,bigint,text); Owner: tendreladmin
 
@@ -76,3 +82,5 @@ $function$;
 REVOKE ALL ON FUNCTION crud_site_read(text,text,text,bigint,text) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION crud_site_read(text,text,text,bigint,text) TO PUBLIC;
 GRANT EXECUTE ON FUNCTION crud_site_read(text,text,text,bigint,text) TO tendreladmin WITH GRANT OPTION;
+
+END;

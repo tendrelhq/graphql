@@ -1,3 +1,9 @@
+BEGIN;
+
+/*
+DROP FUNCTION func_readrtls(timestamp with time zone,timestamp with time zone,bigint[],text[],text[],text[],text[]);
+*/
+
 
 -- Type: FUNCTION ; Name: func_readrtls(timestamp with time zone,timestamp with time zone,bigint[],text[],text[],text[],text[]); Owner: tendreladmin
 
@@ -200,3 +206,5 @@ $function$;
 REVOKE ALL ON FUNCTION func_readrtls(timestamp with time zone,timestamp with time zone,bigint[],text[],text[],text[],text[]) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION func_readrtls(timestamp with time zone,timestamp with time zone,bigint[],text[],text[],text[],text[]) TO PUBLIC;
 GRANT EXECUTE ON FUNCTION func_readrtls(timestamp with time zone,timestamp with time zone,bigint[],text[],text[],text[],text[]) TO tendreladmin WITH GRANT OPTION;
+
+END;

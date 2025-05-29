@@ -1,3 +1,9 @@
+BEGIN;
+
+/*
+DROP FUNCTION engine0.task_chain(text);
+*/
+
 
 -- Type: FUNCTION ; Name: engine0.task_chain(text); Owner: tendreladmin
 
@@ -30,3 +36,5 @@ REVOKE ALL ON FUNCTION engine0.task_chain(text) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION engine0.task_chain(text) TO PUBLIC;
 GRANT EXECUTE ON FUNCTION engine0.task_chain(text) TO tendreladmin WITH GRANT OPTION;
 GRANT EXECUTE ON FUNCTION engine0.task_chain(text) TO graphql;
+
+END;

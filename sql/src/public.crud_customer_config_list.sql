@@ -1,3 +1,9 @@
+BEGIN;
+
+/*
+DROP FUNCTION crud_customer_config_list(text,bigint);
+*/
+
 
 -- Type: FUNCTION ; Name: crud_customer_config_list(text,bigint); Owner: tendreladmin
 
@@ -36,3 +42,5 @@ $function$;
 REVOKE ALL ON FUNCTION crud_customer_config_list(text,bigint) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION crud_customer_config_list(text,bigint) TO PUBLIC;
 GRANT EXECUTE ON FUNCTION crud_customer_config_list(text,bigint) TO tendreladmin WITH GRANT OPTION;
+
+END;

@@ -1,3 +1,9 @@
+BEGIN;
+
+/*
+DROP PROCEDURE entity.crud_entitytag_update(uuid,uuid,uuid,uuid,uuid,uuid,boolean,boolean,timestamp with time zone,timestamp with time zone,bigint);
+*/
+
 
 -- Type: PROCEDURE ; Name: entity.crud_entitytag_update(uuid,uuid,uuid,uuid,uuid,uuid,boolean,boolean,timestamp with time zone,timestamp with time zone,bigint); Owner: tendreladmin
 
@@ -91,3 +97,5 @@ REVOKE ALL ON PROCEDURE entity.crud_entitytag_update(uuid,uuid,uuid,uuid,uuid,uu
 GRANT EXECUTE ON PROCEDURE entity.crud_entitytag_update(uuid,uuid,uuid,uuid,uuid,uuid,boolean,boolean,timestamp with time zone,timestamp with time zone,bigint) TO PUBLIC;
 GRANT EXECUTE ON PROCEDURE entity.crud_entitytag_update(uuid,uuid,uuid,uuid,uuid,uuid,boolean,boolean,timestamp with time zone,timestamp with time zone,bigint) TO tendreladmin WITH GRANT OPTION;
 GRANT EXECUTE ON PROCEDURE entity.crud_entitytag_update(uuid,uuid,uuid,uuid,uuid,uuid,boolean,boolean,timestamp with time zone,timestamp with time zone,bigint) TO graphql;
+
+END;

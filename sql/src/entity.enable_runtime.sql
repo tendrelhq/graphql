@@ -1,3 +1,9 @@
+BEGIN;
+
+/*
+DROP PROCEDURE entity.enable_runtime(uuid,text,uuid,text,uuid,text,bigint,text);
+*/
+
 
 -- Type: PROCEDURE ; Name: entity.enable_runtime(uuid,text,uuid,text,uuid,text,bigint,text); Owner: tendreladmin
 
@@ -275,7 +281,7 @@ begin
 
   -- Note that this will eventually get removed as part of the lazy
   -- instantiation merge (once the newer Runtime app build is live). Under the
-  -- newer model, pre-creation of "On Demand" instances is no longer required.
+  -- newer model, pre-creation of On Demand instances is no longer required.
   create temp table ins_instance as 
     select *
     from engine0.instantiate(
@@ -643,3 +649,5 @@ REVOKE ALL ON PROCEDURE entity.enable_runtime(uuid,text,uuid,text,uuid,text,bigi
 GRANT EXECUTE ON PROCEDURE entity.enable_runtime(uuid,text,uuid,text,uuid,text,bigint,text) TO PUBLIC;
 GRANT EXECUTE ON PROCEDURE entity.enable_runtime(uuid,text,uuid,text,uuid,text,bigint,text) TO tendreladmin WITH GRANT OPTION;
 GRANT EXECUTE ON PROCEDURE entity.enable_runtime(uuid,text,uuid,text,uuid,text,bigint,text) TO graphql;
+
+END;

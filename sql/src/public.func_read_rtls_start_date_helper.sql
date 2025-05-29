@@ -1,3 +1,9 @@
+BEGIN;
+
+/*
+DROP FUNCTION func_read_rtls_start_date_helper(timestamp with time zone,text[],text[],text[]);
+*/
+
 
 -- Type: FUNCTION ; Name: func_read_rtls_start_date_helper(timestamp with time zone,text[],text[],text[]); Owner: tendreladmin
 
@@ -99,3 +105,5 @@ $function$;
 REVOKE ALL ON FUNCTION func_read_rtls_start_date_helper(timestamp with time zone,text[],text[],text[]) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION func_read_rtls_start_date_helper(timestamp with time zone,text[],text[],text[]) TO PUBLIC;
 GRANT EXECUTE ON FUNCTION func_read_rtls_start_date_helper(timestamp with time zone,text[],text[],text[]) TO tendreladmin WITH GRANT OPTION;
+
+END;

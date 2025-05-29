@@ -1,3 +1,9 @@
+BEGIN;
+
+/*
+DROP PROCEDURE entity.crud_entityfield_update(uuid,uuid,uuid,uuid,integer,text,uuid,uuid,uuid,text,uuid,uuid,boolean,boolean,boolean,boolean,boolean,boolean,text,uuid,boolean,boolean,timestamp with time zone,timestamp with time zone,text,uuid);
+*/
+
 
 -- Type: PROCEDURE ; Name: entity.crud_entityfield_update(uuid,uuid,uuid,uuid,integer,text,uuid,uuid,uuid,text,uuid,uuid,boolean,boolean,boolean,boolean,boolean,boolean,text,uuid,boolean,boolean,timestamp with time zone,timestamp with time zone,text,uuid); Owner: tendreladmin
 
@@ -203,3 +209,5 @@ REVOKE ALL ON PROCEDURE entity.crud_entityfield_update(uuid,uuid,uuid,uuid,integ
 GRANT EXECUTE ON PROCEDURE entity.crud_entityfield_update(uuid,uuid,uuid,uuid,integer,text,uuid,uuid,uuid,text,uuid,uuid,boolean,boolean,boolean,boolean,boolean,boolean,text,uuid,boolean,boolean,timestamp with time zone,timestamp with time zone,text,uuid) TO PUBLIC;
 GRANT EXECUTE ON PROCEDURE entity.crud_entityfield_update(uuid,uuid,uuid,uuid,integer,text,uuid,uuid,uuid,text,uuid,uuid,boolean,boolean,boolean,boolean,boolean,boolean,text,uuid,boolean,boolean,timestamp with time zone,timestamp with time zone,text,uuid) TO tendreladmin WITH GRANT OPTION;
 GRANT EXECUTE ON PROCEDURE entity.crud_entityfield_update(uuid,uuid,uuid,uuid,integer,text,uuid,uuid,uuid,text,uuid,uuid,boolean,boolean,boolean,boolean,boolean,boolean,text,uuid,boolean,boolean,timestamp with time zone,timestamp with time zone,text,uuid) TO graphql;
+
+END;

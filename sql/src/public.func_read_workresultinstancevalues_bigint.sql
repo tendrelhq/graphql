@@ -1,3 +1,9 @@
+BEGIN;
+
+/*
+DROP FUNCTION func_read_workresultinstancevalues_bigint(text[],text,text,boolean);
+*/
+
 
 -- Type: FUNCTION ; Name: func_read_workresultinstancevalues_bigint(text[],text,text,boolean); Owner: tendreladmin
 
@@ -59,3 +65,5 @@ $function$;
 REVOKE ALL ON FUNCTION func_read_workresultinstancevalues_bigint(text[],text,text,boolean) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION func_read_workresultinstancevalues_bigint(text[],text,text,boolean) TO PUBLIC;
 GRANT EXECUTE ON FUNCTION func_read_workresultinstancevalues_bigint(text[],text,text,boolean) TO tendreladmin WITH GRANT OPTION;
+
+END;

@@ -1,3 +1,9 @@
+BEGIN;
+
+/*
+DROP FUNCTION api.delete_entity_instance(uuid,uuid);
+*/
+
 
 -- Type: FUNCTION ; Name: api.delete_entity_instance(uuid,uuid); Owner: tendreladmin
 
@@ -43,3 +49,5 @@ $function$;
 REVOKE ALL ON FUNCTION api.delete_entity_instance(uuid,uuid) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION api.delete_entity_instance(uuid,uuid) TO tendreladmin WITH GRANT OPTION;
 GRANT EXECUTE ON FUNCTION api.delete_entity_instance(uuid,uuid) TO authenticated;
+
+END;

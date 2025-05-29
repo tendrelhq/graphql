@@ -1,3 +1,14 @@
+BEGIN;
+
+/*
+DROP FUNCTION api.delete_entity_template(uuid,uuid);
+DROP FUNCTION api.delete_entity_field(uuid,uuid);
+DROP VIEW api.entity_template;
+DROP VIEW api.entity_field;
+
+DROP FUNCTION entity.crud_entitytemplate_read_full(uuid,uuid,boolean,boolean,boolean,uuid);
+*/
+
 
 -- Type: FUNCTION ; Name: entity.crud_entitytemplate_read_full(uuid,uuid,boolean,boolean,boolean,uuid); Owner: tendreladmin
 
@@ -267,3 +278,311 @@ REVOKE ALL ON FUNCTION entity.crud_entitytemplate_read_full(uuid,uuid,boolean,bo
 GRANT EXECUTE ON FUNCTION entity.crud_entitytemplate_read_full(uuid,uuid,boolean,boolean,boolean,uuid) TO PUBLIC;
 GRANT EXECUTE ON FUNCTION entity.crud_entitytemplate_read_full(uuid,uuid,boolean,boolean,boolean,uuid) TO tendreladmin WITH GRANT OPTION;
 GRANT EXECUTE ON FUNCTION entity.crud_entitytemplate_read_full(uuid,uuid,boolean,boolean,boolean,uuid) TO graphql;
+
+-- DEPENDANTS
+
+
+-- Type: VIEW ; Name: entity_field; Owner: tendreladmin
+
+CREATE OR REPLACE VIEW api.entity_field AS
+ SELECT entityfield.entityfielduuid AS id,
+    entityfield.entityfieldownerentityuuid AS owner,
+    entityfield.entityfieldcustomername AS owner_name,
+    entityfield.entityfieldparententityuuid AS parent,
+    entityfield.entityfieldsitename AS parent_name,
+    entityfield.entityfieldentityparenttypeentityuuid AS parent_type,
+    entityfield.entityfieldentitytypeentityuuid AS entity_type,
+    entityfield.entityfieldentitytypename AS entity_type_name,
+    entityfield.entityfieldexternalid AS external_id,
+    entityfield.entityfieldexternalsystementityuuid AS external_system,
+    entityfield.entityfieldentitytemplateentityuuid AS template,
+    entitytemplate.entitytemplatename AS template_name,
+    entityfield.entityfieldtypeentityuuid AS type,
+    entityfield.entityfieldtypename AS type_name,
+    entityfield.entityfieldlanguagemasteruuid AS name_id,
+    entityfield.entityfieldname AS name,
+    entityfield.entityfieldformatentityuuid AS format,
+    entityfield.entityfieldformatname AS format_name,
+    entityfield.entityfieldwidgetentityuuid AS widget,
+    entityfield.entityfieldwidgetname AS widget_name,
+    entityfield.entityfieldorder::integer AS _order,
+    entityfield.entityfielddefaultvalue AS default_value,
+    entityfield.entityfieldisprimary AS _primary,
+    entityfield.entityfieldiscalculated AS _calculated,
+    entityfield.entityfieldiseditable AS _editable,
+    entityfield.entityfieldisvisible AS _visible,
+    entityfield.entityfieldisrequired AS _required,
+    entityfield.entityfieldtranslate AS _translate,
+    entityfield.entityfielddeleted AS _deleted,
+    entityfield.entityfielddraft AS _draft,
+        CASE
+            WHEN entityfield.entityfieldenddate IS NOT NULL AND entityfield.entityfieldenddate::date < now()::date THEN false
+            ELSE true
+        END AS _active,
+    entityfield.entityfieldstartdate AS activated_at,
+    entityfield.entityfieldenddate AS deactivated_at,
+    entityfield.entityfieldcreateddate AS created_at,
+    entityfield.entityfieldmodifieddate AS updated_at,
+    entityfield.entityfieldmodifiedbyuuid AS modified_by
+   FROM ( SELECT crud_entityfield_read_full.languagetranslationtypeuuid,
+            crud_entityfield_read_full.entityfielduuid,
+            crud_entityfield_read_full.entityfieldentitytemplateentityuuid,
+            crud_entityfield_read_full.entityfieldcreateddate,
+            crud_entityfield_read_full.entityfieldmodifieddate,
+            crud_entityfield_read_full.entityfieldstartdate,
+            crud_entityfield_read_full.entityfieldenddate,
+            crud_entityfield_read_full.entityfieldlanguagemasteruuid,
+            crud_entityfield_read_full.entityfieldtranslatedname,
+            crud_entityfield_read_full.entityfieldorder,
+            crud_entityfield_read_full.entityfielddefaultvalue,
+            crud_entityfield_read_full.entityfieldiscalculated,
+            crud_entityfield_read_full.entityfieldiseditable,
+            crud_entityfield_read_full.entityfieldisvisible,
+            crud_entityfield_read_full.entityfieldisrequired,
+            crud_entityfield_read_full.entityfieldformatentityuuid,
+            crud_entityfield_read_full.entityfieldformatname,
+            crud_entityfield_read_full.entityfieldwidgetentityuuid,
+            crud_entityfield_read_full.entityfieldwidgetname,
+            crud_entityfield_read_full.entityfieldexternalid,
+            crud_entityfield_read_full.entityfieldexternalsystementityuuid,
+            crud_entityfield_read_full.entityfieldexternalsystemname,
+            crud_entityfield_read_full.entityfieldmodifiedbyuuid,
+            crud_entityfield_read_full.entityfieldmodifiedby,
+            crud_entityfield_read_full.entityfieldrefid,
+            crud_entityfield_read_full.entityfieldrefuuid,
+            crud_entityfield_read_full.entityfieldisprimary,
+            crud_entityfield_read_full.entityfieldtranslate,
+            crud_entityfield_read_full.entityfieldname,
+            crud_entityfield_read_full.entityfieldownerentityuuid,
+            crud_entityfield_read_full.entityfieldcustomername,
+            crud_entityfield_read_full.entityfieldtypeentityuuid,
+            crud_entityfield_read_full.entityfieldtypename,
+            crud_entityfield_read_full.entityfieldparententityuuid,
+            crud_entityfield_read_full.entityfieldsitename,
+            crud_entityfield_read_full.entityfieldentitytypeentityuuid,
+            crud_entityfield_read_full.entityfieldentitytypename,
+            crud_entityfield_read_full.entityfieldentityparenttypeentityuuid,
+            crud_entityfield_read_full.entityfieldparenttypename,
+            crud_entityfield_read_full.entityfielddeleted,
+            crud_entityfield_read_full.entityfielddraft,
+            crud_entityfield_read_full.entityfieldactive
+           FROM entity.crud_entityfield_read_full(NULL::uuid, NULL::uuid, NULL::uuid, NULL::boolean, NULL::boolean, NULL::boolean, ( SELECT util_user_details.get_languagetypeentityuuid
+                   FROM _api.util_user_details() util_user_details(get_workerinstanceid, get_workerinstanceuuid, get_languagetypeid, get_languagetypeuuid, get_languagetypeentityuuid))) crud_entityfield_read_full(languagetranslationtypeuuid, entityfielduuid, entityfieldentitytemplateentityuuid, entityfieldcreateddate, entityfieldmodifieddate, entityfieldstartdate, entityfieldenddate, entityfieldlanguagemasteruuid, entityfieldtranslatedname, entityfieldorder, entityfielddefaultvalue, entityfieldiscalculated, entityfieldiseditable, entityfieldisvisible, entityfieldisrequired, entityfieldformatentityuuid, entityfieldformatname, entityfieldwidgetentityuuid, entityfieldwidgetname, entityfieldexternalid, entityfieldexternalsystementityuuid, entityfieldexternalsystemname, entityfieldmodifiedbyuuid, entityfieldmodifiedby, entityfieldrefid, entityfieldrefuuid, entityfieldisprimary, entityfieldtranslate, entityfieldname, entityfieldownerentityuuid, entityfieldcustomername, entityfieldtypeentityuuid, entityfieldtypename, entityfieldparententityuuid, entityfieldsitename, entityfieldentitytypeentityuuid, entityfieldentitytypename, entityfieldentityparenttypeentityuuid, entityfieldparenttypename, entityfielddeleted, entityfielddraft, entityfieldactive)) entityfield
+     JOIN ( SELECT crud_entitytemplate_read_full.languagetranslationtypeuuid,
+            crud_entitytemplate_read_full.entitytemplateuuid,
+            crud_entitytemplate_read_full.entitytemplateownerentityuuid,
+            crud_entitytemplate_read_full.entitytemplatecustomername,
+            crud_entitytemplate_read_full.entitytemplateparententityuuid,
+            crud_entitytemplate_read_full.entitytemplatesitename,
+            crud_entitytemplate_read_full.entitytemplatetypeentityuuid,
+            crud_entitytemplate_read_full.entitytemplatetype,
+            crud_entitytemplate_read_full.entitytemplateisprimary,
+            crud_entitytemplate_read_full.entitytemplatescanid,
+            crud_entitytemplate_read_full.entitytemplatenameuuid,
+            crud_entitytemplate_read_full.entitytemplatename,
+            crud_entitytemplate_read_full.entitytemplateorder,
+            crud_entitytemplate_read_full.entitytemplatemodifiedbyuuid,
+            crud_entitytemplate_read_full.entitytemplatemodifiedby,
+            crud_entitytemplate_read_full.entitytemplatestartdate,
+            crud_entitytemplate_read_full.entitytemplateenddate,
+            crud_entitytemplate_read_full.entitytemplatecreateddate,
+            crud_entitytemplate_read_full.entitytemplatemodifieddate,
+            crud_entitytemplate_read_full.entitytemplateexternalid,
+            crud_entitytemplate_read_full.entitytemplaterefid,
+            crud_entitytemplate_read_full.entitytemplaterefuuid,
+            crud_entitytemplate_read_full.entitytemplateexternalsystementityuuid,
+            crud_entitytemplate_read_full.entitytemplateexternalsystem,
+            crud_entitytemplate_read_full.entitytemplatedeleted,
+            crud_entitytemplate_read_full.entitytemplatedraft,
+            crud_entitytemplate_read_full.entitytemplateactive
+           FROM entity.crud_entitytemplate_read_full(NULL::uuid, NULL::uuid, NULL::boolean, NULL::boolean, NULL::boolean, ( SELECT util_user_details.get_languagetypeentityuuid
+                   FROM _api.util_user_details() util_user_details(get_workerinstanceid, get_workerinstanceuuid, get_languagetypeid, get_languagetypeuuid, get_languagetypeentityuuid))) crud_entitytemplate_read_full(languagetranslationtypeuuid, entitytemplateuuid, entitytemplateownerentityuuid, entitytemplatecustomername, entitytemplateparententityuuid, entitytemplatesitename, entitytemplatetypeentityuuid, entitytemplatetype, entitytemplateisprimary, entitytemplatescanid, entitytemplatenameuuid, entitytemplatename, entitytemplateorder, entitytemplatemodifiedbyuuid, entitytemplatemodifiedby, entitytemplatestartdate, entitytemplateenddate, entitytemplatecreateddate, entitytemplatemodifieddate, entitytemplateexternalid, entitytemplaterefid, entitytemplaterefuuid, entitytemplateexternalsystementityuuid, entitytemplateexternalsystem, entitytemplatedeleted, entitytemplatedraft, entitytemplateactive)) entitytemplate ON entitytemplate.entitytemplateuuid = entityfield.entityfieldentitytemplateentityuuid
+  WHERE (entityfield.entityfieldownerentityuuid IN ( SELECT util_get_onwership.get_ownership
+           FROM _api.util_get_onwership() util_get_onwership(get_ownership))) OR entityfield.entityfieldownerentityuuid = 'f90d618d-5de7-4126-8c65-0afb700c6c61'::uuid AND entitytemplate.entitytemplateisprimary = true;
+
+COMMENT ON VIEW api.entity_field IS '
+### Entity fields
+
+TODO describe what Entity fields are.
+';
+
+CREATE TRIGGER create_entity_field_tg INSTEAD OF INSERT ON api.entity_field FOR EACH ROW EXECUTE FUNCTION api.create_entity_field();
+CREATE TRIGGER update_entity_field_tg INSTEAD OF UPDATE ON api.entity_field FOR EACH ROW EXECUTE FUNCTION api.update_entity_field();
+
+GRANT INSERT ON api.entity_field TO authenticated;
+GRANT SELECT ON api.entity_field TO authenticated;
+GRANT UPDATE ON api.entity_field TO authenticated;
+
+-- Type: VIEW ; Name: entity_template; Owner: tendreladmin
+
+CREATE OR REPLACE VIEW api.entity_template AS
+ SELECT entitytemplateuuid AS id,
+    entitytemplateownerentityuuid AS owner,
+    entitytemplatecustomername AS owner_name,
+    entitytemplateparententityuuid AS parent,
+    entitytemplatesitename AS parent_name,
+    entitytemplateexternalid AS external_id,
+    entitytemplateexternalsystementityuuid AS external_system,
+    entitytemplatescanid AS scan_code,
+    entitytemplatenameuuid AS name_id,
+    entitytemplatename AS name,
+    entitytemplatetypeentityuuid AS type,
+    entitytemplatetype AS type_name,
+    entitytemplateorder AS _order,
+    entitytemplateisprimary AS _primary,
+    entitytemplatedeleted AS _deleted,
+    entitytemplatedraft AS _draft,
+    entitytemplateactive AS _active,
+    entitytemplatestartdate AS activated_at,
+    entitytemplateenddate AS deactivated_at,
+    entitytemplatecreateddate AS created_at,
+    entitytemplatemodifieddate AS updated_at,
+    entitytemplatemodifiedbyuuid AS modified_by
+   FROM ( SELECT crud_entitytemplate_read_full.languagetranslationtypeuuid,
+            crud_entitytemplate_read_full.entitytemplateuuid,
+            crud_entitytemplate_read_full.entitytemplateownerentityuuid,
+            crud_entitytemplate_read_full.entitytemplatecustomername,
+            crud_entitytemplate_read_full.entitytemplateparententityuuid,
+            crud_entitytemplate_read_full.entitytemplatesitename,
+            crud_entitytemplate_read_full.entitytemplatetypeentityuuid,
+            crud_entitytemplate_read_full.entitytemplatetype,
+            crud_entitytemplate_read_full.entitytemplateisprimary,
+            crud_entitytemplate_read_full.entitytemplatescanid,
+            crud_entitytemplate_read_full.entitytemplatenameuuid,
+            crud_entitytemplate_read_full.entitytemplatename,
+            crud_entitytemplate_read_full.entitytemplateorder,
+            crud_entitytemplate_read_full.entitytemplatemodifiedbyuuid,
+            crud_entitytemplate_read_full.entitytemplatemodifiedby,
+            crud_entitytemplate_read_full.entitytemplatestartdate,
+            crud_entitytemplate_read_full.entitytemplateenddate,
+            crud_entitytemplate_read_full.entitytemplatecreateddate,
+            crud_entitytemplate_read_full.entitytemplatemodifieddate,
+            crud_entitytemplate_read_full.entitytemplateexternalid,
+            crud_entitytemplate_read_full.entitytemplaterefid,
+            crud_entitytemplate_read_full.entitytemplaterefuuid,
+            crud_entitytemplate_read_full.entitytemplateexternalsystementityuuid,
+            crud_entitytemplate_read_full.entitytemplateexternalsystem,
+            crud_entitytemplate_read_full.entitytemplatedeleted,
+            crud_entitytemplate_read_full.entitytemplatedraft,
+            crud_entitytemplate_read_full.entitytemplateactive
+           FROM entity.crud_entitytemplate_read_full(NULL::uuid, NULL::uuid, NULL::boolean, NULL::boolean, NULL::boolean, ( SELECT util_user_details.get_languagetypeentityuuid
+                   FROM _api.util_user_details() util_user_details(get_workerinstanceid, get_workerinstanceuuid, get_languagetypeid, get_languagetypeuuid, get_languagetypeentityuuid))) crud_entitytemplate_read_full(languagetranslationtypeuuid, entitytemplateuuid, entitytemplateownerentityuuid, entitytemplatecustomername, entitytemplateparententityuuid, entitytemplatesitename, entitytemplatetypeentityuuid, entitytemplatetype, entitytemplateisprimary, entitytemplatescanid, entitytemplatenameuuid, entitytemplatename, entitytemplateorder, entitytemplatemodifiedbyuuid, entitytemplatemodifiedby, entitytemplatestartdate, entitytemplateenddate, entitytemplatecreateddate, entitytemplatemodifieddate, entitytemplateexternalid, entitytemplaterefid, entitytemplaterefuuid, entitytemplateexternalsystementityuuid, entitytemplateexternalsystem, entitytemplatedeleted, entitytemplatedraft, entitytemplateactive)) entitytemplate
+  WHERE (entitytemplateownerentityuuid IN ( SELECT util_get_onwership.get_ownership
+           FROM _api.util_get_onwership() util_get_onwership(get_ownership))) OR entitytemplateownerentityuuid = 'f90d618d-5de7-4126-8c65-0afb700c6c61'::uuid AND entitytemplateisprimary = true;
+
+COMMENT ON VIEW api.entity_template IS '
+## Entity Template
+
+A description of what an entity tempalte is and why it is used
+
+### get {baseUrl}/entity_template
+
+A bunch of comments explaining get
+
+### del {baseUrl}/entity_template
+
+A bunch of comments explaining del
+
+### patch {baseUrl}/entity_template
+
+A bunch of comments explaining patch
+';
+
+CREATE TRIGGER create_entity_template_tg INSTEAD OF INSERT ON api.entity_template FOR EACH ROW EXECUTE FUNCTION api.create_entity_template();
+CREATE TRIGGER update_entity_template_tg INSTEAD OF UPDATE ON api.entity_template FOR EACH ROW EXECUTE FUNCTION api.update_entity_template();
+
+GRANT INSERT ON api.entity_template TO authenticated;
+GRANT SELECT ON api.entity_template TO authenticated;
+GRANT UPDATE ON api.entity_template TO authenticated;
+
+-- Type: FUNCTION ; Name: api.delete_entity_field(uuid,uuid); Owner: tendreladmin
+
+CREATE OR REPLACE FUNCTION api.delete_entity_field(owner uuid, id uuid)
+ RETURNS SETOF api.entity_field
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+AS $function$
+declare
+	ins_userid bigint;
+begin
+  -- TODO: I wonder what we should do here. Do we:
+  -- (a) Grant access to the entity schema to authenticated?
+  -- (b) Use SECURITY DEFINER functions
+  -- The downside of (a) is broader permissions, while of (b) is we lose RLS.
+  -- I lean towards (a) at the moment.
+select get_workerinstanceid
+into ins_userid
+from _api.util_user_details();
+
+if (select owner in (select * from _api.util_get_onwership()) )
+	then  
+	  call entity.crud_entityfield_delete(
+	      create_entityfieldownerentityuuid := owner,
+	      create_entityfieldentityuuid := id,
+	      create_modifiedbyid := ins_userid
+	  );
+	else
+		return;  -- need an exception here
+end if;
+
+  return query
+    select *
+    from api.entity_field t
+    where t.owner = $1 and t.id = $2
+  ;
+
+  return;
+end 
+$function$;
+
+
+REVOKE ALL ON FUNCTION api.delete_entity_field(uuid,uuid) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION api.delete_entity_field(uuid,uuid) TO tendreladmin WITH GRANT OPTION;
+GRANT EXECUTE ON FUNCTION api.delete_entity_field(uuid,uuid) TO authenticated;
+
+-- Type: FUNCTION ; Name: api.delete_entity_template(uuid,uuid); Owner: tendreladmin
+
+CREATE OR REPLACE FUNCTION api.delete_entity_template(owner uuid, id uuid)
+ RETURNS SETOF api.entity_template
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+AS $function$
+declare
+	ins_userid bigint;
+begin
+  -- TODO: I wonder what we should do here. Do we:
+  -- (a) Grant access to the entity schema to authenticated?
+  -- (b) Use SECURITY DEFINER functions
+  -- The downside of (a) is broader permissions, while of (b) is we lose RLS.
+  -- I lean towards (a) at the moment.
+select get_workerinstanceid
+into ins_userid
+from _api.util_user_details();
+
+if (select owner in (select * from _api.util_get_onwership()) )
+	then  
+	  call entity.crud_entitytemplate_delete(
+	      create_entitytemplateownerentityuuid := owner,
+	      create_entitytemplateentityuuid := id,
+	      create_modifiedbyid := ins_userid
+	  );
+	else
+		return;  -- need an exception here
+end if;
+
+  return query
+    select *
+    from api.entity_template t
+    where t.owner = $1 and t.id = $2
+  ;
+
+  return;
+end 
+$function$;
+
+
+REVOKE ALL ON FUNCTION api.delete_entity_template(uuid,uuid) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION api.delete_entity_template(uuid,uuid) TO tendreladmin WITH GRANT OPTION;
+GRANT EXECUTE ON FUNCTION api.delete_entity_template(uuid,uuid) TO authenticated;
+
+END;

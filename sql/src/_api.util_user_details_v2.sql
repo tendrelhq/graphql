@@ -1,3 +1,9 @@
+BEGIN;
+
+/*
+DROP FUNCTION _api.util_user_details_v2();
+*/
+
 
 -- Type: FUNCTION ; Name: _api.util_user_details_v2(); Owner: tendreladmin
 
@@ -39,3 +45,5 @@ $function$;
 REVOKE ALL ON FUNCTION _api.util_user_details_v2() FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION _api.util_user_details_v2() TO tendreladmin WITH GRANT OPTION;
 GRANT EXECUTE ON FUNCTION _api.util_user_details_v2() TO authenticated;
+
+END;

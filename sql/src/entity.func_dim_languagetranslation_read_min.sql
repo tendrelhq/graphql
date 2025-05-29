@@ -1,3 +1,9 @@
+BEGIN;
+
+/*
+DROP FUNCTION entity.func_dim_languagetranslation_read_min(uuid,uuid);
+*/
+
 
 -- Type: FUNCTION ; Name: entity.func_dim_languagetranslation_read_min(uuid,uuid); Owner: tendreladmin
 
@@ -93,3 +99,5 @@ REVOKE ALL ON FUNCTION entity.func_dim_languagetranslation_read_min(uuid,uuid) F
 GRANT EXECUTE ON FUNCTION entity.func_dim_languagetranslation_read_min(uuid,uuid) TO PUBLIC;
 GRANT EXECUTE ON FUNCTION entity.func_dim_languagetranslation_read_min(uuid,uuid) TO tendreladmin WITH GRANT OPTION;
 GRANT EXECUTE ON FUNCTION entity.func_dim_languagetranslation_read_min(uuid,uuid) TO graphql;
+
+END;

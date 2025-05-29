@@ -1,3 +1,9 @@
+BEGIN;
+
+/*
+DROP FUNCTION engine1.delete_node(text,text);
+*/
+
 
 -- Type: FUNCTION ; Name: engine1.delete_node(text,text); Owner: tendreladmin
 
@@ -36,3 +42,5 @@ REVOKE ALL ON FUNCTION engine1.delete_node(text,text) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION engine1.delete_node(text,text) TO PUBLIC;
 GRANT EXECUTE ON FUNCTION engine1.delete_node(text,text) TO tendreladmin WITH GRANT OPTION;
 GRANT EXECUTE ON FUNCTION engine1.delete_node(text,text) TO graphql;
+
+END;

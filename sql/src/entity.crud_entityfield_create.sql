@@ -1,3 +1,9 @@
+BEGIN;
+
+/*
+DROP PROCEDURE entity.crud_entityfield_create(uuid,uuid,uuid,integer,text,uuid,uuid,uuid,text,uuid,text,uuid,text,boolean,boolean,boolean,boolean,boolean,boolean,text,uuid,uuid,boolean,boolean,bigint);
+*/
+
 
 -- Type: PROCEDURE ; Name: entity.crud_entityfield_create(uuid,uuid,uuid,integer,text,uuid,uuid,uuid,text,uuid,text,uuid,text,boolean,boolean,boolean,boolean,boolean,boolean,text,uuid,uuid,boolean,boolean,bigint); Owner: tendreladmin
 
@@ -652,3 +658,5 @@ REVOKE ALL ON PROCEDURE entity.crud_entityfield_create(uuid,uuid,uuid,integer,te
 GRANT EXECUTE ON PROCEDURE entity.crud_entityfield_create(uuid,uuid,uuid,integer,text,uuid,uuid,uuid,text,uuid,text,uuid,text,boolean,boolean,boolean,boolean,boolean,boolean,text,uuid,uuid,boolean,boolean,bigint) TO PUBLIC;
 GRANT EXECUTE ON PROCEDURE entity.crud_entityfield_create(uuid,uuid,uuid,integer,text,uuid,uuid,uuid,text,uuid,text,uuid,text,boolean,boolean,boolean,boolean,boolean,boolean,text,uuid,uuid,boolean,boolean,bigint) TO tendreladmin WITH GRANT OPTION;
 GRANT EXECUTE ON PROCEDURE entity.crud_entityfield_create(uuid,uuid,uuid,integer,text,uuid,uuid,uuid,text,uuid,text,uuid,text,boolean,boolean,boolean,boolean,boolean,boolean,text,uuid,uuid,boolean,boolean,bigint) TO graphql;
+
+END;

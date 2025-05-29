@@ -1,3 +1,9 @@
+BEGIN;
+
+/*
+DROP FUNCTION entity.crud_entityinstance_read_min(uuid,uuid,uuid,uuid,uuid,uuid,boolean,uuid,boolean,boolean,boolean,uuid);
+*/
+
 
 -- Type: FUNCTION ; Name: entity.crud_entityinstance_read_min(uuid,uuid,uuid,uuid,uuid,uuid,boolean,uuid,boolean,boolean,boolean,uuid); Owner: tendreladmin
 
@@ -416,3 +422,5 @@ REVOKE ALL ON FUNCTION entity.crud_entityinstance_read_min(uuid,uuid,uuid,uuid,u
 GRANT EXECUTE ON FUNCTION entity.crud_entityinstance_read_min(uuid,uuid,uuid,uuid,uuid,uuid,boolean,uuid,boolean,boolean,boolean,uuid) TO PUBLIC;
 GRANT EXECUTE ON FUNCTION entity.crud_entityinstance_read_min(uuid,uuid,uuid,uuid,uuid,uuid,boolean,uuid,boolean,boolean,boolean,uuid) TO tendreladmin WITH GRANT OPTION;
 GRANT EXECUTE ON FUNCTION entity.crud_entityinstance_read_min(uuid,uuid,uuid,uuid,uuid,uuid,boolean,uuid,boolean,boolean,boolean,uuid) TO graphql;
+
+END;

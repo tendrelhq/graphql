@@ -1,3 +1,9 @@
+BEGIN;
+
+/*
+DROP PROCEDURE entity.create_batch_instances(uuid);
+*/
+
 
 -- Type: PROCEDURE ; Name: entity.create_batch_instances(uuid); Owner: tendreladmin
 
@@ -19,7 +25,7 @@ from public.workinstance wi
 		on workinstanceworktemplateid = worktemplateid
 	inner join public.worktemplatetype wtt
 		on worktemplatetypeworktemplateuuid = wt.id
-			and worktemplatetypesystagid in (1075)
+			and worktemplatetypesystagid in (1014)
 where uploadbatchid = workinstanceexternalid and batchinstanceuuid isNull 	
 	and customerid = workinstancecustomerid and import_batch = etl_batch;
 
@@ -45,7 +51,7 @@ if ((select count(*) from entity.runtime_upload_prepped where batchinstanceuuid 
 					inner join public.worktemplatetype wtt
 						on worktemplatetypeworktemplateuuid = wt.id
 							and worktemplatecustomerid = batches.customerid
-							and worktemplatetypesystagid = 1075 ), -- fix this
+							and worktemplatetypesystagid = 1014 ), -- fix this
 			batches.siteid,
 			811,
 			707,
@@ -65,7 +71,7 @@ if ((select count(*) from entity.runtime_upload_prepped where batchinstanceuuid 
 								on workinstanceworktemplateid = worktemplateid
 							inner join public.worktemplatetype wtt
 								on worktemplatetypeworktemplateuuid = wt.id
-									and worktemplatetypesystagid = 1075  -- fix this
+									and worktemplatetypesystagid = 1014  -- fix this
 							inner join languagemaster
 								on workinstancenameid = languagemasteruuid
 						group by languagemastersource,workinstancecustomerid) batches
@@ -89,7 +95,7 @@ if ((select count(*) from entity.runtime_upload_prepped where batchinstanceuuid 
 					and workinstancestatusid = 707
 			inner join public.worktemplatetype wtt
 				on worktemplatetypeworktemplateuuid = wt.id
-					and worktemplatetypesystagid = 1075;
+					and worktemplatetypesystagid = 1014;
 		
 		update workinstance
 		set workinstancenameid = languagemasteruuid
@@ -245,7 +251,7 @@ if ((select count(*) from entity.runtime_upload_prepped where batchinstanceuuid 
 				on workinstanceworktemplateid = worktemplateid
 			inner join public.worktemplatetype wtt
 				on worktemplatetypeworktemplateuuid = wt.id
-					and worktemplatetypesystagid in (1075)
+					and worktemplatetypesystagid in (1014)
 		where uploadbatchid = workinstanceexternalid and batchinstanceuuid isNull 	and customerid = workinstancecustomerid  and import_batch = etl_batch;
 end if;
 
@@ -260,3 +266,5 @@ REVOKE ALL ON PROCEDURE entity.create_batch_instances(uuid) FROM PUBLIC;
 GRANT EXECUTE ON PROCEDURE entity.create_batch_instances(uuid) TO PUBLIC;
 GRANT EXECUTE ON PROCEDURE entity.create_batch_instances(uuid) TO tendreladmin WITH GRANT OPTION;
 GRANT EXECUTE ON PROCEDURE entity.create_batch_instances(uuid) TO graphql;
+
+END;

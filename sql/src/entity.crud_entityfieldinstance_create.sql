@@ -1,3 +1,9 @@
+BEGIN;
+
+/*
+DROP PROCEDURE entity.crud_entityfieldinstance_create(uuid,uuid,uuid,text,text,uuid,text,uuid,text,text,uuid,boolean,boolean,uuid,bigint);
+*/
+
 
 -- Type: PROCEDURE ; Name: entity.crud_entityfieldinstance_create(uuid,uuid,uuid,text,text,uuid,text,uuid,text,text,uuid,boolean,boolean,uuid,bigint); Owner: tendreladmin
 
@@ -278,3 +284,5 @@ REVOKE ALL ON PROCEDURE entity.crud_entityfieldinstance_create(uuid,uuid,uuid,te
 GRANT EXECUTE ON PROCEDURE entity.crud_entityfieldinstance_create(uuid,uuid,uuid,text,text,uuid,text,uuid,text,text,uuid,boolean,boolean,uuid,bigint) TO PUBLIC;
 GRANT EXECUTE ON PROCEDURE entity.crud_entityfieldinstance_create(uuid,uuid,uuid,text,text,uuid,text,uuid,text,text,uuid,boolean,boolean,uuid,bigint) TO tendreladmin WITH GRANT OPTION;
 GRANT EXECUTE ON PROCEDURE entity.crud_entityfieldinstance_create(uuid,uuid,uuid,text,text,uuid,text,uuid,text,text,uuid,boolean,boolean,uuid,bigint) TO graphql;
+
+END;

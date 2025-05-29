@@ -1,3 +1,9 @@
+BEGIN;
+
+/*
+DROP FUNCTION engine1.publish_workresult(jsonb);
+*/
+
 
 -- Type: FUNCTION ; Name: engine1.publish_workresult(jsonb); Owner: tendreladmin
 
@@ -34,3 +40,5 @@ REVOKE ALL ON FUNCTION engine1.publish_workresult(jsonb) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION engine1.publish_workresult(jsonb) TO PUBLIC;
 GRANT EXECUTE ON FUNCTION engine1.publish_workresult(jsonb) TO tendreladmin WITH GRANT OPTION;
 GRANT EXECUTE ON FUNCTION engine1.publish_workresult(jsonb) TO graphql;
+
+END;

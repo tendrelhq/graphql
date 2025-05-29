@@ -1,3 +1,9 @@
+BEGIN;
+
+/*
+DROP PROCEDURE entity.crud_customerrequestedlanguage_update(bigint,uuid,uuid,boolean,boolean,timestamp with time zone,timestamp with time zone,bigint);
+*/
+
 
 -- Type: PROCEDURE ; Name: entity.crud_customerrequestedlanguage_update(bigint,uuid,uuid,boolean,boolean,timestamp with time zone,timestamp with time zone,bigint); Owner: tendreladmin
 
@@ -32,3 +38,5 @@ REVOKE ALL ON PROCEDURE entity.crud_customerrequestedlanguage_update(bigint,uuid
 GRANT EXECUTE ON PROCEDURE entity.crud_customerrequestedlanguage_update(bigint,uuid,uuid,boolean,boolean,timestamp with time zone,timestamp with time zone,bigint) TO PUBLIC;
 GRANT EXECUTE ON PROCEDURE entity.crud_customerrequestedlanguage_update(bigint,uuid,uuid,boolean,boolean,timestamp with time zone,timestamp with time zone,bigint) TO tendreladmin WITH GRANT OPTION;
 GRANT EXECUTE ON PROCEDURE entity.crud_customerrequestedlanguage_update(bigint,uuid,uuid,boolean,boolean,timestamp with time zone,timestamp with time zone,bigint) TO graphql;
+
+END;

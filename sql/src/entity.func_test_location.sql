@@ -1,3 +1,9 @@
+BEGIN;
+
+/*
+DROP FUNCTION entity.func_test_location(bigint,bigint,boolean,text,text);
+*/
+
 
 -- Type: FUNCTION ; Name: entity.func_test_location(bigint,bigint,boolean,text,text); Owner: tendreladmin
 
@@ -177,3 +183,5 @@ REVOKE ALL ON FUNCTION entity.func_test_location(bigint,bigint,boolean,text,text
 GRANT EXECUTE ON FUNCTION entity.func_test_location(bigint,bigint,boolean,text,text) TO PUBLIC;
 GRANT EXECUTE ON FUNCTION entity.func_test_location(bigint,bigint,boolean,text,text) TO tendreladmin WITH GRANT OPTION;
 GRANT EXECUTE ON FUNCTION entity.func_test_location(bigint,bigint,boolean,text,text) TO graphql;
+
+END;

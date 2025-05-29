@@ -1,3 +1,9 @@
+BEGIN;
+
+/*
+DROP PROCEDURE crud_site_update(text,text,text,bigint,text,text,text,text,text,text,text,bigint);
+*/
+
 
 -- Type: PROCEDURE ; Name: crud_site_update(text,text,text,bigint,text,text,text,text,text,text,text,bigint); Owner: tendreladmin
 
@@ -119,3 +125,5 @@ $procedure$;
 REVOKE ALL ON PROCEDURE crud_site_update(text,text,text,bigint,text,text,text,text,text,text,text,bigint) FROM PUBLIC;
 GRANT EXECUTE ON PROCEDURE crud_site_update(text,text,text,bigint,text,text,text,text,text,text,text,bigint) TO PUBLIC;
 GRANT EXECUTE ON PROCEDURE crud_site_update(text,text,text,bigint,text,text,text,text,text,text,text,bigint) TO tendreladmin WITH GRANT OPTION;
+
+END;

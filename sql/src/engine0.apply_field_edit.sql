@@ -1,3 +1,9 @@
+BEGIN;
+
+/*
+DROP FUNCTION engine0.apply_field_edit(text,text,anyelement,text,engine0.on_error);
+*/
+
 
 -- Type: FUNCTION ; Name: engine0.apply_field_edit(text,text,anyelement,text,engine0.on_error); Owner: tendreladmin
 
@@ -238,3 +244,5 @@ REVOKE ALL ON FUNCTION engine0.apply_field_edit(text,text,anyelement,text,engine
 GRANT EXECUTE ON FUNCTION engine0.apply_field_edit(text,text,anyelement,text,engine0.on_error) TO PUBLIC;
 GRANT EXECUTE ON FUNCTION engine0.apply_field_edit(text,text,anyelement,text,engine0.on_error) TO tendreladmin WITH GRANT OPTION;
 GRANT EXECUTE ON FUNCTION engine0.apply_field_edit(text,text,anyelement,text,engine0.on_error) TO graphql;
+
+END;

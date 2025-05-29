@@ -1,3 +1,9 @@
+BEGIN;
+
+/*
+DROP PROCEDURE entity.import_entity(text);
+*/
+
 
 -- Type: PROCEDURE ; Name: entity.import_entity(text); Owner: tendreladmin
 
@@ -59,3 +65,5 @@ REVOKE ALL ON PROCEDURE entity.import_entity(text) FROM PUBLIC;
 GRANT EXECUTE ON PROCEDURE entity.import_entity(text) TO PUBLIC;
 GRANT EXECUTE ON PROCEDURE entity.import_entity(text) TO tendreladmin WITH GRANT OPTION;
 GRANT EXECUTE ON PROCEDURE entity.import_entity(text) TO graphql;
+
+END;

@@ -1,3 +1,11 @@
+BEGIN;
+
+/*
+DROP TRIGGER update_customer_tg ON api.customer;
+
+DROP FUNCTION api.update_customer();
+*/
+
 
 -- Type: FUNCTION ; Name: api.update_customer(); Owner: tendreladmin
 
@@ -61,3 +69,10 @@ $function$;
 REVOKE ALL ON FUNCTION api.update_customer() FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION api.update_customer() TO tendreladmin WITH GRANT OPTION;
 GRANT EXECUTE ON FUNCTION api.update_customer() TO authenticated;
+
+-- DEPENDANTS
+
+CREATE TRIGGER update_customer_tg INSTEAD OF UPDATE ON api.customer FOR EACH ROW EXECUTE FUNCTION api.update_customer();
+
+
+END;

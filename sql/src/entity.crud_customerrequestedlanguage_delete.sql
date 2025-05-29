@@ -1,3 +1,9 @@
+BEGIN;
+
+/*
+DROP PROCEDURE entity.crud_customerrequestedlanguage_delete(uuid,text,bigint);
+*/
+
 
 -- Type: PROCEDURE ; Name: entity.crud_customerrequestedlanguage_delete(uuid,text,bigint); Owner: tendreladmin
 
@@ -39,3 +45,5 @@ REVOKE ALL ON PROCEDURE entity.crud_customerrequestedlanguage_delete(uuid,text,b
 GRANT EXECUTE ON PROCEDURE entity.crud_customerrequestedlanguage_delete(uuid,text,bigint) TO PUBLIC;
 GRANT EXECUTE ON PROCEDURE entity.crud_customerrequestedlanguage_delete(uuid,text,bigint) TO tendreladmin WITH GRANT OPTION;
 GRANT EXECUTE ON PROCEDURE entity.crud_customerrequestedlanguage_delete(uuid,text,bigint) TO graphql;
+
+END;

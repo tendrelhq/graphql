@@ -1,3 +1,9 @@
+BEGIN;
+
+/*
+DROP FUNCTION debug.inspect(anyelement);
+*/
+
 
 -- Type: FUNCTION ; Name: debug.inspect(anyelement); Owner: tendreladmin
 
@@ -38,3 +44,5 @@ REVOKE ALL ON FUNCTION debug.inspect(anyelement) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION debug.inspect(anyelement) TO PUBLIC;
 GRANT EXECUTE ON FUNCTION debug.inspect(anyelement) TO tendreladmin WITH GRANT OPTION;
 GRANT EXECUTE ON FUNCTION debug.inspect(anyelement) TO graphql;
+
+END;

@@ -1,3 +1,9 @@
+BEGIN;
+
+/*
+DROP FUNCTION engine0.compute_rrule_next_occurrence(text,numeric,timestamp with time zone);
+*/
+
 
 -- Type: FUNCTION ; Name: engine0.compute_rrule_next_occurrence(text,numeric,timestamp with time zone); Owner: tendreladmin
 
@@ -22,3 +28,5 @@ REVOKE ALL ON FUNCTION engine0.compute_rrule_next_occurrence(text,numeric,timest
 GRANT EXECUTE ON FUNCTION engine0.compute_rrule_next_occurrence(text,numeric,timestamp with time zone) TO PUBLIC;
 GRANT EXECUTE ON FUNCTION engine0.compute_rrule_next_occurrence(text,numeric,timestamp with time zone) TO tendreladmin WITH GRANT OPTION;
 GRANT EXECUTE ON FUNCTION engine0.compute_rrule_next_occurrence(text,numeric,timestamp with time zone) TO graphql;
+
+END;

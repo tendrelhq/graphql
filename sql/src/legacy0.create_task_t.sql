@@ -1,3 +1,9 @@
+BEGIN;
+
+/*
+DROP FUNCTION legacy0.create_task_t(text,text,text,text,bigint,integer,boolean);
+*/
+
 
 -- Type: FUNCTION ; Name: legacy0.create_task_t(text,text,text,text,bigint,integer,boolean); Owner: tendreladmin
 
@@ -33,7 +39,7 @@ begin
       ins_name._id,
       task_supports_lazy_instantiation,
       1404,
-      true,
+      false, -- The engine supports this but it is useless without frontend support, so disabling for now -rugg
       task_order,
       modified_by
   from public.customer, public.location, ins_name
@@ -81,10 +87,13 @@ begin
   ;
 
   return;
-end $function$;
+end 
+$function$;
 
 
 REVOKE ALL ON FUNCTION legacy0.create_task_t(text,text,text,text,bigint,integer,boolean) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION legacy0.create_task_t(text,text,text,text,bigint,integer,boolean) TO PUBLIC;
 GRANT EXECUTE ON FUNCTION legacy0.create_task_t(text,text,text,text,bigint,integer,boolean) TO tendreladmin WITH GRANT OPTION;
 GRANT EXECUTE ON FUNCTION legacy0.create_task_t(text,text,text,text,bigint,integer,boolean) TO graphql;
+
+END;

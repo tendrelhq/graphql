@@ -1,3 +1,9 @@
+BEGIN;
+
+/*
+DROP FUNCTION legacy0.primary_location_for_instance(text);
+*/
+
 
 -- Type: FUNCTION ; Name: legacy0.primary_location_for_instance(text); Owner: tendreladmin
 
@@ -38,3 +44,5 @@ REVOKE ALL ON FUNCTION legacy0.primary_location_for_instance(text) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION legacy0.primary_location_for_instance(text) TO PUBLIC;
 GRANT EXECUTE ON FUNCTION legacy0.primary_location_for_instance(text) TO tendreladmin WITH GRANT OPTION;
 GRANT EXECUTE ON FUNCTION legacy0.primary_location_for_instance(text) TO graphql;
+
+END;

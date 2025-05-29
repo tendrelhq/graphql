@@ -1,3 +1,9 @@
+BEGIN;
+
+/*
+DROP PROCEDURE entity.crud_entityfileinstance_delete(uuid,uuid,bigint);
+*/
+
 
 -- Type: PROCEDURE ; Name: entity.crud_entityfileinstance_delete(uuid,uuid,bigint); Owner: tendreladmin
 
@@ -71,3 +77,5 @@ REVOKE ALL ON PROCEDURE entity.crud_entityfileinstance_delete(uuid,uuid,bigint) 
 GRANT EXECUTE ON PROCEDURE entity.crud_entityfileinstance_delete(uuid,uuid,bigint) TO PUBLIC;
 GRANT EXECUTE ON PROCEDURE entity.crud_entityfileinstance_delete(uuid,uuid,bigint) TO tendreladmin WITH GRANT OPTION;
 GRANT EXECUTE ON PROCEDURE entity.crud_entityfileinstance_delete(uuid,uuid,bigint) TO graphql;
+
+END;
