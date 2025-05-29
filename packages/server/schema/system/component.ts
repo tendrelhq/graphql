@@ -38,7 +38,7 @@ select
   f.draft as "isDraft",
   f.primary as "isPrimary",
   f.required as "isRequired",
-  f.order as order,
+  f.order::integer as order,
   case
     when f.type = 'Boolean'
     then jsonb_build_object('__typename', 'BooleanValue', 'boolean', f.value::boolean)

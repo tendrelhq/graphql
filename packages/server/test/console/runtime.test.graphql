@@ -37,12 +37,17 @@ fragment TestRuntime_fragment on Task {
     edges {
       node {
         id @include(if: $includeFieldIds)
+        isActive
+        isDraft
+        isPrimary
+        isRequired
         description {
           value
         }
         name {
           value
         }
+        order
         value {
           ...TestRuntimeValue_fragment
         }

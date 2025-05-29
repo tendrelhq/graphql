@@ -85,9 +85,14 @@ describe("[console] runtime", () => {
           {
             "node": {
               "description": null,
+              "isActive": true,
+              "isDraft": false,
+              "isPrimary": false,
+              "isRequired": false,
               "name": {
                 "value": "Customer",
               },
+              "order": 0,
               "value": {
                 "__typename": "StringValue",
                 "string": null,
@@ -98,9 +103,14 @@ describe("[console] runtime", () => {
           {
             "node": {
               "description": null,
+              "isActive": true,
+              "isDraft": false,
+              "isPrimary": false,
+              "isRequired": false,
               "name": {
                 "value": "Product Name",
               },
+              "order": 1,
               "value": {
                 "__typename": "StringValue",
                 "string": null,
@@ -111,9 +121,14 @@ describe("[console] runtime", () => {
           {
             "node": {
               "description": null,
+              "isActive": true,
+              "isDraft": false,
+              "isPrimary": false,
+              "isRequired": false,
               "name": {
                 "value": "SKU",
               },
+              "order": 2,
               "value": {
                 "__typename": "StringValue",
                 "string": null,
@@ -126,9 +141,14 @@ describe("[console] runtime", () => {
               "description": {
                 "value": "This is the baz field",
               },
+              "isActive": true,
+              "isDraft": true,
+              "isPrimary": false,
+              "isRequired": false,
               "name": {
                 "value": "Baz",
               },
+              "order": 98,
               "value": {
                 "__typename": "NumberValue",
                 "number": null,
@@ -141,9 +161,14 @@ describe("[console] runtime", () => {
               "description": {
                 "value": "This is the bar field",
               },
+              "isActive": true,
+              "isDraft": false,
+              "isPrimary": false,
+              "isRequired": false,
               "name": {
                 "value": "Bar",
               },
+              "order": 99,
               "value": {
                 "__typename": "BooleanValue",
                 "boolean": false,
@@ -156,9 +181,14 @@ describe("[console] runtime", () => {
               "description": {
                 "value": "This is the foo field",
               },
+              "isActive": true,
+              "isDraft": false,
+              "isPrimary": false,
+              "isRequired": false,
               "name": {
                 "value": "Foo",
               },
+              "order": 100,
               "value": {
                 "__typename": "StringValue",
                 "string": null,
