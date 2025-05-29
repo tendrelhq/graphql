@@ -1,3 +1,4 @@
+!.env.local.default
 !.env.local.template
 !.github/
 *.dump

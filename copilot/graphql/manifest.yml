@@ -59,10 +59,12 @@ environments:
   test:
     variables:
       ATTACHMENT_BUCKET: test-lambdastack-photostoragebucketcc7aea4f-1cnysolqfj44u
+      JWT_ISS: urn:tendrel:test
       LOG_LEVEL: debug
   beta:
     variables:
       ATTACHMENT_BUCKET: beta-lambdastack-photostoragebucketcc7aea4f-1ang3xq3j0cqv
+      JWT_ISS: urn:tendrel:beta
 
 sidecars:
   nginx:

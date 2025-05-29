@@ -9,13 +9,9 @@ services:
         - type=gha,mode=max
       tags:
         - tendrelhq/graphql:latest
-    env_file: .env.local
-    environment:
-      BASE_URL: http://nginx/
-      CLERK_PUBLISHABLE_KEY: pk_test_YXdha2UtaG9nLTI2LmNsZXJrLmFjY291bnRzLmRldiQ
-      NODE_ENV: development
-      PGUSER: graphql
-      STAGE: dev
+    env_file:
+      - .env.local.default
+      - .env.local
     extra_hosts:
       - host.docker.internal:host-gateway
     ports:
@@ -47,9 +43,9 @@ services:
         - type=gha,mode=max
       tags:
         - tendrelhq/postgrest:latest
-    env_file: .env.local
-    environment:
-      PGUSER: graphql
+    env_file:
+      - .env.local.default
+      - .env.local
     extra_hosts:
       - host.docker.internal:host-gateway
     ports:

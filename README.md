@@ -8,7 +8,9 @@ To get started:
    - You can use [sqitch] if you feel like it. I use it during development.[^1]
    - If you get errors about things already existing, run the corresponding
      revert script and then re-run the deploy script.
-1. `cp .env.local.template .env.local` and fill in the blanks, everything is required.
+1. `cp .env.local.template .env.local` and fill in your CLERK_SECRET_KEY.
+   - Default values are pulled from [.env.local.default](.env.local.default).
+     You may override these in .env.local if you so choose.
 2. `docker compose up --build --wait` (n.b. `--wait` implies `--detach`)
 
 ### formatting

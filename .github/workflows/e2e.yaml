@@ -90,12 +90,7 @@ jobs:
       - name: generate
         run: nix develop -c just generate
       - name: setup
-        run: |
-          touch .env.local
-          echo "CLERK_SECRET_KEY=${{ secrets.CLERK_SECRET_KEY }}" >> .env.local
-          echo "PGDATABASE=ci" >> .env.local
-          echo "PGHOST=host.docker.internal" >> .env.local
-          echo "PGRST_JWT_SECRET=\"${{ secrets.PGRST_JWT_SECRET }}\"" >> .env.local
+        run: echo "CLERK_SECRET_KEY=${{ secrets.CLERK_SECRET_KEY }}" > .env.local
       - name: up
         run: docker compose up --build --wait
         env:
