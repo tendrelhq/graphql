@@ -92,37 +92,47 @@ export class Task implements Assignable, Component, Refetchable, Trackable {
   /**
    * @gqlField
    */
-  async field(args: { byName?: string | null }): Promise<Field | null> {
+  async field(args: {
+    byName?: string | null;
+    isDraft?: boolean | null;
+  }): Promise<Field | null> {
     const [row] = await match(this._type)
       .with(
         "workinstance",
         () => sql<[Field?]>`
           with field as (
-              select
-                  encode(
-                      ('workresultinstance:' || wi.id || ':' || wr.id)::bytea, 'base64'
-                  ) as id,
-                  t.systagtype as type,
-                  wri.workresultinstancevalue as value
-              from public.workinstance as wi
-              inner join public.workresultinstance as wri
-                  on wi.workinstanceid = wri.workresultinstanceworkinstanceid
-              inner join public.workresult as wr
-                  on wri.workresultinstanceworkresultid = wr.workresultid
-              inner join public.systag as t on wr.workresulttypeid = t.systagid
-              ${
-                args.byName
-                  ? sql`
-              inner join public.languagemaster as n
-                  on wr.workresultlanguagemasterid = n.languagemasterid
-                  and n.languagemastersource = ${args.byName}
-                  `
-                  : sql``
-              }
-              where wi.id = ${this._id}
-              limit 1
+            select
+              encode(('workresultinstance:' || wi.id || ':' || wr.id)::bytea, 'base64') as id,
+              (wr.workresultenddate is null or wr.workresultenddate > now()) as active,
+              wr.workresultdraft as draft,
+              wr.workresultisprimary as primary,
+              wr.workresultisrequired as required,
+              wr.workresultorder as order,
+              t.systagtype as type,
+              wri.workresultinstancevalue as value
+            from public.workinstance as wi
+            inner join public.workresultinstance as wri
+              on wi.workinstanceid = wri.workresultinstanceworkinstanceid
+            inner join public.workresult as wr
+              on wri.workresultinstanceworkresultid = wr.workresultid
+              and wr.workresultdeleted = false
+              and wr.workresultdraft = ${args.isDraft ?? false}
+              and (
+                wr.workresultenddate is null
+                or wr.workresultenddate > now()
+              )
+            inner join public.systag as t on wr.workresulttypeid = t.systagid
+            ${
+              args.byName
+                ? sql`
+            inner join public.languagemaster as n
+              on wr.workresultlanguagemasterid = n.languagemasterid
+              and n.languagemastersource = ${args.byName}`
+                : sql``
+            }
+            where wi.id = ${this._id}
+            limit 1
           )
-
           ${field$fragment}
         `,
       )
@@ -131,22 +141,31 @@ export class Task implements Assignable, Component, Refetchable, Trackable {
         () => sql<[Field?]>`
           with field as (
               select
-                  encode(('workresult:' || wr.id)::bytea, 'base64') as id,
-                  t.systagtype as type,
-                  wr.workresultdefaultvalue as value
+                encode(('workresult:' || wr.id)::bytea, 'base64') as id,
+                (wr.workresultenddate is null or wr.workresultenddate > now()) as active,
+                wr.workresultdraft as draft,
+                wr.workresultisprimary as primary,
+                wr.workresultisrequired as required,
+                wr.workresultorder as order,
+                t.systagtype as type,
+                wr.workresultdefaultvalue as value
               from public.worktemplate as wt
-              inner join
-                  public.workresult as wr
-                  on wt.worktemplateid = wr.workresultworktemplateid
+              inner join public.workresult as wr
+                on wt.worktemplateid = wr.workresultworktemplateid
+                and wr.workresultdeleted = false
+                and wr.workresultdraft = ${args.isDraft ?? false}
+                and (
+                  wr.workresultenddate is null
+                  or wr.workresultenddate > now()
+                )
               inner join public.systag as t on wr.workresulttypeid = t.systagid
               ${
                 args.byName
                   ? sql`
               inner join
-                  public.languagemaster as n
-                  on wr.workresultlanguagemasterid = n.languagemasterid
-                  and n.languagemastersource = ${args.byName}
-                  `
+                public.languagemaster as n
+                on wr.workresultlanguagemasterid = n.languagemasterid
+                and n.languagemastersource = ${args.byName}`
                   : sql``
               }
               where wt.id = ${this._id}
@@ -1570,6 +1589,16 @@ export function applyAssignments_(
 export async function fields(
   parent: Task,
   ctx: Context,
+  args: {
+    /**
+     * Return all Fields regardless of whether they have been published or not.
+     */
+    includeDraft?: boolean | null;
+    /**
+     * Return only those Fields which have yet to be published.
+     */
+    isDraft?: boolean | null;
+  },
 ): Promise<Connection<Field>> {
   if (parent._type !== "workinstance" && parent._type !== "worktemplate") {
     console.warn(`Underlying type '${parent._type}' does not support fields`);
@@ -1589,91 +1618,99 @@ export async function fields(
     .with(
       "workinstance",
       () => sql<Field[]>`
-        with
-            field as (
-                select
-                    encode(
-                        ('workresultinstance:' || wi.id || ':' || wr.id)::bytea, 'base64'
-                    ) as id,
-                    encode(('name:' || n.languagemasteruuid)::bytea, 'base64') as _name,
-                    wi.workinstanceid as _id,
-                    wr.workresultid as _field,
-                    t.systagtype as type,
-                    nullif(
-                        coalesce(vt.languagetranslationvalue, v.languagemastersource, wri.workresultinstancevalue),
-                        ''
-                    ) as value
-                from public.workinstance as wi
-                inner join
-                    public.workresultinstance as wri
-                    on wi.workinstanceid = wri.workresultinstanceworkinstanceid
-                inner join
-                    public.workresult as wr
-                    on wri.workresultinstanceworkresultid = wr.workresultid
-                    and (
-                        wr.workresultisprimary = false
-                        or (
-                            wr.workresultisprimary = true
-                            and wr.workresultentitytypeid is null
-                            and wr.workresulttypeid != 737
-                        )
-                    )
-                inner join
-                    public.languagemaster as n
-                    on wr.workresultlanguagemasterid = n.languagemasterid
-                inner join
-                    public.systag as t
-                    on wr.workresulttypeid = t.systagid
-                left join
-                    public.languagemaster as v
-                    on wri.workresultinstancevaluelanguagemasterid = v.languagemasterid
-                left join
-                    public.languagetranslations as vt
-                    on v.languagemasterid = vt.languagetranslationmasterid
-                    and vt.languagetranslationtypeid = (
-                        select systagid
-                        from public.systag
-                        where systagparentid = 2 and systagtype = ${ctx.req.i18n.language}
-                    )
-                where wi.id = ${parent._id}
-                order by wr.workresultorder asc, wr.workresultid asc
+        with field as (
+          select
+            encode(('workresultinstance:' || wi.id || ':' || wr.id)::bytea, 'base64') as id,
+            (wr.workresultenddate is null or wr.workresultenddate > now()) as active,
+            wr.workresultdraft as draft,
+            wr.workresultisprimary as primary,
+            wr.workresultisrequired as required,
+            wr.workresultorder as order,
+            t.systagtype as type,
+            nullif(coalesce(vt.languagetranslationvalue, v.languagemastersource, wri.workresultinstancevalue), '') as value
+          from public.workinstance as wi
+          inner join public.workresultinstance as wri
+            on wi.workinstanceid = wri.workresultinstanceworkinstanceid
+          inner join public.workresult as wr
+            on wri.workresultinstanceworkresultid = wr.workresultid
+            and wr.workresultdeleted = false
+            ${
+              args.includeDraft
+                ? sql``
+                : sql`and wr.workresultdraft = ${args.isDraft ?? false}`
+            }
+            and (
+              wr.workresultenddate is null
+              or wr.workresultenddate > now()
             )
+            and (
+              wr.workresultisprimary = false
+              or (
+                wr.workresultisprimary = true
+                and wr.workresultentitytypeid is null
+                and wr.workresulttypeid != 737
+              )
+            )
+          inner join public.languagemaster as n
+            on wr.workresultlanguagemasterid = n.languagemasterid
+          inner join public.systag as t
+            on wr.workresulttypeid = t.systagid
+          left join public.languagemaster as v
+            on wri.workresultinstancevaluelanguagemasterid = v.languagemasterid
+          left join public.languagetranslations as vt
+            on v.languagemasterid = vt.languagetranslationmasterid
+            and vt.languagetranslationtypeid = (
+              select systagid
+              from public.systag
+              where systagparentid = 2 and systagtype = ${ctx.req.i18n.language}
+            )
+          where wi.id = ${parent._id}
+          order by wr.workresultorder asc, wr.workresultid asc
+        )
         ${field$fragment}
       `,
     )
     .with(
       "worktemplate",
       () => sql<Field[]>`
-        with
-            field as (
-                select
-                    encode(('workresult:' || wr.id)::bytea, 'base64') as id,
-                    encode(('name:' || n.languagemasteruuid)::bytea, 'base64') as "_name",
-                    wr.workresultid as _field,
-                    t.systagtype as type,
-                    wr.workresultdefaultvalue as value
-                from public.worktemplate as wt
-                inner join
-                    public.workresult as wr
-                    on wt.worktemplateid = wr.workresultworktemplateid
-                    and (wr.workresultenddate is null or wr.workresultenddate > now())
-                    and (
-                        wr.workresultisprimary = false
-                        or (
-                            wr.workresultisprimary = true
-                            and wr.workresultentitytypeid is null
-                            and wr.workresulttypeid != 737
-                        )
-                    )
-                inner join
-                    public.languagemaster as n
-                    on wr.workresultlanguagemasterid = n.languagemasterid
-                inner join
-                    public.systag as t
-                    on wr.workresulttypeid = t.systagid
-                where wt.id = ${parent._id}
-                order by wr.workresultorder asc, wr.workresultid asc
+        with field as (
+          select
+            encode(('workresult:' || wr.id)::bytea, 'base64') as id,
+            (wr.workresultenddate is null or wr.workresultenddate > now()) as active,
+            wr.workresultdraft as draft,
+            wr.workresultisprimary as primary,
+            wr.workresultisrequired as required,
+            wr.workresultorder as order,
+            t.systagtype as type,
+            wr.workresultdefaultvalue as value
+          from public.worktemplate as wt
+          inner join public.workresult as wr
+            on wt.worktemplateid = wr.workresultworktemplateid
+            and wr.workresultdeleted = false
+            ${
+              args.includeDraft
+                ? sql``
+                : sql`and wr.workresultdraft = ${args.isDraft ?? false}`
+            }
+            and (
+              wr.workresultenddate is null
+              or wr.workresultenddate > now()
             )
+            and (
+              wr.workresultisprimary = false
+              or (
+                wr.workresultisprimary = true
+                and wr.workresultentitytypeid is null
+                and wr.workresulttypeid != 737
+              )
+            )
+          inner join public.languagemaster as n
+            on wr.workresultlanguagemasterid = n.languagemasterid
+          inner join public.systag as t
+            on wr.workresulttypeid = t.systagid
+          where wt.id = ${parent._id}
+          order by wr.workresultorder asc, wr.workresultid asc
+        )
         ${field$fragment}
       `,
     )

@@ -26,7 +26,6 @@ import {
   attachments as fieldAttachmentsResolver,
   completions as fieldCompletionsResolver,
   description as fieldDescriptionResolver,
-  isRequired as fieldIsRequiredResolver,
   name as fieldNameResolver,
   parent as fieldParentResolver,
 } from "./system/component";
@@ -1233,14 +1232,32 @@ export function getSchema(): GraphQLSchema {
               name: "byName",
               type: GraphQLString,
             },
+            isDraft: {
+              name: "isDraft",
+              type: GraphQLBoolean,
+            },
           },
         },
         fields: {
           description: "The set of Fields for the given Task.",
           name: "fields",
           type: FieldConnectionType,
-          resolve(source, _args, context) {
-            return assertNonNull(taskFieldsResolver(source, context));
+          args: {
+            includeDraft: {
+              description:
+                "Return all Fields regardless of whether they have been published or not.",
+              name: "includeDraft",
+              type: GraphQLBoolean,
+            },
+            isDraft: {
+              description:
+                "Return only those Fields which have yet to be published.",
+              name: "isDraft",
+              type: GraphQLBoolean,
+            },
+          },
+          resolve(source, args, context) {
+            return assertNonNull(taskFieldsResolver(source, context, args));
           },
         },
         fsm: {
@@ -1414,11 +1431,46 @@ export function getSchema(): GraphQLSchema {
             );
           },
         },
+        isActive: {
+          description:
+            'Whether this Field is considered "active".\nBy default, only "active" Fields will show up in certain queries, e.g.\nthose used by the Runtime mobile app.',
+          name: "isActive",
+          type: GraphQLBoolean,
+          resolve(source, args, context, info) {
+            return assertNonNull(
+              defaultFieldResolver(source, args, context, info),
+            );
+          },
+        },
+        isDraft: {
+          description:
+            'Whether this Field has been published, or not.\nSimilar to "active" Fields, unpublished Fields do not show up in certain\nqueries, e.g. those used by the Runtime mobile app.',
+          name: "isDraft",
+          type: GraphQLBoolean,
+          resolve(source, args, context, info) {
+            return assertNonNull(
+              defaultFieldResolver(source, args, context, info),
+            );
+          },
+        },
+        isPrimary: {
+          name: "isPrimary",
+          type: GraphQLBoolean,
+          resolve(source, args, context, info) {
+            return assertNonNull(
+              defaultFieldResolver(source, args, context, info),
+            );
+          },
+        },
         isRequired: {
+          description:
+            'Whether this Field is "required", e.g. as a "form field".\nNote that this is not currently enforced by the engine and should be\nhandled by the client.',
           name: "isRequired",
           type: GraphQLBoolean,
-          resolve(source, _args, context) {
-            return assertNonNull(fieldIsRequiredResolver(source, context));
+          resolve(source, args, context, info) {
+            return assertNonNull(
+              defaultFieldResolver(source, args, context, info),
+            );
           },
         },
         name: {
@@ -1427,6 +1479,17 @@ export function getSchema(): GraphQLSchema {
           type: DisplayNameType,
           resolve(source, _args, context) {
             return assertNonNull(fieldNameResolver(source, context));
+          },
+        },
+        order: {
+          description:
+            "The natural order of this Field, relative to other Fields within the same\nTask. This is, most notably, the order in which Fields are returned by e.g.\nthe Task.fields api, and subsequently drives the *display order* for Fields\nin e.g. the Runtime mobile app.",
+          name: "order",
+          type: GraphQLInt,
+          resolve(source, args, context, info) {
+            return assertNonNull(
+              defaultFieldResolver(source, args, context, info),
+            );
           },
         },
         parent: {

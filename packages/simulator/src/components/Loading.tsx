@@ -1,9 +1,8 @@
 import assert from "node:assert";
 import spinners from "cli-spinners";
 import type { SpinnerName } from "cli-spinners";
-import { Text, useStdin } from "ink";
+import { Text } from "ink";
 import { useEffect, useMemo, useState } from "react";
-import config from "../config";
 import { faker } from "../rng"; // This is the default global faker instance.
 
 type Props = {
@@ -33,14 +32,10 @@ export function Loading({ message = "Loading..." }: Props) {
     return () => clearInterval(timer);
   }, [spinner]);
 
-  const stdin = useStdin();
-
-  return stdin.isRawModeSupported && !config.force_raw_mode ? (
+  return (
     <Text>
       {spinner.frames[frame]} {message}
     </Text>
-  ) : (
-    <Text>{message}</Text>
   );
 }
 

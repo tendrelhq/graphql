@@ -31,3 +31,7 @@ pull-schemas:
 
 test:
     bun test
+
+alias c := check
+alias ci := install
+alias g := generate

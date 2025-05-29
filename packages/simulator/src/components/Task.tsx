@@ -1,5 +1,5 @@
 import { map } from "@/util";
-import { Box, Text, type TextProps, useStdin } from "ink";
+import { Box, Text, type TextProps } from "ink";
 import { useMemo } from "react";
 import { match } from "ts-pattern";
 import config from "../config";
@@ -19,7 +19,7 @@ import {
 import { formatDuration } from "../lib";
 import { Id, type IdProps } from "./Id";
 
-interface TaskChainProps {
+export interface TaskChainProps {
   chainLagN?: number;
   showFullChain?: boolean;
   task: UseTaskChainKey;
@@ -70,11 +70,6 @@ export function TaskChain({
       );
     })
     .exhaustive();
-
-  const stdin = useStdin();
-  if (!stdin.isRawModeSupported || config.force_raw_mode) {
-    console.log(`└─ chain.length: ${chain.edges.length}`);
-  }
 
   return <Chain />;
 }

@@ -1,5 +1,5 @@
-import { Text, render, useStdin } from "ink";
-import { Suspense, useEffect, useState } from "react";
+import { Text, render } from "ink";
+import { Suspense } from "react";
 import { ErrorBoundary, type FallbackProps } from "react-error-boundary";
 import { RelayEnvironmentProvider } from "react-relay";
 import { App } from "./components/App";
@@ -37,18 +37,6 @@ const Fallback = (props: FallbackProps) => {
 };
 
 const Main = () => {
-  const [ready, setReady] = useState(!config.force_raw_mode);
-  const { setRawMode } = useStdin();
-
-  if (config.force_raw_mode) {
-    useEffect(() => {
-      setRawMode(true);
-      setReady(true);
-    }, [setRawMode]);
-  }
-
-  if (!ready) return;
-
   return (
     <ErrorBoundary FallbackComponent={Fallback}>
       <Suspense>

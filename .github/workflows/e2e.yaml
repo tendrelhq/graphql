@@ -108,7 +108,7 @@ jobs:
           PGUSER: graphql
           PGPASSWORD: graphql
           X_TENDREL_USER: user_2jJ7Xl0LFewQGKKNYwfFWAM0Lmc
-      - name: simulator
+      - name: simulator # FIXME: This is currently broken in CI :(
         if: success()
         continue-on-error: true
         run: nix develop -c bun simulator:start

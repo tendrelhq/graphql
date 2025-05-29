@@ -149,6 +149,11 @@ export async function asFieldTemplateValueType(
     with field as (
       select
         engine1.base64_encode(convert_to('workresult:' || wr.id, 'utf8')) as id,
+        (wr.workresultenddate is null or wr.workresultenddate > now()) as active,
+        wr.workresultdraft as draft,
+        wr.workresultisprimary as primary,
+        wr.workresultisrequired as required,
+        wr.workresultorder as order,
         s.systagtype as "type",
         wr.workresultdefaultvalue as "value"
       from entity.entityinstance

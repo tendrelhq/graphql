@@ -1,7 +1,7 @@
 import assert from "node:assert";
 import { type Customer, createTestContext } from "@/test/prelude";
 import { map } from "@/util";
-import { Box, Spacer, Text, useInput, useStdin } from "ink";
+import { Box, Spacer, Text, useInput } from "ink";
 import SelectInput from "ink-select-input";
 import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import {
@@ -39,7 +39,6 @@ export function App() {
   const [owner, setOwner] = useState("");
   const [template, setTemplate] = useState("");
   const data = useLazyLoadQuery<AppQuery>(AppFragment, {});
-  const stdin = useStdin();
 
   const ownerQuery = useQueryLoader<SelectedOwner>(SelectedOwnerQuery);
   const templateQuery = useQueryLoader<SelectedTemplate>(SelectedTemplateQuery);
@@ -79,16 +78,14 @@ export function App() {
     return <Simulator owner={owner} template={template} />;
   }, [data, onSelectOwner, onSelectTemplate, owner, ownerQuery, template]);
 
-  if (stdin.isRawModeSupported && !config.force_raw_mode) {
-    useInput(
-      (_, key) => {
-        if (key.escape) setOwner("");
-      },
-      {
-        isActive: owner !== "" && template === "",
-      },
-    );
-  }
+  useInput(
+    (_, key) => {
+      if (key.escape) setOwner("");
+    },
+    {
+      isActive: owner !== "" && template === "",
+    },
+  );
 
   return (
     <Box flexDirection="column">
@@ -182,17 +179,14 @@ function SelectOwner({
     return trie;
   }, [owners]);
 
-  const stdin = useStdin();
-  if (stdin.isRawModeSupported && !config.force_raw_mode) {
-    useInput(
-      (input, key) => {
-        if (key.ctrl && input === "g") {
-          setGenerating(true);
-        }
-      },
-      { isActive: !isGenerating },
-    );
-  }
+  useInput(
+    (input, key) => {
+      if (key.ctrl && input === "g") {
+        setGenerating(true);
+      }
+    },
+    { isActive: !isGenerating },
+  );
 
   if (config.auto_select_owner) {
     return (
@@ -280,9 +274,6 @@ function AutoSelect(props: AutoSelectProps) {
 }
 
 function Select({ onSelect, placeholder, trie }: SelectProps) {
-  const stdin = useStdin();
-  assert(stdin.isRawModeSupported && !config.force_raw_mode);
-
   const [page, setPage] = useState(0);
   const [searchTerm, setSearchTerm] = useState("");
 

@@ -535,11 +535,36 @@ type Field {
   Unique identifier for this Field.
   """
   id: ID @semanticNonNull
+  """
+  Whether this Field is considered "active".
+  By default, only "active" Fields will show up in certain queries, e.g.
+  those used by the Runtime mobile app.
+  """
+  isActive: Boolean @semanticNonNull
+  """
+  Whether this Field has been published, or not.
+  Similar to "active" Fields, unpublished Fields do not show up in certain
+  queries, e.g. those used by the Runtime mobile app.
+  """
+  isDraft: Boolean @semanticNonNull
+  isPrimary: Boolean @semanticNonNull
+  """
+  Whether this Field is "required", e.g. as a "form field".
+  Note that this is not currently enforced by the engine and should be
+  handled by the client.
+  """
   isRequired: Boolean @semanticNonNull
   """
   Display name for a Field.
   """
   name: DisplayName @semanticNonNull
+  """
+  The natural order of this Field, relative to other Fields within the same
+  Task. This is, most notably, the order in which Fields are returned by e.g.
+  the Task.fields api, and subsequently drives the *display order* for Fields
+  in e.g. the Runtime mobile app.
+  """
+  order: Int @semanticNonNull
   parent: Task @semanticNonNull
   """
   The value for this Field, if any. This field will always be present (when
@@ -896,11 +921,20 @@ type Task implements Assignable & Component & Node & Trackable {
   displayName: DisplayName
     @deprecated(reason: "Use Task.name instead.")
     @semanticNonNull
-  field(byName: String): Field
+  field(byName: String, isDraft: Boolean): Field
   """
   The set of Fields for the given Task.
   """
-  fields: FieldConnection @semanticNonNull
+  fields(
+    """
+    Return all Fields regardless of whether they have been published or not.
+    """
+    includeDraft: Boolean
+    """
+    Return only those Fields which have yet to be published.
+    """
+    isDraft: Boolean
+  ): FieldConnection @semanticNonNull
   """
   Tasks can have an associated StateMachine, which defines a finite set of
   states that the given Task can be in at any given time.

@@ -33,37 +33,30 @@ export interface Component {
 
 export const field$fragment: Fragment = sql`
 select
-    f.id,
-    case
-        when f.type = 'Boolean'
-        then
-            jsonb_build_object(
-                '__typename', 'BooleanValue', 'boolean', f.value::boolean
-            )
-        when f.type = 'Date'
-        then
-            jsonb_build_object(
-                '__typename', 'TimestampValue', 'timestamp', to_timestamp(f.value::bigint / 1000.0)
-            )
-        when f.type = 'Number'
-        then
-            jsonb_build_object(
-                '__typename', 'NumberValue', 'number', f.value::numeric
-            )
-        when f.type = 'String'
-        then
-            jsonb_build_object(
-                '__typename', 'StringValue', 'string', f.value
-            )
-        else '{}'::jsonb
-    end as value,
-    case
-        when f.type = 'Boolean' then 'boolean'
-        when f.type = 'Date' then 'timestamp'
-        when f.type = 'Number' then 'number'
-        when f.type = 'String' then 'string'
-        else 'unknown'
-    end as "valueType"
+  f.id,
+  f.active as "isActive",
+  f.draft as "isDraft",
+  f.primary as "isPrimary",
+  f.required as "isRequired",
+  f.order as order,
+  case
+    when f.type = 'Boolean'
+    then jsonb_build_object('__typename', 'BooleanValue', 'boolean', f.value::boolean)
+    when f.type = 'Date'
+    then jsonb_build_object('__typename', 'TimestampValue', 'timestamp', to_timestamp(f.value::bigint / 1000.0))
+    when f.type = 'Number'
+    then jsonb_build_object('__typename', 'NumberValue', 'number', f.value::numeric)
+    when f.type = 'String'
+    then jsonb_build_object('__typename', 'StringValue', 'string', f.value)
+    else '{}'::jsonb
+  end as value,
+  case
+    when f.type = 'Boolean' then 'boolean'
+    when f.type = 'Date' then 'timestamp'
+    when f.type = 'Number' then 'number'
+    when f.type = 'String' then 'string'
+    else 'unknown'
+  end as "valueType"
 from field as f
 `;
 
@@ -75,6 +68,46 @@ export type Field = {
    * @gqlField
    */
   id: ID;
+
+  /**
+   * Whether this Field is considered "active".
+   * By default, only "active" Fields will show up in certain queries, e.g.
+   * those used by the Runtime mobile app.
+   *
+   * @gqlField
+   */
+  isActive: boolean;
+
+  /**
+   * Whether this Field has been published, or not.
+   * Similar to "active" Fields, unpublished Fields do not show up in certain
+   * queries, e.g. those used by the Runtime mobile app.
+   *
+   * @gqlField
+   */
+  isDraft: boolean;
+
+  /** @gqlField */
+  isPrimary: boolean;
+
+  /**
+   * Whether this Field is "required", e.g. as a "form field".
+   * Note that this is not currently enforced by the engine and should be
+   * handled by the client.
+   *
+   * @gqlField
+   */
+  isRequired: boolean;
+
+  /**
+   * The natural order of this Field, relative to other Fields within the same
+   * Task. This is, most notably, the order in which Fields are returned by e.g.
+   * the Task.fields api, and subsequently drives the *display order* for Fields
+   * in e.g. the Runtime mobile app.
+   *
+   * @gqlField
+   */
+  order: Int;
 
   /**
    * The value for this Field, if any. This field will always be present (when
@@ -134,6 +167,11 @@ export async function completions(
       () => sql`
         select
           ''::text as id, -- unused, purely for fragment reuse
+          (wr.workresultenddate is null or wr.workresultenddate > now()) as active,
+          wr.workresultdraft as draft,
+          wr.workresultisprimary as primary,
+          wr.workresultisrequired as required,
+          wr.workresultorder as order,
           s.systagtype as "type",
           c.custagtype as "value"
         from public.workresult as wr
@@ -157,6 +195,11 @@ export async function completions(
       return sql`
         select
           ''::text as id, -- unused, purely for fragment reuse
+          (wr.workresultenddate is null or wr.workresultenddate > now()) as active,
+          wr.workresultdraft as draft,
+          wr.workresultisprimary as primary,
+          wr.workresultisrequired as required,
+          wr.workresultorder as order,
           s.systagtype as "type",
           c.custagtype as "value"
         from public.workinstance as wi
@@ -353,11 +396,6 @@ export async function parent(field: Field): Promise<Task> {
     });
 
   return new Task(row);
-}
-
-/** @gqlField */
-export async function isRequired(field: Field, ctx: Context): Promise<boolean> {
-  return (await ctx.orm.requirement.load(field.id)) === true;
 }
 
 /** @gqlInput */

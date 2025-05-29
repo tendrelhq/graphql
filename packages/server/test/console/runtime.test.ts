@@ -7,12 +7,12 @@ import {
   createDefaultCustomer,
   createTestContext,
   execute,
-  paginateQuery,
 } from "@/test/prelude";
 import { assertNonNull, mapOrElse } from "@/util";
 import { Faker, base, en } from "@faker-js/faker";
 import {
   TestAddFieldDocument,
+  TestDeleteFieldDocument,
   TestRuntimeDocument,
 } from "./runtime.test.generated";
 
@@ -76,6 +76,7 @@ describe("[console] runtime", () => {
           isDraft: true,
         },
       ],
+      includeDraftFields: true,
     });
     expect(mutation1.errors).toBeFalsy();
     expect(mutation1.data?.addFields?.fields).toMatchInlineSnapshot(`
@@ -169,6 +170,35 @@ describe("[console] runtime", () => {
         "totalCount": 6,
       }
     `);
+  });
+
+  test("delete fields", async () => {
+    const query0 = await execute(ctx, schema, TestRuntimeDocument, {
+      owner: CUSTOMER.id,
+      type: ["Batch"],
+      includeFieldIds: true,
+    });
+    expect(query0.errors).toBeFalsy();
+    const fields = assertNonNull(
+      query0.data?.templates?.edges?.at(0)?.node?.asTask?.fields?.edges,
+    );
+
+    for (const field of fields) {
+      const m = await execute(ctx, schema, TestDeleteFieldDocument, {
+        field: assertNonNull(field.node?.id),
+      });
+      expect(m.errors).toBeFalsy();
+    }
+
+    const query1 = await execute(ctx, schema, TestRuntimeDocument, {
+      owner: CUSTOMER.id,
+      type: ["Batch"],
+      includeFieldIds: true,
+    });
+    expect(query1.errors).toBeFalsy();
+    expect(
+      query1.data?.templates?.edges?.at(0)?.node?.asTask?.fields?.totalCount,
+    ).toBe(0);
   });
 
   beforeAll(async () => {

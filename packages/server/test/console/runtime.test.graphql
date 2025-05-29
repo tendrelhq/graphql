@@ -1,4 +1,9 @@
-query TestRuntime($owner: ID!, $type: [String!]!) {
+query TestRuntime(
+  $owner: ID!
+  $type: [String!]!
+  $includeFieldIds: Boolean = false
+  $includeDraftFields: Boolean = false
+) {
   templates(owner: $owner, type: $type) {
     edges {
       node {
@@ -11,17 +16,27 @@ query TestRuntime($owner: ID!, $type: [String!]!) {
   }
 }
 
-mutation TestAddField($node: ID!, $fields: [FieldDefinitionInput!]!) {
+mutation TestAddField(
+  $node: ID!
+  $fields: [FieldDefinitionInput!]!
+  $includeFieldIds: Boolean = false
+  $includeDraftFields: Boolean = false
+) {
   addFields(node: $node, fields: $fields) {
     ...TestRuntime_fragment
   }
 }
 
+mutation TestDeleteField($field: ID!) {
+  deleteNode(node: $field)
+}
+
 fragment TestRuntime_fragment on Task {
   id
-  fields {
+  fields(includeDraft: $includeDraftFields) {
     edges {
       node {
+        id @include(if: $includeFieldIds)
         description {
           value
         }

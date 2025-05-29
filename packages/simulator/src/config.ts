@@ -41,15 +41,6 @@ function makeProbability(name: string) {
 //============================================================================//
 
 /**
- * Force Ink to use raw mode.
- * Note that this is implicitly enabled in CI.
- *
- * @see {@link https://nodejs.org/api/tty.html#tty_readstream_setrawmode_mode}
- * @see {@link https://github.com/vadimdemedes/ink/tree/master?tab=readme-ov-file#israwmodesupported}
- */
-export const force_raw_mode = b().parse(e.FORCE_RAW_MODE);
-
-/**
  * Auto select an existing customer by name or id.
  * If it no such customer is found, an error will be thrown.
  * If you intend to select by name, keep in mind that the *first* matching owner
@@ -150,7 +141,6 @@ export default {
   active_probability,
   auto_select_owner,
   auto_select_template,
-  force_raw_mode,
   multiplicity,
   print_config,
   root_probability,

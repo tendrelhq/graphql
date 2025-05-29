@@ -1,5 +1,5 @@
 import assert from "node:assert";
-import { Box, Text, useInput, useStdin } from "ink";
+import { Box, Text, useInput } from "ink";
 import { Suspense, useCallback, useEffect, useState } from "react";
 import {
   commitLocalUpdate,
@@ -10,7 +10,6 @@ import {
 import { match } from "ts-pattern";
 import ActiveQueryNode, {
   type useSimulationActiveQuery as ActiveQuery,
-  type TaskStateName,
 } from "../__generated__/useSimulationActiveQuery.graphql";
 import InstanceFragment, {
   type useSimulationInstance_fragment$key as InstanceFragment$key,
@@ -23,7 +22,12 @@ import TimeFragment, {
   type useSimulationTime_fragment$key as TimeFragment$key,
 } from "../__generated__/useSimulationTime_fragment.graphql";
 import Loading from "../components/Loading";
-import { TaskChain, TaskId, TaskName } from "../components/Task";
+import {
+  TaskChain,
+  type TaskChainProps,
+  TaskId,
+  TaskName,
+} from "../components/Task";
 import config from "../config";
 import { formatDuration } from "../lib";
 import { anyModifier } from "../lib/ink";
@@ -104,26 +108,23 @@ function Running(props: SimulatorProps) {
     });
   }, [props, rex]);
 
-  const stdin = useStdin();
-  if (stdin.isRawModeSupported && !config.force_raw_mode) {
-    useInput((input, key) => {
-      switch (true) {
-        case input === "+" && !anyModifier(key):
-          setChainLagN(n => n + 1);
-          break;
-        case input === "-" && !anyModifier(key):
-          setChainLagN(n => Math.max(n - 1, 0));
-          break;
-        case input === "=" && !anyModifier(key):
-          setChainLagN(config.chain_lag_n);
-          setShowFullChain(config.show_full_chain);
-          break;
-        case input === "v" && !anyModifier(key):
-          setShowFullChain(b => !b);
-          break;
-      }
-    });
-  }
+  useInput((input, key) => {
+    switch (true) {
+      case input === "+" && !anyModifier(key):
+        setChainLagN(n => n + 1);
+        break;
+      case input === "-" && !anyModifier(key):
+        setChainLagN(n => Math.max(n - 1, 0));
+        break;
+      case input === "=" && !anyModifier(key):
+        setChainLagN(config.chain_lag_n);
+        setShowFullChain(config.show_full_chain);
+        break;
+      case input === "v" && !anyModifier(key):
+        setShowFullChain(b => !b);
+        break;
+    }
+  });
 
   return (
     <Box flexDirection="column">
@@ -137,19 +138,15 @@ function Running(props: SimulatorProps) {
           showFullChain={showFullChain}
           {...props}
         />
-        {stdin.isRawModeSupported && !config.force_raw_mode && (
-          <>
-            <Box height={1} />
-            <Text color="gray">
-              <Text bold>chain_lag_n={chainLagN}</Text> : use +/- to change
-            </Text>
-            <Text color="gray">
-              <Text bold>show_full_chain={Number(showFullChain)}</Text> : use v
-              to toggle
-            </Text>
-            <Text color="gray">use = to reset to defaults</Text>
-          </>
-        )}
+        <Box height={1} />
+        <Text color="gray">
+          <Text bold>chain_lag_n={chainLagN}</Text> : use +/- to change
+        </Text>
+        <Text color="gray">
+          <Text bold>show_full_chain={Number(showFullChain)}</Text> : use v to
+          toggle
+        </Text>
+        <Text color="gray">use = to reset to defaults</Text>
       </Suspense>
     </Box>
   );
@@ -160,12 +157,6 @@ function Time(props: { simulation: TimeFragment$key }) {
   const rex = useRex();
   const sys = data.time ?? "-";
   const usr = formatDuration(rex.time.elapsed);
-
-  const stdin = useStdin();
-  if (!stdin.isRawModeSupported || config.force_raw_mode) {
-    console.log(`t=${sys}, usr=${usr}`);
-    return null;
-  }
 
   return (
     <Text>
@@ -264,19 +255,13 @@ const syncTime: System<SimulationQuery> = function (query) {
   ];
 };
 
-function InstancesOf(
-  props: SimulatorProps & {
-    chainLagN: number;
-    showFullChain: boolean;
-    withState?: TaskStateName[];
-  },
-) {
+function InstancesOf(props: SimulatorProps & Omit<TaskChainProps, "task">) {
   const data = useLazyLoadQuery<ActiveQuery>(ActiveQueryNode, props);
   return (
     <Box flexDirection="column" gap={1}>
       <Text color="gray">{data.instances.totalCount} instances</Text>
       {data.instances?.edges?.map(e => (
-        <Instance key={e.node.id} instance={e.node} />
+        <Instance key={e.node.id} instance={e.node} {...props} />
       ))}
     </Box>
   );
@@ -285,14 +270,6 @@ function InstancesOf(
 function Instance(props: { instance: InstanceFragment$key }) {
   const node = useFragment(InstanceFragment, props.instance);
   const state = useTaskState(node);
-  const stdin = useStdin();
-
-  if (!stdin.isRawModeSupported || config.force_raw_mode) {
-    console.log(
-      `${node.id} @ ${node.parent?.name?.value} -> ${state?.__typename}`,
-    );
-  }
-
   return (
     <Box flexDirection="column">
       <Box gap={1}>
