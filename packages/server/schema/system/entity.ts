@@ -92,7 +92,7 @@ export async function instances(
   }
 
   const res = await fetch(
-    new URL(`/entity_instance?${q.toString()}`, base_url),
+    new URL(`/api/v1/entity_instance?${q.toString()}`, base_url),
     {
       method: "GET",
       headers: headers,
