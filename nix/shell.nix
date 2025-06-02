@@ -25,6 +25,7 @@
           pkgs.awscli2
           pkgs.bun
           pkgs.docker-buildx
+          pkgs.jq
           pkgs.just
           pkgs.nodejs # needed by relay-compiler's entrypoint
           pkgs.openssl

@@ -26,6 +26,12 @@ migrate:
 package:
     docker build --build-arg=NODE_ENV={{node_env}} --file=config/graphql.dockerfile -t {{image_name}} .
 
+publish:
+    mkdir -p ./dist/graphql
+    jq '{name,version,files}' packages/server/package.json > ./dist/graphql/package.json
+    cp packages/server/schema.graphql ./dist/graphql/schema.graphql
+    cd ./dist/graphql && bun publish
+
 pull-schemas:
     ./sql/scripts/pull-schemas.sh
 

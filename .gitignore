@@ -5,6 +5,7 @@
 *.generated.ts
 /.*
 data/
+dist/
 node_modules/
 out/
 postgrestools.jsonc

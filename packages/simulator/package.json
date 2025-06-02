@@ -6,7 +6,7 @@
   },
   "dependencies": {
     "@tendrelhq/core": "workspace:*",
-    "@tendrelhq/graphql": "workspace:*",
+    "@tendrel/graphql": "workspace:*",
     "cli-spinners": "^3.2.0",
     "fast-check": "^3.23.2",
     "ink": "^5.2.0",

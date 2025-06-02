@@ -1,5 +1,5 @@
 {
-  "name": "@tendrelhq/graphql",
+  "name": "@tendrel/graphql",
   "version": "0.33.1",
   "type": "module",
   "exports": {
@@ -7,6 +7,7 @@
     "./schema/*": "./schema/*",
     "./test/*": "./test/*"
   },
+  "files": ["schema.graphql"],
   "scripts": {
     "build": "bun build ./bin/app.ts --compile --env=disable --minify --outfile=out/app --sourcemap",
     "check": "biome check --write && tsc --pretty",
