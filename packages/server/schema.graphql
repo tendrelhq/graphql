@@ -971,6 +971,7 @@ type FieldConnection {
 
 input FieldDefinitionInput {
   description: String
+  id: ID
   isDraft: Boolean
   isPrimary: Boolean
   name: String!

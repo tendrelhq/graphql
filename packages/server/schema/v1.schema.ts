@@ -1931,6 +1931,10 @@ export function getSchema(): GraphQLSchema {
             name: "description",
             type: GraphQLString,
           },
+          id: {
+            name: "id",
+            type: GraphQLID,
+          },
           isDraft: {
             name: "isDraft",
             type: GraphQLBoolean,

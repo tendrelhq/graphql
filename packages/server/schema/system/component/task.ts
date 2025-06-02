@@ -230,6 +230,18 @@ export class Task implements Assignable, Component, Refetchable, Trackable {
         });
       });
 
+    const fieldId = map(input.id, id => {
+      const g = decodeGlobalId(id);
+      switch (g.type) {
+        case "workresult":
+          // workresult:<workresult.id>
+          return g.id;
+        case "workresultinstance":
+          // workresultinstance:<workinstance.id>:<workresult.id>
+          return assertNonNull(g.suffix?.at(0), "invalid global id");
+      }
+    });
+
     const result = await sql`
       with cte as (${cte})
       select t.*
@@ -241,7 +253,7 @@ export class Task implements Assignable, Component, Refetchable, Trackable {
           modified_by := cte.modified_by,
           template_id := cte.template_id,
           field_description := ${input.description ?? null},
-          field_id := null,
+          field_id := ${fieldId ?? null},
           field_is_draft := ${input.isDraft ?? false},
           field_is_primary := ${input.isPrimary ?? false},
           field_name := ${input.name},

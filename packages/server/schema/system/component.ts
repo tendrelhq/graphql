@@ -400,6 +400,7 @@ export async function parent(field: Field): Promise<Task> {
 
 /** @gqlInput */
 export type FieldDefinitionInput = {
+  id?: ID | null;
   name: string;
   type: ValueType;
   description?: string | null;
