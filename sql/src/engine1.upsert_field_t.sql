@@ -245,6 +245,15 @@ begin
     from cte
   ;
 
+  return query
+    select
+      'engine1.id'::regproc,
+      jsonb_build_object(
+        '_log', 'updated: field',
+        'field', field
+      )
+  ;
+
   return;
 end $function$;
 

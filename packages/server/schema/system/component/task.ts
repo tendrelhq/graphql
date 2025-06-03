@@ -265,7 +265,6 @@ export class Task implements Assignable, Component, Refetchable, Trackable {
         engine1.execute(ops.*) as t
       ;
     `;
-
     console.debug("engine.execute:", JSON.stringify(result.at(0)));
 
     // TODO: the return value could be more helpful.
@@ -274,7 +273,7 @@ export class Task implements Assignable, Component, Refetchable, Trackable {
       map(result.at(0)?.ctx.at(0)?.field, id =>
         encodeGlobalId({ type: "workresult", id }),
       ),
-      "failed to add field",
+      "failed to upsert field",
     );
 
     const [row] = await match(this._type)
