@@ -140,10 +140,6 @@ begin
         )
       from cte
     ;
-
-    if not found then
-      raise exception 'engine1.upsert_field_t: failed to delete field.description';
-    end if;
   else
     return query
       with

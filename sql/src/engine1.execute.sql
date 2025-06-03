@@ -31,7 +31,6 @@ end $function$;
 
 
 REVOKE ALL ON FUNCTION engine1.execute(engine1.closure) FROM PUBLIC;
-GRANT EXECUTE ON FUNCTION engine1.execute(engine1.closure) TO PUBLIC;
 GRANT EXECUTE ON FUNCTION engine1.execute(engine1.closure) TO tendreladmin WITH GRANT OPTION;
 GRANT EXECUTE ON FUNCTION engine1.execute(engine1.closure) TO graphql;
 

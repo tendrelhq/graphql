@@ -95,7 +95,7 @@ export async function deleteNode(node: ID, ctx: Context): Promise<ID[]> {
       `,
     );
 
-  console.debug(`engine1.execution.result:\n${JSON.stringify(rows, null, 2)}`);
+  console.debug("engine1.execution.result:", JSON.stringify(rows.at(0)));
 
   if (rows.length) {
     return [node];
