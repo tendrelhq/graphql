@@ -21,7 +21,6 @@ import {
   mapOrElse,
   normalizeBase64,
 } from "@/util";
-import { Temporal } from "@js-temporal/polyfill";
 import { GraphQLError } from "graphql/error";
 import type { ID, Int } from "grats";
 import { P, match } from "ts-pattern";
@@ -180,7 +179,7 @@ export class Task implements Assignable, Component, Refetchable, Trackable {
     return row ?? null;
   }
 
-  async addField(
+  async upsertField(
     input: FieldDefinitionInput,
     ctx: Context,
     sql: TxSql,
@@ -232,6 +231,7 @@ export class Task implements Assignable, Component, Refetchable, Trackable {
 
     const fieldId = map(input.id, id => {
       const g = decodeGlobalId(id);
+      assertUnderlyingType(["workresult", "workresultinstance"], g.type);
       switch (g.type) {
         case "workresult":
           // workresult:<workresult.id>
@@ -266,73 +266,69 @@ export class Task implements Assignable, Component, Refetchable, Trackable {
       ;
     `;
 
+    console.debug("engine.execute:", JSON.stringify(result.at(0)));
+
     // TODO: the return value could be more helpful.
-    // For now we know we the workresult will always be the first one.
+    // For now we know the workresult will always be the first one.
     const field: string = assertNonNull(
-      map(result.at(0)?.ctx.at(0)?.created.at(0)?.node, id =>
+      map(result.at(0)?.ctx.at(0)?.field, id =>
         encodeGlobalId({ type: "workresult", id }),
       ),
       "failed to add field",
     );
 
-    // This is still ugly...
-    // but honestly it's gotten way better since the Checklist days lmao.
-    return match(valueType)
-      .with("Boolean", () => ({
-        id: field,
-        value: {
-          __typename: "BooleanValue" as const,
-          boolean: match(input.value)
-            .with({ boolean: P.boolean }, v => v.boolean)
-            .otherwise(() => null),
-        },
-        valueType: "boolean" as const,
-      }))
-      .with("Entity", () => ({
-        id: field,
-        value: {
-          __typename: "EntityValue" as const,
-          entity: null,
-        },
-        valueType: "entity" as const,
-      }))
-      .with("Number", () => ({
-        id: field,
-        value: {
-          __typename: "NumberValue" as const,
-          number: match(input.value)
-            .with({ number: P.number }, v => v.number)
-            .otherwise(() => null),
-        },
-        valueType: "number" as const,
-      }))
-      .with("String", () => ({
-        id: field,
-        value: {
-          __typename: "StringValue" as const,
-          string: match(input.value)
-            .with({ string: P.string }, v => v.string)
-            .otherwise(() => null),
-        },
-        valueType: "string" as const,
-      }))
-      .with("Date", () => ({
-        id: field,
-        value: {
-          __typename: "TimestampValue" as const,
-          timestamp: match(input.value)
-            .with({ timestamp: P.string }, v =>
-              map(
-                // We store these as epoch second. Don't ask me why.
-                Temporal.Instant.from(v.timestamp),
-                t => (t.epochMilliseconds / 1000).toString(),
-              ),
-            )
-            .otherwise(() => null),
-        },
-        valueType: "timestamp" as const,
-      }))
+    const [row] = await match(this._type)
+      .with(
+        "workinstance",
+        () => sql<[Field]>`
+          with field as (
+            select
+              encode(('workresultinstance:' || wi.id || ':' || wr.id)::bytea, 'base64') as id,
+              (wr.workresultenddate is null or wr.workresultenddate > now()) as active,
+              wr.workresultdraft as draft,
+              wr.workresultisprimary as primary,
+              wr.workresultisrequired as required,
+              wr.workresultorder as order,
+              t.systagtype as type,
+              wri.workresultinstancevalue as value
+            from public.workinstance as wi
+            inner join public.workresultinstance as wri
+              on wi.workinstanceid = wri.workresultinstanceworkinstanceid
+            inner join public.workresult as wr
+              on wri.workresultinstanceworkresultid = wr.workresultid
+            inner join public.systag as t on wr.workresulttypeid = t.systagid
+            where wi.id = ${this._id} and wr.id = ${field}
+            limit 1
+          )
+          ${field$fragment}
+        `,
+      )
+      .with(
+        "worktemplate",
+        () => sql<[Field]>`
+          with field as (
+              select
+                encode(('workresult:' || wr.id)::bytea, 'base64') as id,
+                (wr.workresultenddate is null or wr.workresultenddate > now()) as active,
+                wr.workresultdraft as draft,
+                wr.workresultisprimary as primary,
+                wr.workresultisrequired as required,
+                wr.workresultorder as order,
+                t.systagtype as type,
+                wr.workresultdefaultvalue as value
+              from public.worktemplate as wt
+              inner join public.workresult as wr
+                on wt.worktemplateid = wr.workresultworktemplateid
+              inner join public.systag as t on wr.workresulttypeid = t.systagid
+              where wt.id = ${this._id} and wr.id = ${field}
+              limit 1
+          )
+          ${field$fragment}
+        `,
+      )
       .exhaustive();
+
+    return row;
   }
 
   async createTransition(
@@ -1748,7 +1744,7 @@ export async function addFields(
   if (t._type === "worktemplate" && args.fields.length > 0) {
     await sql.begin(async sql => {
       await setCurrentIdentity(sql, ctx);
-      await Promise.all(args.fields.map(f => t.addField(f, ctx, sql)));
+      await Promise.all(args.fields.map(f => t.upsertField(f, ctx, sql)));
     });
   }
   return t;

@@ -46,9 +46,8 @@ begin
       select
         'engine1.id'::regproc,
         jsonb_build_object(
-          'ok', true,
-          'count', 1,
-          'created', jsonb_build_array(jsonb_build_object('node', field))
+          '_log', 'create: field',
+          'field', field
         )
       union all
       select
@@ -81,14 +80,14 @@ begin
           workresultmodifiedby = modified_by
       where workresult.id = field
         and workresultorder is distinct from field_order
-      returning workresult.id
+      returning *
     )
     select
       'engine1.id'::regproc,
       jsonb_build_object(
-        'ok', true,
-        'count', 1,
-        'updated', jsonb_build_array(jsonb_build_object('node', id))
+        '_log', 'update: field.order',
+        'field', id,
+        'field.order', cte.workresultorder
       )
     from cte
   ;
@@ -101,14 +100,14 @@ begin
           workresultmodifiedby = modified_by
       where workresult.id = field
         and workresultisrequired is distinct from field_is_required
-      returning workresult.id
+      returning *
     )
     select
       'engine1.id'::regproc,
       jsonb_build_object(
-        'ok', true,
-        'count', 1,
-        'updated', jsonb_build_array(jsonb_build_object('node', id))
+        '_log', 'update: field.required',
+        'field', id,
+        'field.required', cte.workresultisrequired
       )
     from cte
   ;
@@ -127,19 +126,24 @@ begin
             workdescriptionenddate is null
             or workdescriptionenddate > now()
           )
-        returning workdescription.id
+        returning
+          workresult.id as field,
+          workdescription.id as description
       )
       select
         'engine1.id'::regproc,
         jsonb_build_object(
-          'ok', true,
-          'count', count(*),
-          'updated', jsonb_agg(jsonb_build_object('node', cte.id))
+          '_log', 'deleted: field.description',
+          'field', cte.field,
+          'field.description', cte.description
 
         )
       from cte
-      having count(*) > 0
     ;
+
+    if not found then
+      raise exception 'engine1.upsert_field_t: failed to delete field.description';
+    end if;
   else
     return query
       with
@@ -175,34 +179,34 @@ begin
               owner := customer_id,
               content := field_description,
               language := language_type
-          )
+          ) as t
           where not exists (select 1 from cur_desc)
         )
       select
         'engine1.id'::regproc,
         jsonb_build_object(
-          'ok', true,
-          'count', count(*),
-          'updated', jsonb_agg(jsonb_build_object('node', upd_desc.id))
+          '_log', 'updated: field.description',
+          'field', field,
+          'field.description', upd_desc.id
         )
       from upd_desc
-      having count(*) > 0
       union all
       select
         'engine1.id'::regproc,
         jsonb_build_object(
-          'ok', true,
-          'count', count(*),
-          'created', jsonb_agg(jsonb_build_object('node', ins_desc.id))
+          '_log', 'created: field.description',
+          'field', field,
+          'field.description', ins_desc.id
         )
       from ins_desc
-      having count(*) > 0
     ;
   end if;
 
   return query
     with cte as (
-      select t.*
+      select
+        workresult.id as field,
+        t.*
       from
         public.workresult,
         public.languagemaster,
@@ -217,12 +221,11 @@ begin
     select
       'engine1.id'::regproc,
       jsonb_build_object(
-        'ok', true,
-        'count', count(*),
-        'updated', jsonb_agg(jsonb_build_object('node', cte.id))
+        '_log', 'updated: field.name',
+        'field', cte.field,
+        'field.name', cte.id
       )
     from cte
-    having count(*) > 0
   ;
 
   -- TODO: this should probably happen via closure.
@@ -234,14 +237,14 @@ begin
           workresultmodifiedby = modified_by
       where workresult.id = field
         and workresultdefaultvalue is distinct from field_value
-      returning workresult.id
+      returning *
     )
     select
       'engine1.id'::regproc,
       jsonb_build_object(
-        'ok', true,
-        'count', 1,
-        'updated', jsonb_build_array(jsonb_build_object('node', id))
+        '_log', 'updated: field.value',
+        'field', cte.id,
+        'field.value', cte.workresultdefaultvalue
       )
     from cte
   ;
@@ -251,7 +254,6 @@ end $function$;
 
 
 REVOKE ALL ON FUNCTION engine1.upsert_field_t(text,text,bigint,text,text,text,integer,text,text,boolean,boolean,boolean,text,text,text) FROM PUBLIC;
-GRANT EXECUTE ON FUNCTION engine1.upsert_field_t(text,text,bigint,text,text,text,integer,text,text,boolean,boolean,boolean,text,text,text) TO PUBLIC;
 GRANT EXECUTE ON FUNCTION engine1.upsert_field_t(text,text,bigint,text,text,text,integer,text,text,boolean,boolean,boolean,text,text,text) TO tendreladmin WITH GRANT OPTION;
 GRANT EXECUTE ON FUNCTION engine1.upsert_field_t(text,text,bigint,text,text,text,integer,text,text,boolean,boolean,boolean,text,text,text) TO graphql;
 

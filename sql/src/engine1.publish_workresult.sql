@@ -18,14 +18,14 @@ AS $function$
         workresultmodifiedby = 895
     where id in (select value from jsonb_array_elements_text(ctx))
       and workresultdraft = true
-    returning id
+    returning *
   )
   select
     'engine1.id'::regproc,
     jsonb_build_object(
-        'ok', true,
-        'count', count(*),
-        'updated', jsonb_agg(jsonb_build_object('node', cte.id))
+        '_log', 'updated: field.draft',
+        'field', cte.id,
+        'field.draft', cte.workresultdraft
     )
   from cte
   union all
@@ -37,7 +37,6 @@ $function$;
 
 
 REVOKE ALL ON FUNCTION engine1.publish_workresult(jsonb) FROM PUBLIC;
-GRANT EXECUTE ON FUNCTION engine1.publish_workresult(jsonb) TO PUBLIC;
 GRANT EXECUTE ON FUNCTION engine1.publish_workresult(jsonb) TO tendreladmin WITH GRANT OPTION;
 GRANT EXECUTE ON FUNCTION engine1.publish_workresult(jsonb) TO graphql;
 

@@ -31,13 +31,13 @@ import type { ID } from "grats";
 
 // biome-ignore lint/suspicious/noExplicitAny:
 export async function execute<R, V extends Record<string, any>>(
-  ctx: Context,
+  contextValue: Context,
   schema: GraphQLSchema,
   query: DocumentNode<R, V>,
   ...[variables]: V extends Record<string, never> ? [] : [V]
 ) {
   const result = await graphql({
-    contextValue: ctx,
+    contextValue,
     schema,
     source: print(query),
     variableValues: variables,

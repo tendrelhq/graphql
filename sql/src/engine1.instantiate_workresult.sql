@@ -56,20 +56,13 @@ AS $function$
 
   select
     'engine1.id'::regproc,
-    jsonb_build_object(
-        'ok', count(*) > 0,
-        'count', count(*),
-        'created', coalesce(
-          jsonb_agg(jsonb_build_object('node', cte.id)),
-          '[]'::jsonb
-        )
-    )
+    jsonb_build_object('_log', 'created: field', 'field', jsonb_agg(cte.id))
   from cte
+  having count(*) > 0;
 $function$;
 
 
 REVOKE ALL ON FUNCTION engine1.instantiate_workresult(jsonb) FROM PUBLIC;
-GRANT EXECUTE ON FUNCTION engine1.instantiate_workresult(jsonb) TO PUBLIC;
 GRANT EXECUTE ON FUNCTION engine1.instantiate_workresult(jsonb) TO tendreladmin WITH GRANT OPTION;
 GRANT EXECUTE ON FUNCTION engine1.instantiate_workresult(jsonb) TO graphql;
 

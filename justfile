@@ -16,7 +16,7 @@ restore:
 install:
     bun clean && bun install --frozen-lockfile
 
-generate: install
+generate:
     bun --filter=./packages/* generate
     bun format
 
@@ -30,7 +30,7 @@ publish:
     mkdir -p ./dist/graphql
     jq '{name,version,files}' packages/server/package.json > ./dist/graphql/package.json
     cp packages/server/schema.graphql ./dist/graphql/schema.graphql
-    cd ./dist/graphql && bun publish
+    cd ./dist/graphql && bun publish --access=public
 
 pull-schemas:
     ./sql/scripts/pull-schemas.sh

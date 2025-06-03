@@ -69,7 +69,7 @@ jobs:
         run: nix develop -c just restore
         env:
           PGHOST: localhost
-          PGDATABASE: ci
+          PGDATABASE: tendrel
           PGUSER: postgres
           PGPASSWORD: postgres
       - name: migrate
@@ -82,7 +82,7 @@ jobs:
         run: nix develop -c psql -c 'analyze;'
         env:
           PGHOST: localhost
-          PGDATABASE: ci
+          PGDATABASE: tendrel
           PGUSER: postgres
           PGPASSWORD: postgres
       - name: install
@@ -99,33 +99,33 @@ jobs:
         run: nix develop -c just test
         env:
           PGHOST: localhost
-          PGDATABASE: ci
+          PGDATABASE: tendrel
           PGUSER: graphql
           PGPASSWORD: graphql
           X_TENDREL_USER: user_2jJ7Xl0LFewQGKKNYwfFWAM0Lmc
-      - name: simulator # FIXME: This is currently broken in CI :(
-        if: success()
-        continue-on-error: true
-        run: nix develop -c bun simulator:start
-        env:
-          # The simulator doesn't quite have full api support yet :/
-          PGHOST: localhost
-          PGDATABASE: ci
-          PGUSER: postgres
-          PGPASSWORD: postgres
-          # TODO: move this to a matrix and run multiple simulations
-          SKIP_OWNER_PROMPT: true
-          AUTO_SELECT_TEMPLATE: Run
-          PRINT_CONFIG: true
-          # FIXME: this is a rather crude measure to exit "successfully" :D
-          TIMEOUT: 2m
-          X_TENDREL_USER: user_2jJ7Xl0LFewQGKKNYwfFWAM0Lmc
+      # - name: simulator # FIXME: This is currently broken in CI :(
+      #   if: success()
+      #   continue-on-error: true
+      #   run: nix develop -c bun simulator:start
+      #   env:
+      #     # The simulator doesn't quite have full api support yet :/
+      #     PGHOST: localhost
+      #     PGDATABASE: tendrel
+      #     PGUSER: postgres
+      #     PGPASSWORD: postgres
+      #     # TODO: move this to a matrix and run multiple simulations
+      #     SKIP_OWNER_PROMPT: true
+      #     AUTO_SELECT_TEMPLATE: Run
+      #     PRINT_CONFIG: true
+      #     # FIXME: this is a rather crude measure to exit "successfully" :D
+      #     TIMEOUT: 2m
+      #     X_TENDREL_USER: user_2jJ7Xl0LFewQGKKNYwfFWAM0Lmc
       - name: dump logs
-        run: docker compose logs --no-color > compose.log
         if: always()
+        run: docker compose logs --no-color > compose.log
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: compose.log
           path: compose.log
-          retention-days: 1
+          retention-days: 7
